@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head></head>
+  <body>
+	<div id="header">
+		<div id="header_inner" class="fixed_centered">
+			<img src="images/logo2.png" alt="Fortepan Iowa">
+			<ul id="menu1">
+				<li><a href="http://fortepan.chas.uni.edu">Home</a>
+				<li><a href="about">About</a>
+			</ul>
+		</div>
+	</div> 
+    <div>
+    {% for p in photo %}
+        <img id="h700{{ p.accession_number}}" class="h700" src="{{ p.h700 }}" />
+    {% endfor %}
+    </div>
+    <div>
+    {% if prev_page_first %}
+        <a href="{% url 'photoview' photos.previous_page_number prev_page_first %}">Previous Page</a>
+    {% endif %}
+    {% if prev_accession %}
+        <a href="{% url 'photoview' prev_photo_page prev_accession %}">Previous Photo</a>
+    {% endif %}
+    {% for p in photos %}
+        <a href="{% url 'photoview' photos.number p.accession_number %}">
+        <img id="thumb{{ p.accession_number}}" class="thumbnail" src="{{ p.thumb }}" />
+        </a>
+    {% endfor %}
+    {% if next_accession %}
+        <a href="{% url 'photoview' next_photo_page next_accession %}">Next Photo</a>
+    {% endif %}
+    {% if next_page_first %}
+        <a href="{% url 'photoview' photos.next_page_number next_page_first %}">Next Page</a>
+    {% endif %}
+    </div>
+  
+  </body>
+</html>

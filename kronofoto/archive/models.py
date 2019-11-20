@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Donor(models.Model):
     last_name = models.CharField(max_length=256)
@@ -32,3 +33,12 @@ class Photo(models.Model):
     caption = models.TextField()
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
+
+    def thumb(self):
+        return '{}/archive/thumbs/{}_75x75.jpg'.format(settings.STATIC_URL, self.accession_number)
+
+    def h700(self):
+        return '{}/archive/h700/{}_x700.jpg'.format(settings.STATIC_URL, self.accession_number)
+
+    def original(self):
+        return '{}/archive/originals/{}.jpg'.format(settings.STATIC_URL, self.accession_number)

@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from archive import views
 
 urlpatterns = [
+    path('<int:page>/<str:photo>/', views.photoview, name="photoview"),
     path('admin/', admin.site.urls),
 ]
