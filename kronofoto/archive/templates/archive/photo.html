@@ -1,10 +1,51 @@
 <!DOCTYPE html>
 <html>
-  <head></head>
+  <head>
+    <title>Fortepan Iowa</title>
+    <style>
+        .tanbutton {
+            background-color: #d6d4bf; 
+            color: black; 
+            text-decoration: none; 
+            border-radius: 0.5rem; 
+            padding:0.4rem;
+        }
+        .uppercase {
+            text-transform: uppercase;
+            font-family: sans-serif;
+        }
+        body {
+            font-family: arial, verdana;
+            color: #555;
+        }
+        #mainDataContainer {
+            font-size: 0.8rem;
+            border-top: 1px #d3d5c0 solid;
+            padding: 0.625rem;
+            margin-bottom: 0.625rem;
+            padding-top: 0.1875rem;
+        }
+        #mainDataContainer ul {
+            list-style:none;
+            padding:0;
+            margin: 0;
+        }
+        #mainDataContainer ul li {
+            display: inline-block;
+            padding-right: 1rem;
+            text-align: center;
+        }
+        #mainDataContainer ul li:not(:first-child) {
+            border-left: 1px solid #d3d5c0;
+            padding: 0 1rem 0 1rem;
+            text-align: center;
+        }
+    </style> 
+  </head>
   <body>
 	<div id="header">
 		<div id="header_inner" class="fixed_centered">
-			<img src="images/logo2.png" alt="Fortepan Iowa">
+			<img src="http://fortepan.us/images/logo2.png" alt="Fortepan Iowa">
 			<ul id="menu1">
 				<li><a href="http://fortepan.chas.uni.edu">Home</a>
 				<li><a href="about">About</a>
@@ -13,28 +54,35 @@
 	</div> 
     <div>
     {% for p in photo %}
-        <img id="h700{{ p.accession_number}}" class="h700" src="{{ p.h700 }}" />
+        <img id="h700{{ p.accession_number }}" class="h700" src="{{ p.h700 }}" />
+        <div id="mainDataContainer">
+        <ul><li>{{ p.accession_number }}</li><li>{{ p.year }}</li>
+        <li>{{ p.location }}</li>
+        <li>Donated by {{ p.collection.displayed_donors }}</li>
+        </ul>
+        <p>{{ p.caption }}</p>
+        <div><a class="uppercase tanbutton" href="{{ p.original }}">Download</a></div>
+        <p>Collection: {{ p.collection.name }} (Photos: {{ p.collection.total_photos }}, Years: {{ p.collection.year_min }} - {{ p.collection.year_max }})</p>
+        <p>Photo and data prepared by</p>
+        </div>
     {% endfor %}
     </div>
     <div>
     {% if prev_page_first %}
-        <a href="{% url 'photoview' photos.previous_page_number prev_page_first %}">Previous Page</a>
+        <a class="tanbutton" href="{% url 'photoview' photos.previous_page_number prev_page_first %}">◀◀</a>
     {% endif %}
     {% if prev_accession %}
-        <a href="{% url 'photoview' prev_photo_page prev_accession %}">Previous Photo</a>
+        <a class="tanbutton" href="{% url 'photoview' prev_photo_page prev_accession %}">◀</a>
     {% endif %}
     {% for p in photos %}
-        <a href="{% url 'photoview' photos.number p.accession_number %}">
-        <img id="thumb{{ p.accession_number}}" class="thumbnail" src="{{ p.thumb }}" />
-        </a>
+<a href="{% url 'photoview' photos.number p.accession_number %}"><img id="thumb{{ p.accession_number}}" class="thumbnail" src="{{ p.thumb }}" /></a>
     {% endfor %}
     {% if next_accession %}
-        <a href="{% url 'photoview' next_photo_page next_accession %}">Next Photo</a>
+        <a class="tanbutton" href="{% url 'photoview' next_photo_page next_accession %}">▶</a>
     {% endif %}
     {% if next_page_first %}
-        <a href="{% url 'photoview' photos.next_page_number next_page_first %}">Next Page</a>
+        <a class="tanbutton" href="{% url 'photoview' photos.next_page_number next_page_first %}">▶▶</a>
     {% endif %}
     </div>
-  
   </body>
 </html>

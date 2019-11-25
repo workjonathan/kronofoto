@@ -42,3 +42,13 @@ class Photo(models.Model):
 
     def original(self):
         return '{}/archive/originals/{}.jpg'.format(settings.STATIC_URL, self.accession_number)
+
+    def location(self):
+        result = 'Location: n/a'
+        if self.country:
+            result = self.country
+        elif self.county:
+            result = '{} County, {}'.format(self.county, self.state)
+        elif self.city:
+            result = '{}, {}'.format(self.city, self.state)
+        return result
