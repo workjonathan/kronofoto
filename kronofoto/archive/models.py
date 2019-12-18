@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 
-class Donor(models.Model):
+class ContactInfo(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)
     home_phone = models.CharField(max_length=256)
@@ -11,6 +11,15 @@ class Donor(models.Model):
     state = models.CharField(max_length=256)
     zip = models.CharField(max_length=256)
     country = models.CharField(max_length=256)
+
+
+class Donor(models.Model):
+    contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
+
+
+class Contributor(models.Model):
+    contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
+
 
 class Collection(models.Model):
     name = models.CharField(max_length=512)
@@ -33,6 +42,8 @@ class Photo(models.Model):
     caption = models.TextField()
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(Contributor, null=True, on_delete=models.SET_NULL)
 
     def thumb(self):
         return '{}/archive/thumbs/{}_75x75.jpg'.format(settings.STATIC_URL, self.accession_number)
