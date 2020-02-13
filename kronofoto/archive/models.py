@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 class ContactInfo(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)
@@ -26,10 +27,15 @@ class Collection(models.Model):
     donors = models.ManyToManyField(Donor)
     displayed_donors = models.CharField(max_length=512)
     description = models.TextField()
-    year_min = models.SmallIntegerField('oldest photo year', editable=False, null=True)
-    year_max = models.SmallIntegerField('newest photo year', editable=False, null=True)
-    total_photos = models.SmallIntegerField('photos', editable=False)
+    year_min = models.SmallIntegerField(
+        "oldest photo year", editable=False, null=True
+    )
+    year_max = models.SmallIntegerField(
+        "newest photo year", editable=False, null=True
+    )
+    total_photos = models.SmallIntegerField("photos", editable=False)
     is_published = models.BooleanField(default=False)
+
 
 class Photo(models.Model):
     accession_number = models.CharField(max_length=50, unique=True)
@@ -43,23 +49,31 @@ class Photo(models.Model):
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(Contributor, null=True, on_delete=models.SET_NULL)
+    created_by = models.ForeignKey(
+        Contributor, null=True, on_delete=models.SET_NULL
+    )
 
     def thumb(self):
-        return '{}/archive/thumbs/{}_75x75.jpg'.format(settings.STATIC_URL, self.accession_number)
+        return "{}/archive/thumbs/{}_75x75.jpg".format(
+            settings.STATIC_URL, self.accession_number
+        )
 
     def h700(self):
-        return '{}/archive/h700/{}_x700.jpg'.format(settings.STATIC_URL, self.accession_number)
+        return "{}/archive/h700/{}_x700.jpg".format(
+            settings.STATIC_URL, self.accession_number
+        )
 
     def original(self):
-        return '{}/archive/originals/{}.jpg'.format(settings.STATIC_URL, self.accession_number)
+        return "{}/archive/originals/{}.jpg".format(
+            settings.STATIC_URL, self.accession_number
+        )
 
     def location(self):
-        result = 'Location: n/a'
+        result = "Location: n/a"
         if self.country:
             result = self.country
         elif self.county:
-            result = '{} County, {}'.format(self.county, self.state)
+            result = "{} County, {}".format(self.county, self.state)
         elif self.city:
-            result = '{}, {}'.format(self.city, self.state)
+            result = "{}, {}".format(self.city, self.state)
         return result

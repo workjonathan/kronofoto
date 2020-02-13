@@ -85,24 +85,24 @@
     </div>
     <div>
     {% for p in index %}
-        <a href="{% url 'photoview' p.2 p.1.accession_number %}">{{ p.0 }}</a>
+        <a href="{% url 'photoview' p.2 p.1.accession_number %}?{{ getparams }}">{{ p.0 }}</a>
     {% endfor %}
     </div>
     <div class="text-center">
     {% if prev_page_first %}
-        <a class="tanbutton" href="{% url 'photoview' photos.previous_page_number prev_page_first %}">◀◀</a>
+        <a class="tanbutton" href="{% url 'photoview' photos.previous_page_number prev_page_first %}?{{ getparams }}">◀◀</a>
     {% endif %}
     {% if prev_accession %}
-        <a class="tanbutton" href="{% url 'photoview' prev_photo_page prev_accession %}">◀</a>
+        <a class="tanbutton" href="{% url 'photoview' prev_photo_page prev_accession %}?{{ getparams }}">◀</a>
     {% endif %}
     {% for p in photos %}
-<a href="{% url 'photoview' photos.number p.accession_number %}"><img id="thumb{{ p.accession_number}}" class="thumbnail" src="{{ p.thumb }}" /></a>
+<a href="{% url 'photoview' photos.number p.accession_number %}?{{ getparams }}"><img id="thumb{{ p.accession_number}}" class="thumbnail" src="{{ p.thumb }}" /></a>
     {% endfor %}
     {% if next_accession %}
-        <a class="tanbutton" href="{% url 'photoview' next_photo_page next_accession %}">▶</a>
+        <a class="tanbutton" href="{% url 'photoview' next_photo_page next_accession %}?{{ getparams }}">▶</a>
     {% endif %}
     {% if next_page_first %}
-        <a class="tanbutton" href="{% url 'photoview' photos.next_page_number next_page_first %}">▶▶</a>
+        <a class="tanbutton" href="{% url 'photoview' photos.next_page_number next_page_first %}?{{ getparams }}">▶▶</a>
     {% endif %}
     </div>
     </div>
