@@ -1,0 +1,16 @@
+{% load static %}
+<img id="h700{{ photo.accession_number }}" class="h700" src="{% static photo.h700.url %}" />
+</div>
+<div>
+<div id="mainDataContainer">
+<ul><li>{{ photo.accession_number }}</li><li>{{ photo.year }}</li>
+<li>{{ photo.location }}</li>
+<li>Donated by {{ photo.collection.displayed_donors }}</li>
+</ul>
+<p>{{ photo.caption }}</p>
+<div><a class="uppercase tanbutton" href="{{ photo.original }}">Download</a></div>
+<p>Collection: {{ photo.collection.name }} (Photos: {{ photo.collection.total_photos }}, Years: {{ photo.collection.year_min }} - {{ photo.collection.year_max }})</p>
+<p>Photo and data prepared by {{ photo.created_by.contactinfo.first_name }} {{ photo.created_by.contactinfo.last_name }}</p>
+<p>Added to archive on: {{ photo.created|date:"Y-m-d h:i:s A" }}</p>
+</div>
+

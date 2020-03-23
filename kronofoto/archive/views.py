@@ -1,12 +1,90 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.db.models import Min, Count, Q
-from .models import Photo, Collection
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.utils.http import urlencode
+from django.views.generic import ListView, TemplateView
+from django.views.generic.base import RedirectView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 import operator
 from functools import reduce
 from math import floor
+
+
+class PrePublishPhotoList(PermissionRequiredMixin, ListView):
+    model = PrePublishPhoto
+    template_name = 'archive/publish_list.html'
+    permission_required = ('archive.delete_prepublishphoto', 'archive.change_photo')
+
+
+class PrePublishPhotoView(PermissionRequiredMixin, DetailView):
+    template_name = 'archive/publish.html'
+    model = PrePublishPhoto
+    permission_required = ('archive.delete_prepublishphoto', 'archive.change_photo')
+
+
+class PublishPhotoRedirect(PermissionRequiredMixin, RedirectView):
+    permanent = False
+    pattern_name = 'prepublishlist'
+    publish = None
+    permission_required = ('archive.delete_prepublishphoto', 'archive.change_photo')
+
+    def get_redirect_url(self, *args, **kwargs):
+        photo = get_object_or_404(PrePublishPhoto, id=kwargs['pk'])
+        del kwargs['pk']
+        photo.photo.is_published = self.publish
+        photo.photo.save()
+        photo.delete()
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class UploadScannedImage(PermissionRequiredMixin, CreateView):
+    model = ScannedPhoto
+    fields = ['image', 'collection']
+    template_name = 'archive/upload_photo.html'
+    success_url = reverse_lazy('upload')
+    permission_required = 'archive.add_scannedphoto'
+
+
+class ReviewPhotos(PermissionRequiredMixin, ListView):
+    model = ScannedPhoto
+    template_name = 'archive/review_photos.html'
+    permission_required = 'archive.add_photovote'
+
+    def get_queryset(self):
+        return ScannedPhoto.objects.filter(accepted=None)
+
+
+class VoteOnPhoto(PermissionRequiredMixin, RedirectView):
+    permanent = False
+    pattern_name = 'review'
+    infavor = None
+    permission_required = 'archive.add_photovote'
+
+    def get_redirect_url(self, *args, **kwargs):
+        photo = get_object_or_404(ScannedPhoto, id=kwargs['pk'])
+        del kwargs['pk']
+        vote, created = PhotoVote.objects.update_or_create(photo=photo, voter=self.request.user, defaults={'infavor': self.infavor})
+        return super().get_redirect_url(*args, **kwargs)
+
+
+class ApprovePhoto(PermissionRequiredMixin, RedirectView):
+    permanent = False
+    pattern_name = 'review'
+    approve = None
+    permission_required = 'archive.change_scannedphoto'
+
+    def get_redirect_url(self, *args, **kwargs):
+        photo = get_object_or_404(ScannedPhoto, id=kwargs['pk'])
+        del kwargs['pk']
+        photo.accepted = self.approve
+        photo.save()
+        PhotoVote.objects.filter(photo=photo).delete()
+        return super().get_redirect_url(*args, **kwargs)
 
 
 def photoview(request, page, photo):
@@ -76,8 +154,7 @@ def photoview(request, page, photo):
     next_page_first_accession = None
     prev_page_first_accession = None
     prev_page_last_accession = None
-    if photos.has_next():
-        next_page_first_accession = next_photos[0].accession_number
+    if photos.has_next(): next_page_first_accession = next_photos[0].accession_number
     if photos.has_previous():
         prev_page_first_accession = prev_photos[0].accession_number
         prev_page_last_accession = prev_photos[-1].accession_number
@@ -105,7 +182,7 @@ def photoview(request, page, photo):
             prev_accession = photos[cur_index - 1].accession_number
             next_accession = next_page_first_accession
 
-    photo_rec = Photo.objects.filter(accession_number=photo)
+    photo_rec = Photo.objects.filter(id=Photo.accession2id(photo))
 
     return render(
         request,

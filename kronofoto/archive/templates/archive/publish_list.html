@@ -1,0 +1,10 @@
+{% extends "archive/base.html" %}
+
+{% block content %}
+    <h2>Photos</h2>
+    <ul>
+        {% for photo in object_list %}
+            <li><a href="{% url 'prepublishdetails' photo.id %}">{{ photo.photo.accession_number }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "archive/base.html" %}
+{% load photodetails %}
+
+{% block content %}
+    <h2>{{ object.photo.accession_number }}</h2>
+    <a href="{% url "approve" object.id %}">Approve</a> <a href="{% url "reject" object.id %}">Reject</a>
+    <div>
+    {% show_photo object.photo %}
+    </div>
+    
+{% endblock %}
+

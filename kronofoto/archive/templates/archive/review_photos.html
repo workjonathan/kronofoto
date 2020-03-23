@@ -1,0 +1,29 @@
+{% extends "archive/base.html" %}
+
+{% load static %}
+
+{% block content %}
+    <h2>Photos</h2>
+    <table>
+        <tr>
+            <th>Image</th>
+            <th>Votes</th>
+            <th>Actions</th>
+        </tr>
+        {% for photo in object_list %}
+            <tr>
+                <th><img src="{% static photo.image.url %}"/></th>
+                <th>
+                    <ul>
+                    {% for vote in photo.votes.all %}
+                    <li>
+                        {{ vote.voter }} - {{ vote.infavor|yesno:"Yes,No" }}
+                    </li>
+                    {% endfor %}
+                    </ul>
+                </th>
+                <th><ul><li><a href="{% url "photo-yes" photo.id %}">Vote Yes</a></li><li><a href="{% url "photo-no" photo.id %}">Vote No</a></li><li><a href="{% url "photo-approve" photo.id %}">Approve</a></li><li><a href="{% url "photo-reject" photo.id %}">Reject</a></li></th></ul>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

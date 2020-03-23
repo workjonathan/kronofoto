@@ -1,0 +1,75 @@
+<!doctype html>
+<html class="no-js">
+  <head>
+	<meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	{% load static %}
+    <link rel="stylesheet" href="{% static "foundation/css/foundation.css" %}">
+    <link rel="stylesheet" href="{% static "foundation/css/app.css" %}">
+    <title>Fortepan Iowa</title>
+    <style>
+        .tanbutton {
+            background-color: #d6d4bf; 
+            color: black; 
+            text-decoration: none; 
+            border-radius: 0.5rem; 
+            padding:0.4rem;
+        }
+        .uppercase {
+            text-transform: uppercase;
+            font-family: sans-serif;
+        }
+        body {
+            font-family: arial, verdana;
+            color: #555;
+        }
+        #mainDataContainer {
+            font-size: 0.8rem;
+            border-top: 1px #d3d5c0 solid;
+            padding: 0.625rem;
+            margin-bottom: 0.625rem;
+            padding-top: 0.1875rem;
+        }
+        #mainDataContainer ul {
+            list-style:none;
+            padding:0;
+            margin: 0;
+        }
+        #mainDataContainer ul li {
+            display: inline-block;
+            padding-right: 1rem;
+            text-align: center;
+        }
+        #mainDataContainer ul li:not(:first-child) {
+            border-left: 1px solid #d3d5c0;
+            padding: 0 1rem 0 1rem;
+            text-align: center;
+        }
+        #photozone {
+            margin:1.5rem;
+        }
+    </style> 
+  </head>
+  <body>
+    <div class="grid-container">
+	<div class="top-bar" id="header">
+		<div id="header_inner" class="top-bar-left">
+			<img src="http://fortepan.us/images/logo2.png" alt="Fortepan Iowa">
+        </div>
+		<div class="top-bar-right">
+			<ul class="menu">
+				<li><a href="http://fortepan.chas.uni.edu">Home</a>
+				<li><a href="about">About</a>
+			</ul>
+		</div>
+	</div> 
+    {% block content %}
+    {% endblock %}
+    </div>
+	<script src="{% static "foundation/js/vendor/jquery.js" %}"></script>
+    <script src="{% static "foundation/js/vendor/what-input.js" %}"></script>
+    <script src="{% static "foundation/js/vendor/foundation.js" %}"></script>
+    <script src="{% static "foundation/js/app.js" %}"></script>
+  </body>
+</html>

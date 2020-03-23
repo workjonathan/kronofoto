@@ -14,12 +14,24 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from archive import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth.views import LoginView
 
 urlpatterns = [
+    path('accounts/', include('django.contrib.auth.urls')),
     path('<int:page>/<str:photo>/', views.photoview, name="photoview"),
+    path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),
+    path('upload/', views.UploadScannedImage.as_view(), name="upload"),
+    path('review/', views.ReviewPhotos.as_view(), name="review"),
+    path('publish/<int:pk>', views.PrePublishPhotoView.as_view(), name='prepublishdetails'),
+    path('publish/<int:pk>/approve', views.PublishPhotoRedirect.as_view(publish=True), name='approve'),
+    path('publish/<int:pk>/reject', views.PublishPhotoRedirect.as_view(publish=False), name='reject'),
+    path('review/<int:pk>/vote/yes', views.VoteOnPhoto.as_view(infavor=True), name='photo-yes'),
+    path('review/<int:pk>/vote/no', views.VoteOnPhoto.as_view(infavor=False), name='photo-no'),
+    path('review/<int:pk>/approve/yes', views.ApprovePhoto.as_view(approve=True), name='photo-approve'),
+    path('review/<int:pk>/approve/no', views.ApprovePhoto.as_view(approve=False), name='photo-reject'),
     path('admin/', admin.site.urls),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
