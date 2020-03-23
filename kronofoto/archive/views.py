@@ -161,6 +161,7 @@ def photoview(request, page, photo):
     for i, p in enumerate(photos):
         if p.accession_number == photo:
             cur_index = i
+            p.active = True
     prev_accession = None
     next_accession = None
     prev_photo_page = None

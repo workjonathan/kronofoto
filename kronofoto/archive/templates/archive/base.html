@@ -1,75 +1,56 @@
-<!doctype html>
-<html class="no-js">
-  <head>
-	<meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{% load static %}
-    <link rel="stylesheet" href="{% static "foundation/css/foundation.css" %}">
-    <link rel="stylesheet" href="{% static "foundation/css/app.css" %}">
-    <title>Fortepan Iowa</title>
-    <style>
-        .tanbutton {
-            background-color: #d6d4bf; 
-            color: black; 
-            text-decoration: none; 
-            border-radius: 0.5rem; 
-            padding:0.4rem;
-        }
-        .uppercase {
-            text-transform: uppercase;
-            font-family: sans-serif;
-        }
-        body {
-            font-family: arial, verdana;
-            color: #555;
-        }
-        #mainDataContainer {
-            font-size: 0.8rem;
-            border-top: 1px #d3d5c0 solid;
-            padding: 0.625rem;
-            margin-bottom: 0.625rem;
-            padding-top: 0.1875rem;
-        }
-        #mainDataContainer ul {
-            list-style:none;
-            padding:0;
-            margin: 0;
-        }
-        #mainDataContainer ul li {
-            display: inline-block;
-            padding-right: 1rem;
-            text-align: center;
-        }
-        #mainDataContainer ul li:not(:first-child) {
-            border-left: 1px solid #d3d5c0;
-            padding: 0 1rem 0 1rem;
-            text-align: center;
-        }
-        #photozone {
-            margin:1.5rem;
-        }
-    </style> 
-  </head>
-  <body>
-    <div class="grid-container">
-	<div class="top-bar" id="header">
-		<div id="header_inner" class="top-bar-left">
-			<img src="http://fortepan.us/images/logo2.png" alt="Fortepan Iowa">
-        </div>
-		<div class="top-bar-right">
-			<ul class="menu">
-				<li><a href="http://fortepan.chas.uni.edu">Home</a>
-				<li><a href="about">About</a>
-			</ul>
-		</div>
-	</div> 
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link type="text/css" rel="stylesheet" href="{% static "assets/css/index.css" %}">
+  <title>Fortepan Iowa</title>
+</head>
+<body>
+  <header>
+    <nav aria-label="Main navigation">
+      <div id="logo">
+        <img src="{% static "assets/images/01-fi-logo.svg" %}" alt="Fortepan Iowa Logo">
+      </div>
+      <ul>
+        <li>
+        </li>
+        <li>0008087 IMG</li>
+        <li>New</li>
+        <li id="search-box-container">
+          <label for="search-box">
+            <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
+            <input type="text" id="search-box" placeholder="Keywords, terms, photo ID#, donor">
+          </label>
+        </li>
+        <li>
+          <img src="{% static "assets/images/04-grid.svg" %}" alt="Grid icon">
+        </li>
+        <li>
+          <img src="{% static "assets/images/05-iowa.svg" %}" alt="Icon in the shape of the state of Iowa">
+        </li>
+        <li>
+          <img src="{% static "assets/images/06-darkmode.svg" %}" alt="A square with light and dark corners">
+        </li>
+        <li>
+          <img src="{% static "assets/images/07-fullscreen.svg" %}" alt="A fullscreen icon">
+        </li>
+        <li>Auto</li>
+        <li>
+          <div id="login">
+            <span>Login</span>
+          </div>
+        </li>
+        <li>
+          <!-- HAMBURGER MENU -->
+        </li>
+      </ul>
+    </nav>
+  </header>
     {% block content %}
     {% endblock %}
-    </div>
-	<script src="{% static "foundation/js/vendor/jquery.js" %}"></script>
-    <script src="{% static "foundation/js/vendor/what-input.js" %}"></script>
-    <script src="{% static "foundation/js/vendor/foundation.js" %}"></script>
-    <script src="{% static "foundation/js/app.js" %}"></script>
-  </body>
+  <!-- <footer></footer> -->
+</body>
 </html>

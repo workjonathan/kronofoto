@@ -1,33 +1,96 @@
 {% extends "archive/base.html" %}
-{% load photodetails %}
 {% load static %}
 
 {% block content %}
-<div class="text-center" id="photozone">
-{% for p in photo %}
-    {% show_photo p %}
-{% endfor %}
-</div>
-<div>
-{% for p in index %}
-    <a href="{% url 'photoview' p.2 p.1.accession_number %}?{{ getparams }}">{{ p.0 }}</a>
-{% endfor %}
-</div>
-<div class="text-center">
-{% if prev_page_first %}
-    <a class="tanbutton" href="{% url 'photoview' photos.previous_page_number prev_page_first %}?{{ getparams }}">◀◀</a>
-{% endif %}
-{% if prev_accession %}
-    <a class="tanbutton" href="{% url 'photoview' prev_photo_page prev_accession %}?{{ getparams }}">◀</a>
-{% endif %}
-{% for p in photos %}
-<a href="{% url 'photoview' photos.number p.accession_number %}?{{ getparams }}"><img id="thumb{{ p.accession_number}}" class="thumbnail" src="{% static p.thumbnail.url %}" /></a>
-{% endfor %}
+  <main>
+    <article class="fi-image">
+      <figure>
+        <img src="{% static photo.0.h700.url %}" alt="Alt text for the image">
+      </figure>
+      <div id="fi-image-controls">
 {% if next_accession %}
-    <a class="tanbutton" href="{% url 'photoview' next_photo_page next_accession %}?{{ getparams }}">▶</a>
+    <a href="{% url 'photoview' next_photo_page next_accession %}?{{ getparams }}">
+        <img src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
 {% endif %}
+      </div>
+      <button id="expand">+</button>
+      {% comment %}
+      <div id="metadata">
+        <div class="metadata-1a">
+          <ul>
+            <li>1935, Cascade, IA, USA</li>
+            <li><span class="field-name">Photo ID:</span>FI000827</li>
+            <li><span class="field-name">Donor:</span>Catherine Palczewski</li>
+          </ul>
+        </div>
+        <div class="metadata-2a">
+          <ul>
+            <li><span class="field-name">Photographer:</span>Cassandra Nulty</li>
+            <li><span class="field-name">Scanner:</span>Cassandra Nulty</li>
+            <li><span class="field-name">Added to Archive:</span>2009-12-23</li>
+          </ul>
+        </div>
+        <div class="metadata-3a">
+          <ul>
+            <li><span class="field-name">Catalog Terms:</span>Children, School & Education, Portraits-Group</li>
+            <li><span class="field-name">Tag:</span>trumpet, piano, clarinet, drums, classroom, music, chalkboard</li>
+            <li><span class="field-name">Comments:</span>Cascade Elementary, music class. Ben Johnson is playing the trumpet, he is 12.</li>
+          </ul>
+        </div>
+        {% endcomment %}
+    </article>
+    <nav class="fi-timeline">
+      <div class="fi-thumbnail-carousel">
+        <div class="back-arrows">
+{% if prev_page_first %}
+    <a href="{% url 'photoview' photos.previous_page_number prev_page_first %}?{{ getparams }}">
+{% endif %}
+        &#10092;&#10092;
+{% if prev_accession %}
+    </a>
+{% endif %}
+        </div>
+        <ul id="fi-thumbnail-carousel-images">
+{% for p in photos %}
+          <li {{p.active | yesno:"data-active,,"}}><a href="{% url 'photoview' photos.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
+{% endfor %}
+        </ul>
+        <div class="forward-arrows">
 {% if next_page_first %}
-    <a class="tanbutton" href="{% url 'photoview' photos.next_page_number next_page_first %}?{{ getparams }}">▶▶</a>
+    <a href="{% url 'photoview' photos.next_page_number next_page_first %}?{{ getparams }}">
 {% endif %}
-</div>
+        &#10093;&#10093;
+{% if next_page_first %}
+    </a>
+{% endif %}
+        </div>
+      </div>
+      <div class="year-ticker">
+        <div class="year-min">&#10092; 1890</div>
+        <ul class="year-ticker-increments">
+          <li>1900</li>
+          <li>1905</li>
+          <li>1910</li>
+          <li>1915</li>
+          <li>1920</li>
+          <li>1925</li>
+          <li>1930</li>
+          <li>1935</li>
+          <li>1940</li>
+          <li>1945</li>
+          <li>1950</li>
+          <li>1955</li>
+          <li>1960</li>
+          <li>1965</li>
+          <li>1970</li>
+          <li>1975</li>
+          <li>1980</li>
+          <li>1985</li>
+          <li>1990</li>
+          <li>1995</li>
+        </ul>
+        <div class="year-max">2000&#10093;</div>
+      </div>
+    </nav>
+  </main>
 {% endblock %}
