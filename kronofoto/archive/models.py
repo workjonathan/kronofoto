@@ -95,7 +95,7 @@ class Photo(models.Model):
     def accession_number(self):
         return 'FI' + str(self.id).zfill(7)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
         #try: for orientation in ExifTags.TAGS.keys():
         #        if ExifTags.TAGS[orientation]=='Orientation':
@@ -137,7 +137,7 @@ class Photo(models.Model):
         fname = 'h700/{}.jpg'.format(self.uuid)
         h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
         self.h700.name = fname
-        super().save()
+        super().save(*args, **kwargs)
 
 
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.db.models import Min, Count, Q
@@ -152,12 +152,28 @@ def photoview(request, page, photo):
     photo_list = Photo.objects.filter(q).order_by("year", "id")
     paginator = Paginator(photo_list, items)
     this_page = paginator.get_page(page)
+    photo_rec = None
     for i, p in enumerate(this_page):
         if p.accession_number == photo:
             p.active = True
             photo_rec = p
             break
 
+    if photo_rec is None:
+        id = Photo.accession2id(photo)
+        photo = Photo.objects.get(id=id)
+        lo = 0
+        hi = len(photo_list) - 1
+        mid = (hi + lo) // 2
+        while hi > lo:
+            if photo_list[mid].id == id:
+                break
+            elif photo_list[mid].year > photo.year or (photo_list[mid].year == photo.year and photo_list[mid].id > id):
+                hi = mid - 1
+            else:
+                lo = mid + 1
+            mid = (hi + lo) // 2
+        return redirect('photoview', page=(mid//items + 1), photo=photo.accession_number)
     prev_page = []
     next_page = []
     if this_page.has_previous():
