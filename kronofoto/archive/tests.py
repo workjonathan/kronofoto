@@ -21,6 +21,10 @@ class WhenHave50Photos(TestCase):
             cls.photos.append(p)
 
 
+    def testShould404WhenPhotoNotFound(self):
+        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 'FI99999'}))
+        self.assertEqual(resp.status_code, 404)
+
     def testShouldRedirectToCorrectPageForPhoto(self):
         photos = self.photos
         for page in range(1, 6):

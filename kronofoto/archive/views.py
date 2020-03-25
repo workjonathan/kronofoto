@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.utils.http import urlencode
+from django.http import Http404
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
@@ -161,9 +162,12 @@ def photoview(request, page, photo):
 
     if photo_rec is None:
         id = Photo.accession2id(photo)
-        photo = Photo.objects.get(id=id)
-        idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
-        return redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
+        try:
+            photo = Photo.objects.get(id=id)
+            idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
+            return redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
+        except Photo.DoesNotExist:
+            raise Http404("Photo does not exist")
     prev_page = []
     next_page = []
     if this_page.has_previous():
