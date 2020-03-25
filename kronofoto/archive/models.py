@@ -45,12 +45,32 @@ class Collection(models.Model):
         return self.name
 
 
+class Term(models.Model):
+    term = models.CharField(max_length=64)
+
+    def __str__(self):
+        return self.term
+
+
+class Tag(models.Model):
+    tag = models.CharField(max_length=64)
+    accepted = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return self.tag
+
+
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     original = models.ImageField(null=True)
     h700 = models.ImageField(null=True)
     thumbnail = models.ImageField(null=True)
     collection = models.ForeignKey(Collection, models.PROTECT)
+    tags = models.ManyToManyField(Tag, blank=True)
+    def acceptedtags(self):
+        return self.tags.filter(accepted=True)
+    terms = models.ManyToManyField(Term, blank=True)
     city = models.CharField(max_length=128)
     county = models.CharField(max_length=128)
     state = models.CharField(max_length=64)

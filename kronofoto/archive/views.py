@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 import operator
 from functools import reduce
 from math import floor
+from itertools import islice,chain
 
 
 class PrePublishPhotoList(PermissionRequiredMixin, ListView):
@@ -145,65 +146,51 @@ def photoview(request, page, photo):
         while index and index[-1][0] != p.year - 1:
             index.append((index[-1][0] + 1, p, year_pages[p.year]))
         index.append((p.year, p, year_pages[p.year]))
-    photo_list = Photo.objects.filter(q).order_by("year", "id")
-    paginator = Paginator(photo_list, 10)
-    photos = paginator.get_page(page)
-    prev_photos = paginator.get_page(page - 1)
-    next_photos = paginator.get_page(page + 1)
-    cur_index = None
-    next_page_first_accession = None
-    prev_page_first_accession = None
-    prev_page_last_accession = None
-    if photos.has_next(): next_page_first_accession = next_photos[0].accession_number
-    if photos.has_previous():
-        prev_page_first_accession = prev_photos[0].accession_number
-        prev_page_last_accession = prev_photos[-1].accession_number
-    for i, p in enumerate(photos):
-        if p.accession_number == photo:
-            cur_index = i
-            p.active = True
-    prev_accession = None
-    next_accession = None
-    prev_photo_page = None
-    next_photo_page = None
-    if cur_index is not None:
-        if cur_index == 0:
-            prev_photo_page = page - 1
-            next_photo_page = page
-            prev_accession = prev_page_last_accession
-            next_accession = photos[cur_index + 1].accession_number
-        elif cur_index < 9:
-            prev_photo_page = page
-            next_photo_page = page
-            prev_accession = photos[cur_index - 1].accession_number
-            next_accession = photos[cur_index + 1].accession_number
-        else:
-            prev_photo_page = page
-            next_photo_page = page + 1
-            prev_accession = photos[cur_index - 1].accession_number
-            next_accession = next_page_first_accession
 
-    photo_rec = Photo.objects.filter(id=Photo.accession2id(photo))
+    items = 10
+
+    photo_list = Photo.objects.filter(q).order_by("year", "id")
+    paginator = Paginator(photo_list, items)
+    this_page = paginator.get_page(page)
+    for i, p in enumerate(this_page):
+        if p.accession_number == photo:
+            p.active = True
+            photo_rec = p
+            break
+
+    prev_page = []
+    next_page = []
+    if this_page.has_previous():
+        prev_page = paginator.get_page(page-1)
+        for p in prev_page:
+            p.page = prev_page
+    if this_page.has_next():
+        next_page = paginator.get_page(page+1)
+        for p in next_page:
+            p.page = next_page
+    for p in this_page:
+        p.page = this_page
+    last = None
+    for p in chain(prev_page, this_page, next_page):
+        if last:
+            p.last = last
+            last.next = p
+        last = p
 
     return render(
         request,
         "archive/photo.html",
         {
-            "photos": photos,
+            "page": this_page,
+            "next_page": next_page,
+            "prev_page": prev_page,
             "photo": photo_rec,
-            "next_page_first": next_page_first_accession,
-            "prev_page_first": prev_page_first_accession,
-            "prev_page_last": prev_page_last_accession,
-            "prev_accession": prev_accession,
-            "next_accession": next_accession,
-            "prev_photo_page": prev_photo_page,
-            "next_photo_page": next_photo_page,
             "index": index,
             "collections": collections,
             "cities": cities,
             "states": states,
             "countries": countries,
-            "counties": counties,
+            "coenties": counties,
             "getparams": request.GET.urlencode(),
         },
     )

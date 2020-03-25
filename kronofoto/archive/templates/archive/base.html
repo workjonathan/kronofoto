@@ -40,7 +40,11 @@
         <li>Auto</li>
         <li>
           <div id="login">
-            <span>Login</span>
+{% if user.is_authenticated %}
+            <span><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
+{% else %}
+            <span><a href="{% url "login" %}?next={{request.get_full_path | urlencode}}">Login</a></span>
+{% endif %}
           </div>
         </li>
         <li>

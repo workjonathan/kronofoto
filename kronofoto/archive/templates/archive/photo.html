@@ -5,62 +5,69 @@
   <main>
     <article class="fi-image">
       <figure>
-        <img src="{% static photo.0.h700.url %}" alt="Alt text for the image">
+        <img src="{% static photo.h700.url %}" alt="Alt text for the image">
       </figure>
       <div id="fi-image-controls">
-{% if next_accession %}
-    <a href="{% url 'photoview' next_photo_page next_accession %}?{{ getparams }}">
+{% if photo.next %}
+    <a href="{% url 'photoview' photo.next.page.number photo.next.accession_number %}?{{ getparams }}">
         <img src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
 {% endif %}
       </div>
-      <button id="expand">+</button>
-      {% comment %}
-      <div id="metadata">
+      <button id="expand" onclick="toggleVis()">+</button>
+      <div id="metadata" class="hidden">
         <div class="metadata-1a">
           <ul>
-            <li>1935, Cascade, IA, USA</li>
-            <li><span class="field-name">Photo ID:</span>FI000827</li>
-            <li><span class="field-name">Donor:</span>Catherine Palczewski</li>
+            <li>{{ photo.year }}, {{ photo.location }}</li>
+            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
+            <li><span class="field-name">Donor:</span>{{photo.collection.name}}</li>
           </ul>
         </div>
         <div class="metadata-2a">
           <ul>
+            {% comment %}
             <li><span class="field-name">Photographer:</span>Cassandra Nulty</li>
-            <li><span class="field-name">Scanner:</span>Cassandra Nulty</li>
-            <li><span class="field-name">Added to Archive:</span>2009-12-23</li>
+            
+            <li><span class="field-name">Scanner:</span></li>
+            {% endcomment %}
+            <li><span class="field-name">Added to Archive:</span>{{ photo.created }}</li>
           </ul>
         </div>
         <div class="metadata-3a">
           <ul>
-            <li><span class="field-name">Catalog Terms:</span>Children, School & Education, Portraits-Group</li>
-            <li><span class="field-name">Tag:</span>trumpet, piano, clarinet, drums, classroom, music, chalkboard</li>
-            <li><span class="field-name">Comments:</span>Cascade Elementary, music class. Ben Johnson is playing the trumpet, he is 12.</li>
+            {% if photo.terms.all %}
+            <li><span class="field-name">Catalog Terms:</span>{{ photo.terms.all | join:", " }}</li>
+            {% endif %}
+            {% if photo.acceptedtags %}
+            <li><span class="field-name">Tags:</span>
+            {{ photo.acceptedtags | join:", " }}
+            </li>
+            {% endif %}
+            <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
           </ul>
         </div>
-        {% endcomment %}
     </article>
     <nav class="fi-timeline">
       <div class="fi-thumbnail-carousel">
         <div class="back-arrows">
-{% if prev_page_first %}
-    <a href="{% url 'photoview' photos.previous_page_number prev_page_first %}?{{ getparams }}">
+{% if page.has_previous %}
+    <a href="{% url 'photoview' page.previous_page_number prev_page.0.accession_number %}?{{ getparams }}">
 {% endif %}
         &#10092;&#10092;
-{% if prev_accession %}
+{% if page.has_previous %}
     </a>
 {% endif %}
         </div>
         <ul id="fi-thumbnail-carousel-images">
-{% for p in photos %}
-          <li {{p.active | yesno:"data-active,,"}}><a href="{% url 'photoview' photos.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
+{% for p in page.object_list %}
+          <li {{p.active | yesno:"data-active,"}}><a href="{% url 'photoview' page.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
 {% endfor %}
         </ul>
         <div class="forward-arrows">
-{% if next_page_first %}
-    <a href="{% url 'photoview' photos.next_page_number next_page_first %}?{{ getparams }}">
+{% if page.has_next %}
+    <a href="{% url 'photoview' page.next_page_number next_page.0.accession_number %}?{{ getparams }}">
 {% endif %}
         &#10093;&#10093;
-{% if next_page_first %}
+{% if page.has_next %}
     </a>
 {% endif %}
         </div>
@@ -93,4 +100,6 @@
       </div>
     </nav>
   </main>
+  <script src="{% static "assets/js/junk.js" %}">
+  </script>
 {% endblock %}
