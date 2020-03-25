@@ -162,18 +162,8 @@ def photoview(request, page, photo):
     if photo_rec is None:
         id = Photo.accession2id(photo)
         photo = Photo.objects.get(id=id)
-        lo = 0
-        hi = len(photo_list) - 1
-        mid = (hi + lo) // 2
-        while hi > lo:
-            if photo_list[mid].id == id:
-                break
-            elif photo_list[mid].year > photo.year or (photo_list[mid].year == photo.year and photo_list[mid].id > id):
-                hi = mid - 1
-            else:
-                lo = mid + 1
-            mid = (hi + lo) // 2
-        return redirect('photoview', page=(mid//items + 1), photo=photo.accession_number)
+        idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
+        return redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
     prev_page = []
     next_page = []
     if this_page.has_previous():

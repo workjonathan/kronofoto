@@ -21,7 +21,7 @@ class WhenHave50Photos(TestCase):
             cls.photos.append(p)
 
 
-    def testShouldRedirectFromWrongPage(self):
+    def testShouldRedirectToCorrectPageForPhoto(self):
         photos = self.photos
         for page in range(1, 6):
             thispage = photos[:10]
