@@ -204,3 +204,15 @@ def photoview(request, page, photo):
             "getparams": request.GET.urlencode(),
         },
     )
+
+class GridView(ListView):
+    model = Photo
+    paginate_by = 50
+    template_name = 'archive/photo_grid.html'
+
+    def get_queryset(self):
+        return Photo.objects.filter(Q(is_published=True) & Q(year__isnull=False)).order_by('year', 'id')
+
+    def get_paginate_by(self, qs):
+        return self.request.GET.get('display', self.paginate_by)
+
