@@ -9,7 +9,7 @@ from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 import operator
 from functools import reduce
@@ -147,7 +147,7 @@ def photoview(request, page, photo):
         while index and index[-1][0] != p.year - 1:
             index.append((index[-1][0] + 1, p, year_pages[p.year]))
         index.append((p.year, p, year_pages[p.year]))
-
+    index = [(year if year % 5 == 0 else '', reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
     items = 10
 
     photo_list = Photo.objects.filter(q).order_by("year", "id")
@@ -195,7 +195,7 @@ def photoview(request, page, photo):
             "next_page": next_page,
             "prev_page": prev_page,
             "photo": photo_rec,
-            "index": index,
+            "years": index,
             "collections": collections,
             "cities": cities,
             "states": states,

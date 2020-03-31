@@ -1,5 +1,6 @@
 {% extends "archive/base.html" %}
 {% load static %}
+{% load timeline %}
 
 {% block content %}
   <main>
@@ -74,28 +75,7 @@
       </div>
       <div class="year-ticker">
         <div class="year-min">&#10092; 1890</div>
-        <ul class="year-ticker-increments">
-          <li>1900</li>
-          <li>1905</li>
-          <li>1910</li>
-          <li>1915</li>
-          <li>1920</li>
-          <li>1925</li>
-          <li>1930</li>
-          <li>1935</li>
-          <li>1940</li>
-          <li>1945</li>
-          <li>1950</li>
-          <li>1955</li>
-          <li>1960</li>
-          <li>1965</li>
-          <li>1970</li>
-          <li>1975</li>
-          <li>1980</li>
-          <li>1985</li>
-          <li>1990</li>
-          <li>1995</li>
-        </ul>
+        {% make_timeline years %}
         <div class="year-max">2000&#10093;</div>
       </div>
     </nav>

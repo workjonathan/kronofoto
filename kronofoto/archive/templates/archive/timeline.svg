@@ -1,0 +1,16 @@
+<svg viewBox="{{ viewBox|join:' '}}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    {% for info in years %}
+        {% if info.0 %}
+        <a xlink:href="{{info.1}}">
+            <text font-size="4" text-anchor="middle"><tspan x="{{ info.2 }}" y="3">
+            {{ info.0 }}
+            </tspan>
+            </text>
+        </a>
+        {% endif %}
+        <a xlink:href="{{info.1}}">
+            <rect fill="#111" x="{{info.2}}" y="5" width="1" height="3"/>
+        </a>
+    {% endfor %}
+</svg>
