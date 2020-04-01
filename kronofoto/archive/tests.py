@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from . import models
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -79,3 +79,112 @@ class WhenHave50Photos(TestCase):
             currentpage += 1
             if not resp.context['page_obj'].has_next():
                 break
+
+
+from archive.templatetags import timeline
+class TimelineDisplay(SimpleTestCase):
+    def testShouldDefineMinorMarkerPositions(self):
+        years = [(year, '/{}'.format(year)) for year in [1900, 1901, 1902, 1903, 1904, 1905]]
+        result = timeline.make_timeline(years, width=60)
+        self.assertEqual(result['majornotches'], [{
+            'target': '/1900',
+            'box': {
+                'x': 0,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 0,
+                'y': 5,
+                'width': 2,
+                'height': 5,
+            },
+            'label': {
+                'text': '1900',
+                'x': 5,
+                'y': 3
+            }
+        },
+        {
+            'target': '/1905',
+            'box': {
+                'x': 50,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 50,
+                'y': 5,
+                'width': 2,
+                'height': 5,
+            },
+            'label': {
+                'text': '1905',
+                'x': 55,
+                'y': 3
+            }
+        },
+        ])
+        self.assertEqual(result['minornotches'], [{
+            'target': '/1901',
+            'box': {
+                'x': 10,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 10,
+                'y': 7,
+                'width': 2,
+                'height': 3,
+            }
+        },
+        {
+            'target': '/1902',
+            'box': {
+                'x': 20,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 20,
+                'y': 7,
+                'width': 2,
+                'height': 3,
+            }
+        },
+        {
+            'target': '/1903',
+            'box': {
+                'x': 30,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 30,
+                'y': 7,
+                'width': 2,
+                'height': 3,
+            }
+        },
+        {
+            'target': '/1904',
+            'box': {
+                'x': 40,
+                'y': 5,
+                'width': 10,
+                'height': 5,
+            },
+            'notch': {
+                'x': 40,
+                'y': 7,
+                'width': 2,
+                'height': 3,
+            }
+        },
+        ])

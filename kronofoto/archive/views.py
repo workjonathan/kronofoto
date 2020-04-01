@@ -147,7 +147,7 @@ def photoview(request, page, photo):
         while index and index[-1][0] != p.year - 1:
             index.append((index[-1][0] + 1, p, year_pages[p.year]))
         index.append((p.year, p, year_pages[p.year]))
-    index = [(year if year % 5 == 0 else '', reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
+    index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
     items = 10
 
     photo_list = Photo.objects.filter(q).order_by("year", "id")
