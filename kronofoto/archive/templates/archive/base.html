@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 {% load static %}
+{% load login %}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,11 +41,7 @@
         <li>Auto</li>
         <li>
           <div id="login">
-{% if user.is_authenticated %}
-            <span><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
-{% else %}
-            <span><a href="{% url "login" %}?next={{request.get_full_path | urlencode}}">Login</a></span>
-{% endif %}
+            {% make_login %}
           </div>
         </li>
         <li>
