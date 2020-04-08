@@ -55,7 +55,7 @@ class Term(models.Model):
 
 class Tag(models.Model):
     tag = models.CharField(max_length=64, unique=True)
-    slug = models.SlugField(unique=True, blank=True)
+    slug = models.SlugField(unique=True, blank=True, editable=False)
 
     def save(self):
         if not self.slug:
