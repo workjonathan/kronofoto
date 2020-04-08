@@ -84,6 +84,8 @@ class Photo(models.Model):
     created_by = models.ForeignKey(
         Contributor, null=True, on_delete=models.SET_NULL, blank=True
     )
+    def __str__(self):
+        return self.accession_number
 
     @staticmethod
     def accession2id(accession):
