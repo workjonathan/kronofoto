@@ -23,6 +23,7 @@ from django.contrib.auth.views import LoginView
 urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('<int:page>/<str:photo>/', views.photoview, name="photoview"),
+    path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),
     path('upload/', views.UploadScannedImage.as_view(), name="upload"),

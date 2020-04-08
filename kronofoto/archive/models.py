@@ -53,9 +53,7 @@ class Term(models.Model):
 
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=64)
-    accepted = models.BooleanField(default=False)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    tag = models.CharField(max_length=64, unique=True)
 
     def __str__(self):
         return self.tag
@@ -68,8 +66,7 @@ class Photo(models.Model):
     thumbnail = models.ImageField(null=True)
     collection = models.ForeignKey(Collection, models.PROTECT)
     tags = models.ManyToManyField(Tag, blank=True)
-    def acceptedtags(self):
-        return self.tags.filter(accepted=True)
+    proposed_tags = models.ManyToManyField(Tag, blank=True, related_name='proposed_tags')
     terms = models.ManyToManyField(Term, blank=True)
     city = models.CharField(max_length=128)
     county = models.CharField(max_length=128)
@@ -81,7 +78,7 @@ class Photo(models.Model):
     is_published = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
-        Contributor, null=True, on_delete=models.SET_NULL
+        Contributor, null=True, on_delete=models.SET_NULL, blank=True
     )
 
     @staticmethod

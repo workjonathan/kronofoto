@@ -1,6 +1,7 @@
 from django.test import TestCase, SimpleTestCase
 from . import models
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.http import urlencode
 
@@ -20,6 +21,28 @@ class WhenHave50Photos(TestCase):
                 is_published=True,
             )
             cls.photos.append(p)
+
+
+    def testShouldNotAllowGuestsToTagPhotos(self):
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}))
+        self.assertEqual(resp.status_code, 302)
+
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}), { 'tag': 'test tag'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(len(self.photos[0].proposed_tags.all()), 0)
+        self.assertEqual(len(self.photos[0].tags.all()), 0)
+
+
+    def testShouldBeAbleToTagPhotos(self):
+        User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        self.client.login(username='testuser', password='testpassword')
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}))
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}), { 'tag': 'test tag'})
+        self.assertEqual(len(self.photos[0].proposed_tags.all()), 1)
+        self.assertEqual(self.photos[0].proposed_tags.all()[0].tag, 'test tag')
+        self.assertEqual(len(self.photos[0].tags.all()), 0)
 
 
     def testShould404WhenPhotoNotFound(self):

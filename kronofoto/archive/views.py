@@ -3,18 +3,40 @@ from django.core.paginator import Paginator
 from django.conf import settings
 from django.db.models import Min, Count, Q
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
+from .forms import TagForm
 from django.utils.http import urlencode
 from django.http import Http404
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, FormView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 import operator
 from functools import reduce
 from math import floor
 from itertools import islice,chain
+
+
+class AddTagView(LoginRequiredMixin, FormView):
+    template_name = 'archive/add_tag.html'
+    form_class = TagForm
+    success_url = '/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['photo'] = self.photo
+        return context
+
+    def dispatch(self, request, photo):
+        self.photo = Photo.objects.get(id=Photo.accession2id(photo))
+        self.success_url = reverse('photoview', kwargs={'page': 0, 'photo': photo})
+        return super().dispatch(request)
+
+    def form_valid(self, form):
+        form.add_tag(self.photo)
+        return super().form_valid(form)
+
 
 
 class PrePublishPhotoList(PermissionRequiredMixin, ListView):
