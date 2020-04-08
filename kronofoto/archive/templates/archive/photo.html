@@ -41,6 +41,7 @@
             {% if photo.get_accepted_tags %}
             <li><span class="field-name">Tags:</span>
             {{ photo.get_accepted_tags | join:", " }}
+            <a href="{% url "addtag" photo.accession_number %}">+</a>
             </li>
             {% endif %}
             <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
