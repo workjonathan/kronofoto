@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.text import slugify
 from django.contrib.auth.models import User
 import uuid
 from PIL import Image, ExifTags, ImageOps
@@ -54,7 +55,12 @@ class Term(models.Model):
 
 class Tag(models.Model):
     tag = models.CharField(max_length=64, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+
+    def save(self):
+        if not self.slug:
+            self.slug = slugify(self.tag)
+        super().save()
 
     def __str__(self):
         return self.tag
