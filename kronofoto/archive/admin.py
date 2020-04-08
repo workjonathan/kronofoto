@@ -1,10 +1,14 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term
+from .models import Photo, Tag, Term, PhotoTag
 from django.conf import settings
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(PhotoTag)
+class PhotoTagAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(Tag)

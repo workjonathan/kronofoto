@@ -59,14 +59,18 @@ class Tag(models.Model):
         return self.tag
 
 
+
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     original = models.ImageField(null=True)
     h700 = models.ImageField(null=True)
     thumbnail = models.ImageField(null=True)
     collection = models.ForeignKey(Collection, models.PROTECT)
-    tags = models.ManyToManyField(Tag, blank=True)
-    proposed_tags = models.ManyToManyField(Tag, blank=True, related_name='proposed_tags')
+    tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
+    def get_accepted_tags(self):
+        return self.tags.filter(phototag__accepted=True)
+    def get_proposed_tags(self):
+        return self.tags.filter(phototag__accepted=False)
     terms = models.ManyToManyField(Term, blank=True)
     city = models.CharField(max_length=128)
     county = models.CharField(max_length=128)
@@ -162,6 +166,12 @@ class Photo(models.Model):
         elif self.country:
             result = self.country
         return result
+
+
+class PhotoTag(models.Model):
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
+    accepted = models.BooleanField()
 
 
 class PrePublishPhoto(models.Model):

@@ -38,9 +38,9 @@
             {% if photo.terms.all %}
             <li><span class="field-name">Catalog Terms:</span>{{ photo.terms.all | join:", " }}</li>
             {% endif %}
-            {% if photo.acceptedtags %}
+            {% if photo.get_accepted_tags %}
             <li><span class="field-name">Tags:</span>
-            {{ photo.acceptedtags | join:", " }}
+            {{ photo.get_accepted_tags | join:", " }}
             </li>
             {% endif %}
             <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
