@@ -111,11 +111,11 @@ class ApprovePhoto(PermissionRequiredMixin, RedirectView):
         return super().get_redirect_url(*args, **kwargs)
 
 
-def photoview(request, page, photo):
-    replacements = {"collection": "collection__name"}
-    params = ("collection", "city", "state", "country")
+def build_query(getparams):
+    replacements = {"collection": "collection__name", "tag": 'phototag__tag__slug'}
+    params = ("collection", "city", "state", "country", 'tag')
     filtervals = (
-        (replacements.get(param, param), request.GET.get(param))
+        (replacements.get(param, param), getparams.get(param))
         for param in params
     )
     clauses = [Q(**{k: v}) for (k, v) in filtervals if v]
@@ -123,7 +123,11 @@ def photoview(request, page, photo):
     andClauses = [Q(is_published=True), Q(year__isnull=False)]
     if clauses:
         andClauses.append(reduce(operator.or_, clauses))
-    q = reduce(operator.and_, andClauses)
+    return reduce(operator.and_, andClauses)
+
+
+def photoview(request, page, photo):
+    q = build_query(request.GET)
 
     # yikes
     year_vals = (
@@ -222,7 +226,7 @@ def photoview(request, page, photo):
             "cities": cities,
             "states": states,
             "countries": countries,
-            "coenties": counties,
+            "counties": counties,
             "getparams": request.GET.urlencode(),
         },
     )
@@ -233,8 +237,7 @@ class GridView(ListView):
     template_name = 'archive/photo_grid.html'
 
     def get_queryset(self):
-        return Photo.objects.filter(Q(is_published=True) & Q(year__isnull=False)).order_by('year', 'id')
+        return Photo.objects.filter(build_query(self.request.GET)).order_by('year', 'id')
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
-
