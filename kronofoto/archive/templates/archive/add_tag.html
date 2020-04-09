@@ -6,6 +6,6 @@
     {{ form.as_p }}
     <input type="submit" value="Add">
 </form>
-Current tags: {{ photo.tags.all | join:', ' }}
+Current tags: {{ photo.accepted_tags | join:', ' }}
 <img src="{% static photo.h700.url %}">
 {% endblock %}
