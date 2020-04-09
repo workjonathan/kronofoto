@@ -21,7 +21,7 @@ class TagInline(admin.TabularInline):
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = ('tags__phototag__accepted',)
+    list_filter = ('phototag__accepted',)
     list_display = ('thumb_image',)
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
