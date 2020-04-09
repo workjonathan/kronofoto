@@ -35,8 +35,8 @@
         </div>
         <div class="metadata-3a">
           <ul>
-            {% if photo.terms.all %}
             <li><span class="field-name">Catalog Terms:</span>
+            {% if photo.terms.all %}
                 {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
                     <a href="{% url "gridview" 1 %}?term={{term.slug}}">{{ term }}</a>{% endfor %}
             {% else %}
