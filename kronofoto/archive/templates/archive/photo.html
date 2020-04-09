@@ -36,11 +36,17 @@
         <div class="metadata-3a">
           <ul>
             {% if photo.terms.all %}
-            <li><span class="field-name">Catalog Terms:</span>{{ photo.terms.all | join:", " }}</li>
+            <li><span class="field-name">Catalog Terms:</span>
+                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
+                    <a href="{% url "gridview" 1 %}?term={{term.slug}}">{{ term }}</a>{% endfor %}
+            {% else %}
+            None
             {% endif %}
+            </li>
             <li><span class="field-name">Tags:</span>
             {% if photo.get_accepted_tags %}
-                {% for tag in photo.get_accepted_tags %}{% if not forloop.first %},{% endif %} <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
+                {% for tag in photo.get_accepted_tags %}{% if not forloop.first %},{% endif %} 
+                <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
             {% else %}
             None
             {% endif %}

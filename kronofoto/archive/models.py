@@ -47,7 +47,13 @@ class Collection(models.Model):
 
 
 class Term(models.Model):
-    term = models.CharField(max_length=64)
+    term = models.CharField(max_length=64, unique=True)
+    slug = models.SlugField(unique=True, blank=True, editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.term)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.term

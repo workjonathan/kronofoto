@@ -112,8 +112,12 @@ class ApprovePhoto(PermissionRequiredMixin, RedirectView):
 
 
 def build_query(getparams):
-    replacements = {"collection": "collection__name", "tag": 'phototag__tag__slug'}
-    params = ("collection", "city", "state", "country", 'tag')
+    replacements = {
+        "collection": "collection__name",
+        "tag": 'phototag__tag__slug',
+        'term': 'terms__slug',
+    }
+    params = ("collection", "city", "state", "country", 'tag', 'term')
     filtervals = (
         (replacements.get(param, param), getparams.get(param))
         for param in params

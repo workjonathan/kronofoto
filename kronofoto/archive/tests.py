@@ -89,6 +89,18 @@ class WhenHave50Photos(TestCase):
         self.assertInHTML('<div id="navigation"><a href="{}">First</a> <a href="{}">Previous</a> Next Last'.format(pages[0], pages[2]), resp.content.decode('utf-8'))
 
 
+    def testGridShouldRespectTermFilters(self):
+        term = models.Term.objects.create(term="test term")
+        photos = [self.photos[2], self.photos[5], self.photos[15]]
+        for photo in photos:
+            photo.terms.add(term)
+        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'term': term.slug})
+        self.assertEqual(len(resp.context['page_obj']), len(photos))
+        our_ids = {photo.id for photo in photos}
+        got_ids = {photo.id for photo in resp.context['page_obj']}
+        self.assertEqual(our_ids, got_ids)
+
+
     def testGridShouldRespectTagFilters(self):
         tag = models.Tag.objects.create(tag="test tag")
         photos = [self.photos[2], self.photos[5], self.photos[15]]
