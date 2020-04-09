@@ -57,10 +57,10 @@ class Tag(models.Model):
     tag = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.tag)
-        super().save()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.tag
