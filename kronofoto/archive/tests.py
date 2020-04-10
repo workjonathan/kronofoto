@@ -112,6 +112,14 @@ class WhenHave50Photos(TestCase):
         got_ids = {photo.id for photo in resp.context['page_obj']}
         self.assertEqual(our_ids, got_ids)
 
+    def testFilteringShouldNotShowUnapprovedTags(self):
+        tag = models.Tag.objects.create(tag="test tag")
+        photos = [self.photos[2], self.photos[5], self.photos[15]]
+        for photo in photos:
+            models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=False)
+        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': tag.slug})
+        self.assertEqual(len(resp.context['page_obj']), 0)
+
 
     def testGridViewShouldHonorDisplayParameter(self):
         for disp in range(15, 24):

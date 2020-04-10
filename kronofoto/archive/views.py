@@ -118,11 +118,12 @@ def build_query(getparams):
         'term': 'terms__slug',
     }
     params = ("collection", "city", "state", "country", 'tag', 'term')
+    merges = {'phototag__tag__slug': [Q(phototag__accepted=True)]}
     filtervals = (
         (replacements.get(param, param), getparams.get(param))
         for param in params
     )
-    clauses = [Q(**{k: v}) for (k, v) in filtervals if v]
+    clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
 
     andClauses = [Q(is_published=True), Q(year__isnull=False)]
     if clauses:
