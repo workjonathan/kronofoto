@@ -7,10 +7,6 @@ from django.conf import settings
 class TermAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    pass
-
 
 class TagInline(admin.TabularInline):
     model = PhotoTag

@@ -75,9 +75,9 @@ class Tag(models.Model):
 
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    original = models.ImageField(null=True)
-    h700 = models.ImageField(null=True)
-    thumbnail = models.ImageField(null=True)
+    original = models.ImageField(null=True, editable=False)
+    h700 = models.ImageField(null=True, editable=False)
+    thumbnail = models.ImageField(null=True, editable=False)
     collection = models.ForeignKey(Collection, models.PROTECT)
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     def get_accepted_tags(self):
@@ -85,12 +85,12 @@ class Photo(models.Model):
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
     terms = models.ManyToManyField(Term, blank=True)
-    city = models.CharField(max_length=128)
-    county = models.CharField(max_length=128)
-    state = models.CharField(max_length=64)
-    country = models.CharField(max_length=64, null=True)
-    year = models.SmallIntegerField(null=True)
-    caption = models.TextField()
+    city = models.CharField(max_length=128, blank=True)
+    county = models.CharField(max_length=128, blank=True)
+    state = models.CharField(max_length=64, blank=True)
+    country = models.CharField(max_length=64, null=True, blank=True)
+    year = models.SmallIntegerField(null=True, blank=True)
+    caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
