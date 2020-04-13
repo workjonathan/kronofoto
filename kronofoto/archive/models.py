@@ -29,18 +29,16 @@ class Contributor(models.Model): # maybe should be a group? (for users)
 
 
 class Collection(models.Model):
+    PRIVACY_TYPES = [
+        ('PR', 'Private'),
+        ('UL', 'Unlisted'),
+        ('PU', 'Public'),
+    ]
     name = models.CharField(max_length=512)
-    donors = models.ManyToManyField(Donor) # maybe should be a field of Photo?
-    displayed_donors = models.CharField(max_length=512)
-    description = models.TextField()
-    year_min = models.SmallIntegerField(
-        "oldest photo year", editable=False, null=True
-    )
-    year_max = models.SmallIntegerField(
-        "newest photo year", editable=False, null=True
-    )
-    total_photos = models.SmallIntegerField("photos", editable=False, default=0)
-    is_published = models.BooleanField(default=False)
+    description = models.TextField(blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    visibility = models.CharField(max_length=2, choices=PRIVACY_TYPES)
+    photos = models.ManyToManyField('Photo', blank=True)
 
     def __str__(self):
         return self.name
@@ -72,13 +70,12 @@ class Tag(models.Model):
         return self.tag
 
 
-
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     original = models.ImageField(null=True, editable=False)
     h700 = models.ImageField(null=True, editable=False)
     thumbnail = models.ImageField(null=True, editable=False)
-    collection = models.ForeignKey(Collection, models.PROTECT)
+    donor = models.ForeignKey(Donor, models.PROTECT)
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     def get_accepted_tags(self):
         return self.tags.filter(phototag__accepted=True)
@@ -196,7 +193,8 @@ class PrePublishPhoto(models.Model):
 
 class ScannedPhoto(models.Model):
     image = models.ImageField(upload_to='uploads/%Y/%m/%d/') # callable that incorporates donor name?
-    collection = models.ForeignKey(Collection, models.PROTECT)
+    donor = models.ForeignKey(Donor, models.PROTECT)
+
     created = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         Contributor, null=True, on_delete=models.SET_NULL

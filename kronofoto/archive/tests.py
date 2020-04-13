@@ -8,7 +8,10 @@ from django.utils.http import urlencode
 class WhenHave50Photos(TestCase):
     @classmethod
     def setUpTestData(cls):
-        coll = models.Collection.objects.create(name='test collection')
+        donor = models.Donor.objects.create(contactinfo=models.ContactInfo.objects.create(
+            last_name='last',
+            first_name='first',
+        ))
         cls.photos = []
         for y in range(1900, 1950):
             p = models.Photo.objects.create(
@@ -16,7 +19,7 @@ class WhenHave50Photos(TestCase):
                     name='test_img.jpg',
                     content=open('testdata/test.jpg', 'rb').read(),
                     content_type='image/jpeg'),
-                collection=coll,
+                donor=donor,
                 year=y,
                 is_published=True,
             )

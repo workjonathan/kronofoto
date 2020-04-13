@@ -20,7 +20,7 @@
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}</li>
             <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
-            <li><span class="field-name">Donor:</span>{{photo.collection.name}}</li>
+            <li><span class="field-name">Donor:</span>{{photo.donor.contactinfo.first_name}} {{photo.donor.contactinfo.last_name}}</li>
           </ul>
         </div>
         <div class="metadata-2a">
