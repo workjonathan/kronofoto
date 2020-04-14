@@ -113,19 +113,6 @@ class Photo(models.Model):
 
     def save(self, *args, **kwargs):
         image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
-        #try: for orientation in ExifTags.TAGS.keys():
-        #        if ExifTags.TAGS[orientation]=='Orientation':
-        #            break
-        #    exif=dict(image._getexif().items())
-
-        #    if exif[orientation] == 3:
-        #        image=image.rotate(180, expand=True)
-        #    elif exif[orientation] == 6:
-        #        image=image.rotate(270, expand=True)
-        #    elif exif[orientation] == 8:
-        #        image=image.rotate(90, expand=True)
-        #except (ArributeError, KeyError, IndexError):
-        #    pass
         dims = ((75, 75), (None, 700))
         results = []
         w,h = image.size
@@ -155,22 +142,6 @@ class Photo(models.Model):
         self.h700.name = fname
         super().save(*args, **kwargs)
 
-
-
-   # def thumb(self):
-   #     return "{}/archive/thumbs/{}_75x75.jpg".format(
-   #         settings.STATIC_URL, self.accession_number
-   #     )
-
-   # def h700(self):
-   #     return "{}/archive/h700/{}_x700.jpg".format(
-   #         settings.STATIC_URL, self.accession_number
-   #     )
-
-   # def original(self):
-   #     return "{}/archive/originals/{}.jpg".format(
-   #         settings.STATIC_URL, self.accession_number
-   #     )
 
     def location(self):
         result = "Location: n/a"
