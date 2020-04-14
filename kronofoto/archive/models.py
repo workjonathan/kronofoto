@@ -23,6 +23,9 @@ class ContactInfo(models.Model):
 class Donor(models.Model):
     contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
 
+    def __str__(self):
+        return '{} {}'.format(self.contactinfo.first_name, self.contactinfo.last_name)
+
 
 class Contributor(models.Model): # maybe should be a group? (for users)
     contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
