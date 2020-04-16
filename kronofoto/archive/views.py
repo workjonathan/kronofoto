@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.conf import settings
 from django.db.models import Min, Count, Q
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
+from django.contrib.auth.models import User
 from .forms import TagForm
 from django.utils.http import urlencode
 from django.http import Http404
@@ -246,3 +247,15 @@ class GridView(ListView):
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
+
+class Profile(ListView):
+    model = Collection
+    template_name = 'archive/user_page.html'
+
+    def get_queryset(self):
+        if self.request.user.get_username() == self.kwargs['username']:
+            return Collection.objects.filter(owner=self.request.user)
+        else:
+            user = get_object_or_404(User, username=self.kwargs['username'])
+            return Collection.objects.filter(owner=user, visibility='PU')
+

@@ -1,0 +1,7 @@
+{% extends "archive/base.html" %}
+
+{% block content %}
+{% for collection in object_list %}
+    {{ collection.name }}
+{% endfor %}
+{% endblock %}

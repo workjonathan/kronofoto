@@ -133,10 +133,48 @@ class WhenHave50Photos(TestCase):
         currentpage = 1
         while True:
             resp = self.client.get(reverse('gridview', kwargs={'page': currentpage}), {'display': 16})
-            self.assertInHTML('<div id="position">Items {} - {} of {}</div>'.format((currentpage-1)*16+1, min(50, currentpage*16), 50), resp.content.decode('utf-8'))
+            self.assertInHTML(
+                '<div id="position">Items {} - {} of {}</div>'.format(
+                    (currentpage-1)*16+1, min(50, currentpage*16), 50
+                ),
+                resp.content.decode('utf-8'),
+            )
             currentpage += 1
             if not resp.context['page_obj'].has_next():
                 break
+
+    def testUserProfile(self):
+        users = [
+            User.objects.create_user('testuser', 'user@email.com', 'testpassword'),
+            User.objects.create_user('testuser2', 'user@email.com', 'testpassword'),
+        ]
+        collections = []
+        i = 0
+        for user in users:
+            for privacy in models.Collection.PRIVACY_TYPES:
+                coll = models.Collection.objects.create(
+                    name='test collection{}'.format(i),
+                    description='description{}'.format(i),
+                    owner=user,
+                    visibility=privacy[0],
+                )
+                coll.photos.set(self.photos[i:i+4])
+                collections.append(coll)
+                i += 4
+        self.client.login(username='testuser', password='testpassword')
+        resp = self.client.get(reverse('user-page', args=['testuser']))
+        self.assertEqual(len(resp.context['object_list']), 3)
+        for collection in resp.context['object_list']:
+            self.assertEqual(collection.owner.get_username(), 'testuser')
+
+        resp = self.client.get(reverse('user-page', args=['testuser2']))
+        self.assertEqual(len(resp.context['object_list']), 1)
+        for collection in resp.context['object_list']:
+            self.assertEqual(collection.owner.get_username(), 'testuser2')
+
+    def testUserProfileShould404IfUserDoesNotExist(self):
+        resp = self.client.get(reverse('user-page', args=['notarealuser']))
+        self.assertEqual(resp.status_code, 404)
 
 
 from archive.templatetags import timeline
