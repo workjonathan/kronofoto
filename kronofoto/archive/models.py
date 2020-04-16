@@ -38,7 +38,6 @@ class Collection(models.Model):
         ('PU', 'Public'),
     ]
     name = models.CharField(max_length=512)
-    description = models.TextField(blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     visibility = models.CharField(max_length=2, choices=PRIVACY_TYPES)
     photos = models.ManyToManyField('Photo', blank=True)

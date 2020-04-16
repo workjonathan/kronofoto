@@ -154,7 +154,6 @@ class WhenHave50Photos(TestCase):
             for privacy in models.Collection.PRIVACY_TYPES:
                 coll = models.Collection.objects.create(
                     name='test collection{}'.format(i),
-                    description='description{}'.format(i),
                     owner=user,
                     visibility=privacy[0],
                 )
