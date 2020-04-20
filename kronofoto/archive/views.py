@@ -138,6 +138,13 @@ def build_query(getparams, user):
     return reduce(operator.and_, andClauses)
 
 
+def tempfrontpage(request):
+    q = build_query(request.GET, request.user)
+    photo = Photo.objects.filter(q).order_by('?')[0]
+    return redirect('photoview', page=1, photo=photo.accession_number)
+
+
+
 def photoview(request, page, photo):
     q = build_query(request.GET, request.user)
 

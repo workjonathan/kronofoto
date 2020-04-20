@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView
 
 urlpatterns = [
+    path('', views.tempfrontpage),
     path('accounts/', include('django.contrib.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
