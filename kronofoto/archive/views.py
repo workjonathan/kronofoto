@@ -4,13 +4,14 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.contrib.auth.models import User
-from .forms import TagForm
+from .forms import TagForm, AddToListForm
 from django.utils.http import urlencode
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
+
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, FormView
+from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 import operator
@@ -112,14 +113,19 @@ class ApprovePhoto(PermissionRequiredMixin, RedirectView):
         return super().get_redirect_url(*args, **kwargs)
 
 
-def build_query(getparams):
+def build_query(getparams, user):
     replacements = {
-        "collection": "collection__name",
+        "collection": "collection__id",
         "tag": 'phototag__tag__slug',
         'term': 'terms__slug',
     }
     params = ("collection", "city", "state", "country", 'tag', 'term')
-    merges = {'phototag__tag__slug': [Q(phototag__accepted=True)]}
+    merges = {
+        'phototag__tag__slug': [Q(phototag__accepted=True)],
+        'collection__id': [~Q(collection__visibility='PR')],
+    }
+    if user.is_authenticated:
+        merges['collection__id'][0] |= Q(collection__owner=user)
     filtervals = (
         (replacements.get(param, param), getparams.get(param))
         for param in params
@@ -133,7 +139,7 @@ def build_query(getparams):
 
 
 def photoview(request, page, photo):
-    q = build_query(request.GET)
+    q = build_query(request.GET, request.user)
 
     # yikes
     year_vals = (
@@ -243,7 +249,7 @@ class GridView(ListView):
     template_name = 'archive/photo_grid.html'
 
     def get_queryset(self):
-        return Photo.objects.filter(build_query(self.request.GET)).order_by('year', 'id')
+        return Photo.objects.filter(build_query(self.request.GET, self.request.user)).order_by('year', 'id')
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
@@ -259,3 +265,53 @@ class Profile(ListView):
             user = get_object_or_404(User, username=self.kwargs['username'])
             return Collection.objects.filter(owner=user, visibility='PU')
 
+
+class CollectionCreate(LoginRequiredMixin, CreateView):
+    model = Collection
+    fields = ['name', 'visibility']
+    template_name = 'archive/collection_create.html'
+
+    def get_success_url(self):
+        return reverse('user-page', args=[self.request.user.get_username()])
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+
+class CollectionDelete(LoginRequiredMixin, DeleteView):
+    model = Collection
+    template_name = 'archive/collection_delete.html'
+
+    def get_success_url(self):
+        return reverse('user-page', args=[self.request.user.get_username()])
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.owner != request.user:
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class AddToList(LoginRequiredMixin, FormView):
+    template_name = 'archive/collection_create.html'
+    form_class = AddToListForm
+
+    def get_success_url(self):
+        return reverse('photoview', args=[1, self.kwargs['photo']])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['collections'] = [(collection.id, collection.name) for collection in Collection.objects.filter(owner=self.request.user)]
+        kwargs['collections'].append((None, 'New List'))
+        return kwargs
+
+    def form_valid(self, form):
+        if form.cleaned_data['collection']:
+            collection = get_object_or_404(Collection, id=form.cleaned_data['collection'])
+            if collection.owner == self.request.user:
+                photo = get_object_or_404(Photo, id=Photo.accession2id(self.kwargs['photo']))
+                collection.photos.add(photo)
+        elif form.cleaned_data['name']:
+            collection = Collection.objects.create(name=form.cleaned_data['name'], owner=self.request.user, visibility=form.cleaned_data['visibility'])
+        return super().form_valid(form)

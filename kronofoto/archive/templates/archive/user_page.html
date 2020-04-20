@@ -1,7 +1,12 @@
 {% extends "archive/base.html" %}
 
 {% block content %}
+<ul>
 {% for collection in object_list %}
-    {{ collection.name }}
+    <li>
+    <a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
+    <a href="{% url "collection-delete" collection.id %}">Delete</a>
+    </li>
 {% endfor %}
+</ul>
 {% endblock %}

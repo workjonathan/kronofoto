@@ -22,7 +22,10 @@ from django.contrib.auth.views import LoginView
 
 urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
-    path('user/<str:username>', views.Profile.as_view(), name='user-page'),
+    path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
+    path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
+    path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+    path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
     path('<int:page>/<str:photo>/', views.photoview, name="photoview"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
