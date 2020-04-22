@@ -21,13 +21,13 @@ from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView
 
 urlpatterns = [
-    path('', views.tempfrontpage),
+    path('', views.FrontPage.as_view()),
     path('accounts/', include('django.contrib.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
-    path('<int:page>/<str:photo>/', views.photoview, name="photoview"),
+    path('<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),

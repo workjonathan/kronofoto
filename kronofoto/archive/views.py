@@ -94,7 +94,9 @@ class VoteOnPhoto(PermissionRequiredMixin, RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         photo = get_object_or_404(ScannedPhoto, id=kwargs['pk'])
         del kwargs['pk']
-        vote, created = PhotoVote.objects.update_or_create(photo=photo, voter=self.request.user, defaults={'infavor': self.infavor})
+        vote, created = PhotoVote.objects.update_or_create(
+            photo=photo, voter=self.request.user, defaults={'infavor': self.infavor}
+        )
         return super().get_redirect_url(*args, **kwargs)
 
 
@@ -138,117 +140,127 @@ def build_query(getparams, user):
     return reduce(operator.and_, andClauses)
 
 
-def tempfrontpage(request):
-    q = build_query(request.GET, request.user)
-    photo = Photo.objects.filter(q).order_by('?')[0]
-    return redirect('photoview', page=1, photo=photo.accession_number)
+class FrontPage(RedirectView):
+    permanent = False
+    pattern_name = 'photoview'
+
+    def get_redirect_url(self, *args, **kwargs):
+        q = build_query(self.request.GET, self.request.user)
+        photo = Photo.objects.filter(q).order_by('?')[0]
+        return super().get_redirect_url(
+            *args, page=1, photo=photo.accession_number, **kwargs
+        )
 
 
 
-def photoview(request, page, photo):
-    q = build_query(request.GET, request.user)
+class PhotoView(TemplateView):
+    template_name = "archive/photo.html"
+    def get_context_data(self, page, photo):
+        context = super().get_context_data()
+        q = build_query(self.request.GET, self.request.user)
 
-    # yikes
-    year_vals = (
-        Photo.objects.values("year")
-        .filter(q)
-        .annotate(min_id=Min("id"), count=Count("id"))
-        .order_by("year")
-    )
-    year_index = (p["min_id"] for p in year_vals)
-    year_pages = {}
-    running_total = 0
-    for y in year_vals:
-        year_pages[y["year"]] = floor(running_total / 10) + 1
-        running_total += y["count"]
-    year_photos = Photo.objects.filter(
-        id__in=year_index, year__isnull=False
-    ).order_by("year")
+        # yikes
+        year_vals = (
+            Photo.objects.values("year")
+            .filter(q)
+            .annotate(min_id=Min("id"), count=Count("id"))
+            .order_by("year")
+        )
+        year_index = (p["min_id"] for p in year_vals)
+        year_pages = {}
+        running_total = 0
+        for y in year_vals:
+            year_pages[y["year"]] = floor(running_total / 10) + 1
+            running_total += y["count"]
+        year_photos = Photo.objects.filter(
+            id__in=year_index, year__isnull=False
+        ).order_by("year")
 
-    collections = Collection.objects.values("name")
-    cities = (
-        Photo.objects.exclude(city="")
-        .values("city")
-        .annotate(count=Count("city"))
-    )
-    counties = (
-        Photo.objects.exclude(county="")
-        .values("county")
-        .annotate(count=Count("county"))
-    )
-    states = (
-        Photo.objects.exclude(state="")
-        .values("state")
-        .annotate(count=Count("state"))
-    )
-    countries = (
-        Photo.objects.exclude(country="")
-        .values("country")
-        .annotate(count=Count("country"))
-    )
+        collections = Collection.objects.values("name")
+        cities = (
+            Photo.objects.exclude(city="")
+            .values("city")
+            .annotate(count=Count("city"))
+        )
+        counties = (
+            Photo.objects.exclude(county="")
+            .values("county")
+            .annotate(count=Count("county"))
+        )
+        states = (
+            Photo.objects.exclude(state="")
+            .values("state")
+            .annotate(count=Count("state"))
+        )
+        countries = (
+            Photo.objects.exclude(country="")
+            .values("country")
+            .annotate(count=Count("country"))
+        )
 
-    index = []
-    for p in year_photos:
-        while index and index[-1][0] != p.year - 1:
-            index.append((index[-1][0] + 1, p, year_pages[p.year]))
-        index.append((p.year, p, year_pages[p.year]))
-    index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
-    items = 10
+        index = []
+        for p in year_photos:
+            while index and index[-1][0] != p.year - 1:
+                index.append((index[-1][0] + 1, p, year_pages[p.year]))
+            index.append((p.year, p, year_pages[p.year]))
+        index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
+        items = 10
 
-    photo_list = Photo.objects.filter(q).order_by("year", "id")
-    paginator = Paginator(photo_list, items)
-    this_page = paginator.get_page(page)
-    photo_rec = None
-    for i, p in enumerate(this_page):
-        if p.accession_number == photo:
-            p.active = True
-            photo_rec = p
-            break
+        photo_list = Photo.objects.filter(q).order_by("year", "id")
+        paginator = Paginator(photo_list, items)
+        this_page = paginator.get_page(page)
+        photo_rec = None
+        for i, p in enumerate(this_page):
+            if p.accession_number == photo:
+                p.active = True
+                photo_rec = p
+                break
 
-    if photo_rec is None:
-        id = Photo.accession2id(photo)
-        try:
-            photo = Photo.objects.get(id=id)
-            idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
-            return redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
-        except Photo.DoesNotExist:
-            raise Http404("Photo does not exist")
-    prev_page = []
-    next_page = []
-    if this_page.has_previous():
-        prev_page = paginator.get_page(page-1)
-        for p in prev_page:
-            p.page = prev_page
-    if this_page.has_next():
-        next_page = paginator.get_page(page+1)
-        for p in next_page:
-            p.page = next_page
-    for p in this_page:
-        p.page = this_page
-    last = None
-    for p in chain(prev_page, this_page, next_page):
-        if last:
-            p.last = last
-            last.next = p
-        last = p
+        if photo_rec is None:
+            id = Photo.accession2id(photo)
+            try:
+                photo = Photo.objects.get(id=id)
+                idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
+                self.redirect = redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
+            except Photo.DoesNotExist:
+                raise Http404("Photo does not exist")
+        prev_page = []
+        next_page = []
+        if this_page.has_previous():
+            prev_page = paginator.get_page(page-1)
+            for p in prev_page:
+                p.page = prev_page
+        if this_page.has_next():
+            next_page = paginator.get_page(page+1)
+            for p in next_page:
+                p.page = next_page
+        for p in this_page:
+            p.page = this_page
+        last = None
+        for p in chain(prev_page, this_page, next_page):
+            if last:
+                p.last = last
+                last.next = p
+            last = p
 
-    return render(
-        request,
-        "archive/photo.html",
-        {
-            "page": this_page,
-            "next_page": next_page,
-            "prev_page": prev_page,
-            "photo": photo_rec,
-            "years": index,
-            "collections": collections,
-            "cities": cities,
-            "states": states,
-            "countries": countries,
-            "counties": counties,
-            "getparams": request.GET.urlencode(),
-        },
-    )
+        context["page"] = this_page
+        context["next_page"] = next_page
+        context["prev_page"] = prev_page
+        context["photo"] = photo_rec
+        context["years"] = index
+        context["collections"] = collections
+        context["cities"] = cities
+        context["states"] = states
+        context["countries"] = countries
+        context["counties"] = counties
+        context["getparams"] = self.request.GET.urlencode()
+        return context
+
+    def render_to_response(self, context, **kwargs):
+        if hasattr(self, "redirect"):
+            return self.redirect
+        return super().render_to_response(context, **kwargs)
+
 
 class GridView(ListView):
     model = Photo
@@ -256,10 +268,13 @@ class GridView(ListView):
     template_name = 'archive/photo_grid.html'
 
     def get_queryset(self):
-        return Photo.objects.filter(build_query(self.request.GET, self.request.user)).order_by('year', 'id')
+        return Photo.objects.filter(
+            build_query(self.request.GET, self.request.user)
+        ).order_by('year', 'id')
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
+
 
 class Profile(ListView):
     model = Collection
@@ -315,10 +330,18 @@ class AddToList(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         if form.cleaned_data['collection']:
-            collection = get_object_or_404(Collection, id=form.cleaned_data['collection'])
+            collection = get_object_or_404(
+                Collection, id=form.cleaned_data['collection']
+            )
             if collection.owner == self.request.user:
-                photo = get_object_or_404(Photo, id=Photo.accession2id(self.kwargs['photo']))
+                photo = get_object_or_404(
+                    Photo, id=Photo.accession2id(self.kwargs['photo'])
+                )
                 collection.photos.add(photo)
         elif form.cleaned_data['name']:
-            collection = Collection.objects.create(name=form.cleaned_data['name'], owner=self.request.user, visibility=form.cleaned_data['visibility'])
+            collection = Collection.objects.create(
+                name=form.cleaned_data['name'],
+                owner=self.request.user,
+                visibility=form.cleaned_data['visibility'],
+            )
         return super().form_valid(form)
