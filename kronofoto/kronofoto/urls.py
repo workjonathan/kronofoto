@@ -14,20 +14,33 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, register_converter
 from archive import views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView
 
+class NegativeIntConverter:
+    regex = '-?\d+'
+
+    def to_python(self, value):
+        return int(value)
+
+    def to_url(self, value):
+        return "{}".format(value)
+
+register_converter(NegativeIntConverter, 'negint')
+
 urlpatterns = [
     path('', views.FrontPage.as_view()),
     path('accounts/', include('django.contrib.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
+    path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
     path('<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
+    path('<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),

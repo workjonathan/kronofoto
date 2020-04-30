@@ -1,0 +1,10 @@
+{% load static %}
+{% for p in prev_page.object_list %}
+      <li><a href="{% url 'photoview' prev_page.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
+{% endfor %}
+{% for p in page.object_list %}
+          <li {{p.active | yesno:"data-active,"}}><a href="{% url 'photoview' page.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
+{% endfor %}
+{% for p in next_page.object_list %}
+      <li><a href="{% url 'photoview' next_page.number p.accession_number %}?{{ getparams }}"><img src="{% static p.thumbnail.url %}" /></a></li>
+{% endfor %}

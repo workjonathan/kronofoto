@@ -1,0 +1,6 @@
+{% for keyframe in keyframes %}
+@keyframes from{{keyframe.from}}-to{{keyframe.to}} {
+    0% { left: {{keyframe.from}}{{unit}}; }
+    100% { left: {{keyframe.to}}{{unit}}; }
+}
+{% endfor %}

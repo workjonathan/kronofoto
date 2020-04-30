@@ -6,7 +6,10 @@ from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm
 from django.utils.http import urlencode
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden, JsonResponse
+from django.template.loader import render_to_string
+from django.contrib.staticfiles.storage import staticfiles_storage
+import json
 
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
@@ -152,8 +155,29 @@ class FrontPage(RedirectView):
         )
 
 
+class Keyframes(TemplateView):
+    template_name = "archive/keyframes.css"
+    content_type = 'text/css'
+    def get_context_data(self, origin, difference, step, unit):
+        context = super().get_context_data()
+        animations = []
+        for i in range(0, difference, step):
+            animations.append({'from': origin-i, 'to': origin-difference})
+            animations.append({'from': origin+i, 'to': origin+difference})
+        context['keyframes'] = animations
+        context['unit'] = unit
+        return context
 
-class PhotoView(TemplateView):
+
+class JSONResponseMixin:
+    def render_to_json_response(self, context, **response_kwargs):
+        return JsonResponse(self.get_data(context), **response_kwargs)
+
+    def get_data(self, context):
+        return context
+
+
+class PhotoView(JSONResponseMixin, TemplateView):
     template_name = "archive/photo.html"
     def get_context_data(self, page, photo):
         context = super().get_context_data()
@@ -254,12 +278,39 @@ class PhotoView(TemplateView):
         context["countries"] = countries
         context["counties"] = counties
         context["getparams"] = self.request.GET.urlencode()
+        context['initialstate'] = self.get_data(context)
         return context
+
+    def get_data(self, context):
+        if 'photo' not in context or not context['photo']:
+            return {
+
+            }
+        return {
+            'url': reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}),
+            'h700': staticfiles_storage.url(context['photo'].h700.url),
+            'thumbnails': render_to_string('archive/thumbnails.html', context),
+            'forward': {
+                "url": reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
+                'json_url': reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
+                "h700": staticfiles_storage.url(context['next_page'][0].h700.url),
+            } if context['page'].has_next() else {},
+        }
+
+    def render(self, context, **kwargs):
+        return super().render_to_response(context, **kwargs)
 
     def render_to_response(self, context, **kwargs):
         if hasattr(self, "redirect"):
             return self.redirect
-        return super().render_to_response(context, **kwargs)
+        return self.render(context, **kwargs)
+
+
+
+class JSONPhotoView(PhotoView):
+
+    def render(self, context, **kwargs):
+        return self.render_to_json_response(context, **kwargs)
 
 
 class GridView(ListView):

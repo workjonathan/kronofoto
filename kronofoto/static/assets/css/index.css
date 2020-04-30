@@ -185,9 +185,18 @@ main article.fi-image {
   justify-content: right;
 }
 
-#fi-thumbnail-carousel-images {
+.slide-container {
+  overflow: hidden;
+  position: relative;
+  width: 950px;
   height: 100%;
-  background-color: var(--fp-light-grey)
+}
+
+
+#fi-thumbnail-carousel-images {
+  background-color: var(--fp-light-grey);
+  position: absolute;
+  left: -100%;
 }
 #fi-thumbnail-carousel-images li {
   padding: 10px;
@@ -198,7 +207,7 @@ main article.fi-image {
   position: relative;
 }
 #fi-thumbnail-carousel-images li img {
-  object-fit: fill;
+    width: auto;
 }
 #fi-thumbnail-carousel-images li[data-active]:before {
   content: '';
