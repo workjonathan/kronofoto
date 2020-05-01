@@ -2,6 +2,7 @@
 {% load static %}
 {% load timeline %}
 {% load thumbnails %}
+{% load photometadata %}
 
 {% block content %}
   <main>
@@ -17,52 +18,14 @@
       </div>
       <button id="expand" onclick="toggleVis()">+</button>
       <div id="metadata" class="hidden">
-        <div class="metadata-1a">
-          <ul>
-            <li>{{ photo.year }}, {{ photo.location }}</li>
-            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
-            <li><span class="field-name">Donor:</span>{{photo.donor.contactinfo.first_name}} {{photo.donor.contactinfo.last_name}}</li>
-          </ul>
-        </div>
-        <div class="metadata-2a">
-          <ul>
-            {% comment %}
-            <li><span class="field-name">Photographer:</span>Cassandra Nulty</li>
-            
-            <li><span class="field-name">Scanner:</span></li>
-            {% endcomment %}
-            <li><span class="field-name">Added to Archive:</span>{{ photo.created }}</li>
-          </ul>
-        </div>
-        <div class="metadata-3a">
-          <ul>
-            <li><span class="field-name">Catalog Terms:</span>
-            {% if photo.terms.all %}
-                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-                    <a href="{% url "gridview" 1 %}?term={{term.slug}}">{{ term }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            </li>
-            <li><span class="field-name">Tags:</span>
-            {% if photo.get_accepted_tags %}
-                {% for tag in photo.get_accepted_tags %}{% if not forloop.first %},{% endif %} 
-                <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            <a href="{% url "addtag" photo.accession_number %}">+</a>
-            </li>
-            <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
-            <li><span class="field-name"><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></span></li>
-          </ul>
-        </div>
+        {% photo_metadata photo %}
+      </div>
     </article>
     <nav class="fi-timeline">
       <div class="fi-thumbnail-carousel">
         <div class="back-arrows">
 {% if page.has_previous %}
-    <a href="{% url 'photoview' page.previous_page_number prev_page.0.accession_number %}?{{ getparams }}">
+    <a id="backward" data-json-href="{% url 'photoview-json' page.previous_page_number prev_page.0.accession_number %}?{{ getparams }}" href="{% url 'photoview' page.previous_page_number prev_page.0.accession_number %}?{{ getparams }}">
 {% endif %}
         &#10092;&#10092;
 {% if page.has_previous %}
@@ -76,7 +39,7 @@
         </div>
         <div class="forward-arrows">
 {% if page.has_next %}
-    <a id="forward" onclick="return forward_click()" href="{% url 'photoview' page.next_page_number next_page.0.accession_number %}?{{ getparams }}">
+    <a id="forward" href="{% url 'photoview' page.next_page_number next_page.0.accession_number %}?{{ getparams }}" data-json-href="{% url 'photoview-json' page.next_page_number next_page.0.accession_number %}?{{ getparams }}">
 {% endif %}
         &#10093;&#10093;
 {% if page.has_next %}

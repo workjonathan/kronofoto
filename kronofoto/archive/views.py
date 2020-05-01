@@ -289,11 +289,11 @@ class PhotoView(JSONResponseMixin, TemplateView):
         return {
             'url': reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}),
             'h700': staticfiles_storage.url(context['photo'].h700.url),
+            'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
             'forward': {
                 "url": reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
                 'json_url': reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
-                "h700": staticfiles_storage.url(context['next_page'][0].h700.url),
             } if context['page'].has_next() else {},
         }
 

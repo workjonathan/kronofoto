@@ -1,0 +1,40 @@
+        <div class="metadata-1a">
+          <ul>
+            <li>{{ photo.year }}, {{ photo.location }}</li>
+            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
+            <li><span class="field-name">Donor:</span>{{photo.donor.contactinfo.first_name}} {{photo.donor.contactinfo.last_name}}</li>
+          </ul>
+        </div>
+        <div class="metadata-2a">
+          <ul>
+            {% comment %}
+            <li><span class="field-name">Photographer:</span>Cassandra Nulty</li>
+            
+            <li><span class="field-name">Scanner:</span></li>
+            {% endcomment %}
+            <li><span class="field-name">Added to Archive:</span>{{ photo.created }}</li>
+          </ul>
+        </div>
+        <div class="metadata-3a">
+          <ul>
+            <li><span class="field-name">Catalog Terms:</span>
+            {% if photo.terms.all %}
+                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
+                    <a href="{% url "gridview" 1 %}?term={{term.slug}}">{{ term }}</a>{% endfor %}
+            {% else %}
+            None
+            {% endif %}
+            </li>
+            <li><span class="field-name">Tags:</span>
+            {% if photo.get_accepted_tags %}
+                {% for tag in photo.get_accepted_tags %}{% if not forloop.first %},{% endif %} 
+                <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
+            {% else %}
+            None
+            {% endif %}
+            <a href="{% url "addtag" photo.accession_number %}">+</a>
+            </li>
+            <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
+            <li><span class="field-name"><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></span></li>
+          </ul>
+        </div>

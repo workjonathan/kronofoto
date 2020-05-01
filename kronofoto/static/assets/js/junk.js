@@ -37,19 +37,39 @@ const loadstate = data => {
     current_state = data
     carousel.setAttribute('style', 'animation: none')
     carousel.innerHTML = data.thumbnails
+    document.getElementById('metadata').innerHTML = data.metadata
     document.getElementById('fi-image').setAttribute('src', data.h700)
-    forward_json = data.forward.json_url
+    forward.setAttribute('href', data.forward.url)
 }
+
 
 let current_state = JSON.parse(document.getElementById('initial-state').textContent)
 window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
-    
+document.addEventListener('click', e => {
+    e.preventDefault()
+    if (e.target.getAttribute('data-json-href')) {
+        e.preventDefault()
+        id = e.target.getAttribute('id')
+        if (id !== 'forward' && id !== 'backward') {
+            request('GET', e.target.getAttribute('data-json-href')).then(data => {
+                loadstate(data)
+                window.history.pushState(data, 'Fortepan Iowa', data.url)
+
+            })
+        }
+    }
+})
+
 window.onpopstate = evt => {
     loadstate(evt.state)
 }
 
 const scrollAction = (evt) => {
-    const next_page = request('GET', current_state.forward.json_url)
+    const next_page = request('GET', current_state.forward.json_url).then(data => {
+        document.getElementById('fi-image').setAttribute('src', data.h700)
+        document.getElementById('metadata').innerHTML = data.metadata
+        return data
+    })
     let p
     if (evt.event === 'click') {
         p = Promise.resolve(evt)
@@ -64,7 +84,6 @@ const scrollAction = (evt) => {
     }
     const scroll2end = p.then(evt => {
         if (evt.event === 'click') {
-            document.getElementById('fi-image').setAttribute('src', current_state.forward.h700)
             carousel.setAttribute('style', `animation: from${evt.position}-to-200 500ms ease-out;`)
             return animationEnd(carousel)
         } 
@@ -79,13 +98,8 @@ const scrollAction = (evt) => {
     })
 }
 
-forward.addEventListener("mousedown", () => 
+forward.addEventListener("mousedown", () => {
     Promise.race([
         mouseUp().then(() => ({event: 'click', position: -100})),
         delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-    ]).then(scrollAction))
-
-const forward_click = () => {
-    return false;
-}
-
+    ]).then(scrollAction)})
