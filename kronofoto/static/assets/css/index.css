@@ -198,6 +198,15 @@ main article.fi-image {
   position: absolute;
   left: -100%;
 }
+
+#fi-preload-zone {
+    position: absolute;
+    left: -9999999px;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+}
+
 #fi-thumbnail-carousel-images li {
   padding: 10px;
   margin: 20px 0;

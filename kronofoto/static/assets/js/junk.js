@@ -5,15 +5,13 @@ const toggleVis = evt => {
     }
 }
 const forward = document.getElementById('forward')
+const backward = document.getElementById('backward')
 const carousel = document.getElementById('fi-thumbnail-carousel-images')
-
-const mouseDown = () => {
-}
 
 const delay = ms => new Promise((resolve, reject) => setTimeout(resolve, ms))
 
-const mouseUp = () => new Promise((resolve, reject) => 
-    forward.addEventListener("mouseup", resolve, {once: true})
+const mouseUp = element => new Promise((resolve, reject) => 
+    element.addEventListener("mouseup", resolve, {once: true})
 )
 
 const animationEnd = element => new Promise((resolve, reject) => 
@@ -35,11 +33,12 @@ const request = (verb, resource) => new Promise((resolve, reject) => {
 
 const loadstate = data => {
     current_state = data
-    carousel.setAttribute('style', 'animation: none')
     carousel.innerHTML = data.thumbnails
+    carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
     document.getElementById('metadata').innerHTML = data.metadata
     document.getElementById('fi-image').setAttribute('src', data.h700)
     forward.setAttribute('href', data.forward.url)
+    backward.setAttribute('href', data.backward.url)
 }
 
 
@@ -64,10 +63,16 @@ window.onpopstate = evt => {
     loadstate(evt.state)
 }
 
-const scrollAction = (evt) => {
-    const next_page = request('GET', current_state.forward.json_url).then(data => {
+const trace = v => {
+    console.log(v)
+    return v
+}
+
+const scrollAction = (element, direction, target) => evt => {
+    const next_page = request('GET', current_state[direction].json_url).then(data => {
         document.getElementById('fi-image').setAttribute('src', data.h700)
         document.getElementById('metadata').innerHTML = data.metadata
+        document.getElementById('fi-preload-zone').innerHTML = data.thumbnails
         return data
     })
     let p
@@ -76,15 +81,15 @@ const scrollAction = (evt) => {
     } else if (evt.event === 'startScroll') {
         const scrollEnd = animationEnd(carousel)
         void carousel.offsetWidth
-        carousel.setAttribute('style', 'animation: from-100-to-200 10s linear;')
+        carousel.setAttribute('style', `animation: from-100-to${target} 10s linear;`)
         p = Promise.race([
-            mouseUp().then(() => ({event: 'click', position: Math.round(-100 - (new Date() - evt.begin)/100)})),
+            mouseUp(element).then(() => ({event: 'click', position: Math.round(-100 - (new Date() - evt.begin)/(-target - 100))})),
             scrollEnd.then(() => ({event: 'startScroll', begin: new Date()})),
         ])
     }
     const scroll2end = p.then(evt => {
         if (evt.event === 'click') {
-            carousel.setAttribute('style', `animation: from${evt.position}-to-200 500ms ease-out;`)
+            carousel.setAttribute('style', `animation: from${evt.position}-to${target} 500ms ease-out; animation-fill-mode: forwards`)
             return animationEnd(carousel)
         } 
         return evt
@@ -93,13 +98,19 @@ const scrollAction = (evt) => {
         loadstate(data)
         window.history.pushState(data, 'Fortepan Iowa', data.url)
         if (evt.event === 'startScroll') {
-            scrollAction(evt)
+            scrollAction(element, direction, target)(evt)
         }
     })
 }
 
-forward.addEventListener("mousedown", () => {
+forward.addEventListener("mousedown", () =>
     Promise.race([
-        mouseUp().then(() => ({event: 'click', position: -100})),
+        mouseUp(forward).then(() => ({event: 'click', position: -100})),
         delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-    ]).then(scrollAction)})
+    ]).then(scrollAction(forward, 'forward', -200)))
+
+backward.addEventListener("mousedown", () =>
+    Promise.race([
+        mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
+        delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+    ]).then(scrollAction(backward, 'backward', 0)))

@@ -291,6 +291,10 @@ class PhotoView(JSONResponseMixin, TemplateView):
             'h700': staticfiles_storage.url(context['photo'].h700.url),
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
+            'backward': {
+                "url": reverse('photoview', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}),
+                'json_url': reverse('photoview-json', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}),
+            } if context['page'].has_previous() else {},
             'forward': {
                 "url": reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
                 'json_url': reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
