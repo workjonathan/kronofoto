@@ -6,14 +6,16 @@
                 y="{{ marker.box.y }}" 
                 width="{{ marker.box.width }}" 
                 height="{{ marker.box.height }}" 
+                data-json-href="{{ marker.json_target }}"
                 fill-opacity="0" />
             <rect 
                 x="{{ marker.notch.x}}" 
                 y="{{ marker.notch.y }}" 
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
+                data-json-href="{{ marker.json_target }}"
                 fill="#44a" />
-            <text font-size="3.5" text-anchor="middle"><tspan x="{{ marker.label.x }}" y="{{ marker.label.y }}">
+            <text font-size="3.5" text-anchor="middle"><tspan data-json-href="{{ marker.json_target}}" x="{{ marker.label.x }}" y="{{ marker.label.y }}">
             {{ marker.label.text }}
             </tspan>
             </text>
@@ -26,28 +28,15 @@
                 y="{{ marker.box.y }}" 
                 width="{{ marker.box.width }}" 
                 height="{{ marker.box.height }}" 
+                data-json-href="{{ marker.json_target }}"
                 fill-opacity="0" />
             <rect 
                 x="{{ marker.notch.x}}" 
                 y="{{ marker.notch.y }}" 
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
+                data-json-href="{{ marker.json_target }}"
                 fill="#111" />
         </a>
     {% endfor %}
-    {% comment %}
-    {% for info in years %}
-        {% if info.0 %}
-        <a xlink:href="{{info.1}}">
-            <text font-size="4" text-anchor="middle"><tspan x="{{ info.2 }}" y="3">
-            {{ info.0 }}
-            </tspan>
-            </text>
-        </a>
-        {% endif %}
-        <a xlink:href="{{info.1}}">
-            <rect fill="#111" x="{{info.2}}" y="5" width="1" height="3"/>
-        </a>
-    {% endfor %}
-    {% endcomment %}
 </svg>

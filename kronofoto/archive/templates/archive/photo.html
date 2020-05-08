@@ -13,7 +13,7 @@
       <div id="fi-image-controls">
 {% if photo.next %}
     <a href="{% url 'photoview' photo.next.page.number photo.next.accession_number %}?{{ getparams }}">
-        <img src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
+        <img id="fi-arrow-right" data-json-href="{% url 'photoview-json' photo.next.page.number photo.next.accession_number %}?{{ getparams }}" src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
 {% endif %}
       </div>
       <button id="expand" onclick="toggleVis()">+</button>

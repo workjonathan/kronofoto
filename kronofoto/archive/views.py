@@ -227,7 +227,7 @@ class PhotoView(JSONResponseMixin, TemplateView):
             while index and index[-1][0] != p.year - 1:
                 index.append((index[-1][0] + 1, p, year_pages[p.year]))
             index.append((p.year, p, year_pages[p.year]))
-        index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page})) for (year, photo, page) in index]
+        index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page}), reverse('photoview-json', kwargs={'photo': photo.accession_number, 'page': page})) for (year, photo, page) in index]
         items = 10
 
         photo_list = Photo.objects.filter(q).order_by("year", "id")
@@ -299,6 +299,10 @@ class PhotoView(JSONResponseMixin, TemplateView):
                 "url": reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
                 'json_url': reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
             } if context['page'].has_next() else {},
+            'next': {
+                'url': reverse('photoview', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}),
+                'json_url': reverse('photoview-json', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}),
+            } if 'photo' in context and context['photo'] and hasattr(context['photo'], 'next') else {},
         }
 
     def render(self, context, **kwargs):

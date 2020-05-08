@@ -9,11 +9,12 @@ def make_timeline(years, width=400):
         'majornotches': [],
         'viewBox': [0, 0, width, 10],
     }
-    for (i, (year, href)) in enumerate(years):
+    for (i, (year, href, json_href)) in enumerate(years):
         xpos = i*width/len(years)
         boxwidth = width/len(years)
         marker = {
             'target': href,
+            'json_target': json_href,
             'box': {
                 'x': xpos,
                 'width': boxwidth,

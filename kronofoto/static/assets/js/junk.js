@@ -37,6 +37,8 @@ const loadstate = data => {
     carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
     document.getElementById('metadata').innerHTML = data.metadata
     document.getElementById('fi-image').setAttribute('src', data.h700)
+    document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
+    document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
     forward.setAttribute('href', data.forward.url)
     backward.setAttribute('href', data.backward.url)
 }
@@ -45,7 +47,6 @@ const loadstate = data => {
 let current_state = JSON.parse(document.getElementById('initial-state').textContent)
 window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
 document.addEventListener('click', e => {
-    e.preventDefault()
     if (e.target.getAttribute('data-json-href')) {
         e.preventDefault()
         id = e.target.getAttribute('id')
