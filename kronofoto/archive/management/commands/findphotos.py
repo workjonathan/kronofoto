@@ -19,14 +19,8 @@ class Command(BaseCommand):
                 filename = files[record.filename]
                 contactInfo, _ = ContactInfo.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
                 donor, _ = Donor.objects.get_or_create(contactinfo=contactInfo)
-                try:
-                    coll = Collection.objects.get(donors=donor)
-                except Collection.DoesNotExist:
-                    coll = Collection.objects.create(name='{}, {}'.format(record.donorLastName, record.donorFirstName))
-                    coll.donors.add(donor)
-                    coll.save()
                 photo = Photo(
-                    collection=coll,
+                    donor=donor,
                     city=record.city,
                     county=record.county,
                     state=record.state,
