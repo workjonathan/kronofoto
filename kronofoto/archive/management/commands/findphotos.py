@@ -27,12 +27,13 @@ class Command(BaseCommand):
                     country=record.country,
                     year=record.year,
                     caption=record.comments,
-                    created=record.added_to_archive,
                     is_published=True,
                 )
                 fname = 'original/{}.jpg'.format(photo.uuid)
                 shutil.copyfile(filename, os.path.join(settings.MEDIA_ROOT, fname))
                 photo.original.name = fname
+                photo.save()
+                photo.created = record.added_to_archive
                 photo.save()
                 record.photo = photo
                 record.save()

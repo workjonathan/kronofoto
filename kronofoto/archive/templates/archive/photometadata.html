@@ -7,12 +7,14 @@
         </div>
         <div class="metadata-2a">
           <ul>
-            {% comment %}
-            <li><span class="field-name">Photographer:</span>Cassandra Nulty</li>
-            
-            <li><span class="field-name">Scanner:</span></li>
-            {% endcomment %}
-            <li><span class="field-name">Added to Archive:</span>{{ photo.created }}</li>
+            {% if photo.photographer %}
+            <li><span class="field-name">Photographer:</span>{{ photo.photographer }}</li>
+            {% endif %}
+
+            {% if photo.scanner %}
+            <li><span class="field-name">Scanner:</span>{{ photo.scanner.contactinfo.first_name }} {{ photo.scanner.contactinfo.last_name }}</li>
+            {% endif %}
+            <li><span class="field-name">Added to Archive:</span>{{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>
         </div>
         <div class="metadata-3a">

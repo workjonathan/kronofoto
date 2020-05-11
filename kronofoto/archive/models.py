@@ -84,6 +84,7 @@ class Photo(models.Model):
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
     terms = models.ManyToManyField(Term, blank=True)
+    photographer = models.TextField(blank=True)
     city = models.CharField(max_length=128, blank=True)
     county = models.CharField(max_length=128, blank=True)
     state = models.CharField(max_length=64, blank=True)
@@ -93,7 +94,7 @@ class Photo(models.Model):
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
+    scanner = models.ForeignKey(
         Contributor, null=True, on_delete=models.SET_NULL, blank=True
     )
     def __str__(self):
