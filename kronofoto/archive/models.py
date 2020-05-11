@@ -112,34 +112,35 @@ class Photo(models.Model):
         return 'FI' + str(self.id).zfill(7)
 
     def save(self, *args, **kwargs):
-        image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
-        dims = ((75, 75), (None, 700))
-        results = []
-        w,h = image.size
-        xoff = yoff = 0
-        size = min(w, h)
-        for dim in dims:
-            if any(dim):
-                img = image
-                if all(dim):
-                    if w > h:
-                        xoff = round((w-h)/2)
-                    elif h > w:
-                        yoff = round((h-w)/4)
-                    img = img.crop((xoff, yoff, xoff+size, yoff+size))
-                if dim[0] and not dim[1]:
-                    dim = (dim[0], round(h/w*dim[0]))
-                elif dim[1] and not dim[0]:
-                    dim = (round(w/h*dim[1]), dim[1])
-                img = img.resize(dim, Image.ANTIALIAS)
-                results.append(img)
-        thumb, h700 = results
-        fname = 'thumb/{}.jpg'.format(self.uuid)
-        thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-        self.thumbnail.name = fname
-        fname = 'h700/{}.jpg'.format(self.uuid)
-        h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-        self.h700.name = fname
+        if not self.thumbnail:
+            image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
+            dims = ((75, 75), (None, 700))
+            results = []
+            w,h = image.size
+            xoff = yoff = 0
+            size = min(w, h)
+            for dim in dims:
+                if any(dim):
+                    img = image
+                    if all(dim):
+                        if w > h:
+                            xoff = round((w-h)/2)
+                        elif h > w:
+                            yoff = round((h-w)/4)
+                        img = img.crop((xoff, yoff, xoff+size, yoff+size))
+                    if dim[0] and not dim[1]:
+                        dim = (dim[0], round(h/w*dim[0]))
+                    elif dim[1] and not dim[0]:
+                        dim = (round(w/h*dim[1]), dim[1])
+                    img = img.resize(dim, Image.ANTIALIAS)
+                    results.append(img)
+            thumb, h700 = results
+            fname = 'thumb/{}.jpg'.format(self.uuid)
+            thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+            self.thumbnail.name = fname
+            fname = 'h700/{}.jpg'.format(self.uuid)
+            h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+            self.h700.name = fname
         super().save(*args, **kwargs)
 
 

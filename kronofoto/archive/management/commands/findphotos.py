@@ -5,6 +5,17 @@ import sys
 import os
 import shutil
 
+
+def splitname(name):
+    name = name.strip()
+    if not name:
+        return name
+    names = name.split()
+    if not len(names):
+        return name
+    return names[-1], ' '.join(names[:-1])
+
+
 class Command(BaseCommand):
     help = 'look for the Jpegs to associate with CSVRecords'
 
@@ -17,8 +28,12 @@ class Command(BaseCommand):
             if record.filename in files:
                 fname = ''
                 filename = files[record.filename]
-                contactInfo, _ = ContactInfo.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
-                donor, _ = Donor.objects.get_or_create(contactinfo=contactInfo)
+                photographer = record.photographer.strip()
+                scanner = splitname(record.scanner)
+                scannerContactInfo, _ = ContactInfo.objects.get_or_create(first_name=scanner[0], last_name=scanner[1])
+                scanner, _ = Contributor.objects.get_or_create(contactinfo=scannerContactInfo)
+                donorcontactInfo, _ = ContactInfo.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
+                donor, _ = Donor.objects.get_or_create(contactinfo=donorcontactInfo)
                 photo = Photo(
                     donor=donor,
                     city=record.city,
@@ -28,6 +43,8 @@ class Command(BaseCommand):
                     year=record.year,
                     caption=record.comments,
                     is_published=True,
+                    photographer=photographer,
+                    scanner=scanner,
                 )
                 fname = 'original/{}.jpg'.format(photo.uuid)
                 shutil.copyfile(filename, os.path.join(settings.MEDIA_ROOT, fname))
