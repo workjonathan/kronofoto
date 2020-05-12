@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from archive.models import CSVRecord, Photo, Collection, Contributor, Donor, ContactInfo
+from archive.models import CSVRecord, Photo, Collection, Donor
 import sys
 import os
 import shutil
@@ -30,10 +30,8 @@ class Command(BaseCommand):
                 filename = files[record.filename]
                 photographer = record.photographer.strip()
                 scanner = splitname(record.scanner)
-                scannerContactInfo, _ = ContactInfo.objects.get_or_create(first_name=scanner[0], last_name=scanner[1])
-                scanner, _ = Contributor.objects.get_or_create(contactinfo=scannerContactInfo)
-                donorcontactInfo, _ = ContactInfo.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
-                donor, _ = Donor.objects.get_or_create(contactinfo=donorcontactInfo)
+                scanner, _ = Donor.objects.get_or_create(first_name=scanner[0], last_name=scanner[1])
+                donor, _ = Donor.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
                 photo = Photo(
                     donor=donor,
                     city=record.city,

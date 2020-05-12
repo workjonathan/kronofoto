@@ -8,7 +8,9 @@ from io import BytesIO
 import os
 
 
-class ContactInfo(models.Model):
+
+
+class Donor(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)
     home_phone = models.CharField(max_length=256)
@@ -18,17 +20,8 @@ class ContactInfo(models.Model):
     state = models.CharField(max_length=256)
     zip = models.CharField(max_length=256)
     country = models.CharField(max_length=256)
-
-
-class Donor(models.Model):
-    contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
-
     def __str__(self):
-        return '{} {}'.format(self.contactinfo.first_name, self.contactinfo.last_name)
-
-
-class Contributor(models.Model): # maybe should be a group? (for users)
-    contactinfo = models.ForeignKey(ContactInfo, models.CASCADE)
+        return '{} {}'.format(self.first_name, self.last_name)
 
 
 class Collection(models.Model):
@@ -95,7 +88,7 @@ class Photo(models.Model):
     is_published = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     scanner = models.ForeignKey(
-        Contributor, null=True, on_delete=models.SET_NULL, blank=True
+        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
     )
     def __str__(self):
         return self.accession_number
@@ -172,7 +165,7 @@ class ScannedPhoto(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
-        Contributor, null=True, on_delete=models.SET_NULL
+        Donor, null=True, on_delete=models.SET_NULL, related_name="scanned_photos"
     )
     accepted = models.BooleanField(null=True)
 

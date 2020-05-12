@@ -2,7 +2,7 @@
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}</li>
             <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
-            <li><span class="field-name">Donor:</span>{{photo.donor.contactinfo.first_name}} {{photo.donor.contactinfo.last_name}}</li>
+            <li><span class="field-name">Donor:</span>{{photo.donor.first_name}} {{photo.donor.last_name}}</li>
           </ul>
         </div>
         <div class="metadata-2a">
@@ -12,7 +12,7 @@
             {% endif %}
 
             {% if photo.scanner %}
-            <li><span class="field-name">Scanner:</span>{{ photo.scanner.contactinfo.first_name }} {{ photo.scanner.contactinfo.last_name }}</li>
+            <li><span class="field-name">Scanner:</span>{{ photo.scanner.first_name }} {{ photo.scanner.last_name }}</li>
             {% endif %}
             <li><span class="field-name">Added to Archive:</span>{{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>
