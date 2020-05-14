@@ -290,21 +290,21 @@ class PhotoView(JSONResponseMixin, TemplateView):
 
             }
         return {
-            'url': reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}),
+            'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}), self.request.GET.urlencode()),
             'h700': staticfiles_storage.url(context['photo'].h700.url),
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
             'backward': {
-                "url": reverse('photoview', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}),
-                'json_url': reverse('photoview-json', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}),
+                "url": "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}), self.request.GET.urlencode()),
+                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}), self.request.GET.urlencode()),
             } if context['page'].has_previous() else {},
             'forward': {
-                "url": reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
-                'json_url': reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}),
+                "url": "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
+                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
             } if context['page'].has_next() else {},
             'next': {
-                'url': reverse('photoview', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}),
-                'json_url': reverse('photoview-json', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}),
+                'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),
+                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),
             } if 'photo' in context and context['photo'] and hasattr(context['photo'], 'next') else {},
         }
 

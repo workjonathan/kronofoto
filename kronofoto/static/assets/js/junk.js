@@ -104,14 +104,17 @@ const scrollAction = (element, direction, target) => evt => {
     })
 }
 
-forward.addEventListener("mousedown", () =>
-    Promise.race([
-        mouseUp(forward).then(() => ({event: 'click', position: -100})),
-        delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-    ]).then(scrollAction(forward, 'forward', -200)))
-
-backward.addEventListener("mousedown", () =>
-    Promise.race([
-        mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
-        delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-    ]).then(scrollAction(backward, 'backward', 0)))
+if (forward) {
+    forward.addEventListener("mousedown", () =>
+        Promise.race([
+            mouseUp(forward).then(() => ({event: 'click', position: -100})),
+            delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+        ]).then(scrollAction(forward, 'forward', -200)))
+}
+if (backward) {
+    backward.addEventListener("mousedown", () =>
+        Promise.race([
+            mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
+            delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+        ]).then(scrollAction(backward, 'backward', 0)))
+}

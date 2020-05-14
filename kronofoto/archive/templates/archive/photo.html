@@ -11,10 +11,17 @@
         <img id="fi-image" src="{% static photo.h700.url %}" alt="Alt text for the image">
       </figure>
       <div id="fi-image-controls">
+      <a
 {% if photo.next %}
-    <a href="{% url 'photoview' photo.next.page.number photo.next.accession_number %}?{{ getparams }}">
-        <img id="fi-arrow-right" data-json-href="{% url 'photoview-json' photo.next.page.number photo.next.accession_number %}?{{ getparams }}" src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
+    href="{% url 'photoview' photo.next.page.number photo.next.accession_number %}?{{ getparams }}"
 {% endif %}
+>
+        <img id="fi-arrow-right" 
+{% if photo.next %}
+        data-json-href="{% url 'photoview-json' photo.next.page.number photo.next.accession_number %}?{{ getparams }}" 
+{% endif %}
+        
+        src="{% static "assets/images/09-advancearrow.svg" %}" alt="Arrow pointing right"></a>
       </div>
       <button id="expand" onclick="toggleVis()">+</button>
       <div id="metadata" class="hidden">
