@@ -8,8 +8,6 @@ from io import BytesIO
 import os
 
 
-
-
 class Donor(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)

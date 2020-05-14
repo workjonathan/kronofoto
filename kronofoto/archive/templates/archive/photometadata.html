@@ -2,7 +2,7 @@
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}</li>
             <li><span class="field-name">Photo ID:</span>{{photo.accession_number}}</li>
-            <li><span class="field-name">Donor:</span>{{photo.donor.first_name}} {{photo.donor.last_name}}</li>
+            <li><span class="field-name">Donor:</span><a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
           </ul>
         </div>
         <div class="metadata-2a">

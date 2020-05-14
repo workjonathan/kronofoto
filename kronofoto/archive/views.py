@@ -123,8 +123,9 @@ def build_query(getparams, user):
         "collection": "collection__id",
         "tag": 'phototag__tag__slug',
         'term': 'terms__slug',
+        'donor': 'donor__id',
     }
-    params = ("collection", "city", "state", "country", 'tag', 'term')
+    params = ("collection", "city", "state", "country", 'tag', 'term', 'donor')
     merges = {
         'phototag__tag__slug': [Q(phototag__accepted=True)],
         'collection__id': [~Q(collection__visibility='PR')],
@@ -243,11 +244,13 @@ class PhotoView(JSONResponseMixin, TemplateView):
         if photo_rec is None:
             id = Photo.accession2id(photo)
             try:
-                photo = Photo.objects.get(id=id)
+                photo = photo_list.get(id=id)
                 idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
-                self.redirect = redirect('photoview', page=(idx//items + 1), photo=photo.accession_number)
+                url = reverse('photoview', kwargs={'page': (idx//items + 1), 'photo': photo.accession_number})
+                print(url)
+                self.redirect = redirect("{}?{}".format(url, self.request.GET.urlencode()))
             except Photo.DoesNotExist:
-                raise Http404("Photo does not exist")
+                raise Http404("Photo either does not exist or is not in that set of photos")
         prev_page = []
         next_page = []
         if this_page.has_previous():
