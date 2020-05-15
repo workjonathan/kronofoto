@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 filename = files[record.filename]
                 photographer = record.photographer.strip()
                 scanner = splitname(record.scanner)
-                scanner, _ = Donor.objects.get_or_create(first_name=scanner[0], last_name=scanner[1])
+                scanner, _ = Donor.objects.get_or_create(first_name=scanner[1], last_name=scanner[0])
                 donor, _ = Donor.objects.get_or_create(first_name=record.donorFirstName, last_name=record.donorLastName)
                 photo = Photo(
                     donor=donor,
