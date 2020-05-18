@@ -125,7 +125,7 @@ def build_query(getparams, user):
         'term': 'terms__slug',
         'donor': 'donor__id',
     }
-    params = ("collection", "city", "state", "country", 'tag', 'term', 'donor')
+    params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
     merges = {
         'phototag__tag__slug': [Q(phototag__accepted=True)],
         'collection__id': [~Q(collection__visibility='PR')],
