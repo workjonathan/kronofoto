@@ -1,14 +1,18 @@
 {% if user.is_authenticated %}
-            <span><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
+<span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
 {% else %}
+<button id="login-btn" onclick="toggleLogin()">
+    Login
+</button>
+<div id="login" class="hidden">
     <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">
-    {% csrf_token %}
-    {{ form.username.label_tag }}
-    {{ form.username }}
-    {{ form.password.label_tag }}
-    {{ form.password }}
+        {% csrf_token %}
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.password.label_tag }}
+        {{ form.password }}
 
-    <input type="submit" value="login">
+        <input type="submit" value="login">
     </form>
     {% if form.errors %}
     <p>Your username and password didn't match. Please try again.</p>
@@ -16,4 +20,6 @@
 
     {# Assumes you setup the password_reset view in your URLconf #}
     <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+</div>
+
 {% endif %}
