@@ -128,3 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 kronofoto/kronofoto/settings.py
+
+# batch test data
+testbatch

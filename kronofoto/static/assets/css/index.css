@@ -101,6 +101,45 @@ input#search-box {
   font-size: 13px;
 }
 
+button#login-btn, .logout-btn {
+  background-color: var(--fp-main-blue);
+  padding: 11px 15px;
+  text-transform: uppercase;
+  font-size: 15px;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+.logout-btn {
+  background-color: var(--fp-main-grey);
+  color: var(--fp-main-blue);
+}
+.logout-btn a {
+  color: var(--fp-main-blue);
+  text-decoration: none;
+}
+.logout-btn:hover a {
+  color: darkgray;
+}
+button#login-btn:hover {
+  color: var(--fp-light-grey);
+}
+#login {
+  position: absolute;
+  top: 80px;
+  right: 50px;
+  z-index: 5;
+  background-color: var(--fp-light-grey);
+  padding: 30px
+}
+#login form {
+  display: flex;
+  flex-direction: column;
+}
+#login form input {
+  margin: 10px 0;
+}
+
 
 /******************
  ** MAIN CONTENT **
