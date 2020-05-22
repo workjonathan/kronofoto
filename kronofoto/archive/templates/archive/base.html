@@ -41,7 +41,10 @@
         </li>
         <li>Auto</li>
         <li>
-          <div id="login">
+          <button id="login-btn" onclick="toggleLogin()">
+            Login
+          </button>
+          <div id="login" class="hidden">
             {% make_login %}
           </div>
         </li>

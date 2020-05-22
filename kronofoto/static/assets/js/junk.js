@@ -1,5 +1,14 @@
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
+    toggleElement(el);
+}
+const toggleLogin = evt => {
+    const el = document.querySelector('#login');
+    console.log('toggled login');
+    toggleElement(el);
+}
+const toggleElement = el => {
+    console.log('el:', el);
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
     }
