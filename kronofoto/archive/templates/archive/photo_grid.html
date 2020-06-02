@@ -6,26 +6,9 @@
 <div id="position">Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
 </div>
 <div id="navigation">
-{% if page_obj.number == 1 %}
-First 
-{% else %}
-    <a href="{% url "gridview" 1 %}?{{ request.GET.urlencode }}">First</a>
-{% endif %}
-{% if page_obj.number == 1 %}
-Previous 
-{% else %}
-    <a href="{% url "gridview" page_obj.previous_page_number %}?{{ request.GET.urlencode }}">Previous</a>
-{% endif %}
-{% if page_obj.has_next %}
-    <a href="{% url "gridview" page_obj.next_page_number %}?{{ request.GET.urlencode }}">Next</a>
-{% else %}
-    Next
-{% endif %}
-{% if page_obj.number == paginator.num_pages %}
-    Last
-{% else %}
-    <a href="{% url "gridview" paginator.num_pages %}?{{ request.GET.urlencode }}">Last</a>
-{% endif %}
+{% for link in links %}
+    {% if link.url %}<a href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
+{% endfor %}
 </div>
 <ul>
     {% for photo in page_obj %}

@@ -22,6 +22,9 @@ from functools import reduce
 from math import floor
 from itertools import islice,chain
 
+from .search.parser import parse
+from .search import evaluate, sort
+
 
 class AddTagView(LoginRequiredMixin, FormView):
     template_name = 'archive/add_tag.html'
@@ -247,7 +250,6 @@ class PhotoView(JSONResponseMixin, TemplateView):
                 photo = photo_list.get(id=id)
                 idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
                 url = reverse('photoview', kwargs={'page': (idx//items + 1), 'photo': photo.accession_number})
-                print(url)
                 self.redirect = redirect("{}?{}".format(url, self.request.GET.urlencode()))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
@@ -336,6 +338,38 @@ class GridView(ListView):
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
+
+    def format_page_url(self, num):
+        return "{}?{}".format(reverse('gridview', args=(num,)), self.request.GET.urlencode())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page_obj = context['page_obj']
+        paginator = context['paginator']
+        links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
+        if page_obj.number != 1:
+            links[0]['url'] = self.format_page_url(1)
+            links[1]['url'] = self.format_page_url(page_obj.previous_page_number())
+        if page_obj.has_next():
+            links[2]['url'] = self.format_page_url(page_obj.next_page_number())
+        if page_obj.number != paginator.num_pages:
+            links[3]['url'] = self.format_page_url(paginator.num_pages)
+        context['links'] = links
+        return context
+
+
+class SearchResultsView(GridView):
+    def format_page_url(self, num):
+        return "{}?{}".format(reverse('search-results'), urlencode({'q': self.request.GET.get('q'), 'page': num}))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['q'] = self.request.GET.get('q')
+        return context
+
+    def get_queryset(self):
+        expr = parse(self.request.GET.get('q'))
+        return sort(expr, evaluate(expr, Photo.objects))
 
 
 class Profile(ListView):

@@ -22,10 +22,13 @@
         <li>0008087 IMG</li>
         <li>New</li>
         <li id="search-box-container">
-          <label for="search-box">
-            <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
-            <input type="text" id="search-box" placeholder="Keywords, terms, photo ID#, donor">
-          </label>
+          <form action="/search/" method="get">
+              <label for="search-box">
+                <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
+                <input type="text" name="q" id="search-box" placeholder="Keywords, terms, photo ID#, donor" value="{{ q }}">
+              </label>
+              <input type="submit" style="display:none">
+          </form>
         </li>
         <li>
           <img src="{% static "assets/images/04-grid.svg" %}" alt="Grid icon">
