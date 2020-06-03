@@ -26,9 +26,9 @@ class Donor(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(donor__last_name=self.value) | Q(donor__first_name=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         ln = fn = 0
@@ -50,9 +50,9 @@ class AccessionNumber(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(id=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         if negated and photo.id != self.value:
@@ -68,10 +68,9 @@ class Tag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
-        q = Q(phototag__tag__tag__icontains=self.value)
-        q = ~q if negated else q
-        return q & Q(phototag__accepted=True)
+    def evaluate(self):
+        q = Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
+        return q
 
     def score(self, photo, negated):
         scores = []
@@ -87,9 +86,9 @@ class Term(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(terms__term__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         scores = []
@@ -105,9 +104,9 @@ class Caption(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(caption__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         words = [w.lower() for w in re.split(r'\W+', photo.caption)]
@@ -120,9 +119,9 @@ class State(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(state__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         return 1 if not negated and photo.state == self.value or negated and photo.state != self.value else 0
@@ -132,9 +131,9 @@ class Country(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(country__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         return 1 if not negated and photo.country == self.value or negated and photo.country != self.value else 0
@@ -143,9 +142,9 @@ class County(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(county__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
@@ -155,9 +154,9 @@ class City(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(city__icontains=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
@@ -166,9 +165,9 @@ class YearEquals(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self, negated):
+    def evaluate(self):
         q = Q(year=self.value)
-        return ~q if negated else q
+        return q
 
     def score(self, photo, negated):
         return 1 if not negated and photo.year == self.value or negated and photo.year != self.value else 0
@@ -178,8 +177,8 @@ class Not(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self, negated):
-        return self.value.evaluate(not negated)
+    def evaluate(self):
+        return ~self.value.evaluate()
 
     def score(self, photo, negated):
         return self.value.score(photo, not negated)
@@ -197,11 +196,8 @@ class BinaryOperator(Expression):
         return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
 
 class And(BinaryOperator):
-    def evaluate(self, negated):
-        if negated:
-            return self.left.evaluate(negated) | self.right.evaluate(negated)
-        else:
-            return self.left.evaluate(negated) & self.right.evaluate(negated)
+    def evaluate(self):
+        return self.left.evaluate() & self.right.evaluate()
 
     def score(self, photo, negated):
         if negated:
@@ -210,11 +206,8 @@ class And(BinaryOperator):
 
 
 class Or(BinaryOperator):
-    def evaluate(self, negated):
-        if negated:
-            return self.left.evaluate(negated) & self.right.evaluate(negated)
-        else:
-            return self.left.evaluate(negated) | self.right.evaluate(negated)
+    def evaluate(self):
+        return self.left.evaluate() | self.right.evaluate()
 
     def score(self, photo, negated):
         if not negated:

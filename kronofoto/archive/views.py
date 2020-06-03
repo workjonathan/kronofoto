@@ -377,7 +377,6 @@ class SearchResultsView(GridView):
                 self.query = self.query[:err.index] + self.query[err.index+1:]
             except ExpectedParenthesis:
                 self.query = self.query + ')'
-        print(expr)
         return sort(expr, evaluate(expr, Photo.objects))
 
 
