@@ -3,7 +3,7 @@ from .expression import *
 
 number = parsy.regex(r'-?[0-9]+').map(int)
 quoted = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
-string = quoted | parsy.regex(r'[^\s]+')
+string = quoted | parsy.regex(r'[^\s\(\)]+')
 
 yearExpr = parsy.string('year:') >> number.map(YearEquals)
 tagExpr = parsy.string('tag:') >> string.map(Tag)
@@ -17,23 +17,17 @@ captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
 
 
-negate = lambda expr: expr | (parsy.string('-') >> expr.map(Not))
+negate = lambda expr: ((parsy.string('-') >> parsy.whitespace.optional() >> expr.map(Not)) | expr)
+wrap = lambda expr: parsy.string('(').mark() >> parsy.whitespace.optional() >> expr << parsy.whitespace.optional() << parsy.string(')')
 
 @parsy.generate
-def simpleExpr():
-    e = yield negate(
-        yearExpr |
-        tagExpr |
-        donorExpr |
-        termExpr |
-        cityExpr |
-        stateExpr |
-        countryExpr |
-        countyExpr |
-        accessionExpr |
-        captionExpr |
-        parsy.string("(") >> expr << parsy.string(")")
-    ) | parsy.string('-') >> string.map(Any).map(Not) | string.map(Any)
+def expr():
+    e = yield andExpr
+    es = yield (
+        (parsy.whitespace.optional() >> (parsy.string('OR') >> parsy.whitespace.optional()).optional()) >> andExpr
+    ).many()
+    for e2 in es:
+        e = Or(e, e2)
     return parsy.success(e)
 
 
@@ -41,30 +35,44 @@ def simpleExpr():
 def andExpr():
     e = yield simpleExpr
     es = yield (
-        parsy.whitespace >> parsy.string('AND') >> parsy.whitespace >> simpleExpr
+        parsy.whitespace.optional() >> parsy.string('AND') >> parsy.whitespace.optional() >> simpleExpr
     ).many()
-    exprs = list(reversed(es))
-    exprs.append(e)
-    e = exprs[0]
-    for e2 in exprs[1:]:
-        e = And(e2, e)
+    for e2 in es:
+        e = And(e, e2)
     return parsy.success(e)
 
 
-@parsy.generate
-def expr():
-    e = yield andExpr
-    es = yield (
-        (parsy.whitespace >> (parsy.string('OR') >> parsy.whitespace).optional()) >> andExpr
-    ).many()
-    exprs = list(reversed(es))
-    exprs.append(e)
-    e = exprs[0]
-    for e2 in exprs[1:]:
-        e = Or(e2, e)
-    return parsy.success(e)
+simpleExpr = negate(
+    yearExpr |
+    tagExpr |
+    donorExpr |
+    termExpr |
+    cityExpr |
+    stateExpr |
+    countryExpr |
+    countyExpr |
+    accessionExpr |
+    captionExpr |
+    string.map(Any) |
+    wrap(expr)
+)
 
 
 def parse(s):
-    parser = expr << parsy.eof
-    return parser.parse(s)
+    parser = parsy.whitespace.optional() >> expr << parsy.whitespace.optional() << parsy.eof
+    try:
+        return parser.parse(s)
+    except parsy.ParseError as err:
+        if ')' in err.expected:
+            raise ExpectedParenthesis from err
+        elif s[err.index] == ')':
+            raise UnexpectedParenthesis(err.index) from err
+
+
+class UnexpectedParenthesis(BaseException):
+    def __init__(self, index):
+        self.index = index
+
+
+class ExpectedParenthesis(BaseException):
+    pass

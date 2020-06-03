@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
+from archive.search.expression import *
 
 class WhenHave50Photos(TestCase):
     @classmethod
@@ -41,65 +42,86 @@ class WhenHave50Photos(TestCase):
         for photo in photomatches:
             self.assertNotIn(photo.year, (1911, 1912))
 
-    def testParserShouldWork(self):
-        expr = parser.parse('year:1912')
-        self.assertTrue(isinstance(expr, expression.YearEquals))
-        self.assertEqual(expr.value, 1912)
-        expr = parser.parse('-year:1911')
-        self.assertTrue(isinstance(expr, expression.Not))
-        self.assertTrue(isinstance(expr.value, expression.YearEquals))
-        self.assertEqual(expr.value.value, 1911)
-        expr = parser.parse('year:1911 AND -year:1912')
-        self.assertTrue(isinstance(expr, expression.And))
-        self.assertTrue(isinstance(expr.left, expression.YearEquals))
-        self.assertEqual(expr.left.value, 1911)
-        self.assertTrue(isinstance(expr.right, expression.Not))
-        self.assertEqual(expr.right.value.value, 1912)
-        expr = parser.parse('year:1911 OR year:1912')
-        self.assertTrue(isinstance(expr, expression.Or))
-        self.assertTrue(isinstance(expr.left, expression.YearEquals))
-        self.assertEqual(expr.left.value, 1911)
-        self.assertEqual(expr.right.value, 1912)
-        expr = parser.parse('year:1911 year:1912')
-        self.assertTrue(isinstance(expr, expression.Or))
-        self.assertTrue(isinstance(expr.left, expression.YearEquals))
-        self.assertEqual(expr.left.value, 1911)
-        self.assertEqual(expr.right.value, 1912)
-        expr = parser.parse('year:1910 AND year:1911 OR year:1912 AND year:1913')
-        self.assertTrue(isinstance(expr, expression.Or))
-        expr = parser.parse('tag:test')
-        self.assertTrue(isinstance(expr, expression.Tag))
-        self.assertEqual(expr.value, 'test')
-        expr = parser.parse('tag:"test multiword"')
-        self.assertTrue(isinstance(expr, expression.Tag))
-        self.assertEqual(expr.value, 'test multiword')
-        expr = parser.parse('year:1910 AND (year:1911 OR year:1912) AND year:1913')
-        self.assertTrue(isinstance(expr, expression.And))
-        self.assertTrue(isinstance(expr.right, expression.And))
-        self.assertTrue(isinstance(expr.right.left, expression.Or))
-        expr = parser.parse('year:1910 AND -(year:1911 OR year:1912) AND year:1913')
-        self.assertTrue(isinstance(expr, expression.And))
-        self.assertTrue(isinstance(expr.right, expression.And))
-        self.assertTrue(isinstance(expr.right.left, expression.Not))
+    def testParserShouldParseTypedNumbers(self):
+        self.assertEqual(parser.parse('year:1912'), YearEquals(1912))
 
-        expr = parser.parse('dog')
-        self.assertTrue(isinstance(expr, expression.Or))
-        self.assertTrue(isinstance(expr.left, expression.Donor))
-        self.assertEqual(expr.left.value, 'dog')
-        expr = parser.parse('"dog"')
-        self.assertTrue(isinstance(expr, expression.Or))
-        self.assertTrue(isinstance(expr.left, expression.Donor))
-        self.assertEqual(expr.left.value, 'dog')
-        expr = parser.parse('-dog')
-        self.assertTrue(isinstance(expr, expression.Not))
-        self.assertEqual(expr.value.left.value, 'dog')
-        expr = parser.parse('-"dog"')
-        self.assertTrue(isinstance(expr, expression.Not))
-        self.assertEqual(expr.value.left.value, 'dog')
+    def testParserShouldParseTypedStrings(self):
+        self.assertEqual(parser.parse('caption:dog'), Caption('dog'))
 
-        expr = parser.parse('FI00001')
-        self.assertTrue(isinstance(expr, expression.AccessionNumber))
-        self.assertEqual(expr.value, 1)
+    def testParserShouldParseUntypedStrings(self):
+        self.assertEqual(
+            parser.parse('dog'),
+            Or(Donor('dog'), Or(Caption('dog'), Or(State('dog'), Or(Country('dog'), Or(County('dog'), Or(City('dog'), Or(Tag('dog'), Term('dog')))))))),
+        )
+
+    def testParserShouldParseUntypedNumbers(self):
+        self.assertEqual(parser.parse('1912'), Or(YearEquals(1912), Or(Donor('1912'), Or(Caption('1912'), Or(State('1912'), Or(Country('1912'), Or(County('1912'), Or(City('1912'), Or(Tag('1912'), Term('1912'))))))))))
+
+    def testParserShouldNegateTerms(self):
+        self.assertEqual(parser.parse('-caption:dog'), Not(Caption('dog')))
+
+    def testParserShouldParseAndExpressions(self):
+        self.assertEqual(parser.parse('caption:dog AND caption:cat'), And(Caption('dog'), Caption('cat')))
+
+    def testParserShouldParseOrExpressions(self):
+        self.assertEqual(parser.parse('caption:dog OR caption:cat'), Or(Caption('dog'), Caption('cat')))
+
+    def testParserShouldSupportOrderOfOperations(self):
+        self.assertEqual(
+            parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
+        )
+
+    def testParserShouldSupportOrderOfOperations(self):
+        self.assertEqual(
+            parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
+        )
+        self.assertEqual(
+            parser.parse('-caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            Or(And(Not(Caption('bird')), Caption('dog')), And(Caption('cat'), Caption('banana'))),
+        )
+
+    def testParserShouldSupportParentheses(self):
+        self.assertEqual(parser.parse('(caption:bird)'), Caption('bird'))
+        self.assertEqual(
+            parser.parse('caption:bird AND (caption:dog OR caption:cat) AND caption:banana'),
+            And(And(Caption('bird'), Or(Caption('dog'), Caption('cat'))), Caption('banana')),
+        )
+        self.assertEqual(
+            parser.parse('(caption:bird OR caption:dog) AND (caption:cat OR caption:banana)'),
+            And(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
+        )
+        self.assertEqual(
+            parser.parse('((caption:bird OR caption:dog) AND (caption:cat caption:banana))'),
+            And(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
+        )
+
+    def testParserShouldSupportNegatedParentheses(self):
+        self.assertEqual(parser.parse('-(caption:bird)'), Not(Caption('bird')))
+        self.assertEqual(
+            parser.parse('caption:bird AND -(caption:dog OR caption:cat) AND caption:banana'),
+            And(And(Caption('bird'), Not(Or(Caption('dog'), Caption('cat')))), Caption('banana')),
+        )
+        self.assertEqual(
+            parser.parse('-(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)'),
+            And(Not(Or(Caption('bird'), Caption('dog'))), Or(Not(Caption('cat')), Caption('banana'))),
+        )
+
+    def testParserShouldNotTripOverExtraneousSpacesAndRandomStuff(self):
+        self.assertEqual(parser.parse('((caption:bird))'), Caption('bird'))
+        self.assertEqual(
+            parser.parse(' -( caption:bird OR caption:dog  )AND(- caption:cat OR caption:banana) '),
+            And(Not(Or(Caption('bird'), Caption('dog'))), Or(Not(Caption('cat')), Caption('banana'))),
+        )
+
+    def testParserShouldNotDieDueToUnmatchedParens(self):
+        with self.assertRaises(parser.UnexpectedParenthesis) as cm:
+            parser.parse('caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)')
+        self.assertEqual(cm.exception.index, 27)
+
+        with self.assertRaises(parser.ExpectedParenthesis):
+            parser.parse('(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana')
 
 
 

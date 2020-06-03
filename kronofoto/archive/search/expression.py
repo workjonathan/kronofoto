@@ -14,6 +14,13 @@ class Expression:
     def __invert__(self):
         return Not(self)
 
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, repr(self.value))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.value == other.value
+
+
 
 class Donor(Expression):
     def __init__(self, value):
@@ -183,6 +190,11 @@ class BinaryOperator(Expression):
         self.left = left
         self.right = right
 
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__, repr(self.left), repr(self.right))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
 
 class And(BinaryOperator):
     def evaluate(self, negated):

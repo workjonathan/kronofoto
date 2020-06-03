@@ -22,7 +22,7 @@ from functools import reduce
 from math import floor
 from itertools import islice,chain
 
-from .search.parser import parse
+from .search.parser import parse, UnexpectedParenthesis, ExpectedParenthesis
 from .search import evaluate, sort
 
 
@@ -360,15 +360,24 @@ class GridView(ListView):
 
 class SearchResultsView(GridView):
     def format_page_url(self, num):
-        return "{}?{}".format(reverse('search-results'), urlencode({'q': self.request.GET.get('q'), 'page': num}))
+        return "{}?{}".format(reverse('search-results'), urlencode({'q': self.query, 'page': num}))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['q'] = self.request.GET.get('q')
+        context['q'] = self.query
         return context
 
     def get_queryset(self):
-        expr = parse(self.request.GET.get('q'))
+        self.query = self.request.GET.get('q')
+        expr = None
+        while expr is None:
+            try:
+                expr = parse(self.query)
+            except UnexpectedParenthesis as err:
+                self.query = self.query[:err.index] + self.query[err.index+1:]
+            except ExpectedParenthesis:
+                self.query = self.query + ')'
+        print(expr)
         return sort(expr, evaluate(expr, Photo.objects))
 
 
