@@ -3,6 +3,28 @@ from functools import reduce
 import operator
 import re
 
+STOPWORDS = {
+    'yourselves', "shan't", "we'll", 'ourselves', 'out', 'who', 'not', 'off',
+    'she', 'these', 'theirs', 'between', 'the', "i'm", 'no', "there's", 'are',
+    "that's", 'doing', 'themselves', 'to', 'what', 'all', 'and', 'be', "can't",
+    'ours', 'under', 'there', 'does', 'his', 'he', 'some', 'me', "i'd", 'but',
+    'up', "we're", 'down', 'herself', 'too', 'having', 'after', 'above', 'its',
+    'their', "she'd", 'further', "aren't", 'again', 'her', 'only', "when's",
+    'own', 'those', 'than', 'when', 'myself', 'by', 'was', 'has', 'at', "she's",
+    'below', 'against', 'would', 'more', 'on', 'once', 'cannot', 'that',
+    "don't", "couldn't", 'your', 'most', 'any', "what's", "he's", 'whom',
+    'ought', "let's", "why's", 'i', 'this', 'it', "how's", "where's", "you'll",
+    'few', "he'll", "wasn't", "haven't", 'a', 'because', 'do', "isn't", 'were',
+    'being', 'could', 'until', 'over', 'why', "shouldn't", 'we', 'in', 'with',
+    'same', 'him', 'so', 'an', 'very', 'them', 'am', 'you', 'itself', "i've",
+    "she'll", "you've", 'my', "i'll", 'through', 'such', 'did', 'hers',
+    "hasn't", "we'd", 'himself', 'before', 'for', "wouldn't", 'where', 'our',
+    'other', 'both', "won't", 'into', "here's", 'while', 'yours', "you'd",
+    "they're", 'yourself', "they'd", 'had', 'is', 'of', "he'd", "they've",
+    "mustn't", "you're", 'which', 'nor', 'or', 'from', 'been', 'how', "hadn't",
+    "weren't", 'as', "doesn't", 'during', 'they', 'should', "didn't", 'then',
+    'have', 'if', 'here', "we've", 'each', "who's", "it's", 'about', "they'll"
+}
 
 class Expression:
     def __or__(self, obj):
@@ -19,6 +41,9 @@ class Expression:
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
+
+    def shakeout(self):
+        return self
 
 
 
@@ -104,9 +129,13 @@ class Caption(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
+    def shakeout(self):
+        if self.value in STOPWORDS:
+            return None
+        return self
+
     def evaluate(self):
-        q = Q(caption__icontains=self.value)
-        return q
+        return Q(caption__icontains=self.value)
 
     def score(self, photo, negated):
         words = [w.lower() for w in re.split(r'\W+', photo.caption)]
@@ -183,6 +212,12 @@ class Not(Expression):
     def score(self, photo, negated):
         return self.value.score(photo, not negated)
 
+    def shakeout(self):
+        value = self.value.shakeout()
+        if value:
+            return Not(value)
+        return value
+
 
 class BinaryOperator(Expression):
     def __init__(self, left, right):
@@ -194,6 +229,16 @@ class BinaryOperator(Expression):
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
+
+    def shakeout(self):
+        left = self.left.shakeout()
+        right = self.right.shakeout()
+        if right and left:
+            return self.__class__(left, right)
+        if right:
+            return right
+        return left
+
 
 class And(BinaryOperator):
     def evaluate(self):

@@ -370,14 +370,18 @@ class SearchResultsView(GridView):
     def get_queryset(self):
         self.query = self.request.GET.get('q')
         expr = None
-        while expr is None:
+        while True:
             try:
-                expr = parse(self.query)
+                expr = parse(self.query).shakeout()
+                break
             except UnexpectedParenthesis as err:
                 self.query = self.query[:err.index] + self.query[err.index+1:]
             except ExpectedParenthesis:
                 self.query = self.query + ')'
-        return sort(expr, evaluate(expr, Photo.objects))
+        if expr:
+            return sort(expr, evaluate(expr, Photo.objects))
+        else:
+            return []
 
 
 class Profile(ListView):
