@@ -46,6 +46,8 @@ const loadstate = data => {
     carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
     document.getElementById('metadata').innerHTML = data.metadata
     document.getElementById('fi-image').setAttribute('src', data.h700)
+    document.getElementById('fi-arrow-left').setAttribute('href', data.previous.url)
+    document.getElementById('fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
     document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
     document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
     forward.setAttribute('href', data.forward.url)

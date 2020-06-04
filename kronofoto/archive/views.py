@@ -268,7 +268,7 @@ class PhotoView(JSONResponseMixin, TemplateView):
         last = None
         for p in chain(prev_page, this_page, next_page):
             if last:
-                p.last = last
+                p.previous = last
                 last.next = p
             last = p
 
@@ -304,6 +304,10 @@ class PhotoView(JSONResponseMixin, TemplateView):
                 "url": "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
                 'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
             } if context['page'].has_next() else {},
+            'previous': {
+                'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['photo'].previous.page.number, 'photo': context['photo'].previous.accession_number}), self.request.GET.urlencode()),
+                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['photo'].previous.page.number, 'photo': context['photo'].previous.accession_number}), self.request.GET.urlencode()),
+            } if 'photo' in context and context['photo'] and hasattr(context['photo'], 'previous') else {},
             'next': {
                 'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),
                 'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),

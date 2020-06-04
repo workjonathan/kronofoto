@@ -10,14 +10,16 @@
       <figure>
         <img id="fi-image" src="{% static photo.h700.url %}" alt="Alt text for the image">
       </figure>
-      <a class="control previous"
+      <a id="fi-arrow-left" class="control previous"
       {% if photo.previous %}
         href="{% url 'photoview' photo.previous.page.number photo.previous.accession_number %}?{{ getparams }}"
+        data-json-href="{% url 'photoview-json' photo.previous.page.number photo.previous.accession_number %}?{{ getparams }}"
       {% endif %}
       ></a>
-      <a class="control forward"
+      <a id="fi-arrow-right" class="control forward"
       {% if photo.next %}
           href="{% url 'photoview' photo.next.page.number photo.next.accession_number %}?{{ getparams }}"
+          data-json-href="{% url 'photoview-json' photo.next.page.number photo.next.accession_number %}?{{ getparams }}"
       {% endif %}
       ></a>
       <button id="expand" onclick="toggleVis()">+</button>
