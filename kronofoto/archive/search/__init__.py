@@ -1,6 +1,6 @@
 
 def evaluate(expression, qs):
-    return qs.filter(expression.evaluate())
+    return qs.filter(expression.evaluate()).distinct()
 
 
 def sort(expression, qs):

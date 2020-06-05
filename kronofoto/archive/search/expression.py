@@ -118,7 +118,7 @@ class Term(Expression):
     def score(self, photo, negated):
         scores = []
         for term in photo.terms.filter(term__icontains=self.value):
-            words = [w.lower() for w in term.split()]
+            words = [w.lower() for w in term.term.split()]
             scores.append(sum(1 for w in words if not negated and self.value == w or negated and self.value != w)/len(words))
         if not negated:
             return sum(scores)
