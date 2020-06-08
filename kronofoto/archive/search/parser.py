@@ -16,9 +16,14 @@ countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
 
+upper = lambda s: s.upper()
+singleton = lambda x: [x]
+const = lambda x: lambda _: x
+is_instance = lambda t: lambda x: isinstance(x, t)
+
 token = (
-      parsy.string('AND')
-    | parsy.string('OR')
+      parsy.string('AND', transform=upper).map(upper)
+    | parsy.string('OR', transform=upper).map(upper)
     | yearExpr
     | tagExpr
     | donorExpr
@@ -33,7 +38,7 @@ token = (
 )
 
 separator = (
-      parsy.whitespace.map(lambda s: [])
+      parsy.whitespace.map(const([]))
     | parsy.regex(r'\s*[-\(\)]\s*').map(lambda s: [s.strip()]))
 
 @parsy.generate
@@ -42,7 +47,7 @@ def tokenize():
     start = sum(start, [])
     token1 = yield token
     start.append(token1)
-    tokens = yield (separator.at_least(1).map(lambda x: sum(x,[])) + token.map(lambda x: [x])).many()
+    tokens = yield (separator.at_least(1).map(lambda x: sum(x,[])) + token.map(singleton)).many()
     tokens = sum(tokens, [])
     endsep = yield separator.many()
     endsep = sum(endsep, [])
@@ -75,14 +80,14 @@ def andExpr():
 
 
 simpleExpr = negate(
-    parsy.test_item(lambda x: isinstance(x, Expression), 'expression')
+    parsy.test_item(is_instance(Expression), 'expression')
   | wrap(expr)
 )
 
 @parsy.generate
 def simple_parse():
     exprs = yield (
-        negate(parsy.test_item(lambda x: isinstance(x, Expression), 'expression')).map(lambda x: [x]) | parsy.test_item(lambda x: True, 'ignore').map(lambda x: [])
+        negate(parsy.test_item(isinstance(Expression), 'expression')).map(singleton) | parsy.test_item(const(True), 'ignore').map(const([]))
     ).many()
     exprs = sum(exprs, [])
     try:
