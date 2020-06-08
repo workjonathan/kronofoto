@@ -43,30 +43,44 @@ class WhenHave50Photos(TestCase):
             self.assertNotIn(photo.year, (1911, 1912))
 
     def testParserShouldParseTypedNumbers(self):
+        self.assertEqual(parser.tokenize.parse('year:1912'), [YearEquals(1912)])
         self.assertEqual(parser.parse('year:1912'), YearEquals(1912))
 
     def testParserShouldParseTypedStrings(self):
+        self.assertEqual(parser.tokenize.parse('caption:dog'), [Caption('dog')])
         self.assertEqual(parser.parse('caption:dog'), Caption('dog'))
 
     def testParserShouldParseUntypedStrings(self):
+        self.assertEqual(
+            parser.tokenize.parse('dog'),
+            [Or(Donor('dog'), Or(Caption('dog'), Or(State('dog'), Or(Country('dog'), Or(County('dog'), Or(City('dog'), Or(Tag('dog'), Term('dog'))))))))],
+        )
         self.assertEqual(
             parser.parse('dog'),
             Or(Donor('dog'), Or(Caption('dog'), Or(State('dog'), Or(Country('dog'), Or(County('dog'), Or(City('dog'), Or(Tag('dog'), Term('dog')))))))),
         )
 
     def testParserShouldParseUntypedNumbers(self):
+        self.assertEqual(parser.tokenize.parse('1912'), [Or(YearEquals(1912), Or(Donor('1912'), Or(Caption('1912'), Or(State('1912'), Or(Country('1912'), Or(County('1912'), Or(City('1912'), Or(Tag('1912'), Term('1912')))))))))])
         self.assertEqual(parser.parse('1912'), Or(YearEquals(1912), Or(Donor('1912'), Or(Caption('1912'), Or(State('1912'), Or(Country('1912'), Or(County('1912'), Or(City('1912'), Or(Tag('1912'), Term('1912'))))))))))
 
     def testParserShouldNegateTerms(self):
+        self.assertEqual(parser.tokenize.parse('-caption:dog'), ['-', Caption('dog')])
         self.assertEqual(parser.parse('-caption:dog'), Not(Caption('dog')))
 
     def testParserShouldParseAndExpressions(self):
+        self.assertEqual(parser.tokenize.parse('caption:dog AND caption:cat'), [Caption('dog'), 'AND', Caption('cat')])
         self.assertEqual(parser.parse('caption:dog AND caption:cat'), And(Caption('dog'), Caption('cat')))
 
     def testParserShouldParseOrExpressions(self):
+        self.assertEqual(parser.tokenize.parse('caption:dog OR caption:cat'), [Caption('dog'), 'OR', Caption('cat')])
         self.assertEqual(parser.parse('caption:dog OR caption:cat'), Or(Caption('dog'), Caption('cat')))
 
     def testParserShouldSupportOrderOfOperations(self):
+        self.assertEqual(
+            parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            [Caption('bird'), 'AND', Caption('dog'), "OR", Caption('cat'), "AND", Caption('banana')],
+        )
         self.assertEqual(
             parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
             Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
@@ -74,8 +88,16 @@ class WhenHave50Photos(TestCase):
 
     def testParserShouldSupportOrderOfOperations(self):
         self.assertEqual(
+            parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            [Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
+        )
+        self.assertEqual(
             parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
             Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
+        )
+        self.assertEqual(
+            parser.tokenize.parse('-caption:bird AND caption:dog OR caption:cat AND caption:banana'),
+            ['-', Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
         )
         self.assertEqual(
             parser.parse('-caption:bird AND caption:dog OR caption:cat AND caption:banana'),
@@ -83,14 +105,27 @@ class WhenHave50Photos(TestCase):
         )
 
     def testParserShouldSupportParentheses(self):
+        self.assertEqual(parser.tokenize.parse('(caption:bird)'), ['(', Caption('bird'), ')'])
         self.assertEqual(parser.parse('(caption:bird)'), Caption('bird'))
+        self.assertEqual(
+            parser.tokenize.parse('caption:bird AND (caption:dog OR caption:cat) AND caption:banana'),
+            [Caption('bird'), 'AND', '(', Caption('dog'), 'OR', Caption('cat'), ')', 'AND', Caption('banana')]
+        )
         self.assertEqual(
             parser.parse('caption:bird AND (caption:dog OR caption:cat) AND caption:banana'),
             And(And(Caption('bird'), Or(Caption('dog'), Caption('cat'))), Caption('banana')),
         )
         self.assertEqual(
+            parser.tokenize.parse('(caption:bird OR caption:dog) AND (caption:cat OR caption:banana)'),
+            ['(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', Caption('cat'), 'OR', Caption('banana'), ')'],
+        )
+        self.assertEqual(
             parser.parse('(caption:bird OR caption:dog) AND (caption:cat OR caption:banana)'),
             And(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
+        )
+        self.assertEqual(
+            parser.tokenize.parse('((caption:bird OR caption:dog) AND (caption:cat caption:banana))'),
+            ['(', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', Caption('cat'), Caption('banana'), ')', ')'],
         )
         self.assertEqual(
             parser.parse('((caption:bird OR caption:dog) AND (caption:cat caption:banana))'),
@@ -98,10 +133,19 @@ class WhenHave50Photos(TestCase):
         )
 
     def testParserShouldSupportNegatedParentheses(self):
+        self.assertEqual(parser.tokenize.parse('-(caption:bird)'), ['-', '(', Caption('bird'), ')'])
         self.assertEqual(parser.parse('-(caption:bird)'), Not(Caption('bird')))
+        self.assertEqual(
+            parser.tokenize.parse('caption:bird AND -(caption:dog OR caption:cat) AND caption:banana'),
+            [Caption('bird'), 'AND', '-', '(', Caption('dog'), 'OR', Caption('cat'), ')', 'AND', Caption('banana')],
+        )
         self.assertEqual(
             parser.parse('caption:bird AND -(caption:dog OR caption:cat) AND caption:banana'),
             And(And(Caption('bird'), Not(Or(Caption('dog'), Caption('cat')))), Caption('banana')),
+        )
+        self.assertEqual(
+            parser.tokenize.parse('-(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)'),
+            ['-', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', '-', Caption('cat'), 'OR', Caption('banana'), ')'],
         )
         self.assertEqual(
             parser.parse('-(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)'),
@@ -109,7 +153,12 @@ class WhenHave50Photos(TestCase):
         )
 
     def testParserShouldNotTripOverExtraneousSpacesAndRandomStuff(self):
+        self.assertEqual(parser.tokenize.parse('((caption:bird))'), ['(', '(', Caption('bird'), ')', ')'])
         self.assertEqual(parser.parse('((caption:bird))'), Caption('bird'))
+        self.assertEqual(
+            parser.tokenize.parse(' -( caption:bird OR caption:dog  )AND(- caption:cat OR caption:banana) '),
+            ['-', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', '-', Caption('cat'), 'OR', Caption('banana'), ')'],
+        )
         self.assertEqual(
             parser.parse(' -( caption:bird OR caption:dog  )AND(- caption:cat OR caption:banana) '),
             And(Not(Or(Caption('bird'), Caption('dog'))), Or(Not(Caption('cat')), Caption('banana'))),
@@ -118,10 +167,13 @@ class WhenHave50Photos(TestCase):
     def testParserShouldNotDieDueToUnmatchedParens(self):
         with self.assertRaises(parser.UnexpectedParenthesis) as cm:
             parser.parse('caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)')
-        self.assertEqual(cm.exception.index, 27)
+        self.assertEqual(cm.exception.index, 3)
 
         with self.assertRaises(parser.ExpectedParenthesis):
             parser.parse('(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana')
+
+        with self.assertRaises(parser.UnexpectedParenthesis):
+            parser.parse('() AND (-caption:cat OR caption:banana')
 
 
 

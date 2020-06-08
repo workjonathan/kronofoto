@@ -22,7 +22,7 @@ from functools import reduce
 from math import floor
 from itertools import islice,chain
 
-from .search.parser import parse, UnexpectedParenthesis, ExpectedParenthesis
+from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
 from .search import evaluate, sort
 
 
@@ -373,19 +373,19 @@ class SearchResultsView(GridView):
 
     def get_queryset(self):
         self.query = self.request.GET.get('q')
-        expr = None
-        while True:
-            try:
-                expr = parse(self.query).shakeout()
-                break
-            except UnexpectedParenthesis as err:
-                self.query = self.query[:err.index] + self.query[err.index+1:]
-            except ExpectedParenthesis:
-                self.query = self.query + ')'
-        if expr:
-            return sort(expr, evaluate(expr, Photo.objects))
-        else:
+        try:
+            parser = Parser.tokenize(self.query)
+            expr = parser.parse().shakeout()
+        except NoExpression:
+            self.query = ''
             return []
+        except:
+            try:
+                expr = parser.simple_parse().shakeout()
+            except NoExpression:
+                self.query = ''
+                return []
+        return sort(expr, evaluate(expr, Photo.objects))
 
 
 class Profile(ListView):

@@ -16,15 +16,47 @@ countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
 
+token = (
+      parsy.string('AND')
+    | parsy.string('OR')
+    | yearExpr
+    | tagExpr
+    | donorExpr
+    | termExpr
+    | cityExpr
+    | stateExpr
+    | countryExpr
+    | countyExpr
+    | accessionExpr
+    | captionExpr
+    | string.map(Any)
+)
 
-negate = lambda expr: ((parsy.string('-') >> parsy.whitespace.optional() >> expr.map(Not)) | expr)
-wrap = lambda expr: parsy.string('(').mark() >> parsy.whitespace.optional() >> expr << parsy.whitespace.optional() << parsy.string(')')
+separator = (
+      parsy.whitespace.map(lambda s: [])
+    | parsy.regex(r'\s*[-\(\)]\s*').map(lambda s: [s.strip()]))
+
+@parsy.generate
+def tokenize():
+    start = yield separator.many()
+    start = sum(start, [])
+    token1 = yield token
+    start.append(token1)
+    tokens = yield (separator.at_least(1).map(lambda x: sum(x,[])) + token.map(lambda x: [x])).many()
+    tokens = sum(tokens, [])
+    endsep = yield separator.many()
+    endsep = sum(endsep, [])
+
+    return start + tokens + endsep
+
+negate = lambda expr: ((parsy.match_item('-') >> expr.map(Not)) | expr)
+wrap = lambda expr: (parsy.match_item('(') >> expr << parsy.match_item(')'))
 
 @parsy.generate
 def expr():
     e = yield andExpr
     es = yield (
-        (parsy.whitespace.optional() >> (parsy.string('OR') >> parsy.whitespace.optional()).optional()) >> andExpr
+        parsy.match_item('OR').optional() >> andExpr
     ).many()
     for e2 in es:
         e = Or(e, e2)
@@ -35,7 +67,7 @@ def expr():
 def andExpr():
     e = yield simpleExpr
     es = yield (
-        parsy.whitespace.optional() >> parsy.string('AND') >> parsy.whitespace.optional() >> simpleExpr
+        parsy.match_item('AND') >> simpleExpr
     ).many()
     for e2 in es:
         e = And(e, e2)
@@ -43,29 +75,56 @@ def andExpr():
 
 
 simpleExpr = negate(
-    yearExpr |
-    tagExpr |
-    donorExpr |
-    termExpr |
-    cityExpr |
-    stateExpr |
-    countryExpr |
-    countyExpr |
-    accessionExpr |
-    captionExpr |
-    string.map(Any) |
-    wrap(expr)
+    parsy.test_item(lambda x: isinstance(x, Expression), 'expression')
+  | wrap(expr)
 )
+
+@parsy.generate
+def simple_parse():
+    exprs = yield (
+        negate(parsy.test_item(lambda x: isinstance(x, Expression), 'expression')).map(lambda x: [x]) | parsy.test_item(lambda x: True, 'ignore').map(lambda x: [])
+    ).many()
+    exprs = sum(exprs, [])
+    try:
+        e = exprs.pop()
+        for e2 in exprs:
+            e = Or(e, e2)
+        return e
+    except IndexError as err:
+        raise NoExpression from err
+
+
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+
+    @classmethod
+    def tokenize(cls, s):
+        try:
+            return cls(tokenize.parse(s))
+        except parsy.ParseError as err:
+            raise NoExpression from err
+    def parse(self):
+        try:
+            return expr.parse(self.tokens)
+        except parsy.ParseError as err:
+            if ')' in err.expected:
+                raise ExpectedParenthesis from err
+            elif self.tokens[err.index] == ')':
+                raise UnexpectedParenthesis(err.index) from err
+
+    def simple_parse(self):
+        return simple_parse.parse(self.tokens)
 
 
 def parse(s):
-    parser = parsy.whitespace.optional() >> expr << parsy.whitespace.optional() << parsy.eof
     try:
-        return parser.parse(s)
+        tokens = tokenize.parse(s)
+        return expr.parse(tokens)
     except parsy.ParseError as err:
         if ')' in err.expected:
             raise ExpectedParenthesis from err
-        elif s[err.index] == ')':
+        elif tokens[err.index] == ')':
             raise UnexpectedParenthesis(err.index) from err
 
 
@@ -75,4 +134,7 @@ class UnexpectedParenthesis(BaseException):
 
 
 class ExpectedParenthesis(BaseException):
+    pass
+
+class NoExpression(BaseException):
     pass
