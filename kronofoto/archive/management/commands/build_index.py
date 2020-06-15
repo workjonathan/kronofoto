@@ -20,7 +20,7 @@ class Command(BaseCommand):
             wordcounts += [
                 WordCount(photo=photo, word=w, field='TE', count=counts[w]/total) for w in counts
             ]
-            counts = sum((Counter(tag.tag.lower().split()) for tag in photo.tags.all()), Counter())
+            counts = sum((Counter(tag.tag.lower().split()) for tag in photo.tags.filter(phototag__accepted=True)), Counter())
             total = sum(counts.values())
             wordcounts += [
                 WordCount(photo=photo, word=w, field='TA', count=counts[w]/total) for w in counts
