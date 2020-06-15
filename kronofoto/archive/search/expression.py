@@ -1,5 +1,5 @@
-from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField
-from django.db.models.functions import Cast, Length, Lower, Replace, Greatest
+from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField
+from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, StrIndex
 
 from functools import reduce
 import operator
@@ -123,9 +123,31 @@ class AccessionNumber(Expression):
         else:
             return 0
 
+class MultiWordTag(Expression):
+    def __init__(self, value):
+        self.value = value.lower()
+        self.field = 'TA_' + '_'.join(self.value.split())
 
 
-class Tag(Expression):
+    def filter1(self):
+        return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
+
+
+    def annotations1(self):
+        tag_minusval = Cast(
+            Length(Replace(Lower(F('phototag__tag__tag')), Value(self.value))), FloatField()
+        )
+        taglen = Cast(Greatest(1.0, Length('phototag__tag__tag')), FloatField())
+        return {self.field: tag_minusval/taglen}
+
+
+    def scoreF(self, negated):
+        if not negated:
+            return 1 - F(self.field)
+        return F(self.field)
+
+
+class SingleWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
@@ -150,8 +172,34 @@ class Tag(Expression):
             return sum(scores)
         return reduce(operator.mul, scores, 1)
 
+Tag = lambda s: MultiWordTag(s) if len(s.split()) > 1 else SingleWordTag(s)
 
-class Term(Expression):
+
+class MultiWordTerm(Expression):
+    def __init__(self, value):
+        self.value = value.lower()
+        self.field = 'TE_' + '_'.join(self.value.split())
+
+
+    def filter1(self):
+        return Q(terms__term__icontains=self.value)
+
+
+    def annotations1(self):
+        term_minusval = Cast(
+            Length(Replace(Lower(F('terms__term')), Value(self.value))), FloatField()
+        )
+        termlen = Cast(Greatest(1.0, Length('terms__term')), FloatField())
+        return {self.field: term_minusval/termlen}
+
+
+    def scoreF(self, negated):
+        if not negated:
+            return 1 - F(self.field)
+        return F(self.field)
+
+
+class SingleWordTerm(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
@@ -176,8 +224,25 @@ class Term(Expression):
             return sum(scores)
         return reduce(operator.mul, scores, 1)
 
+Term = lambda s: MultiWordTerm(s) if len(s.split()) > 1 else SingleWordTerm(s)
 
-class Caption(Expression):
+class MultiWordCaption(Expression):
+    def __init__(self, value):
+        self.value = value.lower()
+        self.caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
+        self.captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
+
+    def filter1(self):
+        return Q(caption__icontains=self.value)
+
+    def scoreF(self, negated):
+        score = self.caption_minusval / self.captionlen
+
+        if not negated:
+            score = 1 - score
+        return score
+
+class SingleWordCaption(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
@@ -205,6 +270,7 @@ class Caption(Expression):
             return 0 if not negated else 1
         return sum(1 for word in words if (not negated and word == self.value) or (negated and word != self.value))/len(words)
 
+Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCaption(s)
 
 class State(Expression):
     def __init__(self, value):
