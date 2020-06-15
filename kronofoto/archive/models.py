@@ -146,6 +146,18 @@ class Photo(models.Model):
         return result
 
 
+class WordCount(models.Model):
+    FIELDS = [
+        ('CA', 'Caption'),
+        ('TA', 'Tag'),
+        ('TE', 'Term'),
+    ]
+    photo = models.ForeignKey(Photo, models.CASCADE)
+    word = models.CharField(max_length=64, blank=True)
+    field = models.CharField(max_length=2, choices=FIELDS)
+    count = models.FloatField()
+
+
 class PhotoTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)

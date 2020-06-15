@@ -1,4 +1,6 @@
-from django.db.models import Q
+from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField
+from django.db.models.functions import Cast, Length, Lower, Replace, Greatest
+
 from functools import reduce
 import operator
 import re
@@ -45,22 +47,49 @@ class Expression:
     def shakeout(self):
         return self
 
+    def filter1(self):
+        return None
+
+    def filter2(self):
+        return None
+
+    def annotations1(self):
+        "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
+        return {}
+
+
 
 
 class Donor(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
-        q = Q(donor__last_name=self.value) | Q(donor__first_name=self.value)
+    def filter1(self):
+        q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
         return q
+
+
+    def scoreF(self, negated):
+        lastname_minusval = Cast(Length(Replace(Lower(F('donor__last_name')), Value(self.value))), FloatField())
+        lastnamelen = Cast(Greatest(1.0, Length('donor__last_name')), FloatField())
+        lastnamebadness = lastname_minusval / lastnamelen
+        firstname_minusval = Cast(Length(Replace(Lower(F('donor__first_name')), Value(self.value))), FloatField())
+        firstnamelen = Cast(Greatest(1, Length('donor__first_name', output_field=FloatField())), FloatField())
+        firstnamebadness = firstname_minusval / firstnamelen
+
+        if negated:
+            score = firstnamebadness * lastnamebadness
+        else:
+            score = 2 - firstnamebadness - lastnamebadness
+        return score ** 4 # raising to fourth power pushes the score down unless the name is very close to an exact match.
+
 
     def score(self, photo, negated):
         ln = fn = 0
         if not negated:
-            if photo.donor.last_name == self.value:
+            if self.value in photo.donor.last_name.lower():
                 ln = 1
-            if photo.donor.first_name == self.value:
+            if self.value in photo.donor.first_name.lower():
                 fn = 1
             return ln + fn
         else:
@@ -75,9 +104,16 @@ class AccessionNumber(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(id=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(id=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(id=self.value, then=0), default=1, output_field=FloatField())
+
 
     def score(self, photo, negated):
         if negated and photo.id != self.value:
@@ -93,9 +129,17 @@ class Tag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
-        q = Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
-        return q
+    def filter2(self):
+        return Q(wordcount__word=self.value, wordcount__field='TA')
+
+    def annotations1(self):
+        return {'TA_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+
+    def scoreF(self, negated):
+        if negated:
+            return 1 - F('TA_' + self.value)
+        else:
+            return F('TA_' + self.value)
 
     def score(self, photo, negated):
         scores = []
@@ -111,9 +155,17 @@ class Term(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
-        q = Q(terms__term__icontains=self.value)
-        return q
+    def filter2(self):
+        return Q(wordcount__word=self.value, wordcount__field='TE')
+
+    def annotations1(self):
+        return {'TE_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+
+    def scoreF(self, negated):
+        if negated:
+            return 1 - F('TE_' + self.value)
+        else:
+            return F('TE_' + self.value)
 
     def score(self, photo, negated):
         scores = []
@@ -134,8 +186,18 @@ class Caption(Expression):
             return None
         return self
 
-    def evaluate(self):
-        return Q(caption__icontains=self.value)
+    def filter2(self):
+        return Q(wordcount__word=self.value, wordcount__field='CA')
+
+    def annotations1(self):
+        return {'CA_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+
+    def scoreF(self, negated):
+        if negated:
+            return 1 - F('CA_' + self.value)
+        else:
+            return F('CA_' + self.value)
+
 
     def score(self, photo, negated):
         words = [w.lower() for w in re.split(r'\W+', photo.caption)]
@@ -148,9 +210,15 @@ class State(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(state__icontains=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(state__icontains=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(state__icontains=self.value, then=0), default=1, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.state == self.value or negated and photo.state != self.value else 0
@@ -160,9 +228,16 @@ class Country(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(country__icontains=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(country__icontains=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(country__icontains=self.value, then=0), default=1, output_field=FloatField())
+
 
     def score(self, photo, negated):
         return 1 if not negated and photo.country == self.value or negated and photo.country != self.value else 0
@@ -171,9 +246,15 @@ class County(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(county__icontains=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(county__icontains=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(county__icontains=self.value, then=0), default=1, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
@@ -183,9 +264,15 @@ class City(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(city__icontains=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(city__icontains=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(city__icontains=self.value, then=0), default=1, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
@@ -194,9 +281,15 @@ class YearEquals(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self):
+    def filter1(self):
         q = Q(year=self.value)
         return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(year=self.value, then=1.0), default=0.0, output_field=FloatField())
+        else:
+            return Case(When(year=self.value, then=0.0), default=1.0, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.year == self.value or negated and photo.year != self.value else 0
@@ -206,8 +299,19 @@ class Not(Expression):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self):
-        return ~self.value.evaluate()
+    def filter1(self):
+        v = self.value.filter1()
+        return ~v if v else v
+
+    def filter2(self):
+        v = self.value.filter2()
+        return ~v if v else v
+
+    def annotations1(self):
+        return self.value.annotations1()
+
+    def scoreF(self, negated):
+        return self.value.scoreF(not negated)
 
     def score(self, photo, negated):
         return self.value.score(photo, not negated)
@@ -230,6 +334,16 @@ class BinaryOperator(Expression):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
 
+    def filter2(self):
+        l = self.left.filter2()
+        r = self.right.filter2()
+        if l and r:
+            return l | r
+        return l if l else r
+
+    def annotations1(self):
+        return dict(**self.left.annotations1(), **self.right.annotations1())
+
     def shakeout(self):
         left = self.left.shakeout()
         right = self.right.shakeout()
@@ -241,8 +355,17 @@ class BinaryOperator(Expression):
 
 
 class And(BinaryOperator):
-    def evaluate(self):
-        return self.left.evaluate() & self.right.evaluate()
+    def filter1(self):
+        l = self.left.filter1()
+        r = self.right.filter1()
+        if l and r:
+            return l & r
+        return l if l else r
+
+    def scoreF(self, negated):
+        if negated:
+            return self.left.scoreF(negated) + self.right.scoreF(negated)
+        return self.left.scoreF(negated) * self.right.scoreF(negated)
 
     def score(self, photo, negated):
         if negated:
@@ -251,8 +374,17 @@ class And(BinaryOperator):
 
 
 class Or(BinaryOperator):
-    def evaluate(self):
-        return self.left.evaluate() | self.right.evaluate()
+    def filter1(self):
+        l = self.left.filter1()
+        r = self.right.filter1()
+        if l and r:
+            return l | r
+        return l if l else r
+
+    def scoreF(self, negated):
+        if negated:
+            return self.left.scoreF(negated) * self.right.scoreF(negated)
+        return self.left.scoreF(negated) + self.right.scoreF(negated)
 
     def score(self, photo, negated):
         if not negated:
