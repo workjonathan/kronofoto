@@ -34,6 +34,7 @@ register_converter(NegativeIntConverter, 'negint')
 urlpatterns = [
     path('', views.FrontPage.as_view()),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/register/', views.RegisterAccount.as_view(), name='register-account'),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('search/', views.SearchResultsView.as_view(), name='search-results'),

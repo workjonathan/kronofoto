@@ -1,5 +1,24 @@
 from django import forms
 from .models import Tag, PhotoTag, Collection
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+
+
+class RegisterUserForm(forms.Form):
+    username = forms.CharField()
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput())
+    password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput())
+
+    def clean(self):
+        data = super().clean()
+        if data['password1'] != data['password2']:
+            self.add_error('password1', 'The password fields must be identical')
+        if User.objects.filter(username=data['username']).exists():
+            self.add_error('username', 'That username is taken')
+        validate_password(data['password1'])
+        return data
+
+
 
 class TagForm(forms.Form):
     tag = forms.CharField()
