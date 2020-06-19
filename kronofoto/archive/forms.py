@@ -5,17 +5,18 @@ from django.contrib.auth.password_validation import validate_password
 
 
 class RegisterUserForm(forms.Form):
-    username = forms.CharField()
+    email = forms.EmailField()
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput())
     password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput())
 
     def clean(self):
         data = super().clean()
-        if User.objects.filter(username=data['username']).exists():
-            self.add_error('username', 'That username is taken')
-        validate_password(data['password1'])
-        if data['password1'] != data['password2']:
-            self.add_error('password1', 'The password fields must be identical')
+        if 'email' in data and User.objects.filter(username=data['email']).exists():
+            self.add_error('email', 'There is already an account associated with that email address.')
+        if 'password1' in data:
+            validate_password(data['password1'])
+            if 'password2' not in data or data['password1'] != data['password2']:
+                self.add_error('password1', 'The password fields must be identical')
         return data
 
 

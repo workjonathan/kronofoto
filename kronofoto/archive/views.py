@@ -48,9 +48,9 @@ class RegisterAccount(FormView):
         response = urllib.request.urlopen(req)
         result = json.loads(response.read().decode())
         if result['success']:
-            username = form.cleaned_data['username']
+            username = form.cleaned_data['email']
             password = form.cleaned_data['password1']
-            user = User.objects.create_user(username, password=password)
+            user = User.objects.create_user(username, password=password, email=username)
             login(self.request, user)
         else:
             self.success_url = reverse('register-account')
