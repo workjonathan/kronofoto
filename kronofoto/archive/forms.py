@@ -11,13 +11,12 @@ class RegisterUserForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        if data['password1'] != data['password2']:
-            self.add_error('password1', 'The password fields must be identical')
         if User.objects.filter(username=data['username']).exists():
             self.add_error('username', 'That username is taken')
         validate_password(data['password1'])
+        if data['password1'] != data['password2']:
+            self.add_error('password1', 'The password fields must be identical')
         return data
-
 
 
 class TagForm(forms.Form):
@@ -27,10 +26,12 @@ class TagForm(forms.Form):
         tag, _ = Tag.objects.get_or_create(tag=self.cleaned_data['tag'])
         phototag = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': False})
 
+
 class CollectionForm(forms.ModelForm):
     class Meta:
         model = Collection
         fields = ['name', 'visibility']
+
 
 class AddToListForm(forms.Form):
     collection = forms.ChoiceField(required=False)
