@@ -353,7 +353,6 @@ class PhotoView(JSONResponseMixin, TemplateView):
         return self.render(context, **kwargs)
 
 
-
 class JSONPhotoView(PhotoView):
 
     def render(self, context, **kwargs):
@@ -366,9 +365,12 @@ class GridView(ListView):
     template_name = 'archive/photo_grid.html'
 
     def get_queryset(self):
-        return Photo.objects.filter(
+        qs = Photo.objects.filter(
             build_query(self.request.GET, self.request.user)
         ).order_by('year', 'id')
+        if qs.count() == 1:
+            self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+        return qs
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
@@ -390,6 +392,11 @@ class GridView(ListView):
             links[3]['url'] = self.format_page_url(paginator.num_pages)
         context['links'] = links
         return context
+
+    def render_to_response(self, context, **kwargs):
+        if hasattr(self, 'redirect'):
+            return self.redirect
+        return super().render_to_response(context, **kwargs)
 
 
 class SearchResultsView(GridView):
@@ -415,7 +422,10 @@ class SearchResultsView(GridView):
             except NoExpression:
                 self.query = ''
                 return []
-        return sort(expr, evaluate(expr, Photo.objects))
+        qs = sort(expr, evaluate(expr, Photo.objects))
+        if qs.count() == 1:
+            self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+        return qs
 
 
 class Profile(ListView):
