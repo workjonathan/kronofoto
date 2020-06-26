@@ -2,10 +2,17 @@ import parsy
 from .expression import *
 
 number = parsy.regex(r'-?[0-9]+').map(int)
+#numberplus = parsy.regex(r'-?[0-9]+\+').map(int)
 quoted = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
 string = quoted | parsy.regex(r'[^\s\(\)]+')
 
-yearExpr = parsy.string('year:') >> number.map(YearEquals)
+yearExpr = parsy.string('year:') >> (
+      parsy.seq((number << parsy.string('-')).map(YearGTE), number.map(YearLTE)).combine(And)
+    | (number << parsy.string('-')).map(YearLTE)
+    | (number << parsy.string('+')).map(YearGTE)
+    | number.map(YearEquals)
+)
+
 tagExpr = parsy.string('tag:') >> string.map(Tag)
 donorExpr = parsy.string('donor:') >> string.map(Donor)
 termExpr = parsy.string('term:') >> string.map(Term)

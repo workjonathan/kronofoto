@@ -58,8 +58,6 @@ class Expression:
         return {}
 
 
-
-
 class Donor(Expression):
     def __init__(self, value):
         self.value = value.lower()
@@ -82,7 +80,6 @@ class Donor(Expression):
         else:
             score = 2 - firstnamebadness - lastnamebadness
         return score ** 4 # raising to fourth power pushes the score down unless the name is very close to an exact match.
-
 
     def score(self, photo, negated):
         ln = fn = 0
@@ -114,7 +111,6 @@ class AccessionNumber(Expression):
         else:
             return Case(When(id=self.value, then=0), default=1, output_field=FloatField())
 
-
     def score(self, photo, negated):
         if negated and photo.id != self.value:
             return 1
@@ -122,6 +118,7 @@ class AccessionNumber(Expression):
             return 1
         else:
             return 0
+
 
 class MultiWordTag(Expression):
     def __init__(self, value):
@@ -342,6 +339,37 @@ class City(Expression):
 
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
+
+
+class YearLTE(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def filter1(self):
+        q = Q(year__lte=self.value)
+        return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(year__lte=self.value, then=1.0), default=0.0, output_field=FloatField())
+        else:
+            return Case(When(year__lte=self.value, then=0.0), default=1.0, output_field=FloatField())
+
+
+class YearGTE(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def filter1(self):
+        q = Q(year__gte=self.value)
+        return q
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(year__gte=self.value, then=1.0), default=0.0, output_field=FloatField())
+        else:
+            return Case(When(year__gte=self.value, then=0.0), default=1.0, output_field=FloatField())
+
 
 class YearEquals(Expression):
     def __init__(self, value):
