@@ -2,6 +2,7 @@
 <html lang="en">
 {% load static %}
 {% load login %}
+{% load searchform %}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +23,8 @@
         <li>0008087 IMG</li>
         <li>New</li>
         <li id="search-box-container">
+        {% make_search_form %}
+              {% comment %}
           <form action="/search/" method="get">
               <label for="search-box">
                 <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
@@ -29,6 +32,7 @@
               </label>
               <input type="submit" style="display:none">
           </form>
+              {% endcomment %}
         </li>
         <li>
           <img src="{% static "assets/images/04-grid.svg" %}" alt="Grid icon">

@@ -1,7 +1,22 @@
 from django import forms
-from .models import Tag, PhotoTag, Collection
+from .models import Tag, PhotoTag, Collection, Term, Donor, Photo
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+
+
+generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
+
+
+class SearchForm(forms.Form):
+    query = forms.CharField(required=False)
+    term = forms.ModelChoiceField(required=False, queryset=Term.objects.all().order_by('term'))
+    startYear = forms.IntegerField(required=False)
+    endYear = forms.IntegerField(required=False)
+    donor = forms.ModelChoiceField(required=False, queryset=Donor.objects.all().order_by('last_name', 'first_name'))
+    city = forms.ChoiceField(required=False, choices=generate_choices('city'))
+    county = forms.ChoiceField(required=False, choices=generate_choices('county'))
+    state = forms.ChoiceField(required=False, choices=generate_choices('state'))
+    country = forms.ChoiceField(required=False, choices=generate_choices('country'))
 
 
 class RegisterUserForm(forms.Form):

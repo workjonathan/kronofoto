@@ -5,7 +5,7 @@ from django.db.models import Min, Count, Q
 import urllib
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.contrib.auth.models import User
-from .forms import TagForm, AddToListForm, RegisterUserForm
+from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
 from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.template.loader import render_to_string
@@ -64,6 +64,7 @@ class AddTagView(LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo'] = self.photo
+        context['search-form'] = SearchForm()
         return context
 
     def dispatch(self, request, photo):
@@ -302,6 +303,7 @@ class PhotoView(JSONResponseMixin, TemplateView):
                 last.next = p
             last = p
 
+        context['search-form'] = SearchForm()
         context["page"] = this_page
         context["next_page"] = next_page
         context["prev_page"] = prev_page
@@ -372,6 +374,7 @@ class GridView(ListView):
             self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
         return qs
 
+
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
 
@@ -381,6 +384,7 @@ class GridView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
+        context['search-form'] = SearchForm()
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
         if page_obj.number != 1:
@@ -401,36 +405,48 @@ class GridView(ListView):
 
 class SearchResultsView(GridView):
     def format_page_url(self, num):
-        return "{}?{}".format(reverse('search-results'), urlencode({'q': self.query, 'page': num}))
+        params = self.request.GET.copy()
+        params['page'] = num
+        return "{}?{}".format(reverse('search-results'), params.urlencode())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['q'] = self.query
+        self.form = SearchForm(self.request.GET)
+        context['search-form'] = self.form
         return context
 
     def get_queryset(self):
-        self.query = self.request.GET.get('q')
-        try:
-            parser = Parser.tokenize(self.query)
-            expr = parser.parse().shakeout()
-        except NoExpression:
-            self.query = ''
-            return []
-        except:
+        self.form = SearchForm(self.request.GET)
+        form = self.form
+
+        if form.is_valid():
+            self.query = form.cleaned_data['query']
             try:
-                expr = parser.simple_parse().shakeout()
+                parser = Parser.tokenize(self.query)
+                expr = parser.parse().shakeout()
             except NoExpression:
                 self.query = ''
                 return []
-        qs = sort(expr, evaluate(expr, Photo.objects))
-        if qs.count() == 1:
-            self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
-        return qs
+            except:
+                try:
+                    expr = parser.simple_parse().shakeout()
+                except NoExpression:
+                    self.query = ''
+                    return []
+            qs = sort(expr, evaluate(expr, Photo.objects))
+            if qs.count() == 1:
+                self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+            return qs
 
 
 class Profile(ListView):
     model = Collection
     template_name = 'archive/user_page.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search-form'] = SearchForm()
+        return context
 
     def get_queryset(self):
         if self.request.user.get_username() == self.kwargs['username']:
