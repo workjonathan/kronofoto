@@ -12,7 +12,7 @@ There is a command to load existing data from the standard arbitrary csv format.
 
 Another command attempts to find images in a directory and associate them with those records. It's currently misses a lot of info.
 
-    ./manage.py importphotos testphotos/
+    ./manage.py findphotos testphotos/
     
 You may also need to build the search index:
 
