@@ -6,6 +6,11 @@ Hopefully all tests will pass when you run tests:
     
 Currently the test script writes out a ton of jpeg files while testing and doesn't delete them. That should be fixed at some point.
 
+Run the migrations:
+
+    ./manage.py migrate
+
+
 There is a command to load existing data from the standard arbitrary csv format. This command only loads records into a table that will not be needed later. 
 
     ./manage.py importcsv fortepandata.csv
