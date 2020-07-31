@@ -16,7 +16,7 @@ Another command attempts to find images in a directory and associate them with t
     
 You may also need to build the search index:
 
-    ./manage build_index
+    ./manage.py build_index
 
 The test server can then be started up:
 
