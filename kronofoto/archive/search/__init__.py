@@ -17,6 +17,3 @@ def evaluate(expression, qs):
             .order_by('-relevance', 'year', 'id')
     )
 
-
-def sort(expression, qs):
-    return qs

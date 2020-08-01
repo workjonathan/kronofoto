@@ -25,7 +25,7 @@ from math import floor
 from itertools import islice,chain
 
 from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
-from .search import evaluate, sort
+from .search import evaluate
 
 class RegisterAccount(FormView):
     form_class = RegisterUserForm
@@ -411,7 +411,6 @@ class SearchResultsView(GridView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        self.form = SearchForm(self.request.GET)
         context['search-form'] = self.form
         return context
 
@@ -420,20 +419,12 @@ class SearchResultsView(GridView):
         form = self.form
 
         if form.is_valid():
-            self.query = form.cleaned_data['query']
             try:
-                parser = Parser.tokenize(self.query)
-                expr = parser.parse().shakeout()
+                expr = form.as_expression()
             except NoExpression:
                 self.query = ''
                 return []
-            except:
-                try:
-                    expr = parser.simple_parse().shakeout()
-                except NoExpression:
-                    self.query = ''
-                    return []
-            qs = sort(expr, evaluate(expr, Photo.objects))
+            qs = evaluate(expr, Photo.objects)
             if qs.count() == 1:
                 self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
             return qs

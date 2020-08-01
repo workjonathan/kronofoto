@@ -57,6 +57,34 @@ class Expression:
         "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
         return {}
 
+class TermExactly(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def filter1(self):
+        return Q(terms__id=self.value.id)
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(terms__id=self.value.id, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(terms__id=self.value.id, then=0), default=1, output_field=FloatField())
+
+class DonorExactly(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def filter1(self):
+        return Q(donor__id=self.value.id)
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(donor__id=self.value.id, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(donor__id=self.value.id, then=0), default=1, output_field=FloatField())
+
+
+
 
 class Donor(Expression):
     def __init__(self, value):

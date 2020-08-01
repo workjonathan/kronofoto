@@ -2,6 +2,9 @@ from django import forms
 from .models import Tag, PhotoTag, Collection, Term, Donor, Photo
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from .search import expression
+from .search.parser import Parser, NoExpression
+from functools import reduce
 
 
 generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
@@ -17,6 +20,42 @@ class SearchForm(forms.Form):
     county = forms.ChoiceField(required=False, choices=generate_choices('county'))
     state = forms.ChoiceField(required=False, choices=generate_choices('state'))
     country = forms.ChoiceField(required=False, choices=generate_choices('country'))
+    def as_expression(self):
+        form_exprs = []
+        try:
+            parser = Parser.tokenize(self.cleaned_data['query'])
+            form_exprs.append(parser.parse().shakeout())
+        except NoExpression:
+            pass
+        except:
+            try:
+                form_exprs.append(parser.simple_parse().shakeout())
+            except NoExpression:
+                pass
+        startYear = endYear = None
+        if self.cleaned_data['term']:
+            form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
+        if self.cleaned_data['startYear']:
+            startYear = expression.YearGTE(self.cleaned_data['startYear'])
+        if self.cleaned_data['endYear']:
+            endYear = expression.YearLTE(self.cleaned_data['endYear'])
+        if startYear and endYear:
+            form_exprs.append(startYear & endYear)
+        elif startYear:
+            form_exprs.append(startYear)
+        elif endYear:
+            form_exprs.append(endYear)
+        if self.cleaned_data['donor']:
+            form_exprs.append(expression.DonorExactly(self.cleaned_data['donor']))
+        if self.cleaned_data['city']:
+            form_exprs.append(expression.City(self.cleaned_data['city']))
+        if self.cleaned_data['state']:
+            form_exprs.append(expression.State(self.cleaned_data['state']))
+        if self.cleaned_data['country']:
+            form_exprs.append(expression.Country(self.cleaned_data['country']))
+        if len(form_exprs):
+            return reduce(expression.Or, form_exprs)
+        raise NoExpression
 
 
 class RegisterUserForm(forms.Form):
