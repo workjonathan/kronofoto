@@ -421,13 +421,12 @@ class SearchResultsView(GridView):
         if form.is_valid():
             try:
                 expr = form.as_expression()
+                qs = evaluate(expr, Photo.objects)
+                if qs.count() == 1:
+                    self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+                return qs
             except NoExpression:
-                self.query = ''
                 return []
-            qs = evaluate(expr, Photo.objects)
-            if qs.count() == 1:
-                self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
-            return qs
 
 
 class Profile(ListView):
@@ -483,7 +482,10 @@ class AddToList(LoginRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['collections'] = [(collection.id, collection.name) for collection in Collection.objects.filter(owner=self.request.user)]
+        kwargs['collections'] = [
+            (collection.id, collection.name)
+            for collection in Collection.objects.filter(owner=self.request.user)
+        ]
         kwargs['collections'].append((None, 'New List'))
         return kwargs
 

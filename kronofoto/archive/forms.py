@@ -20,8 +20,10 @@ class SearchForm(forms.Form):
     county = forms.ChoiceField(required=False, choices=generate_choices('county'))
     state = forms.ChoiceField(required=False, choices=generate_choices('state'))
     country = forms.ChoiceField(required=False, choices=generate_choices('country'))
+
     def as_expression(self):
         form_exprs = []
+        year_exprs = []
         try:
             parser = Parser.tokenize(self.cleaned_data['query'])
             form_exprs.append(parser.parse().shakeout())
@@ -32,19 +34,14 @@ class SearchForm(forms.Form):
                 form_exprs.append(parser.simple_parse().shakeout())
             except NoExpression:
                 pass
-        startYear = endYear = None
         if self.cleaned_data['term']:
             form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
         if self.cleaned_data['startYear']:
-            startYear = expression.YearGTE(self.cleaned_data['startYear'])
+            year_exprs.append(expression.YearGTE(self.cleaned_data['startYear']))
         if self.cleaned_data['endYear']:
-            endYear = expression.YearLTE(self.cleaned_data['endYear'])
-        if startYear and endYear:
-            form_exprs.append(startYear & endYear)
-        elif startYear:
-            form_exprs.append(startYear)
-        elif endYear:
-            form_exprs.append(endYear)
+            year_exprs.append(expression.YearLTE(self.cleaned_data['endYear']))
+        if len(year_exprs) > 0:
+            form_exprs.append(reduce(expression.And, year_exprs))
         if self.cleaned_data['donor']:
             form_exprs.append(expression.DonorExactly(self.cleaned_data['donor']))
         if self.cleaned_data['city']:
