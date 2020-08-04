@@ -19,6 +19,7 @@ from archive import views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView
+from django.views.generic.base import TemplateView
 
 class NegativeIntConverter:
     regex = '-?\d+'
@@ -32,7 +33,11 @@ class NegativeIntConverter:
 register_converter(NegativeIntConverter, 'negint')
 
 urlpatterns = [
-    path('', views.FrontPage.as_view()),
+    path('', views.FrontPage.as_view(), name='random-image'),
+    path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
+    path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
+    path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
+    path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/register/', views.RegisterAccount.as_view(), name='register-account'),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
