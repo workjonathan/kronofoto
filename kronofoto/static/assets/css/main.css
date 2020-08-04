@@ -1,0 +1,120 @@
+@font-face {
+  font-family: 'Gotham';
+  font-weight: normal;
+  src: url('../media/Gotham\ Book\ Regular.otf');
+}
+
+@font-face {
+  font-family: 'Gotham Narrow';
+  font-weight: normal;
+  src: url('../media/Gotham\ Narrow\ Medium.otf');
+}
+
+@font-face {
+  font-family: 'Gotham Narrow';
+  font-weight: lighter;
+  src: url('../media/Gotham\ Narrow\ Book.otf');
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Gotham', sans-serif;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 300px auto 300px;
+}
+
+nav {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+nav a#home img {
+  width: 70%;
+}
+
+nav li {
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+  list-style: none;
+  padding: 7px 0;
+}
+
+nav ul {
+  background-color: #efeff1;
+}
+
+li[active] {
+  color: #6e86bc;
+  position: relative;
+
+}
+li[active]::before {
+  content: '';
+  position: absolute;
+  right: 110%;
+  width: 0; 
+  height: 0; 
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid #6e86bc;
+}
+li[active]::after {
+  content: '';
+  position: absolute;
+  right: 114%;
+  top: 0;
+  width: 15px;
+  height: 100%;
+  background-color: #6e86bc;
+}
+
+main li img {
+  width: 100%;
+  max-width: 300px;
+  display: block;
+  padding: 15px 0;
+}
+
+h1, h2, h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.1ch;
+}
+
+p {
+  font-weight: lighter;
+}
+
+.key-points-figures {
+  display: flex;
+}
+
+.key-points-figures figure {
+  width: 50%;
+  margin: 0;
+  padding: 5px;
+}
+
+.key-points-figures figcaption {
+  font-size: 11px;
+}
+
+figure img {
+  width: 100%;
+}
+
+.possible-uses-figure figure {
+  display: flex;
+}
+
+.possible-uses-figure figcaption {
+  font-size: 11px;
+}
+
+.keyword {
+  text-transform: uppercase;
+  color: #6e86bc;
+}
