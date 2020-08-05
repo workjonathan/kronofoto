@@ -5,6 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from .search import expression
 from .search.parser import Parser, NoExpression
 from functools import reduce
+from .token import UserEmailVerifier
 
 
 generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
@@ -60,6 +61,10 @@ class RegisterUserForm(forms.Form):
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput())
     password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput())
 
+    def __init__(self, user_checker=UserEmailVerifier(), **kwargs):
+        self.user_checker = user_checker
+        super().__init__(**kwargs)
+
     def clean(self):
         data = super().clean()
         if 'email' in data and User.objects.filter(username=data['email']).exists():
@@ -69,6 +74,12 @@ class RegisterUserForm(forms.Form):
             if 'password2' not in data or data['password1'] != data['password2']:
                 self.add_error('password1', 'The password fields must be identical')
         return data
+
+    def create_user(self):
+        username = self.cleaned_data['email']
+        password = self.cleaned_data['password1']
+        user = User.objects.create_user(username, password=password, email=username, is_active=False)
+        self.user_checker.verify(user)
 
 
 class TagForm(forms.Form):

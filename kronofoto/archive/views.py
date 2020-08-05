@@ -27,6 +27,21 @@ from itertools import islice,chain
 from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
 from .search import evaluate
 
+from .token import UserEmailVerifier
+
+
+class VerifyToken(RedirectView):
+    permanent = False
+    pattern_name = 'random-image'
+    verifier = UserEmailVerifier()
+
+    def get_redirect_url(self, *args, **kwargs):
+        user = self.verifier.verify_token(uid=kwargs['uid'], token=kwargs['token'])
+        if user:
+            login(self.request, user)
+        return super().get_redirect_url()
+
+
 class RegisterAccount(FormView):
     form_class = RegisterUserForm
     template_name = 'archive/register.html'
@@ -37,7 +52,7 @@ class RegisterAccount(FormView):
         context['RECAPTCHA_SITE_KEY'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
         return context
 
-    def form_valid(self, form):
+    def user_is_human(self):
         recaptcha_response = self.request.POST.get('g-recaptcha-response')
         data = {
             'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
@@ -47,14 +62,20 @@ class RegisterAccount(FormView):
         req = urllib.request.Request('https://www.google.com/recaptcha/api/siteverify', data=args)
         response = urllib.request.urlopen(req)
         result = json.loads(response.read().decode())
-        if result['success']:
-            username = form.cleaned_data['email']
-            password = form.cleaned_data['password1']
-            user = User.objects.create_user(username, password=password, email=username)
-            login(self.request, user)
+        return result['success']
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+    def form_valid(self, form):
+        if self.user_is_human():
+            form.create_user()
+            self.success_url = reverse('email-sent')
         else:
             self.success_url = reverse('register-account')
         return super().form_valid(form)
+
 
 class AddTagView(LoginRequiredMixin, FormView):
     template_name = 'archive/add_tag.html'
