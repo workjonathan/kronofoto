@@ -28,8 +28,8 @@
             {% endif %}
             </li>
             <li><span class="field-name">Tags:</span>
-            {% if photo.get_accepted_tags %}
-                {% for tag in photo.get_accepted_tags %}{% if not forloop.first %},{% endif %} 
+            {% if tags %}
+                {% for tag in tags %}{% if not forloop.first %},{% endif %} 
                 <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
             {% else %}
             None

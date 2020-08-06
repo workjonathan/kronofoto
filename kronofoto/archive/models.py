@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
@@ -70,8 +71,11 @@ class Photo(models.Model):
     thumbnail = models.ImageField(null=True, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT)
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
-    def get_accepted_tags(self):
-        return self.tags.filter(phototag__accepted=True)
+    def get_accepted_tags(self, user=None):
+        filter_args = Q(phototag__accepted=True)
+        if user:
+            filter_args |= Q(phototag__creator__pk=user.pk)
+        return self.tags.filter(filter_args)
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
     terms = models.ManyToManyField(Term, blank=True)
@@ -162,6 +166,7 @@ class PhotoTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
+    creator = models.ManyToManyField(User)
 
 
 class PrePublishPhoto(models.Model):

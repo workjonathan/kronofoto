@@ -94,7 +94,7 @@ class AddTagView(LoginRequiredMixin, FormView):
         return super().dispatch(request)
 
     def form_valid(self, form):
-        form.add_tag(self.photo)
+        form.add_tag(self.photo, user=self.request.user)
         return super().form_valid(form)
 
 
@@ -187,6 +187,7 @@ def build_query(getparams, user):
     }
     if user.is_authenticated:
         merges['collection__id'][0] |= Q(collection__owner=user)
+        merges['phototag__tag__slug'][0] |= Q(phototag__creator=user)
     filtervals = (
         (replacements.get(param, param), getparams.get(param))
         for param in params

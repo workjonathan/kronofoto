@@ -85,9 +85,11 @@ class RegisterUserForm(forms.Form):
 class TagForm(forms.Form):
     tag = forms.CharField()
 
-    def add_tag(self, photo):
+    def add_tag(self, photo, user):
         tag, _ = Tag.objects.get_or_create(tag=self.cleaned_data['tag'])
-        phototag = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': False})
+        phototag, _ = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': False})
+        phototag.creator.add(user)
+        phototag.save()
 
 
 class CollectionForm(forms.ModelForm):
