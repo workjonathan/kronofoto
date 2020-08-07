@@ -347,7 +347,7 @@ class PhotoView(JSONResponseMixin, TemplateView):
             }
         return {
             'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}), self.request.GET.urlencode()),
-            'h700': staticfiles_storage.url(context['photo'].h700.url),
+            'h700': context['photo'].h700.url,
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
             'backward': {
