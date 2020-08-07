@@ -8,7 +8,7 @@
   <main>
     <article class="fi-image">
       <figure>
-        <img id="fi-image" src="{% static photo.h700.url %}" alt="Alt text for the image">
+        <img id="fi-image" src="{{MEDIA_URL}}{{ photo.h700.url }}" alt="Alt text for the image">
       </figure>
       <a id="fi-arrow-left" class="control previous"
       {% if photo.previous %}

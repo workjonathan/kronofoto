@@ -63,4 +63,5 @@ urlpatterns = [
     path('review/<int:pk>/approve/yes', views.ApprovePhoto.as_view(approve=True), name='photo-approve'),
     path('review/<int:pk>/approve/no', views.ApprovePhoto.as_view(approve=False), name='photo-reject'),
     path('admin/', admin.site.urls),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\
+  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
