@@ -1,3 +1,4 @@
+const scrollSpeed = 4 // seconds to scroll through one set of 10 images
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
     toggleElement(el);
@@ -96,9 +97,10 @@ const scrollAction = (element, direction, target) => evt => {
     } else if (evt.event === 'startScroll') {
         const scrollEnd = animationEnd(carousel)
         void carousel.offsetWidth
-        carousel.setAttribute('style', `animation: from-100-to${target} 10s linear;`)
+        carousel.setAttribute('style', `animation: from-100-to${target} ${scrollSpeed}s linear;`)
+
         p = Promise.race([
-            mouseUp(element).then(() => ({event: 'click', position: Math.round(-100 - (new Date() - evt.begin)/(-target - 100))})),
+            mouseUp(element).then(() => ({event: 'click', position: Math.round(-10 * scrollSpeed - (new Date() - evt.begin)/(-target - scrollSpeed * 10))})),
             scrollEnd.then(() => ({event: 'startScroll', begin: new Date()})),
         ])
     }
