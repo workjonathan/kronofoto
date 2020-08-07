@@ -51,18 +51,21 @@ const loadstate = data => {
     document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
     document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
     forward.setAttribute('href', data.forward.url)
+    forward.setAttribute('data-json-href', data.forward.json_url)
     backward.setAttribute('href', data.backward.url)
+    backward.setAttribute('data-json-href', data.backward.json_url)
 }
 
 
 let current_state = JSON.parse(document.getElementById('initial-state').textContent)
 window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
 document.addEventListener('click', e => {
-    if (e.target.getAttribute('data-json-href')) {
+    const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
+    if (jsonhref) {
         e.preventDefault()
         id = e.target.getAttribute('id')
         if (id !== 'forward' && id !== 'backward') {
-            request('GET', e.target.getAttribute('data-json-href')).then(data => {
+            request('GET', jsonhref).then(data => {
                 loadstate(data)
                 window.history.pushState(data, 'Fortepan Iowa', data.url)
 
