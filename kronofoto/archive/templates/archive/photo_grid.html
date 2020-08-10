@@ -1,7 +1,5 @@
 {% extends "archive/base.html" %}
 
-{% load static %}
-
 {% block content %}
 <div id="position">Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
 </div>
@@ -12,7 +10,7 @@
 </div>
 <ul>
     {% for photo in page_obj %}
-    <li><a href="{% url 'photoview' 1 photo.accession_number %}"><img src="{% static photo.h700.url %}"/></a></li>
+    <li><a href="{% url 'photoview' 1 photo.accession_number %}"><img src="{{ MEDIA_URL }}{{ photo.h700.url }}"/></a></li>
     {% endfor %}
 </ul>
 {% endblock %}
