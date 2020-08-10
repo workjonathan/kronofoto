@@ -71,6 +71,11 @@ class Photo(models.Model):
     thumbnail = models.ImageField(null=True, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT)
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
+
+    @classmethod
+    def count(cls):
+        return cls.objects.filter(is_published=True).count()
+
     def get_accepted_tags(self, user=None):
         filter_args = Q(phototag__accepted=True)
         if user:

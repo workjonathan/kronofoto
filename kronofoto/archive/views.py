@@ -30,6 +30,13 @@ from .search import evaluate
 from .token import UserEmailVerifier
 
 
+class BaseTemplateMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['photo_count'] = Photo.count()
+        return context
+
+
 class VerifyToken(RedirectView):
     permanent = False
     pattern_name = 'random-image'
@@ -42,7 +49,7 @@ class VerifyToken(RedirectView):
         return super().get_redirect_url()
 
 
-class RegisterAccount(FormView):
+class RegisterAccount(BaseTemplateMixin, FormView):
     form_class = RegisterUserForm
     template_name = 'archive/register.html'
     success_url = '/'
@@ -77,7 +84,7 @@ class RegisterAccount(FormView):
         return super().form_valid(form)
 
 
-class AddTagView(LoginRequiredMixin, FormView):
+class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/add_tag.html'
     form_class = TagForm
     success_url = '/'
@@ -85,7 +92,6 @@ class AddTagView(LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo'] = self.photo
-        context['search-form'] = SearchForm()
         return context
 
     def dispatch(self, request, photo):
@@ -234,10 +240,10 @@ class JSONResponseMixin:
         return context
 
 
-class PhotoView(JSONResponseMixin, TemplateView):
+class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     template_name = "archive/photo.html"
     def get_context_data(self, page, photo):
-        context = super().get_context_data()
+        context = super(PhotoView, self).get_context_data()
         q = build_query(self.request.GET, self.request.user)
 
         # yikes
@@ -325,7 +331,6 @@ class PhotoView(JSONResponseMixin, TemplateView):
                 last.next = p
             last = p
 
-        context['search-form'] = SearchForm()
         context["page"] = this_page
         context["next_page"] = next_page
         context["prev_page"] = prev_page
@@ -383,7 +388,7 @@ class JSONPhotoView(PhotoView):
         return self.render_to_json_response(context, **kwargs)
 
 
-class GridView(ListView):
+class GridView(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = 50
     template_name = 'archive/photo_grid.html'
@@ -406,7 +411,6 @@ class GridView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
-        context['search-form'] = SearchForm()
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
         if page_obj.number != 1:
@@ -451,13 +455,12 @@ class SearchResultsView(GridView):
                 return []
 
 
-class Profile(ListView):
+class Profile(BaseTemplateMixin, ListView):
     model = Collection
     template_name = 'archive/user_page.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search-form'] = SearchForm()
         return context
 
     def get_queryset(self):
@@ -468,7 +471,7 @@ class Profile(ListView):
             return Collection.objects.filter(owner=user, visibility='PU')
 
 
-class CollectionCreate(LoginRequiredMixin, CreateView):
+class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
     model = Collection
     fields = ['name', 'visibility']
     template_name = 'archive/collection_create.html'
@@ -481,7 +484,7 @@ class CollectionCreate(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class CollectionDelete(LoginRequiredMixin, DeleteView):
+class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
     model = Collection
     template_name = 'archive/collection_delete.html'
 
@@ -495,7 +498,7 @@ class CollectionDelete(LoginRequiredMixin, DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class AddToList(LoginRequiredMixin, FormView):
+class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/collection_create.html'
     form_class = AddToListForm
 
