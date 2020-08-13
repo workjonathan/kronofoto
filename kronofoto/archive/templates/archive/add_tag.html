@@ -6,5 +6,5 @@
     <input type="submit" value="Add">
 </form>
 Current tags: {{ photo.accepted_tags | join:', ' }}
-<img src="{{ MEDIA_URL }}{{ photo.h700.url }}">
+<img src="{{ photo.h700.url }}">
 {% endblock %}
