@@ -11,6 +11,7 @@ class TermAdmin(admin.ModelAdmin):
 class TagInline(admin.TabularInline):
     model = PhotoTag
     extra = 1
+    fields=['tag', 'accepted']
 
 
 @admin.register(Photo)
@@ -22,8 +23,8 @@ class PhotoAdmin(admin.ModelAdmin):
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
     def thumb_image(self, obj):
-        return mark_safe('<img src="{}" width="{}" height={} />'.format(settings.STATIC_URL + obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
+        return mark_safe('<img src="{}" width="{}" height={} />'.format(obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
 
     def h700_image(self, obj):
-        return mark_safe('<img src="{}" width="{}" height={} />'.format(settings.STATIC_URL + obj.h700.url, obj.h700.width, obj.h700.height))
+        return mark_safe('<img src="{}" width="{}" height={} />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
 
