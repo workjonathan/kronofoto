@@ -10,7 +10,7 @@
 </div>
 <ul>
     {% for photo in page_obj %}
-    <li><a href="{% url 'photoview' 1 photo.accession_number %}"><img src="{{ photo.h700.url }}"/></a></li>
+    <li><a href="{{ photo.get_absolute_url }}"><img src="{{ photo.h700.url }}"/></a></li>
     {% endfor %}
 </ul>
 {% endblock %}

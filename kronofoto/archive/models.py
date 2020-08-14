@@ -1,4 +1,6 @@
-from django.db.models import Q
+from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum
+from django.urls import reverse
+from django.db.models.functions import RowNumber
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
@@ -7,6 +9,8 @@ import uuid
 from PIL import Image, ExifTags, ImageOps
 from io import BytesIO
 import os
+from functools import reduce
+import operator
 
 
 class Donor(models.Model):
@@ -63,6 +67,27 @@ class Tag(models.Model):
     def __str__(self):
         return self.tag
 
+class PhotoQuerySet(models.QuerySet):
+    def year_index(self):
+        yearid = self.values('year').annotate(min_id=Min('id'))
+        yearcount = self.filter(year=OuterRef('year')).values('year').annotate(count=Count('id'))
+
+        return self.filter(
+            id__in=Subquery(yearid.values('min_id'))
+        ).annotate(
+            row_number=Window(
+                expression=Sum(
+                    Subquery(yearcount.values('count'), output_field=models.IntegerField())
+                ),
+                order_by=[F('year')],
+            ) - Subquery(yearcount.values('count'), output_field=models.IntegerField())
+        )
+
+    def photo_position(self, photo):
+        return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count() + 1
+
+    def filter_photos(self, params, user):
+        return self.filter(Photo.build_query(params, user))
 
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -76,13 +101,79 @@ class Photo(models.Model):
     def count(cls):
         return cls.objects.filter(is_published=True).count()
 
+    @staticmethod
+    def build_query(getparams, user):
+        replacements = {
+            "collection": "collection__id",
+            "tag": 'phototag__tag__slug',
+            'term': 'terms__slug',
+            'donor': 'donor__id',
+        }
+        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
+        merges = {
+            'phototag__tag__slug': [Q(phototag__accepted=True)],
+            'collection__id': [~Q(collection__visibility='PR')],
+        }
+        if user.is_authenticated:
+            merges['collection__id'][0] |= Q(collection__owner=user)
+            merges['phototag__tag__slug'][0] |= Q(phototag__creator=user)
+        filtervals = (
+            (replacements.get(param, param), getparams.get(param))
+            for param in params
+        )
+        clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
+
+        andClauses = [Q(is_published=True), Q(year__isnull=False)]
+        if clauses:
+            andClauses.append(reduce(operator.or_, clauses))
+        return reduce(operator.and_, andClauses)
+
     def get_accepted_tags(self, user=None):
         filter_args = Q(phototag__accepted=True)
         if user:
             filter_args |= Q(phototag__creator__pk=user.pk)
         return self.tags.filter(filter_args)
+
+    def save_params(self, params):
+        self.params = params
+
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
+
+    def page_number(self, queryset=None):
+        if hasattr(self, 'page'):
+            return self.page.number
+        if queryset:
+            self.row_number = queryset.photo_position(self)
+        if hasattr(self, 'row_number'):
+            return (self.row_number-1) // 10 + 1
+        return 1
+
+    def add_params(self, url, params):
+        if params:
+            url = '{}?{}'.format(url, params.urlencode())
+        return url
+
+    def get_json_url(self, queryset=None, params=None):
+        url = reverse(
+            'photoview-json',
+            kwargs={'page': self.page_number(queryset=queryset), 'photo': self.accession_number},
+        )
+        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
+    def get_urls(self):
+        return {
+            'url': self.get_absolute_url(),
+            'json_url': self.get_json_url(),
+        }
+
+    def get_absolute_url(self, queryset=None, params=None):
+        url = reverse(
+            'photoview',
+            kwargs={'page': self.page_number(queryset=queryset), 'photo': self.accession_number},
+        )
+        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
     city = models.CharField(max_length=128, blank=True)
@@ -97,6 +188,8 @@ class Photo(models.Model):
     scanner = models.ForeignKey(
         Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
     )
+
+    objects = PhotoQuerySet.as_manager()
     def __str__(self):
         return self.accession_number
 
