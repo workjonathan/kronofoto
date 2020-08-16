@@ -1,11 +1,33 @@
 {% load static %}
 <form action="/search/" method="get">
-  <table>
-  {{ form }}
-  </table>
+  
   <label for="search-box">
     <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
     <input type="text" name="q" id="search-box" placeholder="Keywords, terms, photo ID#, donor" value="{{ q }}">
   </label>
+  <div class="search-form">
+    {% if form %}
+    <!-- Display Form -->
+    <form>
+      {% regroup form by field.group as field_groups %}
+      {% for field_group in field_groups %}
+
+        <div class="search-form-section">{{field_group.grouper}}
+          <div class="search-form-section_inner">
+            {% for field in field_group.list %}
+              <div>
+                <!-- <label for="" class="search-form-section_label">{{ field.label }}</label> -->
+                {{field}}
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+
+      {% endfor %}
+    </form>
+    {% endif %}
+
+  </div>
   <input type="submit" style="display:none">
 </form>

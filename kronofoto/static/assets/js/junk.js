@@ -129,3 +129,16 @@ if (backward) {
             delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
         ]).then(scrollAction(backward, 'backward', 0)))
 }
+
+//search dropdown
+$('.search-options').click(() => {
+    if($('.arrow').hasClass('down')) {
+        $('.search-form').show()
+        $('.arrow').removeClass('down').addClass('up')
+    } else if ($('.arrow').hasClass('up')) {
+        $('.search-form').hide()
+        $('.arrow').removeClass('up').addClass('down')
+    }
+})
+
+$('input[name="startYear"]').parent().parent('div').addClass('daterange')

@@ -12,15 +12,28 @@ generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field]
 
 
 class SearchForm(forms.Form):
-    query = forms.CharField(required=False)
-    term = forms.ModelChoiceField(required=False, queryset=Term.objects.all().order_by('term'))
-    startYear = forms.IntegerField(required=False)
-    endYear = forms.IntegerField(required=False)
-    donor = forms.ModelChoiceField(required=False, queryset=Donor.objects.all().order_by('last_name', 'first_name'))
-    city = forms.ChoiceField(required=False, choices=generate_choices('city'))
-    county = forms.ChoiceField(required=False, choices=generate_choices('county'))
-    state = forms.ChoiceField(required=False, choices=generate_choices('state'))
-    country = forms.ChoiceField(required=False, choices=generate_choices('country'))
+    query = forms.CharField(required=False, label='' )
+    query.group = "QUERY"
+
+    term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))
+    term.group = "TERM"
+
+    startYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'Start'}) )
+    startYear.group = 'DATE RANGE'
+    endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
+    endYear.group = 'DATE RANGE'
+
+    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.all().order_by('last_name', 'first_name'))
+    donor.group = "DONOR"
+
+    city = forms.ChoiceField(required=False, label='', choices=generate_choices('city'))
+    city.group = 'LOCATION'
+    county = forms.ChoiceField(required=False, label='', choices=generate_choices('county'))
+    county.group = 'LOCATION'
+    state = forms.ChoiceField(required=False, label='', choices=generate_choices('state'))
+    state.group = 'LOCATION'
+    country = forms.ChoiceField(required=False, label='', choices=generate_choices('country'))
+    country.group = 'LOCATION'
 
     def as_expression(self):
         form_exprs = []

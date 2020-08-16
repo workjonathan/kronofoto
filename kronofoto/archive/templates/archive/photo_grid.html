@@ -10,7 +10,7 @@
     {% if link.url %}<a href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
 {% endfor %}
 </div>
-<ul>
+<ul class="photo-grid">
     {% for photo in page_obj %}
     <li><a href="{% url 'photoview' 1 photo.accession_number %}"><img src="{% static photo.h700.url %}"/></a></li>
     {% endfor %}
