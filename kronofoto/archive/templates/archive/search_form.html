@@ -3,14 +3,13 @@
   
   <label for="search-box">
     <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
-    <input type="text" name="q" id="search-box" placeholder="Keywords, terms, photo ID#, donor" value="{{ q }}">
+    {{ form.query }}
   </label>
   <div class="search-form">
-    {% if form %}
     <!-- Display Form -->
-    <form>
       {% regroup form by field.group as field_groups %}
       {% for field_group in field_groups %}
+      {% if field_group.grouper != 'QUERY' %}
 
         <div class="search-form-section">{{field_group.grouper}}
           <div class="search-form-section_inner">
@@ -23,10 +22,8 @@
           </div>
 
         </div>
-
+      {% endif %}
       {% endfor %}
-    </form>
-    {% endif %}
 
   </div>
   <input type="submit" style="display:none">

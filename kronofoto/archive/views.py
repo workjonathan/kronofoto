@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage
 from django.conf import settings
 from django.db.models import Min, Count, Q
+from bisect import bisect_left as bisect
 import urllib
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.contrib.auth.models import User
@@ -19,8 +20,6 @@ from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth import login
-import operator
-from functools import reduce
 from math import floor
 from itertools import islice,chain
 
@@ -28,6 +27,13 @@ from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, N
 from .search import evaluate
 
 from .token import UserEmailVerifier
+
+
+class BaseTemplateMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['photo_count'] = Photo.count()
+        return context
 
 
 class VerifyToken(RedirectView):
@@ -42,7 +48,7 @@ class VerifyToken(RedirectView):
         return super().get_redirect_url()
 
 
-class RegisterAccount(FormView):
+class RegisterAccount(BaseTemplateMixin, FormView):
     form_class = RegisterUserForm
     template_name = 'archive/register.html'
     success_url = '/'
@@ -77,7 +83,7 @@ class RegisterAccount(FormView):
         return super().form_valid(form)
 
 
-class AddTagView(LoginRequiredMixin, FormView):
+class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/add_tag.html'
     form_class = TagForm
     success_url = '/'
@@ -85,12 +91,11 @@ class AddTagView(LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo'] = self.photo
-        context['search-form'] = SearchForm()
         return context
 
     def dispatch(self, request, photo):
         self.photo = Photo.objects.get(id=Photo.accession2id(photo))
-        self.success_url = reverse('photoview', kwargs={'page': 0, 'photo': photo})
+        self.success_url = self.photo.get_absolute_url()
         return super().dispatch(request)
 
     def form_valid(self, form):
@@ -173,43 +178,13 @@ class ApprovePhoto(PermissionRequiredMixin, RedirectView):
         return super().get_redirect_url(*args, **kwargs)
 
 
-def build_query(getparams, user):
-    replacements = {
-        "collection": "collection__id",
-        "tag": 'phototag__tag__slug',
-        'term': 'terms__slug',
-        'donor': 'donor__id',
-    }
-    params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
-    merges = {
-        'phototag__tag__slug': [Q(phototag__accepted=True)],
-        'collection__id': [~Q(collection__visibility='PR')],
-    }
-    if user.is_authenticated:
-        merges['collection__id'][0] |= Q(collection__owner=user)
-        merges['phototag__tag__slug'][0] |= Q(phototag__creator=user)
-    filtervals = (
-        (replacements.get(param, param), getparams.get(param))
-        for param in params
-    )
-    clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
-
-    andClauses = [Q(is_published=True), Q(year__isnull=False)]
-    if clauses:
-        andClauses.append(reduce(operator.or_, clauses))
-    return reduce(operator.and_, andClauses)
-
-
 class FrontPage(RedirectView):
     permanent = False
     pattern_name = 'photoview'
 
     def get_redirect_url(self, *args, **kwargs):
-        q = build_query(self.request.GET, self.request.user)
-        photo = Photo.objects.filter(q).order_by('?')[0]
-        return super().get_redirect_url(
-            *args, page=1, photo=photo.accession_number, **kwargs
-        )
+        photo = Photo.objects.filter_photos(self.request.GET, self.request.user).order_by('?')[0]
+        return photo.get_absolute_url()
 
 
 class Keyframes(TemplateView):
@@ -234,138 +209,80 @@ class JSONResponseMixin:
         return context
 
 
-class PhotoView(JSONResponseMixin, TemplateView):
+class TimelinePaginator(Paginator):
+    def get_page(self, number):
+        try:
+            page = super().page(number)
+            for item in page:
+                item.page = page
+            return page
+        except EmptyPage:
+            return []
+
+
+class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     template_name = "archive/photo.html"
+
+    def get_queryset(self):
+        return Photo.objects.filter_photos(self.request.GET, self.request.user)
+
     def get_context_data(self, page, photo):
-        context = super().get_context_data()
-        q = build_query(self.request.GET, self.request.user)
+        context = super(PhotoView, self).get_context_data()
+        queryset = self.get_queryset()
+        year_index = queryset.year_index()
+        years = [p.year for p in year_index]
+        allyears = [(year, year_index[bisect(years, year)]) for year in range(years[0], years[-1]+1)]
+        index = [(year, photo.get_absolute_url(params=self.request.GET), photo.get_json_url(params=self.request.GET)) for (year, photo) in allyears]
 
-        # yikes
-        year_vals = (
-            Photo.objects.values("year")
-            .filter(q)
-            .annotate(min_id=Min("id"), count=Count("id"))
-            .order_by("year")
-        )
-        year_index = (p["min_id"] for p in year_vals)
-        year_pages = {}
-        running_total = 0
-        for y in year_vals:
-            year_pages[y["year"]] = floor(running_total / 10) + 1
-            running_total += y["count"]
-        year_photos = Photo.objects.filter(
-            id__in=year_index, year__isnull=False
-        ).order_by("year")
-
-        collections = Collection.objects.values("name")
-        cities = (
-            Photo.objects.exclude(city="")
-            .values("city")
-            .annotate(count=Count("city"))
-        )
-        counties = (
-            Photo.objects.exclude(county="")
-            .values("county")
-            .annotate(count=Count("county"))
-        )
-        states = (
-            Photo.objects.exclude(state="")
-            .values("state")
-            .annotate(count=Count("state"))
-        )
-        countries = (
-            Photo.objects.exclude(country="")
-            .values("country")
-            .annotate(count=Count("country"))
-        )
-
-        index = []
-        for p in year_photos:
-            while index and index[-1][0] != p.year - 1:
-                index.append((index[-1][0] + 1, p, year_pages[p.year]))
-            index.append((p.year, p, year_pages[p.year]))
-        index = [(year, reverse('photoview', kwargs={'photo':photo.accession_number, 'page': page}), reverse('photoview-json', kwargs={'photo': photo.accession_number, 'page': page})) for (year, photo, page) in index]
         items = 10
-
-        photo_list = Photo.objects.filter(q).order_by("year", "id")
-        paginator = Paginator(photo_list, items)
+        paginator = TimelinePaginator(queryset.order_by('year', 'id'), items)
         this_page = paginator.get_page(page)
+        prev_page = paginator.get_page(page-1)
+        next_page = paginator.get_page(page+1)
         photo_rec = None
-        for i, p in enumerate(this_page):
+        for p in this_page:
             if p.accession_number == photo:
                 p.active = True
                 photo_rec = p
                 break
 
         if photo_rec is None:
-            id = Photo.accession2id(photo)
             try:
-                photo = photo_list.get(id=id)
-                idx = len(photo_list.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))))
-                url = reverse('photoview', kwargs={'page': (idx//items + 1), 'photo': photo.accession_number})
-                self.redirect = redirect("{}?{}".format(url, self.request.GET.urlencode()))
+                photo = Photo.objects.get(id=Photo.accession2id(photo))
+                self.redirect = redirect(photo.get_absolute_url(queryset=queryset, params=self.request.GET))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
-        prev_page = []
-        next_page = []
-        if this_page.has_previous():
-            prev_page = paginator.get_page(page-1)
-            for p in prev_page:
-                p.page = prev_page
-        if this_page.has_next():
-            next_page = paginator.get_page(page+1)
-            for p in next_page:
-                p.page = next_page
-        for p in this_page:
-            p.page = this_page
+
         last = None
         for p in chain(prev_page, this_page, next_page):
+            p.save_params(self.request.GET)
             if last:
                 p.previous = last
                 last.next = p
             last = p
 
-        context['search-form'] = SearchForm()
         context["page"] = this_page
         context["next_page"] = next_page
         context["prev_page"] = prev_page
         context["photo"] = photo_rec
         context["years"] = index
-        context["collections"] = collections
-        context["cities"] = cities
-        context["states"] = states
-        context["countries"] = countries
-        context["counties"] = counties
         context["getparams"] = self.request.GET.urlencode()
         context['initialstate'] = self.get_data(context)
         return context
 
     def get_data(self, context):
         if 'photo' not in context or not context['photo']:
-            return {
-
-            }
+            return {}
+        photo = context['photo']
         return {
-            'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].number, 'photo': context['photo'].accession_number}), self.request.GET.urlencode()),
-            'h700': staticfiles_storage.url(context['photo'].h700.url),
+            'url': photo.get_absolute_url(),
+            'h700': photo.h700.url,
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
-            'backward': {
-                "url": "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}), self.request.GET.urlencode()),
-                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['page'].previous_page_number(), 'photo': context['prev_page'][0].accession_number}), self.request.GET.urlencode()),
-            } if context['page'].has_previous() else {},
-            'forward': {
-                "url": "{}?{}".format(reverse('photoview', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
-                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['page'].next_page_number(), 'photo': context['next_page'][0].accession_number}), self.request.GET.urlencode()),
-            } if context['page'].has_next() else {},
-            'previous': {
-                'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['photo'].previous.page.number, 'photo': context['photo'].previous.accession_number}), self.request.GET.urlencode()),
-                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['photo'].previous.page.number, 'photo': context['photo'].previous.accession_number}), self.request.GET.urlencode()),
-            } if 'photo' in context and context['photo'] and hasattr(context['photo'], 'previous') else {},
-            'next': {
-                'url': "{}?{}".format(reverse('photoview', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),
-                'json_url': "{}?{}".format(reverse('photoview-json', kwargs={'page': context['photo'].next.page.number, 'photo': context['photo'].next.accession_number}), self.request.GET.urlencode()),
-            } if 'photo' in context and context['photo'] and hasattr(context['photo'], 'next') else {},
+            'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else {},
+            'forward': context['next_page'][0].get_urls() if context['page'].has_next() else {},
+            'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else {},
+            'next': photo.next.get_urls() if hasattr(photo, 'next') else {},
         }
 
     def render(self, context, **kwargs):
@@ -383,17 +300,17 @@ class JSONPhotoView(PhotoView):
         return self.render_to_json_response(context, **kwargs)
 
 
-class GridView(ListView):
+class GridView(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = 50
     template_name = 'archive/photo_grid.html'
 
     def get_queryset(self):
-        qs = Photo.objects.filter(
-            build_query(self.request.GET, self.request.user)
+        qs = Photo.objects.filter_photos(
+            self.request.GET, self.request.user
         ).order_by('year', 'id')
         if qs.count() == 1:
-            self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+            self.redirect = redirect(qs[0].get_absolute_url())
         return qs
 
 
@@ -406,7 +323,8 @@ class GridView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
-        context['search-form'] = SearchForm()
+        for photo in page_obj:
+            photo.save_params(params=self.request.GET)
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
         if page_obj.number != 1:
@@ -445,19 +363,18 @@ class SearchResultsView(GridView):
                 expr = form.as_expression()
                 qs = evaluate(expr, Photo.objects)
                 if qs.count() == 1:
-                    self.redirect = redirect(reverse('photoview', args=(1, qs[0].accession_number)))
+                    self.redirect = redirect(qs[0].get_absolute_url())
                 return qs
             except NoExpression:
                 return []
 
 
-class Profile(ListView):
+class Profile(BaseTemplateMixin, ListView):
     model = Collection
     template_name = 'archive/user_page.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search-form'] = SearchForm()
         return context
 
     def get_queryset(self):
@@ -468,7 +385,7 @@ class Profile(ListView):
             return Collection.objects.filter(owner=user, visibility='PU')
 
 
-class CollectionCreate(LoginRequiredMixin, CreateView):
+class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
     model = Collection
     fields = ['name', 'visibility']
     template_name = 'archive/collection_create.html'
@@ -481,7 +398,7 @@ class CollectionCreate(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class CollectionDelete(LoginRequiredMixin, DeleteView):
+class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
     model = Collection
     template_name = 'archive/collection_delete.html'
 
@@ -495,12 +412,12 @@ class CollectionDelete(LoginRequiredMixin, DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class AddToList(LoginRequiredMixin, FormView):
+class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/collection_create.html'
     form_class = AddToListForm
 
     def get_success_url(self):
-        return reverse('photoview', args=[1, self.kwargs['photo']])
+        return self.photo.get_absolute_url()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -512,19 +429,20 @@ class AddToList(LoginRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
+        self.photo = get_object_or_404(
+            Photo, id=Photo.accession2id(self.kwargs['photo'])
+        )
         if form.cleaned_data['collection']:
             collection = get_object_or_404(
                 Collection, id=form.cleaned_data['collection']
             )
             if collection.owner == self.request.user:
-                photo = get_object_or_404(
-                    Photo, id=Photo.accession2id(self.kwargs['photo'])
-                )
-                collection.photos.add(photo)
+                collection.photos.add(self.photo)
         elif form.cleaned_data['name']:
             collection = Collection.objects.create(
                 name=form.cleaned_data['name'],
                 owner=self.request.user,
                 visibility=form.cleaned_data['visibility'],
             )
+            collection.photos.add(self.photo)
         return super().form_valid(form)

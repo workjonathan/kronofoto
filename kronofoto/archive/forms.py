@@ -12,7 +12,11 @@ generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field]
 
 
 class SearchForm(forms.Form):
-    query = forms.CharField(required=False, label='' )
+    query = forms.CharField(required=False, label='')
+    query.widget.attrs.update({
+        'id': 'search-box',
+        'placeholder': 'Keywords, terms, photo ID#, donor',
+    })
     query.group = "QUERY"
 
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))

@@ -1,3 +1,4 @@
+const scrollSpeed = 4 // seconds to scroll through one set of 10 images
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
     toggleElement(el);
@@ -51,18 +52,19 @@ const loadstate = data => {
     document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
     document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
     forward.setAttribute('href', data.forward.url)
+    forward.setAttribute('data-json-href', data.forward.json_url)
     backward.setAttribute('href', data.backward.url)
+    backward.setAttribute('data-json-href', data.backward.json_url)
 }
 
 
-let current_state = JSON.parse(document.getElementById('initial-state').textContent)
-window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
 document.addEventListener('click', e => {
-    if (e.target.getAttribute('data-json-href')) {
+    const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
+    if (jsonhref) {
         e.preventDefault()
         id = e.target.getAttribute('id')
         if (id !== 'forward' && id !== 'backward') {
-            request('GET', e.target.getAttribute('data-json-href')).then(data => {
+            request('GET', jsonhref).then(data => {
                 loadstate(data)
                 window.history.pushState(data, 'Fortepan Iowa', data.url)
 
@@ -93,9 +95,10 @@ const scrollAction = (element, direction, target) => evt => {
     } else if (evt.event === 'startScroll') {
         const scrollEnd = animationEnd(carousel)
         void carousel.offsetWidth
-        carousel.setAttribute('style', `animation: from-100-to${target} 10s linear;`)
+        carousel.setAttribute('style', `animation: from-100-to${target} ${scrollSpeed}s linear;`)
+
         p = Promise.race([
-            mouseUp(element).then(() => ({event: 'click', position: Math.round(-100 - (new Date() - evt.begin)/(-target - 100))})),
+            mouseUp(element).then(() => ({event: 'click', position: Math.round(-10 * scrollSpeed - (new Date() - evt.begin)/(-target - scrollSpeed * 10))})),
             scrollEnd.then(() => ({event: 'startScroll', begin: new Date()})),
         ])
     }
