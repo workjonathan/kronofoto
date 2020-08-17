@@ -131,3 +131,6 @@ kronofoto/kronofoto/settings.py
 
 # batch test data
 testbatch
+
+# mac files
+.DS_Store
