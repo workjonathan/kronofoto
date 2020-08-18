@@ -11,6 +11,7 @@ from io import BytesIO
 import os
 from functools import reduce
 import operator
+from bisect import bisect_left as bisect
 
 
 class Donor(models.Model):
@@ -68,6 +69,15 @@ class Tag(models.Model):
         return self.tag
 
 class PhotoQuerySet(models.QuerySet):
+    def year_links(self, params=None):
+        year_index = self.year_index()
+        years = [p.year for p in year_index]
+        allyears = [(year, year_index[bisect(years, year)]) for year in range(years[0], years[-1]+1)]
+        return [
+            (year, photo.get_absolute_url(params=params), photo.get_json_url(params=params))
+            for (year, photo) in allyears
+        ]
+
     def year_index(self):
         yearid = self.values('year').annotate(min_id=Min('id'))
         yearcount = self.filter(year=OuterRef('year')).values('year').annotate(count=Count('id'))

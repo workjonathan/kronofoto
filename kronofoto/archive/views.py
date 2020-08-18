@@ -1,8 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, Page
 from django.conf import settings
 from django.db.models import Min, Count, Q
-from bisect import bisect_left as bisect
 import urllib
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
 from django.contrib.auth.models import User
@@ -12,7 +11,6 @@ from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
-
 from django.views.generic import ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
@@ -101,7 +99,6 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.add_tag(self.photo, user=self.request.user)
         return super().form_valid(form)
-
 
 
 class PrePublishPhotoList(PermissionRequiredMixin, ListView):
@@ -209,7 +206,42 @@ class JSONResponseMixin:
         return context
 
 
+class TimelinePage(Page):
+    def find_accession_number(self, accession_number):
+        for p in self:
+            if p.accession_number == accession_number:
+                p.active = True
+                return p
+        raise KeyError(accession_number)
+
+
+class PageSelection:
+    def __init__(self, pages):
+        self.pages = pages
+
+    def find_accession_number(self, accession_number):
+        return self.main_page().find_accession_number(accession_number)
+
+    def main_page(self):
+        return self.pages[len(self.pages)//2]
+
+    def photos(self):
+        last = None
+        for p in chain(*self.pages):
+            yield p
+            if last:
+                p.previous = last
+                last.next = p
+            last = p
+
+
 class TimelinePaginator(Paginator):
+    def get_pageselection(self, pages):
+        return PageSelection(pages)
+
+    def get_pages(self, number, buffer=1):
+        return PageSelection([self.get_page(n) for n in range(number-buffer, number+buffer+1)])
+
     def get_page(self, number):
         try:
             page = super().page(number)
@@ -219,55 +251,45 @@ class TimelinePaginator(Paginator):
         except EmptyPage:
             return []
 
+    def _get_page(self, *args, **kwargs):
+        return TimelinePage(*args, **kwargs)
+
 
 class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     template_name = "archive/photo.html"
+    items = 10
 
     def get_queryset(self):
         return Photo.objects.filter_photos(self.request.GET, self.request.user)
 
+    def get_paginator(self):
+        return TimelinePaginator(self.get_queryset().order_by('year', 'id'), self.items)
+
     def get_context_data(self, page, photo):
         context = super(PhotoView, self).get_context_data()
         queryset = self.get_queryset()
-        year_index = queryset.year_index()
-        years = [p.year for p in year_index]
-        allyears = [(year, year_index[bisect(years, year)]) for year in range(years[0], years[-1]+1)]
-        index = [(year, photo.get_absolute_url(params=self.request.GET), photo.get_json_url(params=self.request.GET)) for (year, photo) in allyears]
+        index = queryset.year_links(params=self.request.GET)
 
-        items = 10
-        paginator = TimelinePaginator(queryset.order_by('year', 'id'), items)
-        this_page = paginator.get_page(page)
-        prev_page = paginator.get_page(page-1)
-        next_page = paginator.get_page(page+1)
-        photo_rec = None
-        for p in this_page:
-            if p.accession_number == photo:
-                p.active = True
-                photo_rec = p
-                break
+        paginator = self.get_paginator()
+        page_selection = paginator.get_pages(page)
 
-        if photo_rec is None:
+        try:
+            photo_rec = page_selection.find_accession_number(photo)
+
+            last = None
+            for p in page_selection.photos():
+                p.save_params(self.request.GET)
+
+            context['prev_page'], context["page"], context['next_page'] = page_selection.pages
+            context["photo"] = photo_rec
+            context["years"] = index
+            context['initialstate'] = self.get_data(context)
+        except KeyError:
             try:
                 photo = Photo.objects.get(id=Photo.accession2id(photo))
                 self.redirect = redirect(photo.get_absolute_url(queryset=queryset, params=self.request.GET))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
-
-        last = None
-        for p in chain(prev_page, this_page, next_page):
-            p.save_params(self.request.GET)
-            if last:
-                p.previous = last
-                last.next = p
-            last = p
-
-        context["page"] = this_page
-        context["next_page"] = next_page
-        context["prev_page"] = prev_page
-        context["photo"] = photo_rec
-        context["years"] = index
-        context["getparams"] = self.request.GET.urlencode()
-        context['initialstate'] = self.get_data(context)
         return context
 
     def get_data(self, context):
