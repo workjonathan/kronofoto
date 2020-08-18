@@ -295,36 +295,27 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
 
 
 class JSONPhotoView(PhotoView):
-
     def render(self, context, **kwargs):
         return self.render_to_json_response(context, **kwargs)
 
 
-class GridView(BaseTemplateMixin, ListView):
+class GridBase(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = 50
     template_name = 'archive/photo_grid.html'
 
-    def get_queryset(self):
-        qs = Photo.objects.filter_photos(
-            self.request.GET, self.request.user
-        ).order_by('year', 'id')
-        if qs.count() == 1:
-            self.redirect = redirect(qs[0].get_absolute_url())
-        return qs
-
-
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
 
-    def format_page_url(self, num):
-        return "{}?{}".format(reverse('gridview', args=(num,)), self.request.GET.urlencode())
+    def render_to_response(self, context, **kwargs):
+        if hasattr(self, 'redirect'):
+            return self.redirect
+        return super().render_to_response(context, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
-        for photo in page_obj:
-            photo.save_params(params=self.request.GET)
+        self.attach_params(page_obj)
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
         if page_obj.number != 1:
@@ -337,13 +328,28 @@ class GridView(BaseTemplateMixin, ListView):
         context['links'] = links
         return context
 
-    def render_to_response(self, context, **kwargs):
-        if hasattr(self, 'redirect'):
-            return self.redirect
-        return super().render_to_response(context, **kwargs)
+
+class GridView(GridBase):
+    def get_queryset(self):
+        qs = self.model.objects.filter_photos(
+            self.request.GET, self.request.user
+        ).order_by('year', 'id')
+        if qs.count() == 1:
+            self.redirect = redirect(qs[0].get_absolute_url())
+        return qs
+
+    def format_page_url(self, num):
+        return "{}?{}".format(reverse('gridview', args=(num,)), self.request.GET.urlencode())
+
+    def attach_params(self, photos):
+        params = self.request.GET.copy()
+        if 'display' in params:
+            params.pop('display')
+        for photo in photos:
+            photo.save_params(params=params)
 
 
-class SearchResultsView(GridView):
+class SearchResultsView(GridBase):
     def format_page_url(self, num):
         params = self.request.GET.copy()
         params['page'] = num
@@ -354,6 +360,9 @@ class SearchResultsView(GridView):
         context['search-form'] = self.form
         return context
 
+    def attach_params(self, photos):
+        pass
+
     def get_queryset(self):
         self.form = SearchForm(self.request.GET)
         form = self.form
@@ -361,7 +370,7 @@ class SearchResultsView(GridView):
         if form.is_valid():
             try:
                 expr = form.as_expression()
-                qs = evaluate(expr, Photo.objects)
+                qs = evaluate(expr, self.model.objects)
                 if qs.count() == 1:
                     self.redirect = redirect(qs[0].get_absolute_url())
                 return qs
