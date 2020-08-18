@@ -276,7 +276,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         try:
             photo_rec = page_selection.find_accession_number(photo)
 
-            last = None
             for p in page_selection.photos():
                 p.save_params(self.request.GET)
 
@@ -285,11 +284,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context["years"] = index
             context['initialstate'] = self.get_data(context)
         except KeyError:
-            try:
-                photo = Photo.objects.get(id=Photo.accession2id(photo))
-                self.redirect = redirect(photo.get_absolute_url(queryset=queryset, params=self.request.GET))
-            except Photo.DoesNotExist:
-                raise Http404("Photo either does not exist or is not in that set of photos")
+            pass
         return context
 
     def get_data(self, context):
@@ -311,8 +306,12 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return super().render_to_response(context, **kwargs)
 
     def render_to_response(self, context, **kwargs):
-        if hasattr(self, "redirect"):
-            return self.redirect
+        if 'photo' not in context:
+            try:
+                photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
+                return redirect(photo.get_absolute_url(queryset=self.get_queryset(), params=self.request.GET))
+            except Photo.DoesNotExist:
+                raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
 
 
