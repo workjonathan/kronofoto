@@ -258,16 +258,23 @@ class TimelinePaginator(Paginator):
 class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     template_name = "archive/photo.html"
     items = 10
+    _queryset = None
+
+    @property
+    def queryset(self):
+        if self._queryset is None:
+            self._queryset = self.get_queryset()
+        return self._queryset
 
     def get_queryset(self):
         return Photo.objects.filter_photos(self.request.GET, self.request.user)
 
     def get_paginator(self):
-        return TimelinePaginator(self.get_queryset().order_by('year', 'id'), self.items)
+        return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
     def get_context_data(self, page, photo):
         context = super(PhotoView, self).get_context_data()
-        queryset = self.get_queryset()
+        queryset = self.queryset
         index = queryset.year_links(params=self.request.GET)
 
         paginator = self.get_paginator()
@@ -309,7 +316,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         if 'photo' not in context:
             try:
                 photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
-                return redirect(photo.get_absolute_url(queryset=self.get_queryset(), params=self.request.GET))
+                return redirect(photo.get_absolute_url(queryset=self.queryset, params=self.request.GET))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
