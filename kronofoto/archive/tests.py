@@ -1,7 +1,7 @@
-from django.test import TestCase, SimpleTestCase
-from . import models
+from django.test import TestCase, SimpleTestCase, RequestFactory
+from . import models, views
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.urls import reverse
 from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
@@ -188,6 +188,14 @@ class WhenHave50Photos(TestCase):
     def testUserProfileShould404IfUserDoesNotExist(self):
         resp = self.client.get(reverse('user-page', args=['notarealuser']))
         self.assertEqual(resp.status_code, 404)
+
+class RegisterAccountTest(TestCase):
+    def testUserIsHumanShouldReturnFalse(self):
+        req = RequestFactory().post(reverse('register-account'), data={'g-recaptcha-response': ''})
+        req.user = AnonymousUser()
+        v = views.RegisterAccount()
+        v.request = req
+        self.assertFalse(v.user_is_human())
 
 
 class ParserTest(SimpleTestCase):
