@@ -94,7 +94,7 @@ class PhotoQuerySet(models.QuerySet):
         )
 
     def photo_position(self, photo):
-        return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count() + 1
+        return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
     def filter_photos(self, params, user):
         return self.filter(Photo.build_query(params, user))
@@ -156,7 +156,7 @@ class Photo(models.Model):
         if queryset:
             self.row_number = queryset.photo_position(self)
         if hasattr(self, 'row_number'):
-            return (self.row_number-1) // 10 + 1
+            return (self.row_number) // 10 + 1
         return 1
 
     def add_params(self, url, params):

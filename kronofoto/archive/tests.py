@@ -27,6 +27,11 @@ class WhenHave50Photos(TestCase):
             )
             cls.photos.append(p)
 
+    def testYearIndex(self):
+        for i, photo in enumerate(models.Photo.objects.year_index()):
+            self.assertEqual(photo.row_number, i)
+            self.assertEqual(photo.page_number(), i//10 + 1)
+
     def testSearchShouldSupportBooleanLogic(self):
         expr1 = expression.YearEquals(1911) & expression.YearEquals(1912)
         expr2 = expression.YearEquals(1911) | expression.YearEquals(1912)
