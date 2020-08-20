@@ -157,7 +157,7 @@ class Photo(models.Model):
             self.row_number = queryset.photo_position(self)
         if hasattr(self, 'row_number'):
             return (self.row_number) // 10 + 1
-        return 1
+        raise AttributeError
 
     def add_params(self, url, params):
         if params:
@@ -165,9 +165,15 @@ class Photo(models.Model):
         return url
 
     def get_json_url(self, queryset=None, params=None):
+        kwargs = {'photo': self.accession_number}
+        try:
+            kwargs['page'] = self.page_number(queryset=queryset)
+        except AttributeError:
+            pass
+
         url = reverse(
             'photoview-json',
-            kwargs={'page': self.page_number(queryset=queryset), 'photo': self.accession_number},
+            kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
@@ -178,9 +184,15 @@ class Photo(models.Model):
         }
 
     def get_absolute_url(self, queryset=None, params=None):
+        kwargs = {'photo': self.accession_number}
+        try:
+            kwargs['page'] = self.page_number(queryset=queryset)
+        except AttributeError:
+            pass
+
         url = reverse(
             'photoview',
-            kwargs={'page': self.page_number(queryset=queryset), 'photo': self.accession_number},
+            kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 

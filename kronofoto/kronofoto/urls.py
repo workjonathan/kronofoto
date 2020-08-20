@@ -1,18 +1,3 @@
-"""kronofoto URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/2.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include, register_converter
 from archive import views
@@ -48,9 +33,11 @@ urlpatterns = [
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
-    path('<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
-    path('<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
+    path('photo/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
+    path('photo/<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
+    path('photo/<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
+    path('grid/', views.GridView.as_view(), name='gridview'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),
     path('upload/', views.UploadScannedImage.as_view(), name="upload"),

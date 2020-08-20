@@ -273,7 +273,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
-    def get_context_data(self, page, photo):
+    def get_context_data(self, photo, page=1):
         context = super(PhotoView, self).get_context_data()
         queryset = self.queryset
         index = queryset.year_links(params=self.request.GET)
