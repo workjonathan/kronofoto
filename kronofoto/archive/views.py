@@ -492,6 +492,8 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
         {'name': 'Terms', 'indexer': Term},
         {'name': 'Tags', 'indexer': Tag},
         {'name': 'Donors', 'indexer': Donor},
+        {'name': 'Cities', 'indexer': Photo.CityIndexer()},
+        {'name': 'Counties', 'indexer': Photo.CountyIndexer()},
     ]
 
     def get_context_data(self, *args, **kwargs):

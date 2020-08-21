@@ -7,6 +7,16 @@ from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 
+class PhotoTest(TestCase):
+    def testCityURL(self):
+        photo = models.Photo(city='CityName', state='StateName')
+        self.assertEqual(photo.get_city_url(), '{}?{}'.format(reverse('gridview'), urlencode({'city': photo.city, 'state': photo.state})))
+
+    def testCountyURL(self):
+        photo = models.Photo(county='CountyName', state='StateName')
+        self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
+
+
 class DonorTest(TestCase):
     def testURL(self):
         donor = models.Donor.objects.create(
@@ -42,8 +52,31 @@ class WhenHave50Photos(TestCase):
                 donor=donor,
                 year=y,
                 is_published=True,
+                city='city{}'.format(y % 3),
+                state='state{}'.format(y % 3),
+                county='county{}'.format(y % 3),
             )
             cls.photos.append(p)
+
+    def testCountyIndex(self):
+        self.assertEqual(
+            models.Photo.county_index(),
+            [
+                {'name': 'county0, state0', 'count': 16, 'href': self.photos[2].get_county_url()},
+                {'name': 'county1, state1', 'count': 17, 'href': self.photos[0].get_county_url()},
+                {'name': 'county2, state2', 'count': 17, 'href': self.photos[1].get_county_url()},
+            ]
+        )
+
+    def testCityIndex(self):
+        self.assertEqual(
+            models.Photo.city_index(),
+            [
+                {'name': 'city0, state0', 'count': 16, 'href': self.photos[2].get_city_url()},
+                {'name': 'city1, state1', 'count': 17, 'href': self.photos[0].get_city_url()},
+                {'name': 'city2, state2', 'count': 17, 'href': self.photos[1].get_city_url()},
+            ]
+        )
 
     def testDonorIndex(self):
         self.assertEqual(

@@ -36,7 +36,7 @@ class Donor(models.Model):
     def index():
         return [
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
-            for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name').filter(count__gt=0)
+            for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
 
 
@@ -73,6 +73,7 @@ class Term(models.Model):
             {'name': term.term, 'count': term.count, 'href': term.get_absolute_url()}
             for term in Term.objects.annotate(count=Count('photo__id')).order_by('term').filter(count__gt=0)
         ]
+
     def __str__(self):
         return self.term
 
@@ -165,9 +166,7 @@ class Photo(models.Model):
         )
         clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
 
-        andClauses = [Q(is_published=True), Q(year__isnull=False)]
-        if clauses:
-            andClauses.append(reduce(operator.or_, clauses))
+        andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
         return reduce(operator.and_, andClauses)
 
     def get_accepted_tags(self, user=None):
@@ -227,6 +226,49 @@ class Photo(models.Model):
             kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
+    def format_url(**kwargs):
+        return "{}?{}".format(
+            reverse('gridview'), urlencode(kwargs)
+        )
+
+    def get_county_url(self):
+        return Photo.format_url(county=self.county, state=self.state)
+
+    def get_city_url(self):
+        return Photo.format_url(city=self.city, state=self.state)
+
+    class CityIndexer:
+        def index(self):
+            return Photo.city_index()
+
+    class CountyIndexer:
+        def index(self):
+            return Photo.county_index()
+
+    @staticmethod
+    def index_by_fields(*fields):
+        return [
+            {
+                'name': ', '.join(p[field] for field in fields),
+                'count': p['count'],
+                'href': Photo.format_url(**{field: p[field] for field in fields}),
+            }
+            for p in Photo.objects.filter(
+                is_published=True
+            ).exclude(
+                reduce(operator.or_, (Q(**{field: ''}) for field in fields))
+            ).values(*fields).annotate(count=Count('id')).order_by(*fields)
+        ]
+
+    @staticmethod
+    def county_index():
+        return Photo.index_by_fields('county', 'state')
+
+    @staticmethod
+    def city_index():
+        return Photo.index_by_fields('city', 'state')
+
 
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
