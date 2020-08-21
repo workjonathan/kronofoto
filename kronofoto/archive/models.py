@@ -12,6 +12,7 @@ import os
 from functools import reduce
 import operator
 from bisect import bisect_left as bisect
+from django.utils.http import urlencode
 
 
 class Donor(models.Model):
@@ -52,6 +53,15 @@ class Term(models.Model):
             self.slug = slugify(self.term)
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        return '{}?{}'.format(reverse('gridview'), urlencode({'term': self.slug}))
+
+    @staticmethod
+    def index():
+        return [
+            {'name': term.term, 'count': term.count, 'href': term.get_absolute_url()}
+            for term in Term.objects.annotate(count=Count('photo__id')).order_by('term').filter(count__gt=0)
+        ]
     def __str__(self):
         return self.term
 
@@ -65,8 +75,19 @@ class Tag(models.Model):
             self.slug = slugify(self.tag)
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        return '{}?{}'.format(reverse('gridview'), urlencode({'tag': self.slug}))
+
+    @staticmethod
+    def index():
+        return [
+            {'name': tag.tag, 'count': tag.count, 'href': tag.get_absolute_url()}
+            for tag in Tag.objects.filter(phototag__accepted=True).annotate(count=Count('phototag__id')).order_by('tag')
+        ]
+
     def __str__(self):
         return self.tag
+
 
 class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):

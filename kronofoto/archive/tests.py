@@ -7,6 +7,16 @@ from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 
+class TermTest(TestCase):
+    def testURL(self):
+        term = models.Term.objects.create(term="test term")
+        self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'term': term.slug})))
+
+class TagTest(TestCase):
+    def testURL(self):
+        tag = models.Tag.objects.create(tag="test tag")
+        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
+
 class WhenHave50Photos(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -26,6 +36,43 @@ class WhenHave50Photos(TestCase):
                 is_published=True,
             )
             cls.photos.append(p)
+
+    def testTermIndex(self):
+        endswithzero = models.Term.objects.create(term="new decade")
+        even = models.Term.objects.create(term="even year")
+        no = models.Term.objects.create(term="none")
+        for photo in self.photos:
+            if photo.year % 2 == 0:
+                photo.terms.add(even)
+            if photo.year % 10 == 0:
+                photo.terms.add(endswithzero)
+        self.assertEqual(
+            models.Term.index(),
+            [
+                {'name': 'even year', 'count': 25, 'href': even.get_absolute_url()},
+                {'name': 'new decade', 'count': 5, 'href': endswithzero.get_absolute_url()},
+            ],
+        )
+
+    def testTagIndex(self):
+        endswithzero = models.Tag.objects.create(tag="new decade")
+        eventag = models.Tag.objects.create(tag="even year")
+        notags = models.Tag.objects.create(tag="none")
+        for photo in self.photos:
+            if photo.year % 2 == 0:
+                models.PhotoTag.objects.create(tag=eventag, photo=photo, accepted=True)
+            if photo.year % 10 == 0:
+                models.PhotoTag.objects.create(tag=endswithzero, photo=photo, accepted=True)
+            elif photo.year % 3 == 0:
+                models.PhotoTag.objects.create(tag=endswithzero, photo=photo, accepted=False)
+        self.assertEqual(
+            models.Tag.index(),
+            [
+                {'name': 'even year', 'count': 25, 'href': eventag.get_absolute_url()},
+                {'name': 'new decade', 'count': 5, 'href': endswithzero.get_absolute_url()},
+            ],
+        )
+
 
     def testYearIndex(self):
         for i, photo in enumerate(models.Photo.objects.year_index()):

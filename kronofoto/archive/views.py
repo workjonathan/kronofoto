@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import urllib.request
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
@@ -484,3 +484,16 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
             )
             collection.photos.add(self.photo)
         return super().form_valid(form)
+
+
+class DirectoryView(BaseTemplateMixin, TemplateView):
+    template_name = 'archive/directory.html'
+    subdirectories = [
+        {'name': 'Terms', 'indexer': Term},
+        {'name': 'Tags', 'indexer': Tag},
+    ]
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['subdirectories'] = self.subdirectories
+        return context

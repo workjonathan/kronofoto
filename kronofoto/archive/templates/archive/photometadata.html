@@ -22,7 +22,7 @@
             <li><span class="field-name">Catalog Terms:</span>
             {% if photo.terms.all %}
                 {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-                    <a href="{% url "gridview" 1 %}?term={{term.slug}}">{{ term }}</a>{% endfor %}
+                    <a href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}
             {% else %}
             None
             {% endif %}
@@ -30,7 +30,7 @@
             <li><span class="field-name">Tags:</span>
             {% if tags %}
                 {% for tag in tags %}{% if not forloop.first %},{% endif %} 
-                <a href="{% url "gridview" 1 %}?tag={{tag.slug}}">{{ tag }}</a>{% endfor %}
+                <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}
             {% else %}
             None
             {% endif %}

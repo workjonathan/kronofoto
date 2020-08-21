@@ -30,6 +30,7 @@ urlpatterns = [
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('search/', views.SearchResultsView.as_view(), name='search-results'),
+    path('directory/', views.DirectoryView.as_view(), name='directory'),
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
