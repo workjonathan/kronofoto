@@ -7,6 +7,14 @@ from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 
+class DonorTest(TestCase):
+    def testURL(self):
+        donor = models.Donor.objects.create(
+            last_name='last',
+            first_name='first',
+        )
+        self.assertEqual(donor.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'donor': donor.id})))
+
 class TermTest(TestCase):
     def testURL(self):
         term = models.Term.objects.create(term="test term")
@@ -20,7 +28,7 @@ class TagTest(TestCase):
 class WhenHave50Photos(TestCase):
     @classmethod
     def setUpTestData(cls):
-        donor = models.Donor.objects.create(
+        cls.donor = donor = models.Donor.objects.create(
             last_name='last',
             first_name='first',
         )
@@ -36,6 +44,14 @@ class WhenHave50Photos(TestCase):
                 is_published=True,
             )
             cls.photos.append(p)
+
+    def testDonorIndex(self):
+        self.assertEqual(
+            models.Donor.index(),
+            [
+                {'name': 'last, first', 'count': 50, 'href': self.donor.get_absolute_url()},
+            ]
+        )
 
     def testTermIndex(self):
         endswithzero = models.Term.objects.create(term="new decade")

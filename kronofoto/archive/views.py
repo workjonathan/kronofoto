@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import urllib.request
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
@@ -491,6 +491,7 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
     subdirectories = [
         {'name': 'Terms', 'indexer': Term},
         {'name': 'Tags', 'indexer': Tag},
+        {'name': 'Donors', 'indexer': Donor},
     ]
 
     def get_context_data(self, *args, **kwargs):

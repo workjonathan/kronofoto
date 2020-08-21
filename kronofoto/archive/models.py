@@ -25,8 +25,19 @@ class Donor(models.Model):
     state = models.CharField(max_length=256)
     zip = models.CharField(max_length=256)
     country = models.CharField(max_length=256)
+
     def __str__(self):
         return '{} {}'.format(self.first_name, self.last_name)
+
+    def get_absolute_url(self):
+        return '{}?{}'.format(reverse('gridview'), urlencode({'donor': self.id}))
+
+    @staticmethod
+    def index():
+        return [
+            {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
+            for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name').filter(count__gt=0)
+        ]
 
 
 class Collection(models.Model):
