@@ -188,8 +188,12 @@ class FrontPage(RedirectView):
 class Keyframes(TemplateView):
     template_name = "archive/keyframes.css"
     content_type = 'text/css'
-    def get_context_data(self, origin, difference, step, unit):
-        context = super().get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        origin = self.kwargs['origin']
+        difference = self.kwargs['difference']
+        step = self.kwargs['step']
+        unit = self.kwargs['unit']
         animations = []
         for i in range(0, difference, step):
             animations.append({'from': origin-i, 'to': origin-difference})
@@ -273,8 +277,13 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
-    def get_context_data(self, photo, page=1):
-        context = super(PhotoView, self).get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super(PhotoView, self).get_context_data(**kwargs)
+        photo = self.kwargs['photo']
+        if 'page' in self.kwargs:
+            page = self.kwargs['page']
+        else:
+            page = 1
         queryset = self.queryset
         index = queryset.year_links(params=self.request.GET)
 
@@ -314,7 +323,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return super().render_to_response(context, **kwargs)
 
     def render_to_response(self, context, **kwargs):
-        if 'photo' not in context:
+        if 'years' not in context:
             try:
                 photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
                 return redirect(photo.get_absolute_url(queryset=self.queryset, params=self.request.GET))
