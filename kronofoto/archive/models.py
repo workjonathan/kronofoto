@@ -386,7 +386,7 @@ class PhotoVote(models.Model):
 
 
 class CSVRecord(models.Model):
-    filename = models.TextField() #unique=True)
+    filename = models.TextField(unique=True)
     # unique constraint seems to make sense to me, but there are quite a few
     # duplicate records. should both be added? Or should we take newer added to
     # archive date to be the true record? Or should this be resolved on a case
