@@ -6,6 +6,8 @@
 
 {% block content %}
   <main>
+    <div class="click-content"></div>
+    
     <article class="fi-image">
       <figure>
         <img id="fi-image" src="{{ photo.h700.url }}" alt="Alt text for the image">
@@ -27,6 +29,8 @@
         {% photo_metadata photo user %}
       </div>
     </article>
+    
+
     <nav class="fi-timeline">
       <div class="fi-thumbnail-carousel">
         <div class="back-arrows">

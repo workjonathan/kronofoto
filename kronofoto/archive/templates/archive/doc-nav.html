@@ -1,5 +1,5 @@
 <ul class="navigation-menu">
 {% for text, name in pages %}
-    <li{% if text == title %} active{% endif %}><a href="{% url name %}">{{ text }}</a></li>
+    <li{% if text == title %} class='active' active{% endif %}><a href="{% url name %}">{{ text }}</a></li>
 {% endfor %}
 </ul>

@@ -41,6 +41,8 @@ body {
   display: grid;
   height: 100vh;
   grid-template-rows: minmax(min-content, 0fr) auto;
+  max-width: 2100px;
+  margin: 0 auto;
 }
 
 /******************
@@ -134,8 +136,9 @@ input#search-box {
   width: 100%;
   background: white;
   margin: 0 -15px;
-  padding: 30px 140px;
+  padding: 60px 130px;
   z-index: 999;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
 
 .search-form th, .search-form td {
@@ -207,8 +210,6 @@ button#login-btn:hover {
 }
 #login {
   position: absolute;
-  top: 80px;
-  right: 50px;
   z-index: 5;
   background-color: var(--fp-light-grey);
   padding: 30px
@@ -219,6 +220,9 @@ button#login-btn:hover {
 }
 #login form input {
   margin: 10px 0;
+}
+#login form input[type="text"], #login form input[type="password"] {
+  background: var(--fp-main-grey);
 }
 
 .grid-icon img {
@@ -242,7 +246,7 @@ input[type="email"], input[type="number"], input[type="search"], input[type="tex
   appearance:none;
   height: 34px;
   padding: 4px 8px;
-  background-color: var(--fp-main-grey);
+  background-color: var(--fp-light-grey);
   color: #333;
   border: none;
   border-radius: 2px;
@@ -262,7 +266,7 @@ select::-ms-expand {
 }
 
 select {
-  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-main-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
+  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
 }
 
 .register-container {
@@ -283,6 +287,49 @@ select {
 
 .register-container input[type="submit"] {
   margin-top: 25px;
+}
+
+.hamburger {
+  cursor: pointer;
+}
+
+.hamburger-container {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+}
+
+.hamburger-menu {
+  padding: 15px 15px 15px 25px;
+  background: var(--fp-light-grey);
+  position: absolute;
+  z-index: 5;
+  top: 90px;
+  width: 250px;
+}
+.hamburger-menu ul {
+  display: block;
+}
+.hamburger-menu li {
+  list-style-type: none;
+  padding: 12px 0;
+}
+.hamburger-menu li a {
+  color: #333;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.hamburger-menu li a:hover {
+  color: var(--fp-main-blue);
+}
+.hamburger-menu li[active]::before {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 30px;
+  left: 0;
+  margin-top: -5px;
+  background-image: url('/static/assets/images/menu-highlight.png');
 }
 
 
@@ -336,11 +383,11 @@ main article.fi-image {
 }
 .fi-image .control.previous {
   grid-column: 1 / span 3;
-  cursor: url('/static/assets/images/back-cursor.png'), auto;
+  cursor: url('/static/assets/images/arrow-cursor-back.png'), auto;
 }
 .fi-image .control.forward {
   grid-column: 4 / span 3;
-  cursor: url('/static/assets/images/forward-cursor.png'), auto;
+  cursor: url('/static/assets/images/arrow-cursor.png'), auto;
 }
 .fi-image #expand {
   grid-row-start: 4;
@@ -409,6 +456,9 @@ main article.fi-image {
 .fi-timeline {
   /* height: 225px; */
   flex-direction: column;
+  max-width: 1140px;
+  justify-self: center;
+  /* width: 1140px; */
 }
 
 .fi-thumbnail-carousel {
@@ -554,10 +604,12 @@ main article.fi-image {
   grid-column: 1 / span 6;
   background-color: var(--fp-light-grey-translucent);
   padding: 20px;
-  position: relative;
+  /* position: relative; */
+  position: absolute;
   z-index: 10;
-
-  grid-template-columns: auto 1fr;
+  bottom: 0;
+  width: 100%;
+  /* grid-template-columns: auto 1fr; */
 }
 #metadata ul {
   list-style-type: none;
@@ -588,6 +640,7 @@ main article.fi-image {
   font-size: 10px;
   grid-row: 1 / span 1;
   grid-column: 2 / span 1;
+  margin-left: 20px;
 }
 
 .gridden {
@@ -596,4 +649,9 @@ main article.fi-image {
 
 .hidden {
     display: none;
+}
+
+.download-icon {
+  width: 18px;
+  vertical-align: sub;
 }

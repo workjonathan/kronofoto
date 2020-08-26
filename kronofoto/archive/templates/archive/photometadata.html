@@ -1,7 +1,8 @@
+{% load static %}
         <div class="metadata-1a">
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}</li>
-            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}} <a href="{{ photo.original.url }}" download="{{ photo.accession_number}}.jpg">Download</a></li>
+            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}} <a href="{{ photo.original.url }}" download="{{ photo.accession_number}}.jpg"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
             <li><span class="field-name">Donor:</span><a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
           </ul>
         </div>

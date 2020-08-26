@@ -8,6 +8,10 @@ const toggleLogin = evt => {
     console.log('toggled login');
     toggleElement(el);
 }
+const toggleMenu = evt => {
+    const el = document.querySelector('.hamburger-menu')
+    toggleElement(el)
+}
 const toggleElement = el => {
     console.log('el:', el);
     if (!el.classList.replace('hidden', 'gridden')) {

@@ -20,7 +20,7 @@ class SearchForm(forms.Form):
     query.group = "QUERY"
 
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))
-    term.group = "TERM"
+    term.group = "CATEGORY"
 
     startYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'Start'}) )
     startYear.group = 'DATE RANGE'
