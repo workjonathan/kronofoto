@@ -4,7 +4,7 @@ from ..forms import SearchForm
 register = template.Library()
 
 @register.inclusion_tag('archive/doc-nav.html', takes_context=False)
-def docnav(title):
+def docnav(title=None):
     pages = (
         ('About', 'about'),
         ('Use', 'use'),
