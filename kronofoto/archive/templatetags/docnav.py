@@ -4,11 +4,21 @@ from ..forms import SearchForm
 register = template.Library()
 
 @register.inclusion_tag('archive/doc-nav.html', takes_context=False)
-def docnav(title=None):
+def docnav(active_item=None):
+    # These are pairs of display text and view names.
     pages = (
         ('About', 'about'),
         ('Use', 'use'),
         ('Contribute', 'contribute'),
         ('Volunteer', 'volunteer'),
     )
-    return {'pages': pages, 'title': title}
+    return {
+        'pages': [
+            {
+                'text': text,
+                'view_name': view_name,
+                'is_active': active_item == text
+            }
+            for text, view_name in pages
+        ],
+    }
