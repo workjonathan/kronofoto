@@ -32,6 +32,7 @@ class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo_count'] = Photo.count()
+        context['grid_url'] = reverse('gridview')
         return context
 
 
@@ -213,9 +214,10 @@ class JSONResponseMixin:
 
 class TimelinePage(Page):
     def find_accession_number(self, accession_number):
-        for p in self:
+        for i, p in enumerate(self):
             if p.accession_number == accession_number:
                 p.active = True
+                p.row_number = self.start_index() + i - 1
                 return p
         raise KeyError(accession_number)
 
@@ -297,6 +299,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
                 p.save_params(self.request.GET)
 
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
+            context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
             context["years"] = index
             context['initialstate'] = self.get_data(context)
@@ -311,6 +314,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return {
             'url': photo.get_absolute_url(),
             'h700': photo.h700.url,
+            'grid_url': photo.get_grid_url(),
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
             'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else {},
@@ -353,6 +357,8 @@ class GridBase(BaseTemplateMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
+        for i, photo in enumerate(page_obj):
+            photo.row_number = page_obj.start_index() + i - 1
         self.attach_params(page_obj)
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]

@@ -214,6 +214,10 @@ class Photo(models.Model):
             'json_url': self.get_json_url(),
         }
 
+    def get_grid_url(self, params=None):
+        url = reverse('gridview', kwargs={'page': (self.row_number - 1)//50 + 1})
+        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
     def get_absolute_url(self, queryset=None, params=None):
         kwargs = {'photo': self.accession_number}
         try:
@@ -226,6 +230,7 @@ class Photo(models.Model):
             kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
 
     def format_url(**kwargs):
         return "{}?{}".format(
