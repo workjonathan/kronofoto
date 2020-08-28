@@ -187,7 +187,7 @@ class Photo(models.Model):
         if queryset:
             self.row_number = queryset.photo_position(self)
         if hasattr(self, 'row_number'):
-            return (self.row_number) // 10 + 1
+            return self.row_number // 10 + 1
         raise AttributeError
 
     def add_params(self, url, params):
@@ -215,7 +215,7 @@ class Photo(models.Model):
         }
 
     def get_grid_url(self, params=None):
-        url = reverse('gridview', kwargs={'page': (self.row_number - 1)//50 + 1})
+        url = reverse('gridview', kwargs={'page': self.row_number//50 + 1})
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
     def get_absolute_url(self, queryset=None, params=None):
