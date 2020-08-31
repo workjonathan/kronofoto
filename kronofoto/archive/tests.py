@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
+from .forms import TagForm
 
 class PhotoTest(TestCase):
     def testCityURL(self):
@@ -34,6 +35,36 @@ class TagTest(TestCase):
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
         self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
+
+
+class TagFormTest(TestCase):
+    def testShouldHandleTagsWithDifferentCapitalization(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+
+        form = TagForm(data={'tag': 'hat'})
+        form.is_valid()
+        form.add_tag(photo, user)
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        form = TagForm(data={'tag': 'Hat'})
+        form.is_valid()
+        form.add_tag(photo, user)
+        self.assertEqual(models.Tag.objects.filter(tag='Hat').count(), 0)
+        self.assertEqual(models.Tag.objects.filter(tag='hat').count(), 1)
 
 class WhenHave50Photos(TestCase):
     @classmethod

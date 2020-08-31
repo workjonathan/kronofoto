@@ -6,6 +6,7 @@ from .search import expression
 from .search.parser import Parser, NoExpression
 from functools import reduce
 from .token import UserEmailVerifier
+from django.utils.text import slugify
 
 
 generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
@@ -103,7 +104,8 @@ class TagForm(forms.Form):
     tag = forms.CharField()
 
     def add_tag(self, photo, user):
-        tag, _ = Tag.objects.get_or_create(tag=self.cleaned_data['tag'])
+        text = self.cleaned_data['tag']
+        tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
         phototag, _ = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': False})
         phototag.creator.add(user)
         phototag.save()
