@@ -298,11 +298,15 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             for p in page_selection.photos():
                 p.save_params(self.request.GET)
 
+            sorted_qs = self.queryset.order_by('year', 'id')
+
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
             context["years"] = index
             context['initialstate'] = self.get_data(context)
+            context['first_year'] = sorted_qs.first().year
+            context['last_year'] = sorted_qs.last().year
         except KeyError:
             pass
         return context
