@@ -365,7 +365,7 @@ class PhotoTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
-    creator = models.ManyToManyField(User)
+    creator = models.ManyToManyField(User, editable=False)
 
 
 class PrePublishPhoto(models.Model):
