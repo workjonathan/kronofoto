@@ -34,7 +34,6 @@ class UserTagInline(admin.TabularInline):
     extra = 0
     fields = ['thumb_image', 'tag', 'accepted']
     readonly_fields = ['thumb_image', 'tag', 'accepted']
-    verbose_name_plural = "??????"
 
     def thumb_image(self, instance):
         return mark_safe(
