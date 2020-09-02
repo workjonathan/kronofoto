@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import urllib.request
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
@@ -17,7 +17,7 @@ from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.urls import reverse_lazy, reverse
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import login
 from math import floor
 from itertools import islice,chain
@@ -26,6 +26,7 @@ from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, N
 from .search import evaluate
 
 from .token import UserEmailVerifier
+
 
 EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
@@ -36,7 +37,6 @@ FAKE_PHOTO = {
         'width': 75,
     }
 }
-
 
 
 class BaseTemplateMixin:
@@ -536,3 +536,14 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context['subdirectories'] = self.subdirectories
         return context
+
+
+class MissingPhotosView(UserPassesTestMixin, ListView):
+    template_name = 'archive/missingphotos.html'
+
+    def test_func(self):
+        print('???')
+        return self.request.user.is_superuser
+
+    def get_queryset(self):
+        return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')
