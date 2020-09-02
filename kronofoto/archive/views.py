@@ -27,6 +27,17 @@ from .search import evaluate
 
 from .token import UserEmailVerifier
 
+EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+
+FAKE_PHOTO = {
+    'thumbnail': {
+        'url': EMPTY_PNG,
+        'height': 75,
+        'width': 75,
+    }
+}
+
+
 
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
@@ -212,6 +223,12 @@ class JSONResponseMixin:
         return context
 
 
+class FakeTimelinePage:
+    def __iter__(self):
+        yield from []
+
+    object_list = [FAKE_PHOTO] * 10
+
 class TimelinePage(Page):
     def find_accession_number(self, accession_number):
         for i, p in enumerate(self):
@@ -256,7 +273,7 @@ class TimelinePaginator(Paginator):
                 item.page = page
             return page
         except EmptyPage:
-            return []
+            return FakeTimelinePage()
 
     def _get_page(self, *args, **kwargs):
         return TimelinePage(*args, **kwargs)

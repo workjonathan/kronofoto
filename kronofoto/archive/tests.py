@@ -8,6 +8,29 @@ from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 from .forms import TagForm
 
+class FakeImageTest(SimpleTestCase):
+    def testShouldHaveThumbnail(self):
+        self.assertEqual(views.FAKE_PHOTO['thumbnail']['url'], views.EMPTY_PNG)
+
+    def testShouldHaveWidth(self):
+        self.assertEqual(views.FAKE_PHOTO['thumbnail']['width'], 75)
+
+    def testShouldHaveHeight(self):
+        self.assertEqual(views.FAKE_PHOTO['thumbnail']['height'], 75)
+
+class FakeTimelinePageTest(SimpleTestCase):
+    def testShouldNotHavePhotos(self):
+        self.assertEqual(len(list(views.FakeTimelinePage())), 0)
+
+    def testShouldHaveAnObjectListWithTenFakePhotos(self):
+        self.assertEqual(len(list(views.FakeTimelinePage().object_list)), 10)
+
+class TimelinePaginatorTest(TestCase):
+    def testInvalidPageShouldGetFakePage(self):
+        page = views.TimelinePaginator(models.Photo.objects.all().order_by('id'), per_page=10).get_page(2)
+        for photo in page.object_list:
+            self.assertEqual(photo['thumbnail']['url'], views.EMPTY_PNG)
+
 class PhotoTest(TestCase):
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')
