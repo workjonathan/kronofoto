@@ -218,6 +218,7 @@ class Photo(models.Model):
         url = reverse('gridview', kwargs={'page': self.row_number//50 + 1})
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
+
     def get_absolute_url(self, queryset=None, params=None):
         kwargs = {'photo': self.accession_number}
         try:
@@ -231,6 +232,8 @@ class Photo(models.Model):
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
+    def get_edit_url(self):
+        return reverse('admin:archive_photo_change', args=(self.id,))
 
     def format_url(**kwargs):
         return "{}?{}".format(

@@ -324,6 +324,9 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['initialstate'] = self.get_data(context)
             context['first_year'] = sorted_qs.first().year
             context['last_year'] = sorted_qs.last().year
+            if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
+                print("SDFLKSDJF")
+                context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
             pass
         return context
