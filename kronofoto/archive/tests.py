@@ -32,6 +32,27 @@ class TimelinePaginatorTest(TestCase):
             self.assertEqual(photo['thumbnail']['url'], views.EMPTY_PNG)
 
 class PhotoTest(TestCase):
+    def testShouldNotAppearTwiceWhenTwoUsersSubmitSameTag(self):
+        user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
+        photo = models.Photo(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=open('testdata/test.jpg', 'rb').read(),
+                content_type='image/jpeg'),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+            is_published=True,
+            year=1950,
+        )
+        photo.save()
+        tag = models.Tag.objects.create(tag="test tag")
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
+        phototag.creator.add(user2)
+        phototag.creator.add(user)
+        phototag.save()
+        photo.save()
+        self.assertEqual(models.Photo.objects.filter_photos({'tag': tag.slug}, user).count(), 1)
+
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')
         self.assertEqual(photo.get_city_url(), '{}?{}'.format(reverse('gridview'), urlencode({'city': photo.city, 'state': photo.state})))

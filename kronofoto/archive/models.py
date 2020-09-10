@@ -135,7 +135,7 @@ class PhotoQuerySet(models.QuerySet):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
     def filter_photos(self, params, user):
-        return self.filter(Photo.build_query(params, user))
+        return self.filter(Photo.build_query(params, user)).distinct()
 
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
