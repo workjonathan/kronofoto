@@ -12,11 +12,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='phototag',
-            name='creator',
-            field=models.ManyToManyField(editable=False, to=settings.AUTH_USER_MODEL),
-        ),
+        #migrations.AlterField(
+        #    model_name='phototag',
+        #    name='creator',
+        #    field=models.ManyToManyField(editable=False, to=settings.AUTH_USER_MODEL),
+        #),
         migrations.AlterField(
             model_name='tag',
             name='tag',
