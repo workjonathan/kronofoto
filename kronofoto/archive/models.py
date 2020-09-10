@@ -15,6 +15,11 @@ from bisect import bisect_left as bisect
 from django.utils.http import urlencode
 
 
+class LowerCaseCharField(models.CharField):
+    def get_prep_value(self, value):
+        return str(value).lower()
+
+
 class Donor(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)
@@ -79,7 +84,7 @@ class Term(models.Model):
 
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=64, unique=True)
+    tag = LowerCaseCharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
     def save(self, *args, **kwargs):

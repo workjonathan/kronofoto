@@ -59,6 +59,10 @@ class TagTest(TestCase):
         tag = models.Tag.objects.create(tag="test tag")
         self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
 
+    def testShouldEnforceLowerCase(self):
+        tag = models.Tag.objects.create(tag='CAPITALIZED')
+        tag.refresh_from_db()
+        self.assertEqual(tag.tag, 'capitalized')
 
 class TagFormTest(TestCase):
     def testShouldHandleTagsWithDifferentCapitalization(self):
@@ -72,7 +76,7 @@ class TagFormTest(TestCase):
         )
         user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
 
-        form = TagForm(data={'tag': 'hat'})
+        form = TagForm(data={'tag': 'Hat'})
         form.is_valid()
         form.add_tag(photo, user)
         photo = models.Photo.objects.create(
@@ -83,10 +87,10 @@ class TagFormTest(TestCase):
             ),
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
         )
-        form = TagForm(data={'tag': 'Hat'})
+        form = TagForm(data={'tag': 'hat'})
         form.is_valid()
         form.add_tag(photo, user)
-        self.assertEqual(models.Tag.objects.filter(tag='Hat').count(), 0)
+        self.assertEqual(models.Tag.objects.filter(tag='Hat').count(), 1)
         self.assertEqual(models.Tag.objects.filter(tag='hat').count(), 1)
 
 class WhenHave50Photos(TestCase):
