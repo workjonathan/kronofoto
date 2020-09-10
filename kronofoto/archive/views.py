@@ -102,11 +102,12 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo'] = self.photo
+        context['tags'] = self.photo.get_accepted_tags(self.request.user)
         return context
 
     def dispatch(self, request, photo):
         self.photo = Photo.objects.get(id=Photo.accession2id(photo))
-        self.success_url = self.photo.get_absolute_url()
+        self.success_url = reverse('addtag', kwargs={'photo': self.photo.accession_number})
         return super().dispatch(request)
 
     def form_valid(self, form):
@@ -325,7 +326,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['first_year'] = sorted_qs.first().year
             context['last_year'] = sorted_qs.last().year
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
-                print("SDFLKSDJF")
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
             pass

@@ -4,7 +4,8 @@
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Add">
+    <span class="back-btn"><a href="{{ photo.get_absolute_url }}">Back to archive</a></span>
 </form>
-Current tags: {{ photo.accepted_tags | join:', ' }}
+Current tags: {{ tags | join:', ' }}
 <img src="{{ photo.h700.url }}">
 {% endblock %}
