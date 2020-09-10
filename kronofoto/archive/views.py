@@ -479,6 +479,12 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
     model = Collection
     template_name = 'archive/collection_delete.html'
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if 'view' not in context:
+            context['view'] = self
+        return context
+
     def get_success_url(self):
         return reverse('user-page', args=[self.request.user.get_username()])
 
