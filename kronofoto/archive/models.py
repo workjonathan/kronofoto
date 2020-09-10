@@ -315,6 +315,7 @@ class Photo(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.thumbnail:
+            Image.MAX_IMAGE_PIXELS = 195670000
             image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
             dims = ((75, 75), (None, 700))
             results = []

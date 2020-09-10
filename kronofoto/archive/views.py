@@ -545,7 +545,6 @@ class MissingPhotosView(UserPassesTestMixin, ListView):
     template_name = 'archive/missingphotos.html'
 
     def test_func(self):
-        print('???')
         return self.request.user.is_superuser
 
     def get_queryset(self):
