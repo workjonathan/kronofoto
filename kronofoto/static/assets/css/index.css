@@ -45,6 +45,11 @@ body {
   margin: 0 auto;
 }
 
+a {
+  color: var(--fp-main-blue);
+  text-decoration: none;
+}
+
 /******************
  ** HEADER / NAV **
  ******************/
@@ -56,7 +61,7 @@ header {
 }
 
 #logo {
-  width: 120px;
+  /* width: 120px; */
 }
 
 nav {
@@ -71,18 +76,30 @@ nav {
   align-items: center;
 }
 
+.main-nav_left {
+  width: 66%;
+}
+
+.main-nav_right {
+  width: 16.5%;
+}
+
 .main-nav_left, .main-nav_right {
-  width: 30%;
   display: flex;
   justify-content: space-evenly;
   align-items: center;
 }
 
 .main-nav_center {
-  width: 40%;
+  width: 16.5%;
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
+}
+
+.header-text {
+  font-size: 14px;
+  color: #777;
 }
 
 nav ul {
@@ -103,12 +120,12 @@ header nav div img {
 }
 
 .logo-img {
-  width: unset !important;
+  width: 95px;
 }
 
 #search-box-container {
   flex-grow: 1;
-  max-width: 500px;
+  max-width: 650px;
   background-color: var(--fp-main-blue);
 }
 #search-box-container img {
@@ -137,7 +154,7 @@ input#search-box::placeholder {
 .search-form {
   display: none;
   position: absolute;
-  max-width: 500px;
+  max-width: 650px;
   width: 100%;
   background: white;
   margin: 0 -15px;
@@ -191,13 +208,25 @@ input#search-box::placeholder {
 }
 
 button#login-btn, .logout-btn, input[type="submit"] {
-  background-color: var(--fp-main-blue);
   padding: 11px 15px;
   text-transform: uppercase;
   font-size: 15px;
   border: none;
-  color: white;
   cursor: pointer;
+  font-weight: bold;
+  transition: ease .2s;
+}
+button#login-btn, .logout-btn {
+  background-color: white;
+  color: var(--fp-main-blue);
+}
+input[type="submit"] {
+  background-color: var(--fp-main-blue);
+  color: white;
+}
+button#login-btn:hover, .logout-btn:hover, input[type="submit"]:hover {
+  background-color: var(--fp-main-blue);
+  color: white;
 }
 .logout-btn {
   background-color: var(--fp-main-grey);
@@ -228,6 +257,15 @@ button#login-btn:hover {
 }
 #login form input[type="text"], #login form input[type="password"] {
   background: var(--fp-main-grey);
+}
+
+#login p a {
+  color: var(--fp-main-blue);
+  text-decoration: none;
+}
+
+#login p {
+  margin-bottom: 5px;
 }
 
 .grid-icon img {
@@ -298,10 +336,25 @@ select {
   cursor: pointer;
 }
 
+.hamburger img {
+  height: 100%;
+  width: 25px;
+  vertical-align: bottom;
+}
+
 .hamburger-container {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  padding: 10px;
+}
+
+.hamburger-container:hover {
+  background-color: var(--fp-main-blue);
+}
+
+.hamburger-container:hover > div img {
+  filter: brightness(0) invert(1);
 }
 
 .hamburger-menu {
@@ -351,7 +404,7 @@ select {
 main {
   grid-row: 2 / span 1;
   display: grid;
-  grid-template-rows: minmax(500px, 1fr) minmax(min-content, 225px);
+  grid-template-rows: minmax(500px, 1fr) minmax(min-content, 190px);
 }
 main article {
   grid-row: 1 / span 1;
@@ -398,7 +451,7 @@ main article.fi-image {
   grid-column: 4 / span 3;
   cursor: url('/static/assets/images/arrow-cursor.png'), auto;
 }
-.fi-image #expand {
+.fi-image #expand, .fi-image #dl {
   grid-row-start: 4;
   grid-column-start: 6;
   grid-column-end: span 1;
@@ -408,11 +461,15 @@ main article.fi-image {
 
   height: 40px;
   width: 40px;
-  background: var(--fp-main-grey-translucent);
+  background: rgb(255,255,255,0.9);
   border: none;
   color: var(--fp-main-blue);
   cursor: pointer;
   font-size: 30px;
+}
+.fi-image #dl {
+  grid-column-start: 5;
+  margin-right: 10px;
 }
 
 .add-tag {
@@ -488,8 +545,8 @@ main article.fi-image {
   z-index: 2;
 }
 .back-arrows {
-  justify-content: right;
-  clip-path: inset(0px -25px 0px 0px);
+  justify-content: flex-end;
+  clip-path: inset(0px -25px 0px 1px);
 }
 
 .forward-arrows {
@@ -611,7 +668,7 @@ main article.fi-image {
  #metadata {
   grid-row: 3 / span 2;
   grid-column: 1 / span 6;
-  background-color: var(--fp-light-grey-translucent);
+  background-color: rgb(255,255,255,0.9);
   padding: 20px;
   /* position: relative; */
   position: absolute;
@@ -632,6 +689,7 @@ main article.fi-image {
   color: var(--fp-main-blue);
   text-transform: uppercase;
   padding-right: 4px;
+  font-weight: bold;
 }
 
 #metadata .metadata-1a ul > li:first-child {

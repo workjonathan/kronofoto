@@ -2,7 +2,7 @@
 <a href="{% url "user-page" user.username %}">{{ user.username }}</a> <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
 {% else %}
 <button id="login-btn" onclick="toggleLogin()">
-    Login
+    <i class="fas fa-lock"></i> Login
 </button>
 <div id="login" class="hidden">
     <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">

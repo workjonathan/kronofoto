@@ -2,20 +2,20 @@
         <div class="metadata-1a">
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
-            <li><span class="field-name">Photo ID:</span>{{photo.accession_number}} <a href="{{ photo.original.url }}" download="{{ photo.accession_number}}.jpg"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
-            <li><span class="field-name">Donor:</span><a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
+            <li>ID#: {{photo.accession_number}} <a href="{{ photo.original.url }}" download="{{ photo.accession_number}}.jpg"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
+            <li>Donated by <a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
           </ul>
         </div>
         <div class="metadata-2a">
-          <ul>
+          <ul style="color: #777;">
             {% if photo.photographer %}
-            <li><span class="field-name">Photographer:</span>{{ photo.photographer }}</li>
+            <li>Photographed by {{ photo.photographer }}</li>
             {% endif %}
 
             {% if photo.scanner %}
-            <li><span class="field-name">Scanner:</span>{{ photo.scanner.first_name }} {{ photo.scanner.last_name }}</li>
+            <li>Scanned by {{ photo.scanner.first_name }} {{ photo.scanner.last_name }}</li>
             {% endif %}
-            <li><span class="field-name">Added to Archive:</span>{{ photo.created | date:"DATE_FORMAT" }}</li>
+            <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>
         </div>
         <div class="metadata-3a">
@@ -38,6 +38,6 @@
             <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a>
             </li>
             <li><span class="field-name">Comments:</span>{{ photo.caption }}</li>
-            <li><span class="field-name"><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></span></li>
+            <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li>
           </ul>
         </div>

@@ -11,6 +11,7 @@ const toggleLogin = evt => {
 const toggleMenu = evt => {
     const el = document.querySelector('.hamburger-menu')
     toggleElement(el)
+    toggleHover()
 }
 const toggleElement = el => {
     console.log('el:', el);
@@ -150,3 +151,17 @@ $('.search-options').click(() => {
 })
 
 $('input[name="startYear"]').parent().parent('div').addClass('daterange')
+
+const toggleHover = () => {
+    if($('.hamburger-menu').hasClass('gridden')) {
+        $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
+        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)')
+    } else {
+        $('.hamburger-container').css('background-color', '')
+        $('.hamburger-container div img').css('filter', '')
+    }
+
+}
+
+
+    
