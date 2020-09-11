@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import urllib.request
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
@@ -17,7 +17,7 @@ from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.urls import reverse_lazy, reverse
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import login
 from math import floor
 from itertools import islice,chain
@@ -28,10 +28,22 @@ from .search import evaluate
 from .token import UserEmailVerifier
 
 
+EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+
+FAKE_PHOTO = {
+    'thumbnail': {
+        'url': EMPTY_PNG,
+        'height': 75,
+        'width': 75,
+    }
+}
+
+
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo_count'] = Photo.count()
+        context['grid_url'] = reverse('gridview')
         return context
 
 
@@ -90,11 +102,12 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['photo'] = self.photo
+        context['tags'] = self.photo.get_accepted_tags(self.request.user)
         return context
 
     def dispatch(self, request, photo):
         self.photo = Photo.objects.get(id=Photo.accession2id(photo))
-        self.success_url = self.photo.get_absolute_url()
+        self.success_url = reverse('addtag', kwargs={'photo': self.photo.accession_number})
         return super().dispatch(request)
 
     def form_valid(self, form):
@@ -211,11 +224,18 @@ class JSONResponseMixin:
         return context
 
 
+class FakeTimelinePage:
+    def __iter__(self):
+        yield from []
+
+    object_list = [FAKE_PHOTO] * 10
+
 class TimelinePage(Page):
     def find_accession_number(self, accession_number):
-        for p in self:
+        for i, p in enumerate(self):
             if p.accession_number == accession_number:
                 p.active = True
+                p.row_number = self.start_index() + i - 1
                 return p
         raise KeyError(accession_number)
 
@@ -254,7 +274,7 @@ class TimelinePaginator(Paginator):
                 item.page = page
             return page
         except EmptyPage:
-            return []
+            return FakeTimelinePage()
 
     def _get_page(self, *args, **kwargs):
         return TimelinePage(*args, **kwargs)
@@ -296,10 +316,17 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             for p in page_selection.photos():
                 p.save_params(self.request.GET)
 
+            sorted_qs = self.queryset.order_by('year', 'id')
+
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
+            context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
             context["years"] = index
             context['initialstate'] = self.get_data(context)
+            context['first_year'] = sorted_qs.first().year
+            context['last_year'] = sorted_qs.last().year
+            if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
+                context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
             pass
         return context
@@ -311,6 +338,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return {
             'url': photo.get_absolute_url(),
             'h700': photo.h700.url,
+            'grid_url': photo.get_grid_url(),
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
             'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else {},
@@ -353,6 +381,8 @@ class GridBase(BaseTemplateMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
+        for i, photo in enumerate(page_obj):
+            photo.row_number = page_obj.start_index() + i - 1
         self.attach_params(page_obj)
         paginator = context['paginator']
         links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
@@ -449,6 +479,12 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
     model = Collection
     template_name = 'archive/collection_delete.html'
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if 'view' not in context:
+            context['view'] = self
+        return context
+
     def get_success_url(self):
         return reverse('user-page', args=[self.request.user.get_username()])
 
@@ -509,3 +545,13 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context['subdirectories'] = self.subdirectories
         return context
+
+
+class MissingPhotosView(UserPassesTestMixin, ListView):
+    template_name = 'archive/missingphotos.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_queryset(self):
+        return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')

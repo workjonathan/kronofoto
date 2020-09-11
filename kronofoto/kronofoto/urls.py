@@ -19,6 +19,7 @@ register_converter(NegativeIntConverter, 'negint')
 
 urlpatterns = [
     path('', views.FrontPage.as_view(), name='random-image'),
+    path('missing-photos/', views.MissingPhotosView.as_view()),
     path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
     path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),

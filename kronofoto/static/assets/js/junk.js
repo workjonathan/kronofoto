@@ -59,6 +59,7 @@ const loadstate = data => {
     forward.setAttribute('data-json-href', data.forward.json_url)
     backward.setAttribute('href', data.backward.url)
     backward.setAttribute('data-json-href', data.backward.json_url)
+    document.getElementById('grid-a').setAttribute('href', data.grid_url)
 }
 
 

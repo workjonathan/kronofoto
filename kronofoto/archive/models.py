@@ -15,6 +15,11 @@ from bisect import bisect_left as bisect
 from django.utils.http import urlencode
 
 
+class LowerCaseCharField(models.CharField):
+    def get_prep_value(self, value):
+        return str(value).lower()
+
+
 class Donor(models.Model):
     last_name = models.CharField(max_length=256)
     first_name = models.CharField(max_length=256)
@@ -79,7 +84,7 @@ class Term(models.Model):
 
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=64, unique=True)
+    tag = LowerCaseCharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
     def save(self, *args, **kwargs):
@@ -130,7 +135,7 @@ class PhotoQuerySet(models.QuerySet):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
     def filter_photos(self, params, user):
-        return self.filter(Photo.build_query(params, user))
+        return self.filter(Photo.build_query(params, user)).distinct()
 
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -187,7 +192,7 @@ class Photo(models.Model):
         if queryset:
             self.row_number = queryset.photo_position(self)
         if hasattr(self, 'row_number'):
-            return (self.row_number) // 10 + 1
+            return self.row_number // 10 + 1
         raise AttributeError
 
     def add_params(self, url, params):
@@ -214,6 +219,11 @@ class Photo(models.Model):
             'json_url': self.get_json_url(),
         }
 
+    def get_grid_url(self, params=None):
+        url = reverse('gridview', kwargs={'page': self.row_number//50 + 1})
+        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
+
     def get_absolute_url(self, queryset=None, params=None):
         kwargs = {'photo': self.accession_number}
         try:
@@ -226,6 +236,9 @@ class Photo(models.Model):
             kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+
+    def get_edit_url(self):
+        return reverse('admin:archive_photo_change', args=(self.id,))
 
     def format_url(**kwargs):
         return "{}?{}".format(
@@ -276,7 +289,7 @@ class Photo(models.Model):
     county = models.CharField(max_length=128, blank=True)
     state = models.CharField(max_length=64, blank=True)
     country = models.CharField(max_length=64, null=True, blank=True)
-    year = models.SmallIntegerField(null=True, blank=True)
+    year = models.SmallIntegerField(null=True, blank=True, db_index=True)
     caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
@@ -302,6 +315,7 @@ class Photo(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.thumbnail:
+            Image.MAX_IMAGE_PIXELS = 195670000
             image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
             dims = ((75, 75), (None, 700))
             results = []
@@ -360,7 +374,7 @@ class PhotoTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
-    creator = models.ManyToManyField(User)
+    creator = models.ManyToManyField(User, editable=False)
 
 
 class PrePublishPhoto(models.Model):
