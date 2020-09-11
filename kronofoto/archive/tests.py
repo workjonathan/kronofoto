@@ -1,7 +1,7 @@
 from django.test import TestCase, SimpleTestCase, RequestFactory
 from . import models, views
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User, AnonymousUser, Permission
 from django.urls import reverse
 from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
@@ -86,8 +86,8 @@ class TagTest(TestCase):
         self.assertEqual(tag.tag, 'capitalized')
 
 class TagFormTest(TestCase):
-    def testShouldHandleTagsWithDifferentCapitalization(self):
-        photo = models.Photo.objects.create(
+    def setUp(self):
+        self.photo = models.Photo.objects.create(
             original=SimpleUploadedFile(
                     name='test_img.jpg',
                     content=open('testdata/test.jpg', 'rb').read(),
@@ -95,7 +95,36 @@ class TagFormTest(TestCase):
             ),
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
         )
-        user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        self.user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+
+    def testShouldAutoAcceptTagsIfUserHasPermissions(self):
+        user = self.user
+        form = TagForm(data={'tag': 'dog'})
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, user)
+
+        user.is_staff = True
+        user.user_permissions.add(Permission.objects.get(codename='add_tag'))
+        user.user_permissions.add(Permission.objects.get(codename='change_tag'))
+        user.user_permissions.add(Permission.objects.get(codename='add_phototag'))
+        user.user_permissions.add(Permission.objects.get(codename='change_phototag'))
+        user.save()
+        user = User.objects.get(username='testuser')
+        form = TagForm(data={'tag': 'Hat'})
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, user)
+        self.photo.refresh_from_db()
+        self.assertTrue(models.PhotoTag.objects.get(photo=self.photo, tag__tag='hat').accepted)
+        form = TagForm(data={'tag': 'dog'})
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, user)
+        self.photo.refresh_from_db()
+        self.assertTrue(models.PhotoTag.objects.get(photo=self.photo, tag__tag='dog').accepted)
+
+
+    def testShouldHandleTagsWithDifferentCapitalization(self):
+        photo = self.photo
+        user = self.user
 
         form = TagForm(data={'tag': 'Hat'})
         form.is_valid()
