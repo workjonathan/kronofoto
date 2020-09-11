@@ -7,7 +7,7 @@
 {% block content %}
   <main>
     <div class="click-content"></div>
-    
+
     <article class="fi-image">
       <figure>
         <img id="fi-image" src="{{ photo.h700.url }}" alt="Alt text for the image">
@@ -61,15 +61,15 @@
         </div>
       </div>
       <div class="year-ticker">
-        <div class="year-min">
+        <!-- <div class="year-min">
           <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing back">
           1890
-        </div>
+        </div> -->
         {% make_timeline years %}
-        <div class="year-max">
+        <!-- <div class="year-max">
           2000
           <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing forward">
-        </div>
+        </div> -->
       </div>
     </nav>
   </main>

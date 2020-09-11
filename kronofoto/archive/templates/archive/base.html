@@ -37,7 +37,7 @@
           <div id="search-box-container">
             <div class="search-box-content">
 
-              <div>
+              <div class="search-box-content_inner">
                 {% make_search_form %}
                 {% comment %}
                 <form action="/search/" method="get">
@@ -87,7 +87,7 @@
             </div>
 
             <div class="hamburger-menu hidden">
-              {% docnav %}
+              {% docnav "Home" %}
               <!-- <ul>
                 <li class="active"><a href="{% url "random-image" %}">Home</a></li>
                 <li><a href="#">About</a></li>
