@@ -18,7 +18,13 @@ class TagInline(admin.TabularInline):
     readonly_fields = ['submitter']
 
     def submitter(self, instance):
-        creators = ', '.join('<a href="{url}">{username}</a>'.format(url=reverse('admin:auth_user_change', args=[user.id]), username=user.username) for user in instance.creator.all())
+        creators = ', '.join(
+            '<a href="{url}">{username}</a>'.format(
+                url=reverse('admin:auth_user_change', args=[user.id]),
+                username=user.username,
+            )
+            for user in instance.creator.all()
+        )
         return mark_safe(creators)
 
 
