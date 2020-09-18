@@ -134,8 +134,79 @@ class PhotoQuerySet(models.QuerySet):
     def photo_position(self, photo):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
-    def filter_photos(self, params, user):
-        return self.filter(Photo.build_query(params, user)).distinct()
+    def filter_photos(self, collection):
+        return self.filter(collection.asQuery()).distinct()
+
+
+def format_location(**kwargs):
+    parts = []
+    if kwargs.get('city', None):
+        parts.append(kwargs['city'])
+    if kwargs.get('county', None):
+        parts.append('{} County'.format(kwargs['county']))
+    if kwargs.get('state', None):
+        parts.append(kwargs['state'])
+    if not parts and kwargs.get('country', None):
+        parts.append(kwargs['country'])
+    s = ', '.join(parts)
+    return s or 'Location: n/a'
+
+
+class CollectionQuery:
+    def __init__(self, getparams, user):
+        self.getparams = getparams
+        self.user = user
+
+    def asQuery(self):
+        replacements = {
+            "collection": "collection__id",
+            "tag": 'phototag__tag__slug',
+            'term': 'terms__slug',
+            'donor': 'donor__id',
+        }
+        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
+        merges = {
+            'phototag__tag__slug': [Q(phototag__accepted=True)],
+            'collection__id': [~Q(collection__visibility='PR')],
+        }
+        if self.user.is_authenticated:
+            merges['collection__id'][0] |= Q(collection__owner=self.user)
+            merges['phototag__tag__slug'][0] |= Q(phototag__creator=self.user)
+        filtervals = (
+            (replacements.get(param, param), self.getparams.get(param))
+            for param in params
+        )
+        clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
+
+        andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
+        return reduce(operator.and_, andClauses)
+
+    def __str__(self):
+        parts = []
+        if 'donor' in self.getparams:
+            d = Donor.objects.get(id=self.getparams['donor'])
+            parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+        location = {
+            key: self.getparams[key]
+            for key in ('city', 'county', 'state', 'country')
+            if self.getparams.get(key, None)
+        }
+        if location:
+            parts.append(format_location(**location))
+        if self.getparams.get('term', None):
+            t = Term.objects.get(slug=self.getparams['term'])
+            parts.append("Termed with {}".format(t.term))
+        if self.getparams.get('tag', None):
+            t = Tag.objects.get(slug=self.getparams['tag'])
+            parts.append("Tagged with {}".format(t.tag))
+        if len(parts) == 0:
+            return 'All Photos'
+        if len(parts) > 1:
+            return '{} and in {}'.format(', '.join(parts[:-1]) , parts[-1])
+        else:
+            return parts[0]
+
+
 
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -148,31 +219,6 @@ class Photo(models.Model):
     @classmethod
     def count(cls):
         return cls.objects.filter(is_published=True).count()
-
-    @staticmethod
-    def build_query(getparams, user):
-        replacements = {
-            "collection": "collection__id",
-            "tag": 'phototag__tag__slug',
-            'term': 'terms__slug',
-            'donor': 'donor__id',
-        }
-        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
-        merges = {
-            'phototag__tag__slug': [Q(phototag__accepted=True)],
-            'collection__id': [~Q(collection__visibility='PR')],
-        }
-        if user.is_authenticated:
-            merges['collection__id'][0] |= Q(collection__owner=user)
-            merges['phototag__tag__slug'][0] |= Q(phototag__creator=user)
-        filtervals = (
-            (replacements.get(param, param), getparams.get(param))
-            for param in params
-        )
-        clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
-
-        andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
-        return reduce(operator.and_, andClauses)
 
     def get_accepted_tags(self, user=None):
         filter_args = Q(phototag__accepted=True)
@@ -346,16 +392,13 @@ class Photo(models.Model):
             self.h700.name = fname
         super().save(*args, **kwargs)
 
-
     def location(self):
-        result = "Location: n/a"
+        kwargs = dict(
+            city=self.city, state=self.state, county=self.county, country=self.country
+        )
         if self.city:
-            result = "{}, {}".format(self.city, self.state)
-        elif self.county:
-            result = "{} County, {}".format(self.county, self.state)
-        elif self.country:
-            result = self.country
-        return result
+            del kwargs['county']
+        return format_location(**kwargs)
 
 
 class WordCount(models.Model):

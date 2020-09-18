@@ -8,6 +8,38 @@ from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 from .forms import TagForm
 
+
+class CollectionQueryTest(TestCase):
+    def setUp(self):
+        self.donor = models.Donor.objects.create(first_name='First', last_name='Last')
+        self.term = models.Term.objects.create(term='Airplane')
+        self.tag = models.Tag.objects.create(tag='dog')
+
+    def testShouldDescribeCounty(self):
+        coll = models.CollectionQuery(dict(county='Place', state='State'), AnonymousUser)
+        self.assertEqual(str(coll), 'Place County, State')
+
+    def testShouldDescribeCity(self):
+        coll = models.CollectionQuery(dict(city='CityTown', state='State'), AnonymousUser)
+        self.assertEqual(str(coll), 'CityTown, State')
+
+    def testShouldDescribeTag(self):
+        coll = models.CollectionQuery(dict(tag=self.tag.slug), AnonymousUser)
+        self.assertEqual(str(coll), 'Tagged with dog')
+
+    def testShouldDescribeTerm(self):
+        coll = models.CollectionQuery(dict(term=self.term.slug), AnonymousUser)
+        self.assertEqual(str(coll), 'Termed with Airplane')
+
+    def testShouldDescribeDonor(self):
+        coll = models.CollectionQuery(dict(donor=self.donor.id), AnonymousUser)
+        self.assertEqual(str(coll), 'Photos in First Last\'s Collection')
+
+    def testShouldDescribeUnfilteredCollection(self):
+        coll = models.CollectionQuery(dict(page=2), AnonymousUser)
+        self.assertEqual(str(coll), 'All Photos')
+
+
 class FakeImageTest(SimpleTestCase):
     def testShouldHaveThumbnail(self):
         self.assertEqual(views.FAKE_PHOTO['thumbnail']['url'], views.EMPTY_PNG)
@@ -51,7 +83,7 @@ class PhotoTest(TestCase):
         phototag.creator.add(user)
         phototag.save()
         photo.save()
-        self.assertEqual(models.Photo.objects.filter_photos({'tag': tag.slug}, user).count(), 1)
+        self.assertEqual(models.Photo.objects.filter_photos(models.CollectionQuery({'tag': tag.slug}, user)).count(), 1)
 
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')

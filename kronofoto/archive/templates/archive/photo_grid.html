@@ -1,6 +1,7 @@
 {% extends "archive/base.html" %}
 
 {% block content %}
+<h2>{{ collection_name }}</h2>
 <div id="position">Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
 </div>
 <div id="navigation">
