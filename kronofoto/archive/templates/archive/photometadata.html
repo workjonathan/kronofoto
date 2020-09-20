@@ -2,7 +2,7 @@
         <div class="metadata-1a">
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
-            <li>ID#: {{photo.accession_number}} <a href="{{ photo.original.url }}" download="{{ photo.accession_number}}.jpg"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
+            <li>ID#: {{photo.accession_number}} <a href="{{ photo.original.url }}" target="_blank" rel="noopener noreferrer"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
             <li>Donated by <a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
           </ul>
         </div>

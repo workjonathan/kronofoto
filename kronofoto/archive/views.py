@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import urllib.request
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord
+from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
@@ -194,7 +194,9 @@ class FrontPage(RedirectView):
     pattern_name = 'photoview'
 
     def get_redirect_url(self, *args, **kwargs):
-        photo = Photo.objects.filter_photos(self.request.GET, self.request.user).order_by('?')[0]
+        photo = Photo.objects.filter_photos(
+            CollectionQuery(self.request.GET, self.request.user)
+        ).order_by('?')[0]
         return photo.get_absolute_url()
 
 
@@ -292,7 +294,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return self._queryset
 
     def get_queryset(self):
-        return Photo.objects.filter_photos(self.request.GET, self.request.user)
+        return Photo.objects.filter_photos(CollectionQuery(self.request.GET, self.request.user))
 
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
@@ -399,12 +401,16 @@ class GridBase(BaseTemplateMixin, ListView):
 
 class GridView(GridBase):
     def get_queryset(self):
-        qs = self.model.objects.filter_photos(
-            self.request.GET, self.request.user
-        ).order_by('year', 'id')
+        self.collection = CollectionQuery(self.request.GET, self.request.user)
+        qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
         if qs.count() == 1:
             self.redirect = redirect(qs[0].get_absolute_url())
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['collection_name'] = str(self.collection)
+        return context
 
     def format_page_url(self, num):
         return "{}?{}".format(reverse('gridview', args=(num,)), self.request.GET.urlencode())
@@ -426,6 +432,7 @@ class SearchResultsView(GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
+        context['collection_name'] = 'Search Results'
         return context
 
     def attach_params(self, photos):

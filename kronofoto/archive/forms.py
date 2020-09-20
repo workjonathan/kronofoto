@@ -106,7 +106,13 @@ class TagForm(forms.Form):
     def add_tag(self, photo, user):
         text = self.cleaned_data['tag']
         tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
-        phototag, _ = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': False})
+        accepted = (
+            user.has_perm('archive.add_tag') and
+            user.has_perm('archive.change_tag') and
+            user.has_perm('archive.add_phototag') and
+            user.has_perm('archive.change_phototag')
+        )
+        phototag, created = PhotoTag.objects.update_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
         phototag.creator.add(user)
         phototag.save()
 
