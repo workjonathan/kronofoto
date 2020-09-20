@@ -1,13 +1,16 @@
 {% extends "archive/base.html" %}
 
 {% block content %}
-<div id="position">Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
+<div class="grid-navigation">
+    <div id="position">Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
+    </div>
+    <div id="navigation">
+    {% for link in links %}
+        {% if link.url %}<a href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
+    {% endfor %}
+    </div>
 </div>
-<div id="navigation">
-{% for link in links %}
-    {% if link.url %}<a href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
-{% endfor %}
-</div>
+
 <ul class="photo-grid">
     {% for photo in page_obj %}
     <li><a href="{{ photo.get_absolute_url }}"><img src="{{ photo.h700.url }}"/></a></li>

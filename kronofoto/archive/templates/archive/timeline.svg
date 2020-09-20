@@ -14,8 +14,8 @@
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
                 data-json-href="{{ marker.json_target }}"
-                fill="#44a" />
-            <text font-size="3.5" text-anchor="middle"><tspan data-json-href="{{ marker.json_target}}" x="{{ marker.label.x }}" y="{{ marker.label.y }}">
+                fill="#999" />
+            <text font-size="3.3" text-anchor="middle"><tspan data-json-href="{{ marker.json_target}}" x="{{ marker.label.x }}" y="{{ marker.label.y }}">
             {{ marker.label.text }}
             </tspan>
             </text>
@@ -36,7 +36,7 @@
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
                 data-json-href="{{ marker.json_target }}"
-                fill="#111" />
+                fill="#bbb" />
         </a>
     {% endfor %}
 </svg>

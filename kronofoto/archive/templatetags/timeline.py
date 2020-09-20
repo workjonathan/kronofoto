@@ -31,6 +31,9 @@ def make_timeline(years, width=400):
         if year % 5 == 0:
             marker['notch']['height'] = 5
             marker['notch']['y'] = 5
+        if year % 10 == 0:
+            marker['notch']['height'] = 5
+            marker['notch']['y'] = 5
             marker['label'] = {
                 'text': str(year),
                 'y': 3,

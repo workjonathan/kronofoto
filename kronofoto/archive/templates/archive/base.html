@@ -26,7 +26,8 @@
       <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
-            <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/01-fi-logo.svg" %}" alt="Fortepan Iowa Logo"></a>
+            <!--{% static "assets/images/01-fi-logo.svg" %}-->
+            <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/skyblue/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
           </div>
 
           <div class="header-text">{{photo_count}} images</div>
@@ -39,7 +40,7 @@
                 {% comment %}
                 <form action="/search/" method="get">
                     <label for="search-box">
-                      <img src="{% static "assets/images/03-mag-glass.svg" %}" alt="Magnifying glass">
+                      <img src="{% static "assets/images/search.svg" %}" alt="Magnifying glass">
                       <input type="text" name="q" id="search-box" placeholder="Keywords, terms, photo ID#, donor" value="{{ q }}">
                     </label>
                     <input type="submit" style="display:none">
@@ -57,12 +58,15 @@
         </div> <!-- end nav left -->
 
         <div class="main-nav_center">
+          <div class="timeline-container">
+            <a href="{% url "random-image" %}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}"></a>
+          </div>
           <div class="grid-icon">
             <a id="grid-a" href="{{ grid_url }}">
-              <img class="grid-icon_reg" src="{% static "assets/images/04b-grid-hover.svg" %}" alt="Grid icon">
+              <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon">
             </a>
           </div>
-          <div class="header-text">NEW</div>
+          <div class="new-label_container"><img class="new-label" src="{% static "assets/images/new.svg" %}"></div>
 
         </div> <!-- end nav center -->
 
@@ -88,7 +92,7 @@
           <div class="hamburger-container">
 
             <div class="hamburger" onclick="toggleMenu()">
-              <img src="{% static "assets/images/hamburger.svg" %}" alt="menu icon">
+              <img class="hamburger-icon" src="{% static "assets/images/hamburger.svg" %}" alt="menu icon">
             </div>
 
             <div class="hamburger-menu hidden">

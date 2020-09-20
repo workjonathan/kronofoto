@@ -163,5 +163,66 @@ const toggleHover = () => {
 
 }
 
+$(() => {
+    if(window.location.href.includes('grid')) {
+        $('.grid-icon').addClass('current-view')
+        $('.timeline-icon').css('opacity', '0.5')
+    } else {
+        $('.timeline-container').addClass('current-view')
+        $('.grid-icon_reg').css('opacity', '0.5')
+    }
+})
+
+//changes colors of icons and --fp-main-blue css variable on page load
+//NEEDS CLEANED UP
+const img1 = "/static/assets/images/skyblue/logo.svg"
+const img2 = "/static/assets/images/golden/logo.svg"
+const img3 = "/static/assets/images/haybail/logo.svg"
+const img4 = "/static/assets/images/navy/logo.svg"
+const img5 = "/static/assets/images/purple/logo.svg"
+const img6 = "/static/assets/images/turquoise/logo.svg"
+const images = [img1, img2, img3, img4, img5, img6]
+//const colors = ["#ce9b23","#e1635c","#6e86bc","#879b6e"]
+//const randomColor = colors[Math.floor(Math.random()*colors.length)]
+const randomImg = images[Math.floor(Math.random()*images.length)]
+window.onload = function() {
+    let hamburger = document.querySelector(".hamburger-icon");
+    let info = document.querySelector('.meta-info-icon')
+    let dl = document.querySelector('.meta-dl-icon')
+    document.getElementsByClassName("logo-img")[0].src = randomImg;
+    console.log(randomImg)
+    if(randomImg == img1) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#6c84bd");
+        hamburger.setAttribute("src", "/static/assets/images/skyblue/menu.svg");
+        info.setAttribute("src", "/static/assets/images/skyblue/info.svg");
+        dl.setAttribute("src", "/static/assets/images/skyblue/download.svg");
+    } else if(randomImg == img2) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#c28800");
+        hamburger.setAttribute("src", "/static/assets/images/golden/menu.svg");
+        info.setAttribute("src", "/static/assets/images/golden/info.svg");
+        dl.setAttribute("src", "/static/assets/images/golden/download.svg");
+    } else if(randomImg == img3) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#c2a55e");
+        hamburger.setAttribute("src", "/static/assets/images/haybail/menu.svg");
+        info.setAttribute("src", "/static/assets/images/haybail/info.svg");
+        dl.setAttribute("src", "/static/assets/images/haybail/download.svg");
+    } else if(randomImg == img4) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#445170");
+        hamburger.setAttribute("src", "/static/assets/images/navy/menu.svg");
+        info.setAttribute("src", "/static/assets/images/navy/info.svg");
+        dl.setAttribute("src", "/static/assets/images/navy/download.svg");
+    } else if(randomImg == img5) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#9769ac");
+        hamburger.setAttribute("src", "/static/assets/images/purple/menu.svg");
+        info.setAttribute("src", "/static/assets/images/purple/info.svg");
+        dl.setAttribute("src", "/static/assets/images/purple/download.svg");
+    } else if(randomImg == img6) {
+        document.documentElement.style.setProperty("--fp-main-blue", "#5ebbc2");
+        hamburger.setAttribute("src", "/static/assets/images/turquoise/menu.svg");
+        info.setAttribute("src", "/static/assets/images/turquoise/info.svg");
+        dl.setAttribute("src", "/static/assets/images/turquoise/download.svg");
+    }
+
+};
 
     
