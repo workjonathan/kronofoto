@@ -8,7 +8,7 @@ from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote,
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
-from django.http import Http404, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
@@ -438,19 +438,22 @@ class SearchResultsView(GridBase):
     def attach_params(self, photos):
         pass
 
-    def get_queryset(self):
+    def dispatch(self, request, *args, **kwargs):
         self.form = SearchForm(self.request.GET)
-        form = self.form
+        if self.form.is_valid():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseBadRequest('Invalid search parameters')
 
-        if form.is_valid():
-            try:
-                expr = form.as_expression()
-                qs = evaluate(expr, self.model.objects)
-                if qs.count() == 1:
-                    self.redirect = redirect(qs[0].get_absolute_url())
-                return qs
-            except NoExpression:
-                return []
+    def get_queryset(self):
+        try:
+            expr = self.form.as_expression()
+            qs = evaluate(expr, self.model.objects)
+            if qs.count() == 1:
+                self.redirect = redirect(qs[0].get_absolute_url())
+            return qs
+        except NoExpression:
+            return []
 
 
 class Profile(BaseTemplateMixin, ListView):
