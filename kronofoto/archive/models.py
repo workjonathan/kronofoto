@@ -129,7 +129,7 @@ class PhotoQuerySet(models.QuerySet):
                 ),
                 order_by=[F('year')],
             ) - Subquery(yearcount.values('count'), output_field=models.IntegerField())
-        )
+        ).order_by('year')
 
     def photo_position(self, photo):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
