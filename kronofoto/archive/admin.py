@@ -2,9 +2,13 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term, PhotoTag
+from .models import Photo, Tag, Term, PhotoTag, Donor
 from django.conf import settings
 from django.urls import reverse
+
+@admin.register(Donor)
+class DonorAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):

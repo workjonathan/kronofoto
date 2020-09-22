@@ -3,7 +3,7 @@
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
             <li>ID#: {{photo.accession_number}} <a href="{{ photo.original.url }}" target="_blank" rel="noopener noreferrer"><img class="download-icon" src="{% static 'assets/images/download.svg' %}" /></a></li>
-            <li>Donated by <a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{photo.donor.first_name}} {{photo.donor.last_name}}</a></li>
+            <li>Donated by <a href="{% url "gridview" 1 %}?donor={{photo.donor.id}}">{{ photo.donor }}</a></li>
           </ul>
         </div>
         <div class="metadata-2a">
@@ -13,7 +13,7 @@
             {% endif %}
 
             {% if photo.scanner %}
-            <li>Scanned by {{ photo.scanner.first_name }} {{ photo.scanner.last_name }}</li>
+            <li>Scanned by {{ photo.scanner }}</li>
             {% endif %}
             <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>

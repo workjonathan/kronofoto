@@ -21,18 +21,18 @@ class LowerCaseCharField(models.CharField):
 
 
 class Donor(models.Model):
-    last_name = models.CharField(max_length=256)
-    first_name = models.CharField(max_length=256)
-    home_phone = models.CharField(max_length=256)
-    street1 = models.CharField(max_length=256)
-    street2 = models.CharField(max_length=256)
-    city = models.CharField(max_length=256)
-    state = models.CharField(max_length=256)
-    zip = models.CharField(max_length=256)
-    country = models.CharField(max_length=256)
+    last_name = models.CharField(max_length=256, blank=True)
+    first_name = models.CharField(max_length=256, blank=True)
+    home_phone = models.CharField(max_length=256, blank=True)
+    street1 = models.CharField(max_length=256, blank=True)
+    street2 = models.CharField(max_length=256, blank=True)
+    city = models.CharField(max_length=256, blank=True)
+    state = models.CharField(max_length=256, blank=True)
+    zip = models.CharField(max_length=256, blank=True)
+    country = models.CharField(max_length=256, blank=True)
 
     def __str__(self):
-        return '{} {}'.format(self.first_name, self.last_name)
+        return '{last}, {first}'.format(first=self.first_name, last=self.last_name)
 
     def get_absolute_url(self):
         return '{}?{}'.format(reverse('gridview'), urlencode({'donor': self.id}))
