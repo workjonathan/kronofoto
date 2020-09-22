@@ -32,7 +32,7 @@ class Donor(models.Model):
     country = models.CharField(max_length=256, blank=True)
 
     def __str__(self):
-        return '{last}, {first}'.format(first=self.first_name, last=self.last_name)
+        return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
     def get_absolute_url(self):
         return '{}?{}'.format(reverse('gridview'), urlencode({'donor': self.id}))
