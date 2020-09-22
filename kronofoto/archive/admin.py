@@ -3,12 +3,29 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from .models import Photo, Tag, Term, PhotoTag, Donor
+from django.db.models import Count
 from django.conf import settings
 from django.urls import reverse
 
 @admin.register(Donor)
 class DonorAdmin(admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
+
+    list_display = ('__str__', 'donated', 'scanned')
+
+    def scanned(self, obj):
+        return '{} photos'.format(obj.scanned_count)
+
+    def donated(self, obj):
+        return '{} photos'.format(obj.donated_count)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(scanned_count=Count('photos_scanned'), donated_count=Count('photo'))
+
+    scanned.admin_order_field = 'scanned_count'
+    donated.admin_order_field = 'donated_count'
+
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
