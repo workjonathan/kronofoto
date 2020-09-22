@@ -31,6 +31,9 @@ class Donor(models.Model):
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
 
+    class Meta:
+        ordering = ('last_name', 'first_name')
+
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
