@@ -8,7 +8,7 @@ from django.urls import reverse
 
 @admin.register(Donor)
 class DonorAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ['last_name', 'first_name']
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
