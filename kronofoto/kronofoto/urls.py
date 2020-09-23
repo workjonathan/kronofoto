@@ -24,6 +24,7 @@ urlpatterns = [
     path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
+    path('original/<str:photo>.jpg', views.XSendImage.as_view(), name='download'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/activate/<str:uid>/<str:token>/', views.VerifyToken.as_view(), name='activate'),
     path('accounts/register/', views.RegisterAccount.as_view(), name='register-account'),

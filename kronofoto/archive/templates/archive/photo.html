@@ -36,13 +36,10 @@
     <nav class="fi-timeline">
       <div class="fi-thumbnail-carousel">
         <div class="back-arrows">
-{% if page.has_previous %}
-    <a id="backward" data-json-href="{{ prev_page.0.get_json_url }}" href="{{ prev_page.0.get_absolute_url }}">
-{% endif %}
+
+    <a id="backward" {% if page.has_previous %} data-json-href="{{ prev_page.0.get_json_url }}" href="{{ prev_page.0.get_absolute_url }}"{% endif %}>
         <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing back">
-{% if page.has_previous %}
     </a>
-{% endif %}
         </div>
         <div class="slide-container">
         <ul id="fi-preload-zone">
@@ -52,14 +49,10 @@
         </ul>
         </div>
         <div class="forward-arrows">
-{% if page.has_next %}
-    <a id="forward" href="{{ next_page.0.get_absolute_url }}" data-json-href="{{ next_page.0.get_json_url }}">
-{% endif %}
+
+    <a id="forward" {% if page.has_next %} href="{{ next_page.0.get_absolute_url }}" data-json-href="{{ next_page.0.get_json_url }}"{% endif %}>
       <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing forward">
-        
-{% if page.has_next %}
     </a>
-{% endif %}
         </div>
       </div>
       

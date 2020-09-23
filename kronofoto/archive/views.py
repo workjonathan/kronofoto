@@ -3,16 +3,17 @@ from django.core.paginator import Paginator, EmptyPage, Page
 from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
+import os
 import urllib.request
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
-from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
+from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView, TemplateView, View
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
@@ -30,13 +31,9 @@ from .token import UserEmailVerifier
 
 EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
-FAKE_PHOTO = {
-    'thumbnail': {
-        'url': EMPTY_PNG,
-        'height': 75,
-        'width': 75,
-    }
-}
+FAKE_PHOTO = dict(thumbnail=dict(url=EMPTY_PNG, height=75, width=75))
+
+NO_URLS = dict(url='#', json_url='#')
 
 
 class BaseTemplateMixin:
@@ -340,13 +337,14 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return {
             'url': photo.get_absolute_url(),
             'h700': photo.h700.url,
+            'original': photo.original.url,
             'grid_url': photo.get_grid_url(),
             'metadata': render_to_string('archive/photometadata.html', context),
             'thumbnails': render_to_string('archive/thumbnails.html', context),
-            'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else {},
-            'forward': context['next_page'][0].get_urls() if context['page'].has_next() else {},
-            'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else {},
-            'next': photo.next.get_urls() if hasattr(photo, 'next') else {},
+            'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else NO_URLS,
+            'forward': context['next_page'][0].get_urls() if context['page'].has_next() else NO_URLS,
+            'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
+            'next': photo.next.get_urls() if hasattr(photo, 'next') else NO_URLS,
         }
 
     def render(self, context, **kwargs):
@@ -360,6 +358,34 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
+
+
+class XSendFile(View):
+    def get_path(self):
+        raise NotImplemented()
+
+    def get_content_type(self, path):
+        return NotImplemented()
+
+    def get_file_size(self, path):
+        return os.stat(path).st_size
+
+    def dispatch(self, request, photo):
+        response = HttpResponse()
+        path = self.get_path()
+        response['X-SendFile'] = path
+        response['Content-Type'] = self.get_content_type(path)
+        response['Content-Length'] = self.get_file_size(path)
+        return response
+
+
+class XSendImage(XSendFile):
+    def get_path(self):
+        obj = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
+        return obj.original.path
+
+    def get_content_type(self, path):
+        return "image/jpeg"
 
 
 class JSONPhotoView(PhotoView):
