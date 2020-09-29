@@ -1,4 +1,4 @@
-from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum
+from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.urls import reverse
 from django.db.models.functions import RowNumber
 from django.db import models
@@ -11,7 +11,7 @@ from io import BytesIO
 import os
 from functools import reduce
 import operator
-from bisect import bisect_left as bisect
+from bisect import bisect_left
 from django.utils.http import urlencode
 
 
@@ -118,12 +118,14 @@ class Tag(models.Model):
     def __str__(self):
         return self.tag
 
+bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):
         year_index = self.year_index()
         years = [p.year for p in year_index]
-        allyears = [(year, year_index[bisect(years, year)]) for year in range(years[0], years[-1]+1)]
+        year_range = Photo.objects.year_range()
+        allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
         return [
             (year, photo.get_absolute_url(params=params), photo.get_json_url(params=params))
             for (year, photo) in allyears
@@ -143,6 +145,9 @@ class PhotoQuerySet(models.QuerySet):
                 order_by=[F('year')],
             ) - Subquery(yearcount.values('count'), output_field=models.IntegerField())
         ).order_by('year')
+
+    def year_range(self):
+        return self.aggregate(end=Max('year'), start=Min('year'))
 
     def photo_position(self, photo):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
