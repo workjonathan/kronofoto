@@ -21,7 +21,7 @@ class DonorAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(scanned_count=Count('photos_scanned'), donated_count=Count('photo'))
+        return qs.annotate_scannedcount().annotate_donatedcount()
 
     scanned.admin_order_field = 'scanned_count'
     donated.admin_order_field = 'donated_count'

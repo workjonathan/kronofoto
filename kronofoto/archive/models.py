@@ -19,6 +19,15 @@ class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
         return str(value).lower()
 
+class DonorQuerySet(models.QuerySet):
+    def annotate_scannedcount(self):
+        return self.annotate(scanned_count=Count('photos_scanned'))
+
+    def annotate_donatedcount(self):
+        return self.annotate(donated_count=Count('photo'))
+
+    def filter_donated(self, at_least=1):
+        return self.annotate_donatedcount().filter(donated_count__gte=at_least)
 
 class Donor(models.Model):
     last_name = models.CharField(max_length=256, blank=True)
@@ -30,6 +39,7 @@ class Donor(models.Model):
     state = models.CharField(max_length=256, blank=True)
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
+    objects = DonorQuerySet.as_manager()
 
     class Meta:
         ordering = ('last_name', 'first_name')
