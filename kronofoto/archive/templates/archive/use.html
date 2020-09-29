@@ -1,4 +1,5 @@
 {% extends "archive/doc-base.html" %}
+{% load static %}
 {% block content %}
     <main>
 <section id="use">
@@ -79,7 +80,7 @@
             Fortepan Iowa image.  For example, this looping video of this fun winter scene &nbsp;was adapted by Gabriella Cummings from
             “<a href="http://download.fortepan.hu/_photo/download/fortepan_7416.jpg">fortepan_XXXX</a>” by Fortepan,
             <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>. Anyone is free to download and build upon this animated adaptation: 
-            <img src="./media/cummings.gif" alt="winter fun">
+            <img src="{% static "assets/images/cummings.gif" %}" alt="winter fun">
           </li>
           <li>
             The ShareAlike licenses are designed to result in the creation of new works for the commons through
@@ -97,14 +98,14 @@
         </p>
         <div class="key-points-figures">
           <figure>
-            <img src="./media/fortepan_25246.jpg" alt="A group of people posing for a photo">
+            <img src="{% static "assets/images/fortepan_25246.jpg" %}" alt="A group of people posing for a photo">
             <figcaption>
               Original Fortepan image, "<a href="http://download.fortepan.hu/_photo/download/fortepan_25246.jpg">fortepan_25246</a>,"
               by Fortepan, <a href=https://creativecommons.org/licenses/by-sa/3.0/us/">CC-BY-SA 3.0</a>.
             </figcaption>
           </figure>
           <figure>
-            <img src="./media/38c.png" alt="A slightly edited version of a group of people posing for a photo">
+            <img src="{% static "assets/images/38c.png" %}" alt="A slightly edited version of a group of people posing for a photo">
             <figcaption>
               Here is a slightly modified version of the same “<a href="http://download.fortepan.hu/_photo/download/fortepan_25246.jpg">fortepan 25246</a>” image –
               a frame and a blue duotone have been added, and there is a little tear on the left side--do
@@ -117,13 +118,13 @@
           This digital photomontage, “Fan,”  is altered so considerably that we can definitely call
           it an “adaptation” (or remix) of the original, wouldn’t you agree? 
         </p>
-        <img src="./media/fan.jpg" alt="The same image drastically modified with blotches of orange and the group of men removed from the background">
+        <img src="{% static "assets/images/fan.jpg" %}" alt="The same image drastically modified with blotches of orange and the group of men removed from the background">
         <p>
           A license for this work should link back to the original photograph, and explain how that photograph was modified. The attribution should look like this:
         </p>
         <blockquote>
             “Fan” by Bettina Fabos. Based on the original image,
-            “<a href="http://download.fortepan.hu/_photo/download/fortepan_25246.jpg,">fortepan_25246</a>” by Fortepan,
+            “<a href="http://download.fortepan.hu/_photo/download/fortepan_25246.jpg">fortepan_25246</a>” by Fortepan,
             <a href="https://creativecommons.org/licenses/by-sa/3.0/us/">CC-BY-SA 3.0</a>, Removed background and applied
             colored layers. “Fan” is licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>.  
         </blockquote>
@@ -157,7 +158,7 @@
               an unmodified photo does not.
               <div class="possible-uses-figure">
                 <figure>
-                  <img src="./media/fb.png" alt="A Facebook post utilizing a Fortepan photo">
+                  <img src="{% static "assets/images/fb.png" %}" alt="A Facebook post utilizing a Fortepan photo">
                   <figcaption>
                     This photo, appearing on Facebook, is not modified, so
                     it does not require a ShareAlike license. 
@@ -179,7 +180,7 @@
             require a Share Alike license.
             <div class="possible-uses-figure">
               <figure>
-                <img src="./media/p&t.jpg" alt="A screen capture of the Proud & Torn project, a composite of several Fortepan images.">
+                <img src="{% static "assets/images/p&t.jpg" %}" alt="A screen capture of the Proud & Torn project, a composite of several Fortepan images.">
                 <figcaption>
                     In this example, two separate licenses are assigned to this section of the digital project,
                     <a href="https://proudandtorn.org/"><i>Proud and Torn, a Visual Memoir of Hungarian History</i></a>:
