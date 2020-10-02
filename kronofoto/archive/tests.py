@@ -108,6 +108,23 @@ class TermTest(TestCase):
         self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'term': term.slug})))
 
 class TagTest(TestCase):
+    def testFindDeadTags(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        tag1 = models.Tag.objects.create(tag="test tag")
+        tag2 = models.Tag.objects.create(tag="dead tag 1")
+        tag3 = models.Tag.objects.create(tag="dead tag 2")
+        models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=False)
+        self.assertEqual(models.Tag.dead_tags().count(), 2)
+        for tag in models.Tag.dead_tags():
+            self.assertNotEqual(tag.tag, tag1.tag)
+
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
         self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
@@ -116,6 +133,7 @@ class TagTest(TestCase):
         tag = models.Tag.objects.create(tag='CAPITALIZED')
         tag.refresh_from_db()
         self.assertEqual(tag.tag, 'capitalized')
+
 
 class TagFormTest(TestCase):
     def setUp(self):
@@ -197,6 +215,19 @@ class WhenHave50Photos(TestCase):
                 county='county{}'.format(y % 3),
             )
             cls.photos.append(p)
+
+    def testShouldAutomaticallyRemoveDeadTags(self):
+        tag = models.Tag.objects.create(tag='unused tag')
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
+        phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='unused tag').count(), 0)
+
+    def testShouldNotAutomaticallyRemoveLiveTags(self):
+        tag = models.Tag.objects.create(tag='still used tag')
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[1], accepted=False)
+        phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='still used tag').count(), 1)
 
     def testCountyIndex(self):
         self.assertEqual(

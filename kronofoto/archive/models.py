@@ -2,6 +2,7 @@ from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, 
 from django.urls import reverse
 from django.db.models.functions import RowNumber
 from django.db import models
+from django.db.models.signals import post_delete
 from django.conf import settings
 from django.utils.text import slugify
 from django.contrib.auth.models import User
@@ -107,6 +108,10 @@ class Tag(models.Model):
 
     def get_absolute_url(self):
         return '{}?{}'.format(reverse('gridview'), urlencode({'tag': self.slug}))
+
+    @staticmethod
+    def dead_tags():
+        return Tag.objects.annotate(photo_count=Count('phototag')).filter(photo_count=0)
 
     @staticmethod
     def index():
@@ -437,6 +442,11 @@ class PhotoTag(models.Model):
     accepted = models.BooleanField()
     creator = models.ManyToManyField(User, editable=False)
 
+def remove_deadtags(sender, instance, **kwargs):
+    if instance.tag.phototag_set.count() == 0:
+        instance.tag.delete()
+
+post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 
 class PrePublishPhoto(models.Model):
     id = models.AutoField(primary_key=True)
