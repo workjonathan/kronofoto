@@ -1,5 +1,6 @@
 {% if user.is_authenticated %}
-<a href="{% url "user-page" user.username %}">{{ user.username }}</a> <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span>
+<!-- {{ user.username }}-->
+<a href="{% url "user-page" user.username %}"><i class="fas fa-user-circle fa-2x"></i></a> <!-- <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span> -->
 {% else %}
 <button id="login-btn" onclick="toggleLogin()">
     <i class="fas fa-lock"></i> Login

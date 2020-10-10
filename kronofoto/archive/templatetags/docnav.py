@@ -7,7 +7,7 @@ register = template.Library()
 def docnav(active_item=None):
     # These are pairs of display text and view names.
     pages = (
-        ('Home', 'random-image'),
+        #('Archive', 'random-image'),
         ('About', 'about'),
         ('Use', 'use'),
         ('Contribute', 'contribute'),

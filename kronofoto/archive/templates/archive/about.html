@@ -1,7 +1,20 @@
 {% extends "archive/doc-base.html" %}
+{% load static %}
+
 {% block content %}
     <main>
       <section id="about">
+        <div class="img-grid">
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/02.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/fortepan_7416.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/fortepan_25246.jpg" %}" alt="">
+          </div>
+        </div>
         <h1>About</h1>
         <p>
           Fortepan Iowa features curated photos taken by ordinary Iowans over

@@ -18,6 +18,7 @@
   <title>Fortepan Iowa</title>
 </head>
 <body>
+  <div class="overlay" style="display: none;"></div>
   <header>
     <nav aria-label="Main navigation">
       <!-- <div id="logo">
@@ -27,7 +28,7 @@
         <div class="main-nav_left">
           <div id="logo">
             <!--{% static "assets/images/01-fi-logo.svg" %}-->
-            <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/skyblue/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
+            <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/white/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
           </div>
 
           <div class="header-text">{{photo_count}} images</div>
@@ -49,7 +50,8 @@
               </div>
 
               <div class="search-options">
-                <i class="arrow down"></i>
+                <!-- <i class="arrow down"></i> -->
+                <img src="{% static "assets/images/carrot.svg" %}" alt="Carrot" class="carrot">
               </div>
 
             </div>
@@ -96,7 +98,7 @@
             </div>
 
             <div class="hamburger-menu hidden">
-              {% docnav "Home" %}
+              {% docnav "Archive" %}
               <!-- <ul>
                 <li class="active"><a href="{% url "random-image" %}">Home</a></li>
                 <li><a href="#">About</a></li>

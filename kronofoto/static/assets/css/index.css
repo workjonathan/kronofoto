@@ -24,10 +24,6 @@
   --fp-light-grey: #efeff1;
   --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
   --fp-main-blue: #6e86bc;
-
-  --fp-color-2: #ce9b23;
-  --fp-color-3: #e1635c;
-
 }
 
 *, body {
@@ -47,6 +43,7 @@ body {
   grid-template-rows: minmax(min-content, 0fr) auto;
   max-width: 2100px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 a {
@@ -108,6 +105,7 @@ nav {
 
 nav ul {
   display: flex;
+  display: -webkit-flex;
   align-self: center;
   flex-grow: 1;
   justify-content: space-between;
@@ -131,7 +129,8 @@ header nav div img {
 #search-box-container {
   flex-grow: 1;
   max-width: 650px;
-  background-color: var(--fp-main-blue);
+  background-color: var(--fp-light-grey);
+  z-index: 998;
 }
 #search-box-container img {
   margin: 7px;
@@ -145,14 +144,19 @@ input#search-box {
   border: none;
   height: 40px;
   background: none;
-  color: var(--fp-light-grey);
+  color: #333;
   font-weight: 500;
   align-self: center;
   font-size: 13px;
 }
 
 input#search-box::placeholder {
-  color: var(--fp-light-grey);
+  color: #999;
+  opacity: 1;
+}
+
+.placeholder-light::placeholder {
+  color: white !important;
   opacity: 1;
 }
 
@@ -164,7 +168,7 @@ input#search-box::placeholder {
   background: white;
   margin: 0 -15px;
   padding: 60px 130px;
-  z-index: 999;
+  z-index: 1000;
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
 
@@ -241,14 +245,14 @@ button#login-btn:hover, .logout-btn:hover, input[type="submit"]:hover {
   text-decoration: none;
 }
 .logout-btn:hover a {
-  color: darkgray;
+  color: white;
 }
 button#login-btn:hover {
   color: var(--fp-light-grey);
 }
 #login {
   position: absolute;
-  z-index: 5;
+  z-index: 1000;
   background-color: var(--fp-light-grey);
   padding: 30px
 }
@@ -290,6 +294,11 @@ button#login-btn:hover {
 .new-label {
   width: 60px;
   vertical-align: middle;
+}
+.carrot {
+  width: 15px !important;
+  vertical-align: middle;
+  cursor: pointer;
 }
 .grid-icon_reg, .timeline-icon {
   vertical-align: middle;
@@ -384,11 +393,11 @@ select {
 }
 
 .hamburger-menu {
-  padding: 15px 15px 15px 25px;
+  padding: 15px 15px 15px 15px;
   background: var(--fp-light-grey);
   position: absolute;
-  z-index: 5;
-  top: 90px;
+  z-index: 1000;
+  top: 57px;
   width: 250px;
 }
 .hamburger-menu ul {
@@ -396,7 +405,7 @@ select {
 }
 .hamburger-menu li {
   list-style-type: none;
-  padding: 12px 0;
+  padding: 12px;
 }
 .hamburger-menu li a {
   color: #333;
@@ -406,7 +415,13 @@ select {
 .hamburger-menu li a:hover {
   color: var(--fp-main-blue);
 }
-.hamburger-menu li.active::before {
+.hamburger-menu li.active {
+  background: var(--fp-main-blue);
+}
+.hamburger-menu li.active > a {
+  color: white;
+}
+/* .hamburger-menu li.active::before {
   content: '';
   position: absolute;
   width: 15px;
@@ -414,7 +429,7 @@ select {
   left: 0;
   margin-top: -5px;
   background-image: url('/static/assets/images/menu-highlight.png');
-}
+} */
 
 .search-box-content_inner {
   width: 95%;
@@ -475,10 +490,18 @@ main article.fi-image {
 .fi-image .control.previous {
   grid-column: 1 / span 3;
   cursor: url('/static/assets/images/arrow-cursor-back.png'), auto;
+  width: 100vw;
+  transform: translateX(-50%);
 }
 .fi-image .control.forward {
   grid-column: 4 / span 3;
   cursor: url('/static/assets/images/arrow-cursor.png'), auto;
+  width: 100vw;
+}
+@media only screen and (max-width: 900px) {
+  .fi-image .control.previous {
+    transform: translateX(-20%);
+  }
 }
 .fi-image #expand, .fi-image #dl {
   grid-row-start: 4;
@@ -551,6 +574,49 @@ main article.fi-image {
   height: 45vh;
 }
 
+.user-header {
+  height: 250px;
+  background: url('/static/assets/images/user-page-bg.jpg');
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-content {
+  width: 50%;
+  max-width: 800px;
+  justify-self: center;
+  margin-top: 60px;
+}
+
+.user-page-content {
+  display: grid;
+  grid-template-rows: inherit;
+}
+
+.user-page-content div:first-child {
+  margin-bottom: 20px; 
+  text-align: center;
+  line-height: 2em;
+}
+
+.overlay {
+  opacity: 0.5;
+  background: #333;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+}
+
+.collection-grid ul li {
+  list-style-type: none;
+}
+
 /*******************
  ** MAIN TIMELINE **
  *******************/
@@ -595,7 +661,7 @@ main article.fi-image {
 .forward-arrows img {
   transform: scaleX(-1);
 }
-.back-arrows a, .forward-arrows a {
+.back-arrows img, .forward-arrows img {
   width: 25px;
 }
 

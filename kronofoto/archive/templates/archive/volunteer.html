@@ -1,10 +1,22 @@
 {% extends "archive/doc-base.html" %}
+{% load static %}
 {% block content %}
     <main>
       
    
       <section id="volunteer">
-        <h2>Volunteer</h2>
+        <div class="img-grid">
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/02.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/fortepan_7416.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/fortepan_25246.jpg" %}" alt="">
+          </div>
+        </div>
+        <h1>Volunteer</h1>
         <p>
           We would love your help. Come join our community! We need help scanning, proofing metadata,
           editing tags and comments, and posting on Facebook. We have Fortepan Iowa scanning hubs at

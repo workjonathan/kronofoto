@@ -1,12 +1,34 @@
 {% extends "archive/base.html" %}
 
 {% block content %}
-<ul>
+<section class="user-page-content">
+    <div class="user-header">
+        <div>
+            <h2>{{ user.username }}</h2>
+            <p>{{ user.email }}</p>
+            <a href="#"><i class="fas fa-edit"></i> Edit</a>
+        </div>
+        
+        <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span> 
+    </div>
+
+    <div class="user-content">
+        <h2>My Lists</h2>
+        <div class="collection-grid">
+            <ul>
+                {% for collection in object_list %}
+                    <li><a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
+<!-- <ul>
 {% for collection in object_list %}
     <li>
     <a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
     <a href="{% url "collection-delete" collection.id %}">Delete</a>
     </li>
 {% endfor %}
-</ul>
+</ul> -->
 {% endblock %}
