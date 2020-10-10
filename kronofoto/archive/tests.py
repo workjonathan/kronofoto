@@ -108,6 +108,23 @@ class TermTest(TestCase):
         self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'term': term.slug})))
 
 class TagTest(TestCase):
+    def testFindDeadTags(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        tag1 = models.Tag.objects.create(tag="test tag")
+        tag2 = models.Tag.objects.create(tag="dead tag 1")
+        tag3 = models.Tag.objects.create(tag="dead tag 2")
+        models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=False)
+        self.assertEqual(models.Tag.dead_tags().count(), 2)
+        for tag in models.Tag.dead_tags():
+            self.assertNotEqual(tag.tag, tag1.tag)
+
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
         self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
@@ -116,6 +133,7 @@ class TagTest(TestCase):
         tag = models.Tag.objects.create(tag='CAPITALIZED')
         tag.refresh_from_db()
         self.assertEqual(tag.tag, 'capitalized')
+
 
 class TagFormTest(TestCase):
     def setUp(self):
@@ -197,6 +215,19 @@ class WhenHave50Photos(TestCase):
                 county='county{}'.format(y % 3),
             )
             cls.photos.append(p)
+
+    def testShouldAutomaticallyRemoveDeadTags(self):
+        tag = models.Tag.objects.create(tag='unused tag')
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
+        phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='unused tag').count(), 0)
+
+    def testShouldNotAutomaticallyRemoveLiveTags(self):
+        tag = models.Tag.objects.create(tag='still used tag')
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
+        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[1], accepted=False)
+        phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='still used tag').count(), 1)
 
     def testCountyIndex(self):
         self.assertEqual(
@@ -571,116 +602,28 @@ class ParserTest(SimpleTestCase):
 
 from archive.templatetags import timeline
 class TimelineDisplay(SimpleTestCase):
+    def assertIsPosition(self, obj):
+        for key in ('x', 'y', 'width', 'height'):
+            self.assertIn(key, obj)
+            self.assertTrue(isinstance(obj[key], int) or isinstance(obj[key], float))
     def testShouldDefineMinorMarkerPositions(self):
         years = [(year, '/{}'.format(year), '/{}.json'.format(year)) for year in [1900, 1901, 1902, 1903, 1904, 1905]]
         result = timeline.make_timeline(years, width=60)
-        self.assertEqual(result['majornotches'], [{
-            'target': '/1900',
-            'json_target': '/1900.json',
-            'box': {
-                'x': 0,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 0,
-                'y': 5,
-                'width': 2,
-                'height': 5,
-            },
-            'label': {
-                'text': '1900',
-                'x': 5,
-                'y': 3
-            }
-        },
-        {
-            'target': '/1905',
-            'json_target': '/1905.json',
-            'box': {
-                'x': 50,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 50,
-                'y': 5,
-                'width': 2,
-                'height': 5,
-            },
-            'label': {
-                'text': '1905',
-                'x': 55,
-                'y': 3
-            }
-        },
-        ])
-        self.assertEqual(result['minornotches'], [{
-            'target': '/1901',
-            'json_target': '/1901.json',
-            'box': {
-                'x': 10,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 10,
-                'y': 7,
-                'width': 2,
-                'height': 3,
-            }
-        },
-        {
-            'target': '/1902',
-            'json_target': '/1902.json',
-            'box': {
-                'x': 20,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 20,
-                'y': 7,
-                'width': 2,
-                'height': 3,
-            }
-        },
-        {
-            'target': '/1903',
-            'json_target': '/1903.json',
-            'box': {
-                'x': 30,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 30,
-                'y': 7,
-                'width': 2,
-                'height': 3,
-            }
-        },
-        {
-            'target': '/1904',
-            'json_target': '/1904.json',
-            'box': {
-                'x': 40,
-                'y': 5,
-                'width': 10,
-                'height': 5,
-            },
-            'notch': {
-                'x': 40,
-                'y': 7,
-                'width': 2,
-                'height': 3,
-            }
-        },
-        ])
+        self.assertIn('majornotches', result)
+        self.assertEqual(len(result['majornotches']), 1)
+        for notch in result['majornotches']:
+            for key in ('target', 'json_target', 'box', 'notch', 'label'):
+                self.assertIn(key, notch)
+            for key in ('box', 'notch'):
+                self.assertIsPosition(notch[key])
+            for key in ('text', 'x', 'y'):
+                self.assertIn(key, notch['label'])
+        self.assertIn('minornotches', result)
+        self.assertEqual(len(result['minornotches']), 5)
+        for notch in result['minornotches']:
+            for key in ('target', 'json_target', 'box', 'notch'):
+                self.assertIn(key, notch)
+            for key in ('box', 'notch'):
+                self.assertIsPosition(notch[key])
 
 

@@ -56,11 +56,12 @@ const loadstate = data => {
     document.getElementById('fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
     document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
     document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
-    forward.setAttribute('href', data.forward.url)
-    forward.setAttribute('data-json-href', data.forward.json_url)
-    backward.setAttribute('href', data.backward.url)
-    backward.setAttribute('data-json-href', data.backward.json_url)
+    forward.setAttribute('href', data.forward && data.forward.url ? data.forward.url : "#")
+    forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
+    backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
+    backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
     document.getElementById('grid-a').setAttribute('href', data.grid_url)
+    document.querySelector('#dl > a').setAttribute('href', data.original)
 }
 
 
@@ -68,13 +69,15 @@ document.addEventListener('click', e => {
     const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
     if (jsonhref) {
         e.preventDefault()
-        id = e.target.getAttribute('id')
-        if (id !== 'forward' && id !== 'backward') {
-            request('GET', jsonhref).then(data => {
-                loadstate(data)
-                window.history.pushState(data, 'Fortepan Iowa', data.url)
+        if (jsonhref !== "#") {
+            id = e.target.getAttribute('id')
+            if (id !== 'forward' && id !== 'backward') {
+                request('GET', jsonhref).then(data => {
+                    loadstate(data)
+                    window.history.pushState(data, 'Fortepan Iowa', data.url)
 
-            })
+                })
+            }
         }
     }
 })
@@ -126,17 +129,20 @@ const scrollAction = (element, direction, target) => evt => {
 
 if (forward) {
     forward.addEventListener("mousedown", () =>
-        Promise.race([
-            mouseUp(forward).then(() => ({event: 'click', position: -100})),
-            delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-        ]).then(scrollAction(forward, 'forward', -200)))
+        forward.getAttribute('href') != '#' ? 
+            Promise.race([
+                mouseUp(forward).then(() => ({event: 'click', position: -100})),
+                delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+            ]).then(scrollAction(forward, 'forward', -200)) : undefined)
 }
+
 if (backward) {
     backward.addEventListener("mousedown", () =>
+        backward.getAttribute('href') != '#' ? 
         Promise.race([
             mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
             delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-        ]).then(scrollAction(backward, 'backward', 0)))
+        ]).then(scrollAction(backward, 'backward', 0)) : undefined)
 }
 
 //search dropdown

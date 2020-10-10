@@ -1,7 +1,8 @@
-from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum
+from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.urls import reverse
 from django.db.models.functions import RowNumber
 from django.db import models
+from django.db.models.signals import post_delete
 from django.conf import settings
 from django.utils.text import slugify
 from django.contrib.auth.models import User
@@ -11,7 +12,7 @@ from io import BytesIO
 import os
 from functools import reduce
 import operator
-from bisect import bisect_left as bisect
+from bisect import bisect_left
 from django.utils.http import urlencode
 
 
@@ -19,20 +20,33 @@ class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
         return str(value).lower()
 
+class DonorQuerySet(models.QuerySet):
+    def annotate_scannedcount(self):
+        return self.annotate(scanned_count=Count('photos_scanned'))
+
+    def annotate_donatedcount(self):
+        return self.annotate(donated_count=Count('photo'))
+
+    def filter_donated(self, at_least=1):
+        return self.annotate_donatedcount().filter(donated_count__gte=at_least)
 
 class Donor(models.Model):
-    last_name = models.CharField(max_length=256)
-    first_name = models.CharField(max_length=256)
-    home_phone = models.CharField(max_length=256)
-    street1 = models.CharField(max_length=256)
-    street2 = models.CharField(max_length=256)
-    city = models.CharField(max_length=256)
-    state = models.CharField(max_length=256)
-    zip = models.CharField(max_length=256)
-    country = models.CharField(max_length=256)
+    last_name = models.CharField(max_length=256, blank=True)
+    first_name = models.CharField(max_length=256, blank=True)
+    home_phone = models.CharField(max_length=256, blank=True)
+    street1 = models.CharField(max_length=256, blank=True)
+    street2 = models.CharField(max_length=256, blank=True)
+    city = models.CharField(max_length=256, blank=True)
+    state = models.CharField(max_length=256, blank=True)
+    zip = models.CharField(max_length=256, blank=True)
+    country = models.CharField(max_length=256, blank=True)
+    objects = DonorQuerySet.as_manager()
+
+    class Meta:
+        ordering = ('last_name', 'first_name')
 
     def __str__(self):
-        return '{} {}'.format(self.first_name, self.last_name)
+        return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
     def get_absolute_url(self):
         return '{}?{}'.format(reverse('gridview'), urlencode({'donor': self.id}))
@@ -96,6 +110,10 @@ class Tag(models.Model):
         return '{}?{}'.format(reverse('gridview'), urlencode({'tag': self.slug}))
 
     @staticmethod
+    def dead_tags():
+        return Tag.objects.annotate(photo_count=Count('phototag')).filter(photo_count=0)
+
+    @staticmethod
     def index():
         return [
             {'name': tag.tag, 'count': tag.count, 'href': tag.get_absolute_url()}
@@ -105,12 +123,14 @@ class Tag(models.Model):
     def __str__(self):
         return self.tag
 
+bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):
         year_index = self.year_index()
         years = [p.year for p in year_index]
-        allyears = [(year, year_index[bisect(years, year)]) for year in range(years[0], years[-1]+1)]
+        year_range = Photo.objects.year_range()
+        allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
         return [
             (year, photo.get_absolute_url(params=params), photo.get_json_url(params=params))
             for (year, photo) in allyears
@@ -129,7 +149,10 @@ class PhotoQuerySet(models.QuerySet):
                 ),
                 order_by=[F('year')],
             ) - Subquery(yearcount.values('count'), output_field=models.IntegerField())
-        )
+        ).order_by('year')
+
+    def year_range(self):
+        return self.aggregate(end=Max('year'), start=Min('year'))
 
     def photo_position(self, photo):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
@@ -419,6 +442,11 @@ class PhotoTag(models.Model):
     accepted = models.BooleanField()
     creator = models.ManyToManyField(User, editable=False)
 
+def remove_deadtags(sender, instance, **kwargs):
+    if instance.tag.phototag_set.count() == 0:
+        instance.tag.delete()
+
+post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 
 class PrePublishPhoto(models.Model):
     id = models.AutoField(primary_key=True)
