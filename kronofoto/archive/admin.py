@@ -7,6 +7,10 @@ from django.db.models import Count
 from django.conf import settings
 from django.urls import reverse
 
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(Donor)
 class DonorAdmin(admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
