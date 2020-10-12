@@ -222,6 +222,9 @@ class CollectionQuery:
         if self.getparams.get('tag', None):
             t = Tag.objects.get(slug=self.getparams['tag'])
             parts.append("Tagged with {}".format(t.tag))
+        if self.getparams.get('collection', None):
+            c = Collection.objects.get(pk=self.getparams['collection'])
+            parts.append(c.name)
         if len(parts) == 0:
             return 'All Photos'
         if len(parts) > 1:
