@@ -291,7 +291,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return self._queryset
 
     def get_queryset(self):
-        return Photo.objects.filter_photos(CollectionQuery(self.request.GET, self.request.user))
+        self.collection = CollectionQuery(self.request.GET, self.request.user)
+        return Photo.objects.filter_photos(self.collection)
 
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
@@ -324,6 +325,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['initialstate'] = self.get_data(context)
             context['first_year'] = sorted_qs.first().year
             context['last_year'] = sorted_qs.last().year
+            context['collection_name'] = str(self.collection)
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
