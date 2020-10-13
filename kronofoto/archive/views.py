@@ -490,6 +490,7 @@ class Profile(BaseTemplateMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['profile_user'] = User.objects.get(username=self.kwargs['username'])
         return context
 
     def get_queryset(self):

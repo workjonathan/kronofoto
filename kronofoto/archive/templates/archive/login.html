@@ -1,6 +1,5 @@
 {% if user.is_authenticated %}
-<!-- {{ user.username }}-->
-<a href="{% url "user-page" user.username %}"><i class="fas fa-user-circle fa-2x"></i></a> <!-- <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span> -->
+<a href="{% url "user-page" user.username %}"><i class="fas fa-user-circle fa-2x"></i></a>
 {% else %}
 <button id="login-btn" onclick="toggleLogin()">
     <i class="fas fa-lock"></i> Login
@@ -8,7 +7,7 @@
 <div id="login" class="hidden">
     <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">
         {% csrf_token %}
-        {{ form.username.label_tag }}
+        Email
         {{ form.username }}
         {{ form.password.label_tag }}
         {{ form.password }}

@@ -24,13 +24,9 @@
   <div class="overlay" style="display: none;"></div>
   <header>
     <nav aria-label="Main navigation">
-      <!-- <div id="logo">
-        <img src="{% static "assets/images/01-fi-logo.svg" %}" alt="Fortepan Iowa Logo">
-      </div> -->
       <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
-            <!--{% static "assets/images/01-fi-logo.svg" %}-->
             <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/white/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
           </div>
 
@@ -41,19 +37,9 @@
 
               <div class="search-box-content_inner">
                 {% make_search_form %}
-                {% comment %}
-                <form action="/search/" method="get">
-                    <label for="search-box">
-                      <img src="{% static "assets/images/search.svg" %}" alt="Magnifying glass">
-                      <input type="text" name="q" id="search-box" placeholder="Keywords, terms, photo ID#, donor" value="{{ q }}">
-                    </label>
-                    <input type="submit" style="display:none">
-                </form>
-                {% endcomment %}
               </div>
 
               <div class="search-options">
-                <!-- <i class="arrow down"></i> -->
                 <img src="{% static "assets/images/carrot.svg" %}" alt="Carrot" class="carrot">
               </div>
 
@@ -77,6 +63,7 @@
 
         <div class="main-nav_right">
           
+        {% comment %}
           <!-- <li>
             <img src="{% static "assets/images/05-iowa.svg" %}" alt="Icon in the shape of the state of Iowa">
           </li> -->
@@ -91,6 +78,7 @@
           </li>
           <li>Auto</li>
           -->
+        {% endcomment %}
           <div class="login-container">
             {% make_login %}
           </div>
@@ -102,15 +90,6 @@
 
             <div class="hamburger-menu hidden">
               {% docnav "Archive" %}
-              <!-- <ul>
-                <li class="active"><a href="{% url "random-image" %}">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">History</a></li>
-                <li><a href="#">Use the Archive</a></li>
-                <li><a href="#">Contribute</a></li>
-                <li><a href="#">Volunteer</a></li>
-                <li><a href="#">Contact</a></li>
-              </ul> -->
             </div>
 
           </div>
