@@ -250,7 +250,7 @@ class Photo(models.Model):
         filter_args = Q(phototag__accepted=True)
         if user:
             filter_args |= Q(phototag__creator__pk=user.pk)
-        return self.tags.filter(filter_args)
+        return self.tags.filter(filter_args).distinct()
 
     def save_params(self, params):
         self.params = params
