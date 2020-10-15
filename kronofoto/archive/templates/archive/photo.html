@@ -28,7 +28,7 @@
       <button id="dl"><a href="{{ photo.original.url }}" target="_blank"><img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}"></a></button>
       <button id="expand" onclick="toggleVis()"><img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}"></button>
       <div id="metadata" class="hidden">
-        {% photo_metadata photo user edit_url %}
+        {% photo_metadata %}
       </div>
     </article>
     
@@ -45,7 +45,7 @@
         <ul id="fi-preload-zone">
         </ul>
         <ul id="fi-thumbnail-carousel-images">
-            {% make_thumbnails page prev_page next_page getparams %}
+            {% make_thumbnails %}
         </ul>
         </div>
         <div class="forward-arrows">
