@@ -163,23 +163,23 @@ $('.search-options').click(() => {
 $('input[name="startYear"]').parent().parent('div').addClass('daterange')
 
 
-$('.overlay').click(() => {
+$('.overlay, .close-btn').click(() => {
     $('.gridden').removeClass('gridden').addClass('hidden')
-    $('.hamburger-container').css('background-color', '')
-    $('.hamburger-container div img').css('filter', '')
     $('.overlay').css('display', 'none')
 })
 
 
 const toggleHover = () => {
     if($('.hamburger-menu').hasClass('gridden')) {
-        $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
-        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)')
         $('.overlay').css('display', 'block')
+        /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
+        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
+        /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
     } else {
-        $('.hamburger-container').css('background-color', '')
-        $('.hamburger-container div img').css('filter', '')
         $('.overlay').css('display', 'none')
+        /* $('.hamburger-container').css('background-color', '')
+        $('.hamburger-container div img').css('filter', '') */
+        /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
     }
 }
 
@@ -215,9 +215,23 @@ $('#search-box').focus(function() {
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
 
-$('.year-ticker svg a').click(() => {
-    $(this).css('border', '3px solid var(--fp-main-blue)')
-})
+var rect = document.querySelector("svg.tl");
+
+if(rect) {
+    rect.addEventListener("click", function(e) {
+    var target = e.target,
+        active = document.querySelector(".stroke");
+    
+    if (active !== null) {
+        active.classList.remove("stroke");
+    }
+    
+    if (target.nodeName === "rect")  {
+        target.classList.add("stroke");   
+    }
+    });
+}
+
 
 
 //changes colors of icons and --fp-main-blue css variable on page load
