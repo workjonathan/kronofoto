@@ -321,6 +321,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
+            context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
             context['initialstate'] = self.get_data(context)
             context['first_year'] = sorted_qs.first().year
@@ -341,8 +342,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'h700': photo.h700.url,
             'original': photo.original.url,
             'grid_url': photo.get_grid_url(),
-            'metadata': render_to_string('archive/photometadata.html', context),
-            'thumbnails': render_to_string('archive/thumbnails.html', context),
+            'metadata': render_to_string('archive/photometadata.html', context, self.request),
+            'thumbnails': render_to_string('archive/thumbnails.html', context, self.request),
             'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else NO_URLS,
             'forward': context['next_page'][0].get_urls() if context['page'].has_next() else NO_URLS,
             'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
@@ -490,6 +491,7 @@ class Profile(BaseTemplateMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['profile_user'] = User.objects.get(username=self.kwargs['username'])
         return context
 
     def get_queryset(self):

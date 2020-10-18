@@ -84,6 +84,7 @@ class PhotoTest(TestCase):
         phototag.save()
         photo.save()
         self.assertEqual(models.Photo.objects.filter_photos(models.CollectionQuery({'tag': tag.slug}, user)).count(), 1)
+        self.assertEqual(photo.get_accepted_tags().count(), 1)
 
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')
@@ -146,6 +147,23 @@ class TagFormTest(TestCase):
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
         )
         self.user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        self.admin = User.objects.create_superuser('testuser2', 'user2@email.com', 'testpassword')
+
+    def testShouldNotRemoveAcceptedStatus(self):
+        form = TagForm(data=dict(tag='dog'))
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, self.admin)
+        self.assertEqual(self.photo.get_accepted_tags().count(), 1)
+        form.add_tag(self.photo, self.user)
+        self.assertEqual(self.photo.get_accepted_tags().count(), 1)
+
+    def testShouldNotDuplicateTag(self):
+        form = TagForm(data=dict(tag='dog'))
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, self.user)
+        self.assertEqual(self.photo.get_accepted_tags().count(), 0)
+        form.add_tag(self.photo, self.admin)
+        self.assertEqual(self.photo.get_accepted_tags(self.admin).count(), 1)
 
     def testShouldAutoAcceptTagsIfUserHasPermissions(self):
         user = self.user

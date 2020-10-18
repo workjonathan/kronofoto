@@ -4,12 +4,16 @@
 <section class="user-page-content">
     <div class="user-header">
         <div>
-            <h2>{{ user.username }}</h2>
-            <p>{{ user.email }}</p>
+            <h2>{{ profile_user.username }}</h2>
+            <p>{{ profile_user.email }}</p>
+        {% if profile_user == request.user %}
             <a href="#"><i class="fas fa-edit"></i> Edit</a>
+        {% endif %}
         </div>
         
+        {% if profile_user == request.user %}
         <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span> 
+        {% endif %}
     </div>
 
     <div class="user-content">
@@ -17,18 +21,15 @@
         <div class="collection-grid">
             <ul>
                 {% for collection in object_list %}
-                    <li><a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a></li>
+                    <li><a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
+                    {% if profile_user == request.user %}
+                    <a href="{% url "collection-delete" collection.id %}">Delete</a>
+                    {% endif %}
+
+                    </li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 </section>
-<!-- <ul>
-{% for collection in object_list %}
-    <li>
-    <a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
-    <a href="{% url "collection-delete" collection.id %}">Delete</a>
-    </li>
-{% endfor %}
-</ul> -->
 {% endblock %}

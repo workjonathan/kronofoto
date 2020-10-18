@@ -112,7 +112,9 @@ class TagForm(forms.Form):
             user.has_perm('archive.add_phototag') and
             user.has_perm('archive.change_phototag')
         )
-        phototag, created = PhotoTag.objects.update_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
+        phototag, created = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
+        if not created:
+            phototag.accepted |= accepted
         phototag.creator.add(user)
         phototag.save()
 

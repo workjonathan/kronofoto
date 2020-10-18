@@ -2,10 +2,6 @@ from django import template
 
 register = template.Library()
 
-@register.inclusion_tag('archive/photometadata.html')
-def photo_metadata(photo, user=None, edit_url=None):
-    return {
-        'photo': photo,
-        'tags': photo.get_accepted_tags(user),
-        'edit_url': edit_url,
-    }
+@register.inclusion_tag('archive/photometadata.html', takes_context=True)
+def photo_metadata(context):
+    return context
