@@ -103,6 +103,14 @@ class RegisterUserForm(forms.Form):
 class TagForm(forms.Form):
     tag = forms.CharField()
 
+    def clean(self):
+        data = super().clean()
+        text = data['tag']
+        if Term.objects.filter(slug=slugify(text)).exists():
+            self.add_error('tag', 'Tags which are already categories are not allowed.')
+        return data
+
+
     def add_tag(self, photo, user):
         text = self.cleaned_data['tag']
         tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})

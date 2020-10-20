@@ -149,6 +149,11 @@ class TagFormTest(TestCase):
         self.user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         self.admin = User.objects.create_superuser('testuser2', 'user2@email.com', 'testpassword')
 
+    def testShouldNotAllowTagsWhichAreAlreadyTerms(self):
+        models.Term.objects.create(term='dog')
+        form = TagForm(data={'tag': 'dog'})
+        self.assertFalse(form.is_valid())
+
     def testShouldNotRemoveAcceptedStatus(self):
         form = TagForm(data=dict(tag='dog'))
         self.assertTrue(form.is_valid())
