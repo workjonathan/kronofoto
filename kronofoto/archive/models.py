@@ -186,8 +186,13 @@ class CollectionQuery:
             "tag": 'phototag__tag__slug',
             'term': 'terms__slug',
             'donor': 'donor__id',
+            'state': 'state__iexact',
+            'country': 'country__iexact',
+            'county': 'county__iexact',
+            'year_atleast': 'year__gte',
+            'year_atmost': 'year__lte',
         }
-        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
+        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor', 'year', 'year_atleast', 'year_atmost')
         merges = {
             'phototag__tag__slug': [Q(phototag__accepted=True)],
             'collection__id': [~Q(collection__visibility='PR')],
@@ -225,10 +230,16 @@ class CollectionQuery:
         if self.getparams.get('collection', None):
             c = Collection.objects.get(pk=self.getparams['collection'])
             parts.append(c.name)
+        if self.getparams.get('year_atleast', None):
+            parts.append('after {}'.format(self.getparams['year_atleast']))
+        if self.getparams.get('year_atmost', None):
+            parts.append('before {}'.format(self.getparams['year_atmost']))
+        if self.getparams.get('year', None):
+            parts.append('{}'.format(self.getparams['year']))
         if len(parts) == 0:
             return 'All Photos'
         if len(parts) > 1:
-            return '{} and in {}'.format(', '.join(parts[:-1]) , parts[-1])
+            return '{} and {}'.format(', '.join(parts[:-1]) , parts[-1])
         else:
             return parts[0]
 

@@ -65,12 +65,14 @@ class SearchForm(forms.Form):
             form_exprs.append(expression.DonorExactly(self.cleaned_data['donor']))
         if self.cleaned_data['city']:
             form_exprs.append(expression.City(self.cleaned_data['city']))
+        if self.cleaned_data['county']:
+            form_exprs.append(expression.County(self.cleaned_data['county']))
         if self.cleaned_data['state']:
             form_exprs.append(expression.State(self.cleaned_data['state']))
         if self.cleaned_data['country']:
             form_exprs.append(expression.Country(self.cleaned_data['country']))
         if len(form_exprs):
-            return reduce(expression.Or, form_exprs)
+            return reduce(expression.And, form_exprs)
         raise NoExpression
 
 

@@ -9,7 +9,7 @@ from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote,
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
-from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
@@ -477,10 +477,17 @@ class SearchResultsView(GridBase):
     def get_queryset(self):
         try:
             expr = self.form.as_expression()
-            qs = evaluate(expr, self.model.objects)
-            if qs.count() == 1:
-                self.redirect = redirect(qs[0].get_absolute_url())
-            return qs
+            try:
+                params = expr.as_collection()
+                qd = QueryDict('', mutable=True)
+                qd.update(params)
+                self.redirect = redirect('{}?{}'.format(reverse('gridview'), qd.urlencode()))
+                return []
+            except ValueError:
+                qs = evaluate(expr, self.model.objects)
+                if qs.count() == 1:
+                    self.redirect = redirect(qs[0].get_absolute_url())
+                return qs
         except NoExpression:
             return []
 

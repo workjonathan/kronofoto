@@ -1,5 +1,6 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField
 from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, StrIndex
+from .. import models
 
 from functools import reduce
 import operator
@@ -57,6 +58,9 @@ class Expression:
         "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
         return {}
 
+    def as_collection(self):
+        raise ValueError('Cannot represent this expression as collection')
+
 class TermExactly(Expression):
     def __init__(self, value):
         self.value = value
@@ -69,6 +73,10 @@ class TermExactly(Expression):
             return Case(When(terms__id=self.value.id, then=1), default=0, output_field=FloatField())
         else:
             return Case(When(terms__id=self.value.id, then=0), default=1, output_field=FloatField())
+
+    def as_collection(self):
+        return {'term': models.Term.objects.get(pk=self.value.id).slug}
+
 
 class DonorExactly(Expression):
     def __init__(self, value):
@@ -83,6 +91,8 @@ class DonorExactly(Expression):
         else:
             return Case(When(donor__id=self.value.id, then=0), default=1, output_field=FloatField())
 
+    def as_collection(self):
+        return {'donor': self.value.id}
 
 
 
@@ -299,7 +309,7 @@ Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCap
 
 class State(Expression):
     def __init__(self, value):
-        self.value = value.lower()
+        self.value = value
 
     def filter1(self):
         q = Q(state__icontains=self.value)
@@ -314,10 +324,13 @@ class State(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.state == self.value or negated and photo.state != self.value else 0
 
+    def as_collection(self):
+        return {'state': self.value}
+
 
 class Country(Expression):
     def __init__(self, value):
-        self.value = value.lower()
+        self.value = value
 
     def filter1(self):
         q = Q(country__icontains=self.value)
@@ -329,13 +342,15 @@ class Country(Expression):
         else:
             return Case(When(country__icontains=self.value, then=0), default=1, output_field=FloatField())
 
-
     def score(self, photo, negated):
         return 1 if not negated and photo.country == self.value or negated and photo.country != self.value else 0
 
+    def as_collection(self):
+        return {'country': self.value}
+
 class County(Expression):
     def __init__(self, value):
-        self.value = value.lower()
+        self.value = value
 
     def filter1(self):
         q = Q(county__icontains=self.value)
@@ -350,10 +365,13 @@ class County(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
 
+    def as_collection(self):
+        return {'county': self.value}
+
 
 class City(Expression):
     def __init__(self, value):
-        self.value = value.lower()
+        self.value = value
 
     def filter1(self):
         q = Q(city__icontains=self.value)
@@ -367,6 +385,9 @@ class City(Expression):
 
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
+
+    def as_collection(self):
+        return {'city': self.value}
 
 
 class YearLTE(Expression):
@@ -383,6 +404,8 @@ class YearLTE(Expression):
         else:
             return Case(When(year__lte=self.value, then=0.0), default=1.0, output_field=FloatField())
 
+    def as_collection(self):
+        return {'year_atmost': self.value}
 
 class YearGTE(Expression):
     def __init__(self, value):
@@ -397,6 +420,9 @@ class YearGTE(Expression):
             return Case(When(year__gte=self.value, then=1.0), default=0.0, output_field=FloatField())
         else:
             return Case(When(year__gte=self.value, then=0.0), default=1.0, output_field=FloatField())
+
+    def as_collection(self):
+        return {'year_atleast': self.value}
 
 
 class YearEquals(Expression):
@@ -415,6 +441,9 @@ class YearEquals(Expression):
 
     def score(self, photo, negated):
         return 1 if not negated and photo.year == self.value or negated and photo.year != self.value else 0
+
+    def as_collection(self):
+        return {'year': self.value}
 
 
 class Not(Expression):
@@ -493,6 +522,9 @@ class And(BinaryOperator):
         if negated:
             return self.left.score(photo, negated) + self.right.score(photo, negated)
         return self.left.score(photo, negated) * self.right.score(photo, negated)
+
+    def as_collection(self):
+        return {**self.left.as_collection(), **self.right.as_collection()}
 
 
 class Or(BinaryOperator):
