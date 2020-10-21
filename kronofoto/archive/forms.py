@@ -107,26 +107,27 @@ class TagForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        text = data['tag']
-        if Term.objects.filter(slug=slugify(text)).exists():
-            self.add_error('tag', 'Tags which are already categories are not allowed.')
+        data['tag'] = [s.strip() for s in data['tag'].split(', ')]
+        for text in data['tag']:
+            if Term.objects.filter(slug=slugify(text)).exists():
+                self.add_error('tag', 'Tags which are already categories are not allowed: {}'.format(text))
         return data
 
 
     def add_tag(self, photo, user):
-        text = self.cleaned_data['tag']
-        tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
-        accepted = (
-            user.has_perm('archive.add_tag') and
-            user.has_perm('archive.change_tag') and
-            user.has_perm('archive.add_phototag') and
-            user.has_perm('archive.change_phototag')
-        )
-        phototag, created = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
-        if not created:
-            phototag.accepted |= accepted
-        phototag.creator.add(user)
-        phototag.save()
+        for text in self.cleaned_data['tag']:
+            tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
+            accepted = (
+                user.has_perm('archive.add_tag') and
+                user.has_perm('archive.change_tag') and
+                user.has_perm('archive.add_phototag') and
+                user.has_perm('archive.change_phototag')
+            )
+            phototag, created = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
+            if not created:
+                phototag.accepted |= accepted
+            phototag.creator.add(user)
+            phototag.save()
 
 
 class CollectionForm(forms.ModelForm):

@@ -216,6 +216,14 @@ class TagFormTest(TestCase):
         self.assertEqual(models.Tag.objects.filter(tag='Hat').count(), 1)
         self.assertEqual(models.Tag.objects.filter(tag='hat').count(), 1)
 
+    def testShouldTreatCommasAsTagSeparators(self):
+        form = TagForm(data={'tag': 'dog, cat, human'})
+        self.assertTrue(form.is_valid())
+        form.add_tag(self.photo, self.user)
+        self.assertEqual(models.Tag.objects.filter(tag='dog').count(), 1)
+        self.assertEqual(models.Tag.objects.filter(tag='cat').count(), 1)
+        self.assertEqual(models.Tag.objects.filter(tag='human').count(), 1)
+
 class WhenHave50Photos(TestCase):
     @classmethod
     def setUpTestData(cls):
