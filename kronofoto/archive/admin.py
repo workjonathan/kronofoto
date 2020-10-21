@@ -9,7 +9,8 @@ from django.urls import reverse
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ['tag']
+
 
 @admin.register(Donor)
 class DonorAdmin(admin.ModelAdmin):

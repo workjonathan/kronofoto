@@ -123,6 +123,9 @@ class Tag(models.Model):
     def __str__(self):
         return self.tag
 
+    class Meta:
+        ordering = ('tag',)
+
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 class PhotoQuerySet(models.QuerySet):
