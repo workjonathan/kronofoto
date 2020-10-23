@@ -13,13 +13,12 @@ generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field]
 
 
 class SearchForm(forms.Form):
-    query = forms.CharField(required=False, label='')
-    query.widget.attrs.update({
+    tag = forms.CharField(required=False, label='')
+    tag.group = 'TAG'
+    tag.widget.attrs.update({
         'id': 'search-box',
-        'placeholder': 'Keywords, terms, photo ID#, donor',
+        'placeholder': 'Tag Search',
     })
-    query.group = "QUERY"
-
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))
     term.group = "CATEGORY"
 
@@ -40,6 +39,12 @@ class SearchForm(forms.Form):
     country = forms.ChoiceField(required=False, label='', choices=generate_choices('country'))
     country.group = 'LOCATION'
 
+    query = forms.CharField(required=False, label='')
+    query.widget.attrs.update({
+        'placeholder': 'Keywords, terms, photo ID#, donor',
+    })
+    query.group = "ADVANCED SEARCH"
+
     def as_expression(self):
         form_exprs = []
         year_exprs = []
@@ -55,6 +60,8 @@ class SearchForm(forms.Form):
                 pass
         if self.cleaned_data['term']:
             form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
+        if self.cleaned_data['tag']:
+            form_exprs.append(expression.TagExactly(self.cleaned_data['tag']))
         if self.cleaned_data['startYear']:
             year_exprs.append(expression.YearGTE(self.cleaned_data['startYear']))
         if self.cleaned_data['endYear']:

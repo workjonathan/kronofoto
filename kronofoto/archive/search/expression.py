@@ -181,13 +181,38 @@ class MultiWordTag(Expression):
             return 1 - F(self.field)
         return F(self.field)
 
+class TagExactly(Expression):
+    def __init__(self, value):
+        self.value = value
+        self.field = 'TAE_' + '_'.join(self.value.split())
+
+    def filter1(self):
+        return Q(phototag__tag__tag__iexact=self.value)
+
+    def annotations1(self):
+        return {
+            self.field: Case(
+                When(phototag__tag__tag__iexact=self.value, then=1),
+                default=0,
+                output_field=FloatField(),
+            )
+        }
+
+    def scoreF(self, negated):
+        if negated:
+            return 1 - F(self.field)
+        else:
+            return F(self.field)
+
+    def as_collection(self):
+        return {'tag': models.Tag.objects.get(tag__iexact=self.value).slug}
 
 class SingleWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
     def filter2(self):
-        return Q(wordcount__word=self.value, wordcount__field='TA')
+        return Q(wordcount__word__icontains=self.value, wordcount__field='TA')
 
     def annotations1(self):
         return {'TA_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
