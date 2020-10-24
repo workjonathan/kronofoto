@@ -768,9 +768,12 @@ main article.fi-image {
   z-index: 3;
   margin-top: 20px;
   width: 100%;
+  margin-bottom: 20px;
 }
 .year-ticker svg {
   width: 100%;
+  margin-left: 40px;
+  margin-right: 40px;
 }
 
 .year-min, .year-max {
@@ -815,9 +818,24 @@ main article.fi-image {
   fill: var(--fp-main-blue);
 }
 
-.stroke {
-  stroke: var(--fp-main-blue);
-  stroke-width: 2;
+/* marker stuff */
+.active-year-marker {
+  position: absolute;
+  display: none;
+  transition: 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+  pointer-events: none;
+}
+.marker-image {
+  width: 65px;
+  height: 36px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
 }
 
 

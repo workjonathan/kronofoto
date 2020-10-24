@@ -215,20 +215,42 @@ $('#search-box').focus(function() {
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
 
+// Year Ticker Interactions
 var rect = document.querySelector("svg.tl");
 
 if(rect) {
     rect.addEventListener("click", function(e) {
-    var target = e.target,
-        active = document.querySelector(".stroke");
+        var target = e.target,
+            active = document.querySelector(".stroke");
+        
+        if (active !== null) {
+            active.classList.remove("stroke");
+        }
+        if (target.nodeName === "rect")  {
+            var year = target.getAttribute('data-year');
+        }
+
+        // if click the label
+        else if (target.nodeName === 'tspan') {
+            var year = target.innerHTML.trim();
+        }
+        
+        // console.log('Year: ' + year);
+        if (year !== null && year !== undefined) {
+            var bounds = target.getBoundingClientRect();
+            var marker = document.querySelector('.active-year-marker');
+            marker.style.display = 'block';
     
-    if (active !== null) {
-        active.classList.remove("stroke");
-    }
+            var markerStyle = window.getComputedStyle(marker);
+            var markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+            var leftX = (bounds.x);
+            var offsetX = (leftX - (markerWidth / 2)); // calculate offset
     
-    if (target.nodeName === "rect")  {
-        target.classList.add("stroke");   
-    }
+            // move marker to offset
+            marker.style.left = (offsetX + 'px');
+            document.querySelector('.marker-year').textContent = year;
+            
+        }
     });
 }
 
