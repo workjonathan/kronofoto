@@ -216,6 +216,50 @@ $('#search-box').focus(function() {
 });
 
 // Year Ticker Interactions
+function updateYear(year) {
+    document.querySelector('.marker-year').textContent = year;
+}
+
+function moveMarker(marker, bounds) {
+    var markerStyle = window.getComputedStyle(marker);
+    var markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+
+    // move marker to offset
+    var leftX = (bounds.x);
+    var offsetX = (leftX - (markerWidth / 2)); // calculate offset
+
+    marker.style.left = (offsetX + 'px');
+}
+
+function showMarker(marker) {
+    if (marker.style.display === '') {
+        marker.style.display = 'block';
+    }
+}
+
+let marker = document.querySelector('.active-year-marker');
+let thumbnails = document.querySelector('#fi-thumbnail-carousel-images');
+
+thumbnails.addEventListener('click', function (e) {
+    let jsonFile = e.target.getAttribute('data-json-href');
+    let req = new XMLHttpRequest();
+
+    req.addEventListener('load', function () {
+        let data = JSON.parse(this.responseText).metadata;
+        let dirtyYear = data.match(/<li>1\d\d\d/)[0];
+        let year = dirtyYear.replace('<li>', '');
+        let tick = document.querySelector('[data-year="' + year + '"]');
+        let bounds = tick.getBoundingClientRect();
+
+        showMarker(marker);
+        moveMarker(marker, bounds);
+        updateYear(year);
+    });
+
+    req.open('GET', jsonFile);
+    req.send();
+});
+
 var rect = document.querySelector("svg.tl");
 
 if(rect) {
@@ -235,21 +279,13 @@ if(rect) {
             var year = target.innerHTML.trim();
         }
         
-        // console.log('Year: ' + year);
+        showMarker(marker);
+
         if (year !== null && year !== undefined) {
             var bounds = target.getBoundingClientRect();
-            var marker = document.querySelector('.active-year-marker');
-            marker.style.display = 'block';
-    
-            var markerStyle = window.getComputedStyle(marker);
-            var markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
-            var leftX = (bounds.x);
-            var offsetX = (leftX - (markerWidth / 2)); // calculate offset
-    
-            // move marker to offset
-            marker.style.left = (offsetX + 'px');
-            document.querySelector('.marker-year').textContent = year;
-            
+
+            moveMarker(marker, bounds);
+            updateYear(year);
         }
     });
 }
