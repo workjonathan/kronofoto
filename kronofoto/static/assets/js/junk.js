@@ -239,7 +239,44 @@ function showMarker(marker) {
         marker.style.display = 'block';
     }
 }
+function getYearFromPhoto (photo) {
+    let jsonFile = photo.getAttribute('data-json-href');
+    let req = new XMLHttpRequest();
 
+    req.addEventListener('load', function () {
+        let data = JSON.parse(this.responseText).metadata;
+        let dirtyYear = data.match(/<li>1\d\d\d/)[0];
+        let year = dirtyYear.replace('<li>', '');
+        let tick = document.querySelector('[data-year="' + year + '"]');
+        let bounds = tick.getBoundingClientRect();
+
+        showMarker(marker);
+        moveMarker(marker, bounds);
+        updateYear(year);
+    });
+
+    req.open('GET', jsonFile);
+    req.send();
+}
+
+function arrowClickHandler () {
+    console.log('This is the arrow event handler');
+}
+
+// TODO: Arrows click event handler
+var forwardArrows = document.querySelector('.forward-arrows');
+var backArrows = document.querySelector('.back-arrows');
+
+forwardArrows.addEventListener('click', arrowClickHandler);
+backArrows.addEventListener('click', arrowClickHandler);
+
+// DOMContentLoaded event handler
+document.addEventListener('DOMContentLoaded', function() {
+    var photo = document.querySelector('li[data-active] a img');
+    getYearFromPhoto(photo);
+});
+
+// Timeline thumbnails click event handler
 thumbnails.addEventListener('click', function (e) {
     let jsonFile = e.target.getAttribute('data-json-href');
     let req = new XMLHttpRequest();
@@ -260,6 +297,7 @@ thumbnails.addEventListener('click', function (e) {
     req.send();
 });
 
+// Timeline SVG Tick click event handler
 var rect = document.querySelector("svg.tl");
 
 if(rect) {
