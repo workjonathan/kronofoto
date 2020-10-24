@@ -58,6 +58,11 @@
       {{ collection_name }}
     </nav>
     <div class="year-ticker">
+      <div class="active-year-marker">
+        <div class="marker-image" style="background-image: url('{% static "assets/images/skyblue/toggle.svg" %}');">
+          <span class="marker-year"></span>
+        </div>
+      </div>
       {% comment %}
       <!-- <div class="year-min">
         <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing back">
