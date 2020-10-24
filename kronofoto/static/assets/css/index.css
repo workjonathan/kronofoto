@@ -515,7 +515,7 @@ main article.fi-image {
 }
 
 .fi-image figure img {
-  max-height: 400px;
+  max-height: 450px;
   width: auto;
 }
 /* .fi-image #fi-image-controls {
