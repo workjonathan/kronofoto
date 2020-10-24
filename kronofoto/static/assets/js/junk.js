@@ -216,6 +216,9 @@ $('#search-box').focus(function() {
 });
 
 // Year Ticker Interactions
+let marker = document.querySelector('.active-year-marker');
+let thumbnails = document.querySelector('#fi-thumbnail-carousel-images');
+
 function updateYear(year) {
     document.querySelector('.marker-year').textContent = year;
 }
@@ -236,9 +239,6 @@ function showMarker(marker) {
         marker.style.display = 'block';
     }
 }
-
-let marker = document.querySelector('.active-year-marker');
-let thumbnails = document.querySelector('#fi-thumbnail-carousel-images');
 
 thumbnails.addEventListener('click', function (e) {
     let jsonFile = e.target.getAttribute('data-json-href');
