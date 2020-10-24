@@ -513,6 +513,11 @@ main article.fi-image {
   display: flex;
   justify-content: center;
 }
+
+.fi-image figure img {
+  max-height: 400px;
+  width: auto;
+}
 /* .fi-image #fi-image-controls {
   grid-row-start: 2;
   grid-row-end: span 1;
