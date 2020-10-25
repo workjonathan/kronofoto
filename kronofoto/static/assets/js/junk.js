@@ -259,20 +259,34 @@ function getYearFromPhoto (photo) {
     req.send();
 }
 
+function getActivePhoto() {
+    return document.querySelector('li[data-active] a img');
+}
+
 function arrowClickHandler () {
-    console.log('This is the arrow event handler');
+    // Wait for active photo to update in DOM
+    window.setTimeout(function () {
+        let photo = getActivePhoto();
+        getYearFromPhoto(photo);
+    }, 100);
 }
 
 // TODO: Arrows click event handler
 var forwardArrows = document.querySelector('.forward-arrows');
 var backArrows = document.querySelector('.back-arrows');
+var fiArrowLeft = document.querySelector('#fi-arrow-left');
+var fiArrowRight = document.querySelector('#fi-arrow-right');
 
-forwardArrows.addEventListener('click', arrowClickHandler);
-backArrows.addEventListener('click', arrowClickHandler);
+[forwardArrows, backArrows, fiArrowLeft, fiArrowRight].map(function (ele) {
+    ele.addEventListener('click', arrowClickHandler);
+});
+
+// forwardArrows.addEventListener('click', arrowClickHandler);
+// backArrows.addEventListener('click', arrowClickHandler);
 
 // DOMContentLoaded event handler
 document.addEventListener('DOMContentLoaded', function() {
-    var photo = document.querySelector('li[data-active] a img');
+    var photo = getActivePhoto();
     getYearFromPhoto(photo);
 });
 
