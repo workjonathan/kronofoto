@@ -40,6 +40,7 @@ urlpatterns = [
     path('photo/<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
+    path('tags/', views.TagSearchView.as_view(), name='tag-search'),
     path('grid/', views.GridView.as_view(), name='gridview'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),

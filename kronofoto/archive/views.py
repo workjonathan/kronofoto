@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
 from django.views.generic import ListView, TemplateView, View
+from django.views.generic.list import BaseListView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
@@ -602,3 +603,16 @@ class MissingPhotosView(UserPassesTestMixin, ListView):
 
     def get_queryset(self):
         return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')
+
+
+class TagSearchView(JSONResponseMixin, BaseListView):
+    def get_queryset(self):
+        return Tag.objects.filter(tag__icontains=self.request.GET['term'], phototag__accepted=True).values('tag', 'id')[:10]
+
+    def get_data(self, context):
+        return dict(results=[tag for tag in context['object_list']])
+
+    def render_to_response(self, context, **kwargs):
+        return self.render_to_json_response(context, **kwargs)
+
+
