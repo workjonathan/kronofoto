@@ -676,6 +676,7 @@ main article.fi-image {
 }
 
 .fi-thumbnail-carousel {
+  height: 130px;
   display: flex;
   flex-direction: row;
   flex-grow: 1;
