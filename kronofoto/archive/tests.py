@@ -124,8 +124,7 @@ class TagTest(TestCase):
 
         obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
 
-        self.assertIn('results', obj)
-        self.assertEqual(len(obj['results']), 10)
+        self.assertEqual(len(obj), 10)
 
     def testSubstringSearchShouldOnlyReturnMatchingTags(self):
         photo = models.Photo.objects.create(
@@ -148,8 +147,7 @@ class TagTest(TestCase):
 
         obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
 
-        self.assertIn('results', obj)
-        self.assertEqual(len(obj['results']), 3)
+        self.assertEqual(len(obj), 3)
 
     def testSubstringSearchShouldOnlyReturnAcceptedTags(self):
         photo = models.Photo.objects.create(
@@ -169,8 +167,7 @@ class TagTest(TestCase):
 
         obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
 
-        self.assertIn('results', obj)
-        self.assertEqual(len(obj['results']), 1)
+        self.assertEqual(len(obj), 1)
 
 
     def testFindDeadTags(self):

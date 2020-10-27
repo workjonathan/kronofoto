@@ -159,6 +159,11 @@ $('.search-options').click(() => {
         $('.arrow').removeClass('up').addClass('down')
     }
 }) */
+console.log($('#search-box'))
+$('#search-box').autocomplete({
+    source: '/tags/',
+    minLength: 2, 
+})
 
 $('input[name="startYear"]').parent().parent('div').addClass('daterange')
 
