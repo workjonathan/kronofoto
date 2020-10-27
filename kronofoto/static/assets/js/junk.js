@@ -5,7 +5,6 @@ const toggleVis = evt => {
 }
 const toggleLogin = evt => {
     const el = document.querySelector('#login');
-    console.log('toggled login');
     toggleElement(el);
 }
 const toggleMenu = evt => {
@@ -14,7 +13,6 @@ const toggleMenu = evt => {
     toggleHover()
 }
 const toggleElement = el => {
-    console.log('el:', el);
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
     }
@@ -83,7 +81,9 @@ document.addEventListener('click', e => {
 })
 
 window.onpopstate = evt => {
-    loadstate(evt.state)
+    if (evt.state) {
+        loadstate(evt.state)
+    }
 }
 
 const trace = v => {
@@ -159,7 +159,6 @@ $('.search-options').click(() => {
         $('.arrow').removeClass('up').addClass('down')
     }
 }) */
-console.log($('#search-box'))
 $('#search-box').autocomplete({
     source: '/tags/',
     minLength: 2, 
@@ -257,7 +256,6 @@ window.onload = function() {
     let search = document.querySelector('.search-icon')
     let carrot = document.querySelector('.carrot')
     document.getElementsByClassName("logo-img")[0].src = randomImg;
-    console.log(randomImg)
     if(randomImg == img1) {
         document.documentElement.style.setProperty("--fp-main-blue", "#6c84bd");
         hamburger.setAttribute("src", "/static/assets/images/skyblue/menu.svg");

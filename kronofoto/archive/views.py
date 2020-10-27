@@ -42,6 +42,7 @@ class BaseTemplateMixin:
         context = super().get_context_data(**kwargs)
         context['photo_count'] = Photo.count()
         context['grid_url'] = reverse('gridview')
+        context['timeline_url'] = '#'
         return context
 
 
@@ -440,6 +441,10 @@ class GridView(GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
+        try:
+            context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+        except IndexError:
+            pass
         return context
 
     def format_page_url(self, num):
