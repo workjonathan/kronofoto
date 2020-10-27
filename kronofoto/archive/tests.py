@@ -478,6 +478,10 @@ class WhenHave50Photos(TestCase):
         got_ids = {photo.id for photo in resp.context['page_obj']}
         self.assertEqual(our_ids, got_ids)
 
+    def testGridShouldHandleNonexistantTags(self):
+        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': "lakdsjflkasdf"})
+        self.assertEqual(len(resp.context['page_obj']), 0)
+
     def testGridShouldRespectTagFilters(self):
         tag = models.Tag.objects.create(tag="test tag")
         photos = [self.photos[2], self.photos[5], self.photos[15]]
