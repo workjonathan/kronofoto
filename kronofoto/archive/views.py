@@ -312,7 +312,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         else:
             page = 1
         queryset = self.queryset
-        index_key = 'year_links:' + self.collection.cache_encoding()
+        cache_info = self.collection.cache_encoding()
+        index_key = 'year_links:' + cache_info
         index = cache.get(index_key)
         if not index:
             index = queryset.year_links(params=self.request.GET)
@@ -334,6 +335,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context["years"] = index
             context['initialstate'] = self.get_data(context)
             context['collection_name'] = str(self.collection)
+            context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:

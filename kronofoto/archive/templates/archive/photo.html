@@ -3,6 +3,7 @@
 {% load timeline %}
 {% load thumbnails %}
 {% load photometadata %}
+{% load cache %}
 
 {% block content %}
   <main>
@@ -66,7 +67,10 @@
         {{ first_year }}
       </div> -->
       {% endcomment %}
+
+    {% cache 300 timeline timeline_key %}
       {% make_timeline years %}
+    {% endcache %}
       {% comment %}
       <!--<div class="year-max">
         {{ last_year }}
