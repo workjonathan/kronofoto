@@ -195,9 +195,11 @@ $(() => {
     if(window.location.href.includes('grid')) {
         $('.grid-icon').addClass('current-view')
         $('.timeline-icon').css('opacity', '0.5')
+        $('.collection-name').css('display', 'none')
     } else {
         $('.timeline-container').addClass('current-view')
         $('.grid-icon_reg').css('opacity', '0.5')
+        $('.collection-name').css('display', 'block')
     }
 })
 
@@ -205,13 +207,13 @@ $('#search-box').focus(function() {
     $('#search-box-container').css('background','var(--fp-main-blue)')
     $('.search-icon').css('filter', 'brightness(0) invert(1)')
     $('.carrot').css('filter', 'brightness(0) invert(1)')
-    $('#search-box').addClass('placeholder-light')
+    $('#search-box').addClass('placeholder-light').css('color', 'white')
     
 }).blur(function() {
     $('#search-box-container').css('background','var(--fp-light-grey)')
     $('.search-icon').css('filter', 'none')
     $('.carrot').css('filter', 'none')
-    $('#search-box').removeClass('placeholder-light')
+    $('#search-box').removeClass('placeholder-light').css('color', '#333')
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
 

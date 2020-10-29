@@ -96,6 +96,7 @@ nav {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
+  padding: 0 35px;
 }
 
 .header-text {
@@ -347,19 +348,19 @@ select {
   background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
 }
 
-.register-container, .collection_create-container, .login-page-container, .add_tag-container {
+.register-container, .collection_create-container, .login-page-container, .add_tag-container, .container-center {
   margin-top: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.register-container form, .collection_create-container form, .login-page-container form, .add_tag-container form {
+.register-container form, .collection_create-container form, .login-page-container form, .add_tag-container form, .container-center form {
   width: 50%;
   max-width: 500px;
 }
 
-.register-container form p, .collection_create-container form p, .login-page-container form p, .add_tag-container form p {
+.register-container form p, .collection_create-container form p, .login-page-container form p, .add_tag-container form p, .container-center form p {
   margin-bottom: 6%;
 }
 
@@ -386,8 +387,27 @@ select {
   width: 50%;
 }
 
-.add_tag-container span.back-btn {
-  margin-bottom: 30px;
+.add_tag-container form p {
+  margin-top: 50px;
+}
+.add_tag-container span.back-btn a {
+  font-size: 13px;
+  color: var(--fp-main-blue);
+  padding: 11px 15px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.add_tag-container span.back-btn a:hover {
+  color: white !important;
+  background: var(--fp-main-blue);
+}
+
+.collection_delete-container input[type="submit"] {
+  margin-right: 20px;
+}
+.collection_delete-container form {
+  text-align: center;
 }
 
 .hamburger {
@@ -655,6 +675,35 @@ main article.fi-image {
   list-style-type: none;
 }
 
+.collection-name {
+  position: absolute;
+  top: 100px;
+  font-size: 12px;
+  color: var(--fp-main-blue);
+  background: var(--fp-light-grey);
+  padding: 7px 17px;
+  z-index: 998;
+}
+
+/* .grey-bg {
+  background-color: #ccc;
+  width: 200vw;
+  z-index: -1;
+  height: 100%;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.fi-timeline::before, .fi-timeline::after {
+  content: "";
+  position: absolute;
+  width: 200vw;
+  right: -100%;
+  background: #f4f4f4;
+  height: 150px;
+  z-index: -1;
+} */
+
 /*******************
  ** MAIN TIMELINE **
  *******************/
@@ -763,7 +812,7 @@ main article.fi-image {
 .year-ticker {
   display: flex;
   flex-direction: row;
-  
+  background: white;
   position: relative;
   z-index: 3;
   margin-top: 20px;

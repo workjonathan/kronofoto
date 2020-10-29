@@ -1,7 +1,7 @@
 {% extends "archive/base.html" %}
 
 {% block content %}
-<div class="register-container">
+<div class="container-center register-container">
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

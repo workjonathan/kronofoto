@@ -213,13 +213,15 @@ header nav div img {
 }
 
 h1, h2, h3 {
-  text-transform: uppercase;
   letter-spacing: 0.1ch;
+  font-weight: lighter;
+  margin: 30px 0 20px 0;
 }
 
 h1 {
   border-bottom: 1px solid var(--fp-main-grey);
   padding-bottom: 10px;
+  font-size: 30px;
 }
 
 p {

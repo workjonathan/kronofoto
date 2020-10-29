@@ -28,7 +28,13 @@
         <div class="main-nav_left">
           <div id="logo">
             <a href="{% url "random-image" %}"><img class="logo-img" src="{% static "assets/images/white/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
+
+            <div class="collection-name">
+              <a href="{% url "random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
+            </div>
           </div>
+
+          
 
           <div class="header-text">{{photo_count}} images</div>
 
@@ -92,9 +98,9 @@
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
               {% docnav "Archive" %}
-              <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
+              <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
-              <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li>
+              <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
             </div>
 
           </div>
