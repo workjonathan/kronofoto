@@ -1,6 +1,6 @@
 {% load static %}
+{% load cache %}
 <form action="/search/" method="get">
-  
   <label for="search-box">
     <img class="search-icon" src="{% static "assets/images/search.svg" %}" alt="Magnifying glass">
     {{ form.tag }}

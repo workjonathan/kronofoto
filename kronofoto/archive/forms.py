@@ -9,7 +9,7 @@ from .token import UserEmailVerifier
 from django.utils.text import slugify
 
 
-generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
+generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).only(field).values(field).distinct().order_by(field)]
 
 
 class SearchForm(forms.Form):

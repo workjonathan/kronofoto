@@ -212,6 +212,12 @@ class CollectionQuery:
         andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
         return reduce(operator.and_, andClauses)
 
+    def cache_encoding(self):
+        keys = [(k, self.getparams[k]) for k in sorted(self.getparams.keys())]
+        if 'tag' in self.getparams:
+            keys.append(['user', self.user.username])
+        return ':'.join(v for pair in keys for v in pair)
+
     def __str__(self):
         parts = []
         if 'donor' in self.getparams:

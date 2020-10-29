@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, Page
+from django.core.cache import cache
 from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
@@ -40,7 +41,11 @@ NO_URLS = dict(url='#', json_url='#')
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['photo_count'] = Photo.count()
+        photo_count = cache.get('photo_count')
+        if not photo_count:
+            photo_count = Photo.count()
+            cache.set('photo_count', photo_count)
+        context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
         return context
@@ -307,7 +312,11 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         else:
             page = 1
         queryset = self.queryset
-        index = queryset.year_links(params=self.request.GET)
+        index_key = 'year_links:' + self.collection.cache_encoding()
+        index = cache.get(index_key)
+        if not index:
+            index = queryset.year_links(params=self.request.GET)
+            cache.set(index_key, index)
 
         paginator = self.get_paginator()
         page_selection = paginator.get_pages(page)
@@ -318,16 +327,12 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             for p in page_selection.photos():
                 p.save_params(self.request.GET)
 
-            sorted_qs = self.queryset.order_by('year', 'id')
-
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
             context['initialstate'] = self.get_data(context)
-            context['first_year'] = sorted_qs.first().year
-            context['last_year'] = sorted_qs.last().year
             context['collection_name'] = str(self.collection)
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
