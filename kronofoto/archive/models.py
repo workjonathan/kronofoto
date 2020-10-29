@@ -44,6 +44,7 @@ class Donor(models.Model):
 
     class Meta:
         ordering = ('last_name', 'first_name')
+        index_together = ('last_name', 'first_name')
 
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
@@ -57,6 +58,8 @@ class Donor(models.Model):
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
             for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
+
+
 
 
 class Collection(models.Model):

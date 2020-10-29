@@ -5,5 +5,10 @@ register = template.Library()
 
 @register.inclusion_tag('archive/search_form.html', takes_context=True)
 def make_search_form(context):
-    form = context['search-form'] if 'search-form' in context else SearchForm()
-    return { 'form': form }
+    params = None
+    if 'search-form' in context:
+        form = context['search-form']
+        params = context['request'].GET
+    else:
+        form = SearchForm()
+    return { 'form': form, 'vary_on': params }

@@ -9,7 +9,17 @@ from .token import UserEmailVerifier
 from django.utils.text import slugify
 
 
-generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).only(field).values(field).distinct().order_by(field)]
+class LocationChoiceField(forms.ChoiceField):
+    def __init__(self, field, *args, **kwargs):
+        self.field = field
+        super().__init__(*args, choices=[], **kwargs)
+
+    def load_choices(self):
+        self.choices = self.get_choices()
+
+    def get_choices(self):
+        yield ('', self.field.capitalize())
+        yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
 
 
 class SearchForm(forms.Form):
@@ -30,13 +40,13 @@ class SearchForm(forms.Form):
     donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated())
     donor.group = "DONOR"
 
-    city = forms.ChoiceField(required=False, label='', choices=generate_choices('city'))
+    city = LocationChoiceField(required=False, label='', field='city')
     city.group = 'LOCATION'
-    county = forms.ChoiceField(required=False, label='', choices=generate_choices('county'))
+    county = LocationChoiceField(required=False, label='', field='county')
     county.group = 'LOCATION'
-    state = forms.ChoiceField(required=False, label='', choices=generate_choices('state'))
+    state = LocationChoiceField(required=False, label='', field='state')
     state.group = 'LOCATION'
-    country = forms.ChoiceField(required=False, label='', choices=generate_choices('country'))
+    country = LocationChoiceField(required=False, label='', field='country')
     country.group = 'LOCATION'
 
     query = forms.CharField(required=False, label='')
@@ -44,6 +54,13 @@ class SearchForm(forms.Form):
         'placeholder': 'Keywords, terms, photo ID#, donor',
     })
     query.group = "ADVANCED SEARCH"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['city'].load_choices()
+        self.fields['county'].load_choices()
+        self.fields['state'].load_choices()
+        self.fields['country'].load_choices()
 
     def as_expression(self):
         form_exprs = []

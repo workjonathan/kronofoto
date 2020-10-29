@@ -6,6 +6,7 @@
     {{ form.tag }}
   </label>
   <div class="search-form">
+    {% cache 300 search_form_ vary_on %}
     <!-- Display Form -->
       {% regroup form by field.group as field_groups %}
       {% for field_group in field_groups %}
@@ -15,7 +16,6 @@
           <div class="search-form-section_inner">
             {% for field in field_group.list %}
               <div>
-                <!-- <label for="" class="search-form-section_label">{{ field.label }}</label> -->
                 {{field}}
               </div>
             {% endfor %}
@@ -24,6 +24,7 @@
         </div>
       {% endif %}
       {% endfor %}
+    {% endcache %}
 
   <input type="submit" value="Search">
   </div>
