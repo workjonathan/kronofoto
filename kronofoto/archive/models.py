@@ -215,8 +215,11 @@ class CollectionQuery:
     def __str__(self):
         parts = []
         if 'donor' in self.getparams:
-            d = Donor.objects.get(id=self.getparams['donor'])
-            parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+            try:
+                d = Donor.objects.get(id=self.getparams['donor'])
+                parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+            except Donor.DoesNotExist:
+                parts.append("Photos in nobody's collection")
         location = {
             key: self.getparams[key]
             for key in ('city', 'county', 'state', 'country')
@@ -225,14 +228,23 @@ class CollectionQuery:
         if location:
             parts.append(format_location(**location))
         if self.getparams.get('term', None):
-            t = Term.objects.get(slug=self.getparams['term'])
-            parts.append("Termed with {}".format(t.term))
+            try:
+                t = Term.objects.get(slug=self.getparams['term']).term
+            except Term.DoesNotExist:
+                t = self.getparams['term']
+            parts.append("Termed with {}".format(t))
         if self.getparams.get('tag', None):
-            t = Tag.objects.get(slug=self.getparams['tag'])
-            parts.append("Tagged with {}".format(t.tag))
+            try:
+                t = Tag.objects.get(slug=self.getparams['tag']).tag
+            except Tag.DoesNotExist:
+                t = self.getparams['tag']
+            parts.append("Tagged with {}".format(t))
         if self.getparams.get('collection', None):
-            c = Collection.objects.get(pk=self.getparams['collection'])
-            parts.append(c.name)
+            try:
+                c = Collection.objects.get(pk=self.getparams['collection'])
+                parts.append(c.name)
+            except Collection.DoesNotExist:
+                parts.append('Mystery collection')
         if self.getparams.get('year_atleast', None):
             parts.append('after {}'.format(self.getparams['year_atleast']))
         if self.getparams.get('year_atmost', None):

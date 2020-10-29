@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
 from django.views.generic import ListView, TemplateView, View
+from django.views.generic.list import BaseListView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
@@ -41,6 +42,7 @@ class BaseTemplateMixin:
         context = super().get_context_data(**kwargs)
         context['photo_count'] = Photo.count()
         context['grid_url'] = reverse('gridview')
+        context['timeline_url'] = '#'
         return context
 
 
@@ -439,6 +441,10 @@ class GridView(GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
+        try:
+            context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+        except IndexError:
+            pass
         return context
 
     def format_page_url(self, num):
@@ -602,3 +608,16 @@ class MissingPhotosView(UserPassesTestMixin, ListView):
 
     def get_queryset(self):
         return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')
+
+
+class TagSearchView(JSONResponseMixin, BaseListView):
+    def get_queryset(self):
+        return Tag.objects.filter(tag__icontains=self.request.GET['term'], phototag__accepted=True).values('tag', 'id').distinct()[:10]
+
+    def get_data(self, context):
+        return [dict(id=tag['id'], value=tag['tag'], label=tag['tag']) for tag in context['object_list']]
+
+    def render_to_response(self, context, **kwargs):
+        return self.render_to_json_response(context, safe=False, **kwargs)
+
+

@@ -11,6 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link type="text/css" rel="stylesheet" href="{% static "assets/css/index.css" %}">
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link type="text/css" rel="stylesheet" href="{% url "keyframes" -100 100 1 "%" %}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
   <script
@@ -56,7 +57,7 @@
 
         <div class="main-nav_center">
           <div class="timeline-container">
-            <a href="{% url "random-image" %}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" title="Timeline View"></a>
+            <a href="{{ timeline_url }}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" title="Timeline View"></a>
           </div>
           <div class="grid-icon">
             <a id="grid-a" href="{{ grid_url }}">
@@ -114,7 +115,8 @@
     {% block content %}
     {% endblock %}
   <!-- <footer></footer> -->
-</body>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="{% static "assets/js/junk.js" %}">
   </script>
+</body>
 </html>

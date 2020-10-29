@@ -109,6 +109,67 @@ class TermTest(TestCase):
         self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'term': term.slug})))
 
 class TagTest(TestCase):
+    def testSubstringSearchShouldNotReturnTooManyThings(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        for x in range(11):
+            tag = models.Tag.objects.create(tag="test tag {}".format(x))
+            models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
+
+        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+
+        self.assertEqual(len(obj), 10)
+
+    def testSubstringSearchShouldOnlyReturnMatchingTags(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        tag1 = models.Tag.objects.create(tag="test tag")
+        models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=True)
+
+        tag2 = models.Tag.objects.create(tag="j tag 1")
+        models.PhotoTag.objects.create(tag=tag2, photo=photo, accepted=True)
+        tag3 = models.Tag.objects.create(tag="a tag 2")
+        models.PhotoTag.objects.create(tag=tag3, photo=photo, accepted=True)
+        tag4 = models.Tag.objects.create(tag="dog")
+        models.PhotoTag.objects.create(tag=tag4, photo=photo, accepted=True)
+
+        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+
+        self.assertEqual(len(obj), 3)
+
+    def testSubstringSearchShouldOnlyReturnAcceptedTags(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                    name='test_img.jpg',
+                    content=open('testdata/test.jpg', 'rb').read(),
+                    content_type='image/jpeg'
+            ),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+        )
+        tag1 = models.Tag.objects.create(tag="test tag")
+        models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=True)
+
+        tag2 = models.Tag.objects.create(tag="j tag 1")
+        tag3 = models.Tag.objects.create(tag="a tag 2")
+        tag4 = models.Tag.objects.create(tag="dog")
+
+        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+
+        self.assertEqual(len(obj), 1)
+
+
     def testFindDeadTags(self):
         photo = models.Photo.objects.create(
             original=SimpleUploadedFile(
@@ -416,6 +477,10 @@ class WhenHave50Photos(TestCase):
         our_ids = {photo.id for photo in photos}
         got_ids = {photo.id for photo in resp.context['page_obj']}
         self.assertEqual(our_ids, got_ids)
+
+    def testGridShouldHandleNonexistantTags(self):
+        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': "lakdsjflkasdf"})
+        self.assertEqual(len(resp.context['page_obj']), 0)
 
     def testGridShouldRespectTagFilters(self):
         tag = models.Tag.objects.create(tag="test tag")

@@ -205,7 +205,10 @@ class TagExactly(Expression):
             return F(self.field)
 
     def as_collection(self):
-        return {'tag': models.Tag.objects.get(tag__iexact=self.value).slug}
+        try:
+            return {'tag': models.Tag.objects.get(tag__iexact=self.value).slug}
+        except models.Tag.DoesNotExist:
+            return {'tag': self.value}
 
 class SingleWordTag(Expression):
     def __init__(self, value):
