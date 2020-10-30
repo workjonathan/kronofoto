@@ -15,6 +15,7 @@ def make_timeline(years, width=400):
         marker = {
             'target': href,
             'json_target': json_href,
+            'data_year': str(year),
             'box': {
                 'x': xpos,
                 'width': boxwidth,

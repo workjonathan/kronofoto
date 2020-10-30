@@ -7,6 +7,7 @@
                 width="{{ marker.box.width }}" 
                 height="{{ marker.box.height }}" 
                 data-json-href="{{ marker.json_target }}"
+                data-year="{{ marker.data_year }}"
                 fill-opacity="0" />
             <rect 
                 x="{{ marker.notch.x}}" 
@@ -14,6 +15,7 @@
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
                 data-json-href="{{ marker.json_target }}"
+                data-year="{{ marker.data_year }}"
                 fill="#999" />
             <text font-size="3.3" text-anchor="middle"><tspan data-json-href="{{ marker.json_target}}" x="{{ marker.label.x }}" y="{{ marker.label.y }}">
             {{ marker.label.text }}
@@ -29,6 +31,7 @@
                 width="{{ marker.box.width }}" 
                 height="{{ marker.box.height }}" 
                 data-json-href="{{ marker.json_target }}"
+                data-year="{{ marker.data_year }}"
                 fill-opacity="0" />
             <rect 
                 x="{{ marker.notch.x}}" 
@@ -36,6 +39,7 @@
                 width="{{ marker.notch.width }}" 
                 height="{{ marker.notch.height }}" 
                 data-json-href="{{ marker.json_target }}"
+                data-year="{{ marker.data_year }}"
                 fill="#bbb" />
         </a>
     {% endfor %}

@@ -60,6 +60,7 @@ const loadstate = data => {
     backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
     document.getElementById('grid-a').setAttribute('href', data.grid_url)
     document.querySelector('#dl > a').setAttribute('href', data.original)
+    moveMarker(data.year)
 }
 
 
@@ -73,12 +74,36 @@ document.addEventListener('click', e => {
                 request('GET', jsonhref).then(data => {
                     loadstate(data)
                     window.history.pushState(data, 'Fortepan Iowa', data.url)
-
                 })
             }
         }
     }
 })
+
+document.addEventListener('DOMContentLoaded', function() {
+    moveMarker(current_state.year)
+});
+
+const moveMarker = year => {
+    const marker = document.querySelector('.active-year-marker');
+    const markerYearElement = document.querySelector('.marker-year');
+
+    // Update year text
+    markerYearElement.textContent = year;
+
+    // Show Marker (might not be necessary to do this display stuff)
+    marker.style.display = 'block';
+
+    // move marker to position of tick
+    let tick = document.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
+    let bounds = tick.getBoundingClientRect();
+    let markerStyle = window.getComputedStyle(marker);
+    let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+    let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
+    marker.style.left = (offset + 'px');
+}
+
+
 
 window.onpopstate = evt => {
     if (evt.state) {
@@ -220,25 +245,6 @@ $('#search-box').focus(function() {
     $('#search-box').removeClass('placeholder-light').css('color', '#333')
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
-
-var rect = document.querySelector("svg.tl");
-
-if(rect) {
-    rect.addEventListener("click", function(e) {
-    var target = e.target,
-        active = document.querySelector(".stroke");
-    
-    if (active !== null) {
-        active.classList.remove("stroke");
-    }
-    
-    if (target.nodeName === "rect")  {
-        target.classList.add("stroke");   
-    }
-    });
-}
-
-
 
 //changes colors of icons and --fp-main-blue css variable on page load
 //NEEDS CLEANED UP
