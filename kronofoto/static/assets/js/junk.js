@@ -62,29 +62,20 @@ const loadstate = data => {
     backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
     document.getElementById('grid-a').setAttribute('href', data.grid_url)
     document.querySelector('#dl > a').setAttribute('href', data.original)
+    moveMarker(data.year)
 }
 
 
 document.addEventListener('click', e => {
-
     const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
     if (jsonhref) {
         e.preventDefault()
-
-        let oldUrl = window.history.state.url;
-
         if (jsonhref !== "#") {
             id = e.target.getAttribute('id')
             if (id !== 'forward' && id !== 'backward') {
                 request('GET', jsonhref).then(data => {
                     loadstate(data)
                     window.history.pushState(data, 'Fortepan Iowa', data.url)
-                    if (oldUrl === window.history.state.url) {
-                        alert('There are no photos for that year');
-                    }
-                    else {
-                        moveMarker();
-                    }
                 })
             }
         }
@@ -92,28 +83,27 @@ document.addEventListener('click', e => {
 })
 
 document.addEventListener('DOMContentLoaded', function() {
-    moveMarker();
+    moveMarker(current_state.year)
 });
 
-const moveMarker = () => {
+const moveMarker = year => {
     const marker = document.querySelector('.active-year-marker');
     const markerYearElement = document.querySelector('.marker-year');
-    const state = window.history.state;
 
     // Update year text
-    markerYearElement.textContent = state.year;
+    markerYearElement.textContent = year;
 
     // Show Marker (might not be necessary to do this display stuff)
     marker.style.display = 'block';
 
     // move marker to position of tick
-    let tick = document.querySelector(`.year-ticker svg a rect[data-year="${state.year}"]`);
+    let tick = document.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
     let bounds = tick.getBoundingClientRect();
     let markerStyle = window.getComputedStyle(marker);
     let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
     let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
     marker.style.left = (offset + 'px');
-};
+}
 
 
 
