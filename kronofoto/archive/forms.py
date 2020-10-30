@@ -7,7 +7,6 @@ from .search.parser import Parser, NoExpression
 from functools import reduce
 from .token import UserEmailVerifier
 from django.utils.text import slugify
-from django.core.cache import cache
 
 
 class LocationChoiceField(forms.ChoiceField):
@@ -16,11 +15,7 @@ class LocationChoiceField(forms.ChoiceField):
         super().__init__(*args, choices=[], **kwargs)
 
     def load_choices(self):
-        key = 'form4:' + self.field
-        temp = cache.get(key)
-        if not temp:
-            self.choices = list(self.get_choices())
-            cache.set(key, self.choices)
+        self.choices = self.get_choices()
 
     def get_choices(self):
         yield ('', self.field.capitalize())
