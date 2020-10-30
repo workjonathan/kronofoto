@@ -41,10 +41,10 @@ NO_URLS = dict(url='#', json_url='#')
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        photo_count = cache.get('photo_count')
+        photo_count = cache.get('photo_count:')
         if not photo_count:
             photo_count = Photo.count()
-            cache.set('photo_count', photo_count)
+            cache.set('photo_count:', photo_count)
         context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
@@ -442,7 +442,12 @@ class GridView(GridBase):
     def get_queryset(self):
         self.collection = CollectionQuery(self.request.GET, self.request.user)
         qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
-        if qs.count() == 1:
+        cache_info = 'photo_count:' + self.collection.cache_encoding()
+        photo_count = cache.get(cache_info)
+        if not photo_count:
+            photo_count = qs.count()
+            cache.set(cache_info, photo_count)
+        if photo_count == 1:
             self.redirect = redirect(qs[0].get_absolute_url())
         return qs
 
