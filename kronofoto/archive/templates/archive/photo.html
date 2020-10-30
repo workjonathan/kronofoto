@@ -88,5 +88,8 @@
   <script>
     let current_state = JSON.parse(document.getElementById('initial-state').textContent)
     window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
+    document.addEventListener('DOMContentLoaded', function() {
+        moveMarker(current_state.year)
+    });
   </script>
 {% endblock %}

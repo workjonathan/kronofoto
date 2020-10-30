@@ -80,10 +80,6 @@ document.addEventListener('click', e => {
     }
 })
 
-document.addEventListener('DOMContentLoaded', function() {
-    moveMarker(current_state.year)
-});
-
 const moveMarker = year => {
     const marker = document.querySelector('.active-year-marker');
     const markerYearElement = document.querySelector('.marker-year');
@@ -102,8 +98,6 @@ const moveMarker = year => {
     let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
     marker.style.left = (offset + 'px');
 }
-
-
 
 window.onpopstate = evt => {
     if (evt.state) {
