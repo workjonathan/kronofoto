@@ -66,21 +66,56 @@ const loadstate = data => {
 
 
 document.addEventListener('click', e => {
+
     const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
     if (jsonhref) {
         e.preventDefault()
+
+        let oldUrl = window.history.state.url;
+
         if (jsonhref !== "#") {
             id = e.target.getAttribute('id')
             if (id !== 'forward' && id !== 'backward') {
                 request('GET', jsonhref).then(data => {
                     loadstate(data)
                     window.history.pushState(data, 'Fortepan Iowa', data.url)
-
+                    if (oldUrl === window.history.state.url) {
+                        alert('There are no photos for that year');
+                    }
+                    else {
+                        moveMarker();
+                    }
                 })
             }
         }
     }
 })
+
+document.addEventListener('DOMContentLoaded', function() {
+    moveMarker();
+});
+
+const moveMarker = () => {
+    const marker = document.querySelector('.active-year-marker');
+    const markerYearElement = document.querySelector('.marker-year');
+    const state = window.history.state;
+
+    // Update year text
+    markerYearElement.textContent = state.year;
+
+    // Show Marker (might not be necessary to do this display stuff)
+    marker.style.display = 'block';
+
+    // move marker to position of tick
+    let tick = document.querySelector(`.year-ticker svg a rect[data-year="${state.year}"]`);
+    let bounds = tick.getBoundingClientRect();
+    let markerStyle = window.getComputedStyle(marker);
+    let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+    let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
+    marker.style.left = (offset + 'px');
+};
+
+
 
 window.onpopstate = evt => {
     loadstate(evt.state)
@@ -214,135 +249,6 @@ $('#search-box').focus(function() {
     $('#search-box').removeClass('placeholder-light')
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
-
-// Year Ticker Interactions
-let marker = document.querySelector('.active-year-marker');
-let thumbnails = document.querySelector('#fi-thumbnail-carousel-images');
-
-function updateYear(year) {
-    document.querySelector('.marker-year').textContent = year;
-}
-
-function moveMarker(marker, bounds) {
-    var markerStyle = window.getComputedStyle(marker);
-    var markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
-
-    // move marker to offset
-    var leftX = (bounds.x);
-    var offsetX = (leftX - (markerWidth / 2)); // calculate offset
-
-    marker.style.left = (offsetX + 'px');
-}
-
-function showMarker(marker) {
-    if (marker.style.display === '') {
-        marker.style.display = 'block';
-    }
-}
-function getYearFromPhoto (photo) {
-    let jsonFile = photo.getAttribute('data-json-href');
-    let req = new XMLHttpRequest();
-
-    req.addEventListener('load', function () {
-        let data = JSON.parse(this.responseText).metadata;
-        let dirtyYear = data.match(/<li>1\d\d\d/)[0];
-        let year = dirtyYear.replace('<li>', '');
-        let tick = document.querySelector('[data-year="' + year + '"]');
-        let bounds = tick.getBoundingClientRect();
-
-        showMarker(marker);
-        moveMarker(marker, bounds);
-        updateYear(year);
-    });
-
-    req.open('GET', jsonFile);
-    req.send();
-}
-
-function getActivePhoto() {
-    return document.querySelector('li[data-active] a img');
-}
-
-function arrowClickHandler () {
-    // Wait for active photo to update in DOM
-    window.setTimeout(function () {
-        let photo = getActivePhoto();
-        getYearFromPhoto(photo);
-    }, 100);
-}
-
-// TODO: Arrows click event handler
-var forwardArrows = document.querySelector('.forward-arrows');
-var backArrows = document.querySelector('.back-arrows');
-var fiArrowLeft = document.querySelector('#fi-arrow-left');
-var fiArrowRight = document.querySelector('#fi-arrow-right');
-
-[forwardArrows, backArrows, fiArrowLeft, fiArrowRight].map(function (ele) {
-    ele.addEventListener('click', arrowClickHandler);
-});
-
-// forwardArrows.addEventListener('click', arrowClickHandler);
-// backArrows.addEventListener('click', arrowClickHandler);
-
-// DOMContentLoaded event handler
-document.addEventListener('DOMContentLoaded', function() {
-    var photo = getActivePhoto();
-    getYearFromPhoto(photo);
-});
-
-// Timeline thumbnails click event handler
-thumbnails.addEventListener('click', function (e) {
-    let jsonFile = e.target.getAttribute('data-json-href');
-    let req = new XMLHttpRequest();
-
-    req.addEventListener('load', function () {
-        let data = JSON.parse(this.responseText).metadata;
-        let dirtyYear = data.match(/<li>1\d\d\d/)[0];
-        let year = dirtyYear.replace('<li>', '');
-        let tick = document.querySelector('[data-year="' + year + '"]');
-        let bounds = tick.getBoundingClientRect();
-
-        showMarker(marker);
-        moveMarker(marker, bounds);
-        updateYear(year);
-    });
-
-    req.open('GET', jsonFile);
-    req.send();
-});
-
-// Timeline SVG Tick click event handler
-var rect = document.querySelector("svg.tl");
-
-if(rect) {
-    rect.addEventListener("click", function(e) {
-        var target = e.target,
-            active = document.querySelector(".stroke");
-        
-        if (active !== null) {
-            active.classList.remove("stroke");
-        }
-        if (target.nodeName === "rect")  {
-            var year = target.getAttribute('data-year');
-        }
-
-        // if click the label
-        else if (target.nodeName === 'tspan') {
-            var year = target.innerHTML.trim();
-        }
-        
-        showMarker(marker);
-
-        if (year !== null && year !== undefined) {
-            var bounds = target.getBoundingClientRect();
-
-            moveMarker(marker, bounds);
-            updateYear(year);
-        }
-    });
-}
-
-
 
 //changes colors of icons and --fp-main-blue css variable on page load
 //NEEDS CLEANED UP
