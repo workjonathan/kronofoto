@@ -348,6 +348,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'forward': context['next_page'][0].get_urls() if context['page'].has_next() else NO_URLS,
             'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
             'next': photo.next.get_urls() if hasattr(photo, 'next') else NO_URLS,
+            'year': photo.year,
         }
 
     def render(self, context, **kwargs):
