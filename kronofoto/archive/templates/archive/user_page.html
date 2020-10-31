@@ -23,7 +23,7 @@
                 {% for collection in object_list %}
                     <li><a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
                     {% if profile_user == request.user %}
-                    <a href="{% url "collection-delete" collection.id %}">Delete</a>
+                    <a href="{% url "collection-delete" collection.id %}" style="margin-left: 10px;"><i class="fas fa-times" title="Delete"></i></a>
                     {% endif %}
 
                     </li>

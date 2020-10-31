@@ -44,6 +44,7 @@ class Donor(models.Model):
 
     class Meta:
         ordering = ('last_name', 'first_name')
+        index_together = ('last_name', 'first_name')
 
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
@@ -57,6 +58,8 @@ class Donor(models.Model):
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
             for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
+
+
 
 
 class Collection(models.Model):
@@ -123,6 +126,9 @@ class Tag(models.Model):
     def __str__(self):
         return self.tag
 
+    class Meta:
+        ordering = ('tag',)
+
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 class PhotoQuerySet(models.QuerySet):
@@ -186,8 +192,13 @@ class CollectionQuery:
             "tag": 'phototag__tag__slug',
             'term': 'terms__slug',
             'donor': 'donor__id',
+            'state': 'state__iexact',
+            'country': 'country__iexact',
+            'county': 'county__iexact',
+            'year_atleast': 'year__gte',
+            'year_atmost': 'year__lte',
         }
-        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor')
+        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor', 'year', 'year_atleast', 'year_atmost')
         merges = {
             'phototag__tag__slug': [Q(phototag__accepted=True)],
             'collection__id': [~Q(collection__visibility='PR')],
@@ -204,11 +215,20 @@ class CollectionQuery:
         andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
         return reduce(operator.and_, andClauses)
 
+    def cache_encoding(self):
+        keys = [(k, self.getparams[k]) for k in sorted(self.getparams.keys())]
+        if 'tag' in self.getparams:
+            keys.append(['user', self.user.username])
+        return ':'.join(v for pair in keys for v in pair)
+
     def __str__(self):
         parts = []
         if 'donor' in self.getparams:
-            d = Donor.objects.get(id=self.getparams['donor'])
-            parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+            try:
+                d = Donor.objects.get(id=self.getparams['donor'])
+                parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+            except Donor.DoesNotExist:
+                parts.append("Photos in nobody's collection")
         location = {
             key: self.getparams[key]
             for key in ('city', 'county', 'state', 'country')
@@ -217,18 +237,33 @@ class CollectionQuery:
         if location:
             parts.append(format_location(**location))
         if self.getparams.get('term', None):
-            t = Term.objects.get(slug=self.getparams['term'])
-            parts.append("Termed with {}".format(t.term))
+            try:
+                t = Term.objects.get(slug=self.getparams['term']).term
+            except Term.DoesNotExist:
+                t = self.getparams['term']
+            parts.append("Termed with {}".format(t))
         if self.getparams.get('tag', None):
-            t = Tag.objects.get(slug=self.getparams['tag'])
-            parts.append("Tagged with {}".format(t.tag))
+            try:
+                t = Tag.objects.get(slug=self.getparams['tag']).tag
+            except Tag.DoesNotExist:
+                t = self.getparams['tag']
+            parts.append("Tagged with {}".format(t))
         if self.getparams.get('collection', None):
-            c = Collection.objects.get(pk=self.getparams['collection'])
-            parts.append(c.name)
+            try:
+                c = Collection.objects.get(pk=self.getparams['collection'])
+                parts.append(c.name)
+            except Collection.DoesNotExist:
+                parts.append('Mystery collection')
+        if self.getparams.get('year_atleast', None):
+            parts.append('after {}'.format(self.getparams['year_atleast']))
+        if self.getparams.get('year_atmost', None):
+            parts.append('before {}'.format(self.getparams['year_atmost']))
+        if self.getparams.get('year', None):
+            parts.append('{}'.format(self.getparams['year']))
         if len(parts) == 0:
             return 'All Photos'
         if len(parts) > 1:
-            return '{} and in {}'.format(', '.join(parts[:-1]) , parts[-1])
+            return '{} and {}'.format(', '.join(parts[:-1]) , parts[-1])
         else:
             return parts[0]
 

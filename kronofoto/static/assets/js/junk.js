@@ -5,7 +5,6 @@ const toggleVis = evt => {
 }
 const toggleLogin = evt => {
     const el = document.querySelector('#login');
-    console.log('toggled login');
     toggleElement(el);
 }
 const toggleMenu = evt => {
@@ -14,7 +13,6 @@ const toggleMenu = evt => {
     toggleHover()
 }
 const toggleElement = el => {
-    console.log('el:', el);
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
     }
@@ -82,10 +80,6 @@ document.addEventListener('click', e => {
     }
 })
 
-document.addEventListener('DOMContentLoaded', function() {
-    moveMarker(current_state.year)
-});
-
 const moveMarker = year => {
     const marker = document.querySelector('.active-year-marker');
     const markerYearElement = document.querySelector('.marker-year');
@@ -105,10 +99,10 @@ const moveMarker = year => {
     marker.style.left = (offset + 'px');
 }
 
-
-
 window.onpopstate = evt => {
-    loadstate(evt.state)
+    if (evt.state) {
+        loadstate(evt.state)
+    }
 }
 
 const trace = v => {
@@ -184,6 +178,10 @@ $('.search-options').click(() => {
         $('.arrow').removeClass('up').addClass('down')
     }
 }) */
+$('#search-box').autocomplete({
+    source: '/tags/',
+    minLength: 2, 
+})
 
 $('input[name="startYear"]').parent().parent('div').addClass('daterange')
 
@@ -220,9 +218,11 @@ $(() => {
     if(window.location.href.includes('grid')) {
         $('.grid-icon').addClass('current-view')
         $('.timeline-icon').css('opacity', '0.5')
+        $('.collection-name').css('display', 'none')
     } else {
         $('.timeline-container').addClass('current-view')
         $('.grid-icon_reg').css('opacity', '0.5')
+        $('.collection-name').css('display', 'block')
     }
 })
 
@@ -230,13 +230,13 @@ $('#search-box').focus(function() {
     $('#search-box-container').css('background','var(--fp-main-blue)')
     $('.search-icon').css('filter', 'brightness(0) invert(1)')
     $('.carrot').css('filter', 'brightness(0) invert(1)')
-    $('#search-box').addClass('placeholder-light')
+    $('#search-box').addClass('placeholder-light').css('color', 'white')
     
 }).blur(function() {
     $('#search-box-container').css('background','var(--fp-light-grey)')
     $('.search-icon').css('filter', 'none')
     $('.carrot').css('filter', 'none')
-    $('#search-box').removeClass('placeholder-light')
+    $('#search-box').removeClass('placeholder-light').css('color', '#333')
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
 
@@ -322,5 +322,3 @@ window.addEventListener('DOMContentLoaded', () => {
     } */
 
 });
-
-    

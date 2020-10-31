@@ -7,19 +7,33 @@ from .search.parser import Parser, NoExpression
 from functools import reduce
 from .token import UserEmailVerifier
 from django.utils.text import slugify
+from django.core.cache import cache
 
 
-generate_choices = lambda field: lambda: [('', field.capitalize())] + [(p[field], p[field]) for p in Photo.objects.exclude(**{field: ''}).values(field).distinct().order_by(field)]
+class LocationChoiceField(forms.ChoiceField):
+    def __init__(self, field, *args, **kwargs):
+        self.field = field
+        super().__init__(*args, choices=[], **kwargs)
+
+    def load_choices(self):
+        key = 'form:' + self.field
+        self.choices = cache.get(key, default=[])
+        if not self.choices:
+            self.choices = list(self.get_choices())
+            cache.set(key, self.choices)
+
+    def get_choices(self):
+        yield ('', self.field.capitalize())
+        yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
 
 
 class SearchForm(forms.Form):
-    query = forms.CharField(required=False, label='')
-    query.widget.attrs.update({
+    tag = forms.CharField(required=False, label='')
+    tag.group = 'TAG'
+    tag.widget.attrs.update({
         'id': 'search-box',
-        'placeholder': 'Keywords, terms, photo ID#, donor',
+        'placeholder': 'Tag Search',
     })
-    query.group = "QUERY"
-
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))
     term.group = "CATEGORY"
 
@@ -31,14 +45,27 @@ class SearchForm(forms.Form):
     donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated())
     donor.group = "DONOR"
 
-    city = forms.ChoiceField(required=False, label='', choices=generate_choices('city'))
+    city = LocationChoiceField(required=False, label='', field='city')
     city.group = 'LOCATION'
-    county = forms.ChoiceField(required=False, label='', choices=generate_choices('county'))
+    county = LocationChoiceField(required=False, label='', field='county')
     county.group = 'LOCATION'
-    state = forms.ChoiceField(required=False, label='', choices=generate_choices('state'))
+    state = LocationChoiceField(required=False, label='', field='state')
     state.group = 'LOCATION'
-    country = forms.ChoiceField(required=False, label='', choices=generate_choices('country'))
+    country = LocationChoiceField(required=False, label='', field='country')
     country.group = 'LOCATION'
+
+    query = forms.CharField(required=False, label='')
+    query.widget.attrs.update({
+        'placeholder': 'Keywords, terms, photo ID#, donor',
+    })
+    query.group = "ADVANCED SEARCH"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['city'].load_choices()
+        self.fields['county'].load_choices()
+        self.fields['state'].load_choices()
+        self.fields['country'].load_choices()
 
     def as_expression(self):
         form_exprs = []
@@ -55,6 +82,8 @@ class SearchForm(forms.Form):
                 pass
         if self.cleaned_data['term']:
             form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
+        if self.cleaned_data['tag']:
+            form_exprs.append(expression.TagExactly(self.cleaned_data['tag']))
         if self.cleaned_data['startYear']:
             year_exprs.append(expression.YearGTE(self.cleaned_data['startYear']))
         if self.cleaned_data['endYear']:
@@ -65,12 +94,14 @@ class SearchForm(forms.Form):
             form_exprs.append(expression.DonorExactly(self.cleaned_data['donor']))
         if self.cleaned_data['city']:
             form_exprs.append(expression.City(self.cleaned_data['city']))
+        if self.cleaned_data['county']:
+            form_exprs.append(expression.County(self.cleaned_data['county']))
         if self.cleaned_data['state']:
             form_exprs.append(expression.State(self.cleaned_data['state']))
         if self.cleaned_data['country']:
             form_exprs.append(expression.Country(self.cleaned_data['country']))
         if len(form_exprs):
-            return reduce(expression.Or, form_exprs)
+            return reduce(expression.And, form_exprs)
         raise NoExpression
 
 
@@ -103,20 +134,29 @@ class RegisterUserForm(forms.Form):
 class TagForm(forms.Form):
     tag = forms.CharField()
 
+    def clean(self):
+        data = super().clean()
+        data['tag'] = [s.strip() for s in data['tag'].split(', ')]
+        for text in data['tag']:
+            if Term.objects.filter(slug=slugify(text)).exists():
+                self.add_error('tag', 'Tags which are already categories are not allowed: {}'.format(text))
+        return data
+
+
     def add_tag(self, photo, user):
-        text = self.cleaned_data['tag']
-        tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
-        accepted = (
-            user.has_perm('archive.add_tag') and
-            user.has_perm('archive.change_tag') and
-            user.has_perm('archive.add_phototag') and
-            user.has_perm('archive.change_phototag')
-        )
-        phototag, created = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
-        if not created:
-            phototag.accepted |= accepted
-        phototag.creator.add(user)
-        phototag.save()
+        for text in self.cleaned_data['tag']:
+            tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
+            accepted = (
+                user.has_perm('archive.add_tag') and
+                user.has_perm('archive.change_tag') and
+                user.has_perm('archive.add_phototag') and
+                user.has_perm('archive.change_phototag')
+            )
+            phototag, created = PhotoTag.objects.get_or_create(tag=tag, photo=photo, defaults={'accepted': accepted})
+            if not created:
+                phototag.accepted |= accepted
+            phototag.creator.add(user)
+            phototag.save()
 
 
 class CollectionForm(forms.ModelForm):

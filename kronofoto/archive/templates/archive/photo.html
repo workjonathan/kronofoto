@@ -3,6 +3,7 @@
 {% load timeline %}
 {% load thumbnails %}
 {% load photometadata %}
+{% load cache %}
 
 {% block content %}
   <main>
@@ -55,7 +56,9 @@
     </a>
         </div>
       </div>
-      {{ collection_name }}
+
+      
+      
     </nav>
     <div class="year-ticker">
       <div class="active-year-marker">
@@ -69,7 +72,10 @@
         {{ first_year }}
       </div> -->
       {% endcomment %}
+
+    {% cache 300 timeline timeline_key %}
       {% make_timeline years %}
+    {% endcache %}
       {% comment %}
       <!--<div class="year-max">
         {{ last_year }}
@@ -82,5 +88,8 @@
   <script>
     let current_state = JSON.parse(document.getElementById('initial-state').textContent)
     window.history.replaceState(current_state, 'Fortepan Iowa', current_state.url)
+    document.addEventListener('DOMContentLoaded', function() {
+        moveMarker(current_state.year)
+    });
   </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, Page
+from django.core.cache import cache
 from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
@@ -9,11 +10,12 @@ from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote,
 from django.contrib.auth.models import User
 from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
 from django.utils.http import urlencode
-from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 import json
 from django.views.generic import ListView, TemplateView, View
+from django.views.generic.list import BaseListView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
@@ -39,8 +41,13 @@ NO_URLS = dict(url='#', json_url='#')
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['photo_count'] = Photo.count()
+        photo_count = cache.get('photo_count:')
+        if not photo_count:
+            photo_count = Photo.count()
+            cache.set('photo_count:', photo_count)
+        context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
+        context['timeline_url'] = '#'
         return context
 
 
@@ -305,7 +312,12 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         else:
             page = 1
         queryset = self.queryset
-        index = queryset.year_links(params=self.request.GET)
+        cache_info = self.collection.cache_encoding()
+        index_key = 'year_links:' + cache_info
+        index = cache.get(index_key)
+        if not index:
+            index = queryset.year_links(params=self.request.GET)
+            cache.set(index_key, index)
 
         paginator = self.get_paginator()
         page_selection = paginator.get_pages(page)
@@ -316,17 +328,14 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             for p in page_selection.photos():
                 p.save_params(self.request.GET)
 
-            sorted_qs = self.queryset.order_by('year', 'id')
-
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context["photo"] = photo_rec
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
             context['initialstate'] = self.get_data(context)
-            context['first_year'] = sorted_qs.first().year
-            context['last_year'] = sorted_qs.last().year
             context['collection_name'] = str(self.collection)
+            context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
@@ -433,13 +442,22 @@ class GridView(GridBase):
     def get_queryset(self):
         self.collection = CollectionQuery(self.request.GET, self.request.user)
         qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
-        if qs.count() == 1:
+        cache_info = 'photo_count:' + self.collection.cache_encoding()
+        photo_count = cache.get(cache_info)
+        if not photo_count:
+            photo_count = qs.count()
+            cache.set(cache_info, photo_count)
+        if photo_count == 1:
             self.redirect = redirect(qs[0].get_absolute_url())
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
+        try:
+            context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+        except IndexError:
+            pass
         return context
 
     def format_page_url(self, num):
@@ -478,10 +496,17 @@ class SearchResultsView(GridBase):
     def get_queryset(self):
         try:
             expr = self.form.as_expression()
-            qs = evaluate(expr, self.model.objects)
-            if qs.count() == 1:
-                self.redirect = redirect(qs[0].get_absolute_url())
-            return qs
+            try:
+                params = expr.as_collection()
+                qd = QueryDict('', mutable=True)
+                qd.update(params)
+                self.redirect = redirect('{}?{}'.format(reverse('gridview'), qd.urlencode()))
+                return []
+            except ValueError:
+                qs = evaluate(expr, self.model.objects)
+                if qs.count() == 1:
+                    self.redirect = redirect(qs[0].get_absolute_url())
+                return qs
         except NoExpression:
             return []
 
@@ -596,3 +621,16 @@ class MissingPhotosView(UserPassesTestMixin, ListView):
 
     def get_queryset(self):
         return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')
+
+
+class TagSearchView(JSONResponseMixin, BaseListView):
+    def get_queryset(self):
+        return Tag.objects.filter(tag__icontains=self.request.GET['term'], phototag__accepted=True).values('tag', 'id').distinct()[:10]
+
+    def get_data(self, context):
+        return [dict(id=tag['id'], value=tag['tag'], label=tag['tag']) for tag in context['object_list']]
+
+    def render_to_response(self, context, **kwargs):
+        return self.render_to_json_response(context, safe=False, **kwargs)
+
+
