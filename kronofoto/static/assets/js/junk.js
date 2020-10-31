@@ -251,13 +251,16 @@ const img4 = "/static/assets/images/navy/logo.svg"
 const images = [img1, img2, img3, img4]
 
 const randomImg = images[Math.floor(Math.random()*images.length)]
-window.onload = function() {
+window.addEventListener('DOMContentLoaded', () => {
     let hamburger = document.querySelector(".hamburger-icon");
     let info = document.querySelector('.meta-info-icon')
     let dl = document.querySelector('.meta-dl-icon')
     let search = document.querySelector('.search-icon')
     let carrot = document.querySelector('.carrot')
+    let timelineMarker = document.querySelector('.marker-image');
+
     document.getElementsByClassName("logo-img")[0].src = randomImg;
+
     if(randomImg == img1) {
         document.documentElement.style.setProperty("--fp-main-blue", "#6c84bd");
         hamburger.setAttribute("src", "/static/assets/images/skyblue/menu.svg");
@@ -267,6 +270,7 @@ window.onload = function() {
         }
         search.setAttribute("src", "/static/assets/images/skyblue/search.svg");
         carrot.setAttribute("src", "/static/assets/images/skyblue/carrot.svg");
+        timelineMarker.style.backgroundImage = "url('/static/assets/images/skyblue/toggle.svg')";
     } else if(randomImg == img2) {
         document.documentElement.style.setProperty("--fp-main-blue", "#c28800");
         hamburger.setAttribute("src", "/static/assets/images/golden/menu.svg");
@@ -276,6 +280,7 @@ window.onload = function() {
         }
         search.setAttribute("src", "/static/assets/images/golden/search.svg");
         carrot.setAttribute("src", "/static/assets/images/golden/carrot.svg");
+        timelineMarker.style.backgroundImage = "url('/static/assets/images/golden/toggle.svg')";
     } else if(randomImg == img3) {
         document.documentElement.style.setProperty("--fp-main-blue", "#c2a55e");
         hamburger.setAttribute("src", "/static/assets/images/haybail/menu.svg");
@@ -285,6 +290,7 @@ window.onload = function() {
         }
         search.setAttribute("src", "/static/assets/images/haybail/search.svg");
         carrot.setAttribute("src", "/static/assets/images/haybail/carrot.svg");
+        timelineMarker.style.backgroundImage = "url('/static/assets/images/haybail/toggle.svg')";
     } else if(randomImg == img4) {
         document.documentElement.style.setProperty("--fp-main-blue", "#445170");
         hamburger.setAttribute("src", "/static/assets/images/navy/menu.svg");
@@ -294,6 +300,7 @@ window.onload = function() {
         }
         search.setAttribute("src", "/static/assets/images/navy/search.svg");
         carrot.setAttribute("src", "/static/assets/images/navy/carrot.svg");
+        timelineMarker.style.backgroundImage = "url('/static/assets/images/navy/toggle.svg')";
     }/*  else if(randomImg == img5) {
         document.documentElement.style.setProperty("--fp-main-blue", "#9769ac");
         hamburger.setAttribute("src", "/static/assets/images/purple/menu.svg");
@@ -314,6 +321,4 @@ window.onload = function() {
         carrot.setAttribute("src", "/static/assets/images/turquoise/carrot.svg");
     } */
 
-};
-
-    
+});
