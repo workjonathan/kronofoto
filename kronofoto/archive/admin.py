@@ -54,11 +54,28 @@ class TagInline(admin.TabularInline):
         return mark_safe(creators)
 
 
+class YearIsSetFilter(admin.SimpleListFilter):
+    title = "photo dated"
+    parameter_name = "dated"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(year__isnull=False)
+        else:
+            return queryset.filter(year__isnull=True)
+
+
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = ('phototag__accepted',)
+    list_filter = ('phototag__accepted', YearIsSetFilter)
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
     def thumb_image(self, obj):
