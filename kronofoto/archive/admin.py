@@ -54,6 +54,23 @@ class TagInline(admin.TabularInline):
         return mark_safe(creators)
 
 
+class TagFilter(admin.SimpleListFilter):
+    title = "tag status"
+    parameter_name = "phototag__accepted"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("needs approval", "needs approval"),
+            ("approved", "approved"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'approved':
+            return queryset.filter(phototag__accepted=True)
+        elif self.value() == "needs approval":
+            return queryset.filter(phototag__accepted=False)
+
+
 class YearIsSetFilter(admin.SimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
@@ -67,7 +84,7 @@ class YearIsSetFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(year__isnull=False)
-        else:
+        elif self.value() == 'No':
             return queryset.filter(year__isnull=True)
 
 
@@ -75,7 +92,7 @@ class YearIsSetFilter(admin.SimpleListFilter):
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = ('phototag__accepted', YearIsSetFilter)
+    list_filter = (TagFilter, YearIsSetFilter)
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
     def thumb_image(self, obj):
