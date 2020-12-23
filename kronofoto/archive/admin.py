@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term, PhotoTag, Donor
+from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
 from django.db.models import Count
 from django.conf import settings
 from django.urls import reverse
@@ -10,6 +10,11 @@ from django.urls import reverse
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
+
+
+@admin.register(NewCutoff)
+class NewCutoffAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Donor)

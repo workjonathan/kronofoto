@@ -17,19 +17,19 @@ class CollectionQueryTest(TestCase):
 
     def testShouldDescribeCounty(self):
         coll = models.CollectionQuery(dict(county='Place', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'Place County, State')
+        self.assertEqual(str(coll), 'Photos from Place County, State')
 
     def testShouldDescribeCity(self):
         coll = models.CollectionQuery(dict(city='CityTown', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'CityTown, State')
+        self.assertEqual(str(coll), 'Photos from CityTown, State')
 
     def testShouldDescribeTag(self):
         coll = models.CollectionQuery(dict(tag=self.tag.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Tagged with dog')
+        self.assertEqual(str(coll), 'Photos tagged with dog')
 
     def testShouldDescribeTerm(self):
         coll = models.CollectionQuery(dict(term=self.term.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Termed with Airplane')
+        self.assertEqual(str(coll), 'Photos termed with Airplane')
 
     def testShouldDescribeDonor(self):
         coll = models.CollectionQuery(dict(donor=self.donor.id), AnonymousUser)
