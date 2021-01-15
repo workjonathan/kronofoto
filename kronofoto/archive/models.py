@@ -416,6 +416,7 @@ class Photo(models.Model):
     state = models.CharField(max_length=64, blank=True)
     country = models.CharField(max_length=64, null=True, blank=True)
     year = models.SmallIntegerField(null=True, blank=True, db_index=True)
+    circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
