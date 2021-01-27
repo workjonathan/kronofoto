@@ -471,7 +471,6 @@ class Photo(models.Model):
                 fname = 'h700/{}.jpg'.format(self.uuid)
                 h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
                 self.h700.name = fname
-                self.original.close()
         super().save(*args, **kwargs)
 
     def location(self):
