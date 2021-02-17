@@ -30,7 +30,8 @@ const = lambda x: lambda _: x
 is_instance = lambda t: lambda x: isinstance(x, t)
 
 token = (
-      parsy.string('AND', transform=upper).map(upper)
+      parsy.string('|', transform=upper).map(upper)
+    | parsy.string('AND', transform=upper).map(upper)
     | parsy.string('OR', transform=upper).map(upper)
     | yearExpr
     | tagExpr
@@ -68,6 +69,16 @@ wrap = lambda expr: (parsy.match_item('(') >> expr << parsy.match_item(')'))
 
 @parsy.generate
 def expr():
+    e = yield orExpr
+    es = yield (
+        parsy.match_item('|') >> orExpr
+    ).many()
+    for e2 in es:
+        e = Maximum(e, e2)
+    return parsy.success(e)
+
+@parsy.generate
+def orExpr():
     e = yield andExpr
     es = yield (
         parsy.match_item('OR').optional() >> andExpr

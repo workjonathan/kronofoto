@@ -1,5 +1,5 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField
-from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, StrIndex
+from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
 from .. import models
 
 from functools import reduce
@@ -531,6 +531,28 @@ class BinaryOperator(Expression):
         if right:
             return right
         return left
+
+
+class Maximum(BinaryOperator):
+    def filter1(self):
+        l = self.left.filter1()
+        r = self.right.filter1()
+        if l and r:
+            return l | r
+        return l if l else r
+
+    def scoreF(self, negated):
+        if negated:
+            return Least(self.left.scoreF(negated), self.right.scoreF(negated))
+        return Greatest(self.left.scoreF(negated), self.right.scoreF(negated))
+
+    def score(self, photo, negated):
+        if negated:
+            return min(self.left.score(photo, negated), self.right.score(photo, negated))
+        return max(self.left.score(photo, negated) * self.right.score(photo, negated))
+
+    def as_collection(self):
+        return {**self.left.as_collection(), **self.right.as_collection()}
 
 
 class And(BinaryOperator):

@@ -608,6 +608,14 @@ class ParserTest(SimpleTestCase):
 
     def testParserShouldSupportOrderOfOperations(self):
         self.assertEqual(
+            parser.tokenize.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
+            [Caption('bird'), 'OR', Caption('dog'), '|', Caption('cat'), 'OR', Caption('banana')],
+        )
+        self.assertEqual(
+            parser.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
+            Maximum(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
+        )
+        self.assertEqual(
             parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
             [Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
         )
