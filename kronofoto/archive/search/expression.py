@@ -66,20 +66,19 @@ class Expression:
         f1 = self.filter1()
         q = (f1 | f2) if f1 and f2 else f1 if f1 else f2
 
-        return qs.filter(q).annotate(
-            **{k: Sum(v, output_field=FloatField()) for (k, v) in self.annotations1().items()}
+        return (qs.filter(q)
+            .annotate(**{k: Sum(v, output_field=FloatField()) for (k, v) in self.annotations1().items()})
+            .defer(*(f.name for f in models.Photo._meta.fields))
+            .annotate(relevance=self.scoreF(False))
+            .filter(relevance__gt=0)
         )
 
     def as_collection(self, qs):
         return self._filter(qs).order_by('year', 'id')
 
     def as_search(self, qs):
-        return (self._filter(qs)
-                .defer(*(f.name for f in models.Photo._meta.fields))
-                .annotate(relevance=self.scoreF(False))
-                .filter(relevance__gt=0)
-                .order_by('-relevance', 'year', 'id')
-        )
+        return self._filter(qs).order_by('-relevance', 'year', 'id')
+
 
 class TermExactly(Expression):
     def __init__(self, value):
@@ -193,13 +192,13 @@ class MultiWordTag(Expression):
             Length(Replace(Lower(F('phototag__tag__tag')), Value(self.value))), FloatField()
         )
         taglen = Cast(Greatest(1.0, Length('phototag__tag__tag')), FloatField())
-        return {self.field: Case(When(phototag__tag__tag__isnull=False, then=tag_minusval/taglen), default=0, output_field=FloatField())}
+        return {self.field: Case(When(phototag__tag__tag__isnull=False, then=1-tag_minusval/taglen), default=0, output_field=FloatField())}
 
 
     def scoreF(self, negated):
         if not negated:
-            return 1 - F(self.field)
-        return F(self.field)
+            return F(self.field)
+        return 1 - F(self.field)
 
 class BasicTag(MultiWordTag):
     def __init__(self, *args, **kwargs):
@@ -279,13 +278,13 @@ class MultiWordTerm(Expression):
             Length(Replace(Lower(F('terms__term')), Value(self.value))), FloatField()
         )
         termlen = Cast(Greatest(1.0, Length('terms__term')), FloatField())
-        return {self.field: term_minusval/termlen}
+        return {self.field: Case(When(terms__term__isnull=False, then=1 - term_minusval/termlen), default=0.0, output_field=FloatField())}
 
 
     def scoreF(self, negated):
         if not negated:
-            return 1 - F(self.field)
-        return F(self.field)
+            return F(self.field)
+        return 1 - F(self.field)
 
 
 class SingleWordTerm(Expression):
