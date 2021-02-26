@@ -561,6 +561,41 @@ class RegisterAccountTest(TestCase):
         self.assertFalse(v.user_is_human())
 
 
+class BasicParserTest(SimpleTestCase):
+    def testParserShouldProduceCollectionExpressions(self):
+        expr = parser.BasicParser.tokenize("dog").parse()
+        self.assertTrue(expr.is_collection())
+
+    def testParserShouldAcceptSimpleWords(self):
+        expr = parser.BasicParser.tokenize("dog").parse()
+        self.assertEqual(expr, Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
+
+    def testParserShouldCombineTerms(self):
+        expr = parser.BasicParser.tokenize("dog waterloo").parse()
+        self.assertEqual(expr, And(Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))), Maximum(BasicTag('waterloo'), Maximum(Term('waterloo'), Maximum(City('waterloo'), Maximum(State('waterloo'), Maximum(Country('waterloo'), County('waterloo'))))))))
+
+class ExpressionTest(SimpleTestCase):
+    def testThingsAreCollections(self):
+        self.assertTrue(YearEquals(1912).is_collection())
+        self.assertTrue(YearLTE(1912).is_collection())
+        self.assertTrue(YearGTE(1912).is_collection())
+        self.assertTrue(City("Waterloo").is_collection())
+        self.assertTrue(County("Black Hawk").is_collection())
+        self.assertTrue(State("IA").is_collection())
+        self.assertTrue(Country("USA").is_collection())
+        self.assertTrue(Term("Farm").is_collection())
+
+    def testMaximumCanBeCollection(self):
+        self.assertTrue(Maximum(Term("Farm"), Term("Animals")).is_collection())
+        self.assertFalse(Maximum(Term("Farm"), Caption("Animals")).is_collection())
+
+    def testAndCanBeCollection(self):
+        self.assertTrue(And(Term("Farm"), Term("Animals")).is_collection())
+        self.assertFalse(And(Term("Farm"), Caption("Animals")).is_collection())
+
+    def testOrIsNotCollection(self):
+        self.assertFalse(Or(Term("Farm"), Term("Animals")).is_collection())
+
 class ParserTest(SimpleTestCase):
     def testParserShouldParseTypedNumbers(self):
         self.assertEqual(parser.tokenize.parse('year:1912'), [YearEquals(1912)])
@@ -595,16 +630,6 @@ class ParserTest(SimpleTestCase):
     def testParserShouldParseOrExpressions(self):
         self.assertEqual(parser.tokenize.parse('caption:dog OR caption:cat'), [Caption('dog'), 'OR', Caption('cat')])
         self.assertEqual(parser.parse('caption:dog OR caption:cat'), Or(Caption('dog'), Caption('cat')))
-
-    def testParserShouldSupportOrderOfOperations(self):
-        self.assertEqual(
-            parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            [Caption('bird'), 'AND', Caption('dog'), "OR", Caption('cat'), "AND", Caption('banana')],
-        )
-        self.assertEqual(
-            parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
-        )
 
     def testParserShouldSupportOrderOfOperations(self):
         self.assertEqual(

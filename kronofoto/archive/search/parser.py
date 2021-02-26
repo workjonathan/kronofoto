@@ -1,5 +1,6 @@
 import parsy
 from .expression import *
+from functools import reduce
 
 number = parsy.regex(r'-?[0-9]+').map(int)
 #numberplus = parsy.regex(r'-?[0-9]+\+').map(int)
@@ -117,6 +118,21 @@ def simple_parse():
         return e
     except IndexError as err:
         raise NoExpression from err
+
+
+class BasicParser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+
+    @classmethod
+    def tokenize(cls, s):
+        return cls(s.split())
+
+    def parse(self):
+        if len(self.tokens):
+            return reduce(And, (CollectionExpr(t) for t in self.tokens))
+        else:
+            raise NoExpression
 
 
 class Parser:

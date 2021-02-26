@@ -58,8 +58,28 @@ class Expression:
         "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
         return {}
 
-    def as_collection(self):
-        raise ValueError('Cannot represent this expression as collection')
+    def is_collection(self):
+        return False
+
+    def _filter(self, qs):
+        f2 = self.filter2()
+        f1 = self.filter1()
+        q = (f1 | f2) if f1 and f2 else f1 if f1 else f2
+
+        return qs.filter(q).annotate(
+            **{k: Sum(v, output_field=FloatField()) for (k, v) in self.annotations1().items()}
+        )
+
+    def as_collection(self, qs):
+        return self._filter(qs).order_by('year', 'id')
+
+    def as_search(self, qs):
+        return (self._filter(qs)
+                .defer(*(f.name for f in models.Photo._meta.fields))
+                .annotate(relevance=self.scoreF(False))
+                .filter(relevance__gt=0)
+                .order_by('-relevance', 'year', 'id')
+        )
 
 class TermExactly(Expression):
     def __init__(self, value):
@@ -173,13 +193,21 @@ class MultiWordTag(Expression):
             Length(Replace(Lower(F('phototag__tag__tag')), Value(self.value))), FloatField()
         )
         taglen = Cast(Greatest(1.0, Length('phototag__tag__tag')), FloatField())
-        return {self.field: tag_minusval/taglen}
+        return {self.field: Case(When(phototag__tag__tag__isnull=False, then=tag_minusval/taglen), default=0, output_field=FloatField())}
 
 
     def scoreF(self, negated):
         if not negated:
             return 1 - F(self.field)
         return F(self.field)
+
+class BasicTag(MultiWordTag):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field = 'B' + self.field
+
+    def is_collection(self):
+        return True
 
 class TagExactly(Expression):
     def __init__(self, value):
@@ -204,11 +232,9 @@ class TagExactly(Expression):
         else:
             return F(self.field)
 
-    def as_collection(self):
-        try:
-            return {'tag': models.Tag.objects.get(tag__iexact=self.value).slug}
-        except models.Tag.DoesNotExist:
-            return {'tag': self.value}
+    def is_collection(self):
+        return True
+
 
 class SingleWordTag(Expression):
     def __init__(self, value):
@@ -267,10 +293,10 @@ class SingleWordTerm(Expression):
         self.value = value.lower()
 
     def filter2(self):
-        return Q(wordcount__word=self.value, wordcount__field='TE')
+        return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
 
     def annotations1(self):
-        return {'TE_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+        return {'TE_' + self.value: Case(When(wordcount__word__icontains=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
     def scoreF(self, negated):
         if negated:
@@ -286,6 +312,10 @@ class SingleWordTerm(Expression):
         if not negated:
             return sum(scores)
         return reduce(operator.mul, scores, 1)
+
+    def is_collection(self):
+        return True
+
 
 Term = lambda s: MultiWordTerm(s) if len(s.split()) > 1 else SingleWordTerm(s)
 
@@ -352,8 +382,8 @@ class State(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.state == self.value or negated and photo.state != self.value else 0
 
-    def as_collection(self):
-        return {'state': self.value}
+    def is_collection(self):
+        return True
 
 
 class Country(Expression):
@@ -373,8 +403,8 @@ class Country(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.country == self.value or negated and photo.country != self.value else 0
 
-    def as_collection(self):
-        return {'country': self.value}
+    def is_collection(self):
+        return True
 
 class County(Expression):
     def __init__(self, value):
@@ -393,8 +423,8 @@ class County(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
 
-    def as_collection(self):
-        return {'county': self.value}
+    def is_collection(self):
+        return True
 
 
 class City(Expression):
@@ -414,8 +444,8 @@ class City(Expression):
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
 
-    def as_collection(self):
-        return {'city': self.value}
+    def is_collection(self):
+        return True
 
 
 class YearLTE(Expression):
@@ -432,8 +462,8 @@ class YearLTE(Expression):
         else:
             return Case(When(year__lte=self.value, then=0.0), default=1.0, output_field=FloatField())
 
-    def as_collection(self):
-        return {'year_atmost': self.value}
+    def is_collection(self):
+        return True
 
 class YearGTE(Expression):
     def __init__(self, value):
@@ -449,8 +479,8 @@ class YearGTE(Expression):
         else:
             return Case(When(year__gte=self.value, then=0.0), default=1.0, output_field=FloatField())
 
-    def as_collection(self):
-        return {'year_atleast': self.value}
+    def is_collection(self):
+        return True
 
 
 class YearEquals(Expression):
@@ -469,6 +499,9 @@ class YearEquals(Expression):
 
     def score(self, photo, negated):
         return 1 if not negated and photo.year == self.value or negated and photo.year != self.value else 0
+
+    def is_collection(self):
+        return True
 
     def as_collection(self):
         return {'year': self.value}
@@ -551,8 +584,8 @@ class Maximum(BinaryOperator):
             return min(self.left.score(photo, negated), self.right.score(photo, negated))
         return max(self.left.score(photo, negated) * self.right.score(photo, negated))
 
-    def as_collection(self):
-        return {**self.left.as_collection(), **self.right.as_collection()}
+    def is_collection(self):
+        return self.left.is_collection() and self.right.is_collection()
 
 
 class And(BinaryOperator):
@@ -573,8 +606,8 @@ class And(BinaryOperator):
             return self.left.score(photo, negated) + self.right.score(photo, negated)
         return self.left.score(photo, negated) * self.right.score(photo, negated)
 
-    def as_collection(self):
-        return {**self.left.as_collection(), **self.right.as_collection()}
+    def is_collection(self):
+        return self.left.is_collection() and self.right.is_collection()
 
 
 class Or(BinaryOperator):
@@ -600,6 +633,14 @@ def Any(s):
     expr = Or(Donor(s), Or(Caption(s), Or(State(s), Or(Country(s), Or(County(s), Or(City(s), Or(Tag(s), Term(s))))))))
     try:
         expr = Or(YearEquals(int(s)), expr)
+    except:
+        pass
+    return expr
+
+def CollectionExpr(s):
+    expr = Maximum(BasicTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
+    try:
+        expr = Maximum(YearEquals(int(s)), expr)
     except:
         pass
     return expr

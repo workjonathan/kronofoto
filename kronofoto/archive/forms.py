@@ -3,7 +3,7 @@ from .models import Tag, PhotoTag, Collection, Term, Donor, Photo
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .search import expression
-from .search.parser import Parser, NoExpression
+from .search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from .token import UserEmailVerifier
 from django.utils.text import slugify
@@ -28,6 +28,11 @@ class LocationChoiceField(forms.ChoiceField):
 
 
 class SearchForm(forms.Form):
+    basic = forms.CharField(required=False, label='')
+    basic.group = 'BASIC'
+    basic.widget.attrs.update({
+        'placeholder': 'Search...',
+    })
     tag = forms.CharField(required=False, label='')
     tag.group = 'TAG'
     tag.widget.attrs.update({
@@ -80,6 +85,12 @@ class SearchForm(forms.Form):
                 form_exprs.append(parser.simple_parse().shakeout())
             except NoExpression:
                 pass
+        if self.cleaned_data['basic']:
+            try:
+                form_exprs.append(BasicParser.tokenize(self.cleaned_data['basic']).parse())
+            except NoExpression:
+                pass
+
         if self.cleaned_data['term']:
             form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
         if self.cleaned_data['tag']:
