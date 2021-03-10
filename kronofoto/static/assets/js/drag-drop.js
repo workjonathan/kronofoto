@@ -51,7 +51,6 @@ function mouseUp(e) {}
 function mouseMove(e) {
   e.preventDefault();
 }
-// ==============================================
 
 // ==============================================
 // Drag Functions
@@ -112,5 +111,4 @@ function dragLeave(e) {
 function dragDrop(e) {
   e.preventDefault();
 }
-// ==============================================
 });
