@@ -496,17 +496,13 @@ class SearchResultsView(GridBase):
     def get_queryset(self):
         try:
             expr = self.form.as_expression()
-            try:
-                params = expr.as_collection()
-                qd = QueryDict('', mutable=True)
-                qd.update(params)
-                self.redirect = redirect('{}?{}'.format(reverse('gridview'), qd.urlencode()))
-                return []
-            except ValueError:
-                qs = evaluate(expr, self.model.objects)
-                if qs.count() == 1:
-                    self.redirect = redirect(qs[0].get_absolute_url())
-                return qs
+            if expr.is_collection():
+                qs = expr.as_collection(self.model.objects)
+            else:
+                qs = expr.as_search(self.model.objects)
+            if qs.count() == 1:
+                self.redirect = redirect(qs[0].get_absolute_url())
+            return qs
         except NoExpression:
             return []
 

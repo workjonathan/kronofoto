@@ -4,6 +4,7 @@ from django.db.models.functions import RowNumber
 from django.db import models
 from django.db.models.signals import post_delete
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 import uuid
@@ -206,11 +207,17 @@ class CollectionQuery:
         if self.user.is_authenticated:
             merges['collection__id'][0] |= Q(collection__owner=self.user)
             merges['phototag__tag__slug'][0] |= Q(phototag__creator=self.user)
-        filtervals = (
+        filtervals = [
             (replacements.get(param, param), self.getparams.get(param))
             for param in params
-        )
+        ]
+        if 'is_new' in self.getparams and NewCutoff.objects.exists():
+            cutoff = NewCutoff.objects.all()[0].date
+            filtervals += [('created__gte', cutoff)]
         clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
+
+        #is_new
+        # select * from photos cross join newcutoff where created > cutoff.date
 
         andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
         return reduce(operator.and_, andClauses)
@@ -223,31 +230,32 @@ class CollectionQuery:
 
     def __str__(self):
         parts = []
+        item_descriptor = 'New Photos' if 'is_new' in self.getparams else "Photos"
         if 'donor' in self.getparams:
             try:
                 d = Donor.objects.get(id=self.getparams['donor'])
-                parts.append("Photos in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
+                parts.append("in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
             except Donor.DoesNotExist:
-                parts.append("Photos in nobody's collection")
+                parts.append("in nobody's collection")
         location = {
             key: self.getparams[key]
             for key in ('city', 'county', 'state', 'country')
             if self.getparams.get(key, None)
         }
         if location:
-            parts.append(format_location(**location))
+            parts.append('from ' + format_location(**location))
         if self.getparams.get('term', None):
             try:
                 t = Term.objects.get(slug=self.getparams['term']).term
             except Term.DoesNotExist:
                 t = self.getparams['term']
-            parts.append("Termed with {}".format(t))
+            parts.append("termed with {}".format(t))
         if self.getparams.get('tag', None):
             try:
                 t = Tag.objects.get(slug=self.getparams['tag']).tag
             except Tag.DoesNotExist:
                 t = self.getparams['tag']
-            parts.append("Tagged with {}".format(t))
+            parts.append("tagged with {}".format(t))
         if self.getparams.get('collection', None):
             try:
                 c = Collection.objects.get(pk=self.getparams['collection'])
@@ -261,12 +269,23 @@ class CollectionQuery:
         if self.getparams.get('year', None):
             parts.append('{}'.format(self.getparams['year']))
         if len(parts) == 0:
-            return 'All Photos'
+            return 'All ' + item_descriptor
         if len(parts) > 1:
-            return '{} and {}'.format(', '.join(parts[:-1]) , parts[-1])
+            return '{} {} and {}'.format(item_descriptor, ', '.join(parts[:-1]) , parts[-1])
         else:
-            return parts[0]
+            return '{} {}'.format(item_descriptor, parts[0])
 
+
+class NewCutoff(models.Model):
+    date = models.DateField()
+
+    def save(self, *args, **kwargs):
+        if not self.pk and NewCutoff.objects.exists():
+            raise ValidationError('There can be only one instance of this object')
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Cutoff date for "new" photos'
 
 
 class Photo(models.Model):
@@ -397,6 +416,7 @@ class Photo(models.Model):
     state = models.CharField(max_length=64, blank=True)
     country = models.CharField(max_length=64, null=True, blank=True)
     year = models.SmallIntegerField(null=True, blank=True, db_index=True)
+    circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
@@ -423,34 +443,34 @@ class Photo(models.Model):
     def save(self, *args, **kwargs):
         if not self.thumbnail:
             Image.MAX_IMAGE_PIXELS = 195670000
-            image = ImageOps.exif_transpose(Image.open(BytesIO(self.original.read())))
-            dims = ((75, 75), (None, 700))
-            results = []
-            w,h = image.size
-            xoff = yoff = 0
-            size = min(w, h)
-            for dim in dims:
-                if any(dim):
-                    img = image
-                    if all(dim):
-                        if w > h:
-                            xoff = round((w-h)/2)
-                        elif h > w:
-                            yoff = round((h-w)/4)
-                        img = img.crop((xoff, yoff, xoff+size, yoff+size))
-                    if dim[0] and not dim[1]:
-                        dim = (dim[0], round(h/w*dim[0]))
-                    elif dim[1] and not dim[0]:
-                        dim = (round(w/h*dim[1]), dim[1])
-                    img = img.resize(dim, Image.ANTIALIAS)
-                    results.append(img)
-            thumb, h700 = results
-            fname = 'thumb/{}.jpg'.format(self.uuid)
-            thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-            self.thumbnail.name = fname
-            fname = 'h700/{}.jpg'.format(self.uuid)
-            h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-            self.h700.name = fname
+            with ImageOps.exif_transpose(Image.open(BytesIO(self.original.read()))) as image:
+                dims = ((75, 75), (None, 700))
+                results = []
+                w,h = image.size
+                xoff = yoff = 0
+                size = min(w, h)
+                for dim in dims:
+                    if any(dim):
+                        img = image
+                        if all(dim):
+                            if w > h:
+                                xoff = round((w-h)/2)
+                            elif h > w:
+                                yoff = round((h-w)/4)
+                            img = img.crop((xoff, yoff, xoff+size, yoff+size))
+                        if dim[0] and not dim[1]:
+                            dim = (dim[0], round(h/w*dim[0]))
+                        elif dim[1] and not dim[0]:
+                            dim = (round(w/h*dim[1]), dim[1])
+                        img = img.resize(dim, Image.ANTIALIAS)
+                        results.append(img)
+                thumb, h700 = results
+                fname = 'thumb/{}.jpg'.format(self.uuid)
+                thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+                self.thumbnail.name = fname
+                fname = 'h700/{}.jpg'.format(self.uuid)
+                h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+                self.h700.name = fname
         super().save(*args, **kwargs)
 
     def location(self):
@@ -516,8 +536,8 @@ class CSVRecord(models.Model):
     # by case basis?
     donorFirstName = models.TextField()
     donorLastName = models.TextField()
-    year = models.IntegerField()
-    circa = models.BooleanField()
+    year = models.IntegerField(null=True)
+    circa = models.BooleanField(null=True)
     scanner = models.TextField()
     photographer = models.TextField()
     address = models.TextField()

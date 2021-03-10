@@ -1,5 +1,6 @@
 import parsy
 from .expression import *
+from functools import reduce
 
 number = parsy.regex(r'-?[0-9]+').map(int)
 #numberplus = parsy.regex(r'-?[0-9]+\+').map(int)
@@ -30,7 +31,8 @@ const = lambda x: lambda _: x
 is_instance = lambda t: lambda x: isinstance(x, t)
 
 token = (
-      parsy.string('AND', transform=upper).map(upper)
+      parsy.string('|', transform=upper).map(upper)
+    | parsy.string('AND', transform=upper).map(upper)
     | parsy.string('OR', transform=upper).map(upper)
     | yearExpr
     | tagExpr
@@ -68,6 +70,16 @@ wrap = lambda expr: (parsy.match_item('(') >> expr << parsy.match_item(')'))
 
 @parsy.generate
 def expr():
+    e = yield orExpr
+    es = yield (
+        parsy.match_item('|') >> orExpr
+    ).many()
+    for e2 in es:
+        e = Maximum(e, e2)
+    return parsy.success(e)
+
+@parsy.generate
+def orExpr():
     e = yield andExpr
     es = yield (
         parsy.match_item('OR').optional() >> andExpr
@@ -106,6 +118,21 @@ def simple_parse():
         return e
     except IndexError as err:
         raise NoExpression from err
+
+
+class BasicParser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+
+    @classmethod
+    def tokenize(cls, s):
+        return cls(s.split())
+
+    def parse(self):
+        if len(self.tokens):
+            return reduce(And, (CollectionExpr(t) for t in self.tokens))
+        else:
+            raise NoExpression
 
 
 class Parser:

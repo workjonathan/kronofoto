@@ -18,12 +18,18 @@ class Command(BaseCommand):
             #with transaction.atomic():
             for row in reader:
                 try:
+                    year = row['Year'][:4].strip()
+                    circa = row['Circa'].strip()
+                    if not year:
+                        year = None
+                    if not circa:
+                        circa = None
                     CSVRecord(
-                        filename=row['FILE NAME'],
+                        filename=row['FILE NAME'].strip(),
                         donorFirstName=row['DONOR FIRST NAME'],
                         donorLastName=row['DONOR LAST NAME'],
-                        year=row['Year'][:4],
-                        circa=row['Circa'],
+                        year=year,
+                        circa=circa,
                         scanner=row['Scanner'],
                         photographer=row['Photographer'],
                         address=row['Address'],

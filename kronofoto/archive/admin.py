@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term, PhotoTag, Donor
+from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
 from django.db.models import Count
 from django.conf import settings
 from django.urls import reverse
@@ -10,6 +10,11 @@ from django.urls import reverse
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
+
+
+@admin.register(NewCutoff)
+class NewCutoffAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Donor)
@@ -54,11 +59,45 @@ class TagInline(admin.TabularInline):
         return mark_safe(creators)
 
 
+class TagFilter(admin.SimpleListFilter):
+    title = "tag status"
+    parameter_name = "phototag__accepted"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("needs approval", "needs approval"),
+            ("approved", "approved"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'approved':
+            return queryset.filter(phototag__accepted=True)
+        elif self.value() == "needs approval":
+            return queryset.filter(phototag__accepted=False)
+
+
+class YearIsSetFilter(admin.SimpleListFilter):
+    title = "photo dated"
+    parameter_name = "dated"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(year__isnull=False)
+        elif self.value() == 'No':
+            return queryset.filter(year__isnull=True)
+
+
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = ('phototag__accepted',)
+    list_filter = (TagFilter, YearIsSetFilter)
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
     def thumb_image(self, obj):

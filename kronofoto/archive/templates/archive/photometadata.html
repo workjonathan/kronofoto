@@ -20,7 +20,7 @@
         </div>
         <div class="metadata-3a">
           <ul>
-            <li><span class="field-name">Catalog Terms:</span>
+            <li><span class="field-name">Category Terms:</span>
             {% if photo.terms.all %}
                 {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
                     <a href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}

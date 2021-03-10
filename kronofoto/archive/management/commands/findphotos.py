@@ -57,5 +57,6 @@ class Command(BaseCommand):
                     photo.save()
                     record.photo = photo
                     record.save()
+                    record.original.close()
                 except Exception as err:
                     print(record.filename, err)

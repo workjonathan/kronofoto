@@ -17,19 +17,19 @@ class CollectionQueryTest(TestCase):
 
     def testShouldDescribeCounty(self):
         coll = models.CollectionQuery(dict(county='Place', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'Place County, State')
+        self.assertEqual(str(coll), 'Photos from Place County, State')
 
     def testShouldDescribeCity(self):
         coll = models.CollectionQuery(dict(city='CityTown', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'CityTown, State')
+        self.assertEqual(str(coll), 'Photos from CityTown, State')
 
     def testShouldDescribeTag(self):
         coll = models.CollectionQuery(dict(tag=self.tag.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Tagged with dog')
+        self.assertEqual(str(coll), 'Photos tagged with dog')
 
     def testShouldDescribeTerm(self):
         coll = models.CollectionQuery(dict(term=self.term.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Termed with Airplane')
+        self.assertEqual(str(coll), 'Photos termed with Airplane')
 
     def testShouldDescribeDonor(self):
         coll = models.CollectionQuery(dict(donor=self.donor.id), AnonymousUser)
@@ -561,6 +561,41 @@ class RegisterAccountTest(TestCase):
         self.assertFalse(v.user_is_human())
 
 
+class BasicParserTest(SimpleTestCase):
+    def testParserShouldProduceCollectionExpressions(self):
+        expr = parser.BasicParser.tokenize("dog").parse()
+        self.assertTrue(expr.is_collection())
+
+    def testParserShouldAcceptSimpleWords(self):
+        expr = parser.BasicParser.tokenize("dog").parse()
+        self.assertEqual(expr, Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
+
+    def testParserShouldCombineTerms(self):
+        expr = parser.BasicParser.tokenize("dog waterloo").parse()
+        self.assertEqual(expr, And(Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))), Maximum(BasicTag('waterloo'), Maximum(Term('waterloo'), Maximum(City('waterloo'), Maximum(State('waterloo'), Maximum(Country('waterloo'), County('waterloo'))))))))
+
+class ExpressionTest(SimpleTestCase):
+    def testThingsAreCollections(self):
+        self.assertTrue(YearEquals(1912).is_collection())
+        self.assertTrue(YearLTE(1912).is_collection())
+        self.assertTrue(YearGTE(1912).is_collection())
+        self.assertTrue(City("Waterloo").is_collection())
+        self.assertTrue(County("Black Hawk").is_collection())
+        self.assertTrue(State("IA").is_collection())
+        self.assertTrue(Country("USA").is_collection())
+        self.assertTrue(Term("Farm").is_collection())
+
+    def testMaximumCanBeCollection(self):
+        self.assertTrue(Maximum(Term("Farm"), Term("Animals")).is_collection())
+        self.assertFalse(Maximum(Term("Farm"), Caption("Animals")).is_collection())
+
+    def testAndCanBeCollection(self):
+        self.assertTrue(And(Term("Farm"), Term("Animals")).is_collection())
+        self.assertFalse(And(Term("Farm"), Caption("Animals")).is_collection())
+
+    def testOrIsNotCollection(self):
+        self.assertFalse(Or(Term("Farm"), Term("Animals")).is_collection())
+
 class ParserTest(SimpleTestCase):
     def testParserShouldParseTypedNumbers(self):
         self.assertEqual(parser.tokenize.parse('year:1912'), [YearEquals(1912)])
@@ -598,15 +633,13 @@ class ParserTest(SimpleTestCase):
 
     def testParserShouldSupportOrderOfOperations(self):
         self.assertEqual(
-            parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            [Caption('bird'), 'AND', Caption('dog'), "OR", Caption('cat'), "AND", Caption('banana')],
+            parser.tokenize.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
+            [Caption('bird'), 'OR', Caption('dog'), '|', Caption('cat'), 'OR', Caption('banana')],
         )
         self.assertEqual(
-            parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
+            parser.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
+            Maximum(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
         )
-
-    def testParserShouldSupportOrderOfOperations(self):
         self.assertEqual(
             parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
             [Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
