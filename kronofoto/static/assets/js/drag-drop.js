@@ -1,19 +1,17 @@
+// =======================================================================================================
+// This file contains the functionality to enable the dragging and dropping of the timeline marker to work
+// =======================================================================================================
 window.addEventListener('DOMContentLoaded', () => {
 const marker = document.querySelector('.active-year-marker');
 const dropzones = document.querySelectorAll('.tl a');
 const dzXCoords = Array.from(dropzones).map((dropzone) => dropzone.getBoundingClientRect().x);
 
-// console.log(marker);
-// console.log(dropzones);
-// console.log(dzXCoords);
-
+// This finds the closest tick to where the cursor is during the drag.
 const getClosestDropzoneX = (goal) => {
   return dzXCoords.reduce((prev, curr) => {
     return (Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev);
   });
 };
-
-// console.log(getClosestDropzoneX(800));
 
 // Marker Listeners
 marker.addEventListener('dragstart', dragStart);
@@ -29,7 +27,6 @@ Array.from(dropzones).map((dropzone) => {
   dropzone.addEventListener('dragenter', dragEnter);
   dropzone.addEventListener('dragleave', dragLeave);
   dropzone.addEventListener('drop', dragDrop);
-  // console.log(dropzone);
 });
 
 let currentX;
@@ -67,43 +64,30 @@ function dragStart(e) {
 }
 
 function dragHandler(e) {
-  // console.log('dragHandler');
   let prevX;
   e.preventDefault();
-  // currentX = e.clientX - initialX; // The difference between mouse start and current mouse
   currentX = e.clientX;
   xOffset = currentX;
-  // console.log(`currentX: ${currentX}`);
-  // console.log(e.clientX);
   if (currentX <= 0) {
-    e.target.style.transform = `translateX(${initialX - markerWidth}px)`; // 145 - 100 - 5.5 - 5 = 34.5
+    e.target.style.transform = `translateX(${initialX - markerWidth}px)`;
   }
   else {
-    e.target.style.transform = `translateX(${e.clientX - markerWidth}px)`; // 145 - 100 - 5.5 - 5 = 34.5
+    e.target.style.transform = `translateX(${e.clientX - markerWidth}px)`;
   }
   prevX = currentX;
-
 }
 
 function dragEnd(e) {
   e.preventDefault();
-  // console.log(`DRAG:END -- currentX: ${currentX}`);
-  // initialX = currentX;
-  // console.log(this);
   this.classList.remove('no-point');
-  let destination = getClosestDropzoneX(currentX);
+  let destination = getClosestDropzoneX(currentX); // not used?
   if (currentX <= 0) {
     e.target.style.transform = `translateX(${currentTickX}px)`;
   }
   else {
     e.target.style.transform = `translateX(${currentX - markerWidth}px)`;
   }
-  // let parentUrl = currentTick.parentElement.getAttribute('xlink:href');
-  // console.log(currentTick.parentElement.getAttribute('xlink:href'));
-  // let parent = document.querySelectorAll(`[*|href="${parentUrl}"]`);
-  // let $theLink = $(`svg a[*|href="${parentUrl}"]`);
 
-  // window.location.href = parentUrl;
   const jsonhref = currentTick.getAttribute('data-json-href') || currentTick.parentElement.getAttribute('data-json-href');
   request('GET', jsonhref).then(data => {
     loadstate(data);
@@ -115,18 +99,14 @@ function dragOver(e) {
   e.preventDefault();
   currentTick = e.target;
   currentTickX = currentTick.getBoundingClientRect().x;
-  // console.log('dragOver');
 }
 
 function dragEnter(e) {
   e.preventDefault();
-  // console.log('dragEnter');
-
 }
 
 function dragLeave(e) {
   e.preventDefault();
-  // console.log('dragLeave');
 }
 
 function dragDrop(e) {
