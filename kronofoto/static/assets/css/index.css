@@ -831,6 +831,19 @@ main article.fi-image {
   margin-right: 40px;
 }
 
+/* ======================================================================== */
+/* These styles are very fragile and are meant to only address the specific */
+/* scenario that the bookend years are getting cut off by the overflow */
+/* and this was the only fix I could find at the time */
+/* ======================================================================== */
+.year-ticker a:first-of-type text {
+  text-anchor: start;
+}
+.year-ticker a:last-of-type text {
+  text-anchor: end;
+}
+/* ======================================================================== */
+
 .year-min, .year-max {
   width: 110px;
   display: flex;
@@ -878,7 +891,8 @@ main article.fi-image {
   position: absolute;
   display: none;
   transition: 0.2s cubic-bezier(0.33, 1, 0.68, 1);
-  pointer-events: none;
+  pointer-events: auto;
+  bottom: 0;
 }
 .marker-image {
   width: 65px;
@@ -891,6 +905,10 @@ main article.fi-image {
   align-items: center;
   text-align: center;
   color: white;
+}
+
+.no-point {
+  pointer-events: none;
 }
 
 
