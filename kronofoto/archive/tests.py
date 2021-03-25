@@ -101,12 +101,12 @@ class DonorTest(TestCase):
             last_name='last',
             first_name='first',
         )
-        self.assertEqual(donor.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'donor': donor.id})))
+        self.assertEqual(donor.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'donor': donor.id})))
 
 class TermTest(TestCase):
     def testURL(self):
         term = models.Term.objects.create(term="test term")
-        self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'term': term.slug})))
+        self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'term': term.id})))
 
 class TagTest(TestCase):
     def testSubstringSearchShouldNotReturnTooManyThings(self):
@@ -189,7 +189,7 @@ class TagTest(TestCase):
 
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
-        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('gridview'), urlencode({'tag': tag.slug})))
+        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'tag': tag.slug})))
 
     def testShouldEnforceLowerCase(self):
         tag = models.Tag.objects.create(tag='CAPITALIZED')
@@ -595,6 +595,52 @@ class ExpressionTest(SimpleTestCase):
 
     def testOrIsNotCollection(self):
         self.assertFalse(Or(Term("Farm"), Term("Animals")).is_collection())
+
+    def testHasDescription(self):
+        self.assertEqual(YearEquals(1912).description(), Description([YearEquals(1912)]))
+        self.assertEqual(YearLTE(1912).description(), Description([YearLTE(1912)]))
+        self.assertEqual(YearGTE(1912).description(), Description([YearGTE(1912)]))
+        self.assertEqual(City("Waterloo").description(), Description([City("Waterloo")]))
+        self.assertEqual(County("Black Hawk").description(), Description([County("Black Hawk")]))
+        self.assertEqual(State("IA").description(), Description([State("IA")]))
+        self.assertEqual(Country("USA").description(), Description([Country("USA")]))
+        self.assertEqual(Term("Farm").description(), Description([Term("Farm")]))
+        self.assertEqual((Term("dog") & Term("Farm")).description(), Description([Term("dog"), Term("Farm")]))
+        self.assertEqual((Maximum(Term("dog"), Term("dog"))).description(), Description([Maximum(Term("dog"), Term("dog"))]))
+
+    def testShortLabels(self):
+        self.assertEqual(YearEquals(1912).short_label(), "Year: 1912")
+        self.assertEqual(YearLTE(1912).short_label(), "Year: 1912-")
+        self.assertEqual(YearGTE(1912).short_label(), "Year: 1912+")
+        self.assertEqual(City("Waterloo").short_label(), "City: Waterloo")
+        self.assertEqual(County("Black Hawk").short_label(), "County: Black Hawk")
+        self.assertEqual(State("IA").short_label(), "State: IA")
+        self.assertEqual(Country("USA").short_label(), "Country: USA")
+        self.assertEqual(Term("Farm").short_label(), "Term: farm")
+        with self.assertRaises(NotImplementedError):
+            (Term("dog") & Term("Farm")).short_label()
+        self.assertEqual((Maximum(Term("dog"), Term("dog"))).short_label(), "dog")
+
+    def testGroupLabels(self):
+        self.assertEqual(YearEquals(1912).group(), "year")
+        self.assertEqual(YearLTE(1912).group(), "year")
+        self.assertEqual(YearGTE(1912).group(), "year")
+        self.assertEqual(City("Waterloo").group(), "location")
+        self.assertEqual(County("Black Hawk").group(), "location")
+        self.assertEqual(State("IA").group(), "location")
+        self.assertEqual(Country("USA").group(), "location")
+        self.assertEqual(Term("Farm").group(), "term")
+        with self.assertRaises(NotImplementedError):
+            (Term("dog") & Term("Farm")).group()
+        self.assertEqual((Maximum(Term("dog"), Term("dog"))).group(), "max")
+
+
+class DescriptionTest(SimpleTestCase):
+    def testHasLongDescription(self):
+        self.assertEqual(str(Description([Term("dog"), Term("Farm"), YearEquals(1912)])), "from 1912; and termed with dog and farm")
+        self.assertEqual(str(Description([YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920")
+        self.assertEqual(str(Description([Term("dog"), YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920; and termed with dog")
+
 
 class ParserTest(SimpleTestCase):
     def testParserShouldParseTypedNumbers(self):

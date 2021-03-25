@@ -31,12 +31,13 @@ class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
     basic.group = 'BASIC'
     basic.widget.attrs.update({
+        'id': 'search-box',
         'placeholder': 'Search...',
     })
     tag = forms.CharField(required=False, label='')
     tag.group = 'TAG'
     tag.widget.attrs.update({
-        'id': 'search-box',
+        'id': 'tag-search',
         'placeholder': 'Tag Search',
     })
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))

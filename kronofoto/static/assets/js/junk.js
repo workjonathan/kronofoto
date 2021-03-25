@@ -178,7 +178,7 @@ $('.search-options').click(() => {
         $('.arrow').removeClass('up').addClass('down')
     }
 }) */
-$('#search-box').autocomplete({
+$('#tag-search').autocomplete({
     source: '/tags/',
     minLength: 2, 
 })

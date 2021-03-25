@@ -198,8 +198,15 @@ class FrontPage(RedirectView):
     pattern_name = 'photoview'
 
     def get_redirect_url(self, *args, **kwargs):
+        form = SearchForm(self.request.GET)
+        expr = None
+        if form.is_valid():
+            try:
+                expr = form.as_expression()
+            except NoExpression:
+                pass
         photo = Photo.objects.filter_photos(
-            CollectionQuery(self.request.GET, self.request.user)
+            CollectionQuery(expr, self.request.user)
         ).order_by('?')[0]
         return photo.get_absolute_url()
 
@@ -298,7 +305,14 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return self._queryset
 
     def get_queryset(self):
-        self.collection = CollectionQuery(self.request.GET, self.request.user)
+        form = SearchForm(self.request.GET)
+        expr = None
+        if form.is_valid():
+            try:
+                expr = form.as_expression()
+            except NoExpression:
+                pass
+        self.collection = CollectionQuery(expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
     def get_paginator(self):
@@ -440,7 +454,14 @@ class GridBase(BaseTemplateMixin, ListView):
 
 class GridView(GridBase):
     def get_queryset(self):
-        self.collection = CollectionQuery(self.request.GET, self.request.user)
+        form = SearchForm(self.request.GET)
+        expr = None
+        if form.is_valid():
+            try:
+                expr = form.as_expression()
+            except NoExpression:
+                pass
+        self.collection = CollectionQuery(expr, self.request.user)
         qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
         cache_info = 'photo_count:' + self.collection.cache_encoding()
         photo_count = cache.get(cache_info)
@@ -481,10 +502,17 @@ class SearchResultsView(GridBase):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
         context['collection_name'] = 'Search Results'
+        if self.expr and self.expr.is_collection():
+            context['collection_name'] = str(self.expr.description())
         return context
 
     def attach_params(self, photos):
-        pass
+        if self.expr and self.expr.is_collection():
+            params = self.request.GET.copy()
+            if 'display' in params:
+                params.pop('display')
+            for photo in photos:
+                photo.save_params(params=params)
 
     def dispatch(self, request, *args, **kwargs):
         self.form = SearchForm(self.request.GET)
@@ -495,7 +523,7 @@ class SearchResultsView(GridBase):
 
     def get_queryset(self):
         try:
-            expr = self.form.as_expression()
+            self.expr = expr = self.form.as_expression()
             if expr.is_collection():
                 qs = expr.as_collection(self.model.objects)
             else:
@@ -504,6 +532,7 @@ class SearchResultsView(GridBase):
                 self.redirect = redirect(qs[0].get_absolute_url())
             return qs
         except NoExpression:
+            self.expr = None
             return []
 
 

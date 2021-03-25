@@ -131,7 +131,7 @@ header nav div img {
   flex-grow: 1;
   max-width: 650px;
   background-color: var(--fp-light-grey);
-  z-index: 998;
+  z-index: 99;
 }
 #search-box-container img {
   margin: 7px;
@@ -161,6 +161,7 @@ input#search-box::placeholder {
   opacity: 1;
 }
 
+
 .search-form {
   display: none;
   position: absolute;
@@ -169,7 +170,7 @@ input#search-box::placeholder {
   background: white;
   margin: 0 -15px;
   padding: 60px 130px;
-  z-index: 1000;
+  z-index: 99;
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
 
@@ -216,6 +217,7 @@ input#search-box::placeholder {
   justify-content: space-between;
   padding: 0 15px;
 }
+
 
 button#login-btn, .logout-btn, input[type="submit"] {
   padding: 11px 15px;

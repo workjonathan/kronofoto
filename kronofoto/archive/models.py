@@ -16,7 +16,6 @@ import operator
 from bisect import bisect_left
 from django.utils.http import urlencode
 
-
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
         return str(value).lower()
@@ -51,7 +50,7 @@ class Donor(models.Model):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
     def get_absolute_url(self):
-        return '{}?{}'.format(reverse('gridview'), urlencode({'donor': self.id}))
+        return '{}?{}'.format(reverse('search-results'), urlencode({'donor': self.id}))
 
     @staticmethod
     def index():
@@ -88,7 +87,7 @@ class Term(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return '{}?{}'.format(reverse('gridview'), urlencode({'term': self.slug}))
+        return '{}?{}'.format(reverse('search-results'), urlencode({'term': self.id}))
 
     @staticmethod
     def index():
@@ -111,7 +110,7 @@ class Tag(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return '{}?{}'.format(reverse('gridview'), urlencode({'tag': self.slug}))
+        return '{}?{}'.format(reverse('search-results'), urlencode({'tag': self.slug}))
 
     @staticmethod
     def dead_tags():
@@ -135,6 +134,7 @@ bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):
         year_index = self.year_index()
+        print(year_index.query)
         years = [p.year for p in year_index]
         year_range = Photo.objects.year_range()
         allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
@@ -165,7 +165,7 @@ class PhotoQuerySet(models.QuerySet):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
     def filter_photos(self, collection):
-        return self.filter(collection.asQuery()).distinct()
+        return collection.filter(self)
 
 
 def format_location(**kwargs):
@@ -183,97 +183,23 @@ def format_location(**kwargs):
 
 
 class CollectionQuery:
-    def __init__(self, getparams, user):
-        self.getparams = getparams
+    def __init__(self, expr, user):
+        self.expr = expr
         self.user = user
 
-    def asQuery(self):
-        replacements = {
-            "collection": "collection__id",
-            "tag": 'phototag__tag__slug',
-            'term': 'terms__slug',
-            'donor': 'donor__id',
-            'state': 'state__iexact',
-            'country': 'country__iexact',
-            'county': 'county__iexact',
-            'year_atleast': 'year__gte',
-            'year_atmost': 'year__lte',
-        }
-        params = ("collection", "county", "city", "state", "country", 'tag', 'term', 'donor', 'year', 'year_atleast', 'year_atmost')
-        merges = {
-            'phototag__tag__slug': [Q(phototag__accepted=True)],
-            'collection__id': [~Q(collection__visibility='PR')],
-        }
-        if self.user.is_authenticated:
-            merges['collection__id'][0] |= Q(collection__owner=self.user)
-            merges['phototag__tag__slug'][0] |= Q(phototag__creator=self.user)
-        filtervals = [
-            (replacements.get(param, param), self.getparams.get(param))
-            for param in params
-        ]
-        if 'is_new' in self.getparams and NewCutoff.objects.exists():
-            cutoff = NewCutoff.objects.all()[0].date
-            filtervals += [('created__gte', cutoff)]
-        clauses = [reduce(operator.and_, [Q(**{k: v})] + merges.get(k, [])) for (k, v) in filtervals if v]
-
-        #is_new
-        # select * from photos cross join newcutoff where created > cutoff.date
-
-        andClauses = [Q(is_published=True), Q(year__isnull=False)] + clauses
-        return reduce(operator.and_, andClauses)
+    def filter(self, qs):
+        if not self.expr:
+            return qs.filter(year__isnull=False, is_published=True)
+        if self.expr.is_collection():
+            return self.expr.as_collection(qs)
+        else:
+            return self.expr.as_search(qs)
 
     def cache_encoding(self):
-        keys = [(k, self.getparams[k]) for k in sorted(self.getparams.keys())]
-        if 'tag' in self.getparams:
-            keys.append(['user', self.user.username])
-        return ':'.join(v for pair in keys for v in pair)
+        return repr(self.expr)
 
     def __str__(self):
-        parts = []
-        item_descriptor = 'New Photos' if 'is_new' in self.getparams else "Photos"
-        if 'donor' in self.getparams:
-            try:
-                d = Donor.objects.get(id=self.getparams['donor'])
-                parts.append("in {first} {last}'s Collection".format(first=d.first_name, last=d.last_name))
-            except Donor.DoesNotExist:
-                parts.append("in nobody's collection")
-        location = {
-            key: self.getparams[key]
-            for key in ('city', 'county', 'state', 'country')
-            if self.getparams.get(key, None)
-        }
-        if location:
-            parts.append('from ' + format_location(**location))
-        if self.getparams.get('term', None):
-            try:
-                t = Term.objects.get(slug=self.getparams['term']).term
-            except Term.DoesNotExist:
-                t = self.getparams['term']
-            parts.append("termed with {}".format(t))
-        if self.getparams.get('tag', None):
-            try:
-                t = Tag.objects.get(slug=self.getparams['tag']).tag
-            except Tag.DoesNotExist:
-                t = self.getparams['tag']
-            parts.append("tagged with {}".format(t))
-        if self.getparams.get('collection', None):
-            try:
-                c = Collection.objects.get(pk=self.getparams['collection'])
-                parts.append(c.name)
-            except Collection.DoesNotExist:
-                parts.append('Mystery collection')
-        if self.getparams.get('year_atleast', None):
-            parts.append('after {}'.format(self.getparams['year_atleast']))
-        if self.getparams.get('year_atmost', None):
-            parts.append('before {}'.format(self.getparams['year_atmost']))
-        if self.getparams.get('year', None):
-            parts.append('{}'.format(self.getparams['year']))
-        if len(parts) == 0:
-            return 'All ' + item_descriptor
-        if len(parts) > 1:
-            return '{} {} and {}'.format(item_descriptor, ', '.join(parts[:-1]) , parts[-1])
-        else:
-            return '{} {}'.format(item_descriptor, parts[0])
+        return str(self.expr)
 
 
 class NewCutoff(models.Model):

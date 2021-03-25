@@ -3,14 +3,14 @@
 <form action="/search/" method="get">
   <label for="search-box">
     <img class="search-icon" src="{% static "assets/images/search.svg" %}" alt="Magnifying glass">
-    {{ form.tag }}
+    {{ form.basic }}
   </label>
   <div class="search-form">
     {% cache 300 search_form_ vary_on %}
     <!-- Display Form -->
       {% regroup form by field.group as field_groups %}
       {% for field_group in field_groups %}
-      {% if field_group.grouper != 'TAG' %}
+      {% if field_group.grouper != 'BASIC' %}
 
         <div class="search-form-section">{{field_group.grouper}}
           <div class="search-form-section_inner">

@@ -29,6 +29,105 @@ STOPWORDS = {
     'have', 'if', 'here', "we've", 'each', "who's", "it's", 'about', "they'll"
 }
 
+class YearFilterReporter:
+    def describe(self, exprs):
+        gt_year = lt_year = None
+        for expr in exprs:
+            if isinstance(expr, YearGTE):
+                if not gt_year or expr.value > gt_year:
+                    gt_year = expr.value
+            elif isinstance(expr, YearEquals):
+                if not gt_year or expr.value > gt_year:
+                    gt_year = expr.value
+                if not lt_year or expr.value < lt_year:
+                    lt_year = expr.value
+            else:
+                if not lt_year or expr.value < lt_year:
+                    lt_year = expr.value
+        if gt_year and lt_year:
+            if gt_year == lt_year:
+                return 'from {}'.format(gt_year)
+            else:
+                return 'between {} and {}'.format(gt_year, lt_year)
+        elif gt_year:
+            return 'after {}'.format(gt_year)
+        else:
+            return 'before {}'.format(lt_year)
+
+
+class GenericFilterReporter:
+    def __init__(self, verb):
+        self.verb = verb
+    def describe(self, exprs):
+        words = [expr.value for expr in exprs]
+        if len(words) == 1:
+            clauses = words[0]
+        else:
+            clauses = ' and '.join([', '.join(words[:-1]), words[-1]])
+        return "{verb} {clauses}".format(verb=self.verb, clauses=clauses)
+
+class LocationFilterReporter:
+    def describe(self, exprs):
+        location = {}
+        for expr in exprs:
+            if isinstance(expr, County):
+                location['county'] = expr.value
+            elif isinstance(expr, City):
+                location['city'] = expr.value
+            elif isinstance(expr, State):
+                location['state'] = expr.value
+            elif isinstance(expr, Country):
+                location['country'] = expr.value
+        return 'from ' + models.format_location(**location)
+
+class MaxReporter:
+    def describe(self, exprs):
+        return ', '.join(self.describe_(expr) for expr in exprs)
+    def describe_(self, expr):
+        if isinstance(expr, Maximum):
+            return self.describe_(expr.left)
+        else:
+            return expr.value
+
+
+class Description:
+    def __init__(self, values):
+        self.values = values
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.values == other.values
+
+    def __add__(self, other):
+        return self.__class__(self.values + other.values)
+
+    def formatter(self, group):
+        if group == 'max':
+            return MaxReporter()
+        if group == 'year':
+            return YearFilterReporter()
+        if group == 'location':
+            return LocationFilterReporter()
+        if group == 'term':
+            return GenericFilterReporter('termed with')
+        if group == 'tag':
+            return GenericFilterReporter('tagged with')
+        if group == 'donor':
+            return GenericFilterReporter('donated by')
+
+    def __str__(self):
+        by_group = {}
+        for v in self.values:
+            category = v.group()
+            exprs = by_group.get(category, [])
+            exprs.append(v)
+            by_group[category] = exprs
+        groups = reversed(sorted(by_group.keys()))
+        group_descriptions = [self.formatter(group).describe(by_group[group]) for group in groups]
+        if len(group_descriptions) == 1:
+            return group_descriptions[0]
+        return '; and '.join(['; '.join(group_descriptions[:-1]), group_descriptions[-1]])
+
+
 class Expression:
     def __or__(self, obj):
         return Or(self, obj)
@@ -79,6 +178,15 @@ class Expression:
     def as_search(self, qs):
         return self._filter(qs).order_by('-relevance', 'year', 'id')
 
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        raise NotImplementedError
+
+    def group(self):
+        raise NotImplementedError
+
 
 class TermExactly(Expression):
     def __init__(self, value):
@@ -93,8 +201,17 @@ class TermExactly(Expression):
         else:
             return Case(When(terms__id=self.value.id, then=0), default=1, output_field=FloatField())
 
-    def as_collection(self):
-        return {'term': models.Term.objects.get(pk=self.value.id).slug}
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Term: {}".format(self.value.term.lower())
+
+    def group(self):
+        return "term"
 
 
 class DonorExactly(Expression):
@@ -110,9 +227,17 @@ class DonorExactly(Expression):
         else:
             return Case(When(donor__id=self.value.id, then=0), default=1, output_field=FloatField())
 
-    def as_collection(self):
-        return {'donor': self.value.id}
+    def is_collection(self):
+        return True
 
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Donor: {}".format(self.value)
+
+    def group(self):
+        return "donor"
 
 
 class Donor(Expression):
@@ -122,7 +247,6 @@ class Donor(Expression):
     def filter1(self):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
         return q
-
 
     def scoreF(self, negated):
         lastname_minusval = Cast(Length(Replace(Lower(F('donor__last_name')), Value(self.value))), FloatField())
@@ -208,6 +332,15 @@ class BasicTag(MultiWordTag):
     def is_collection(self):
         return True
 
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def group(self):
+        return "tag"
+
 class TagExactly(Expression):
     def __init__(self, value):
         self.value = value
@@ -233,6 +366,15 @@ class TagExactly(Expression):
 
     def is_collection(self):
         return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def group(self):
+        return "tag"
 
 
 class SingleWordTag(Expression):
@@ -286,6 +428,12 @@ class MultiWordTerm(Expression):
             return F(self.field)
         return 1 - F(self.field)
 
+    def short_label(self):
+        return "Term: {}".format(self.value)
+
+    def group(self):
+        return "term"
+
 
 class SingleWordTerm(Expression):
     def __init__(self, value):
@@ -315,6 +463,14 @@ class SingleWordTerm(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "Term: {}".format(self.value)
+
+    def group(self):
+        return "term"
+
+    def description(self):
+        return
 
 Term = lambda s: MultiWordTerm(s) if len(s.split()) > 1 else SingleWordTerm(s)
 
@@ -384,6 +540,11 @@ class State(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "State: {}".format(self.value)
+
+    def group(self):
+        return "location"
 
 class Country(Expression):
     def __init__(self, value):
@@ -405,6 +566,12 @@ class Country(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "Country: {}".format(self.value)
+
+    def group(self):
+        return "location"
+
 class County(Expression):
     def __init__(self, value):
         self.value = value
@@ -425,6 +592,11 @@ class County(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "County: {}".format(self.value)
+
+    def group(self):
+        return "location"
 
 class City(Expression):
     def __init__(self, value):
@@ -446,6 +618,12 @@ class City(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "City: {}".format(self.value)
+
+    def group(self):
+        return "location"
+
 
 class YearLTE(Expression):
     def __init__(self, value):
@@ -464,6 +642,13 @@ class YearLTE(Expression):
     def is_collection(self):
         return True
 
+    def short_label(self):
+        return "Year: {}-".format(self.value)
+
+    def group(self):
+        return "year"
+
+
 class YearGTE(Expression):
     def __init__(self, value):
         self.value = value
@@ -480,6 +665,12 @@ class YearGTE(Expression):
 
     def is_collection(self):
         return True
+
+    def short_label(self):
+        return "Year: {}+".format(self.value)
+
+    def group(self):
+        return "year"
 
 
 class YearEquals(Expression):
@@ -502,8 +693,12 @@ class YearEquals(Expression):
     def is_collection(self):
         return True
 
-    def as_collection(self):
-        return {'year': self.value}
+    def short_label(self):
+        return "Year: {}".format(self.value)
+
+    def group(self):
+        return "year"
+
 
 
 class Not(Expression):
@@ -586,6 +781,12 @@ class Maximum(BinaryOperator):
     def is_collection(self):
         return self.left.is_collection() and self.right.is_collection()
 
+    def short_label(self):
+        return self.left.value
+
+    def group(self):
+        return "max"
+
 
 class And(BinaryOperator):
     def filter1(self):
@@ -608,6 +809,11 @@ class And(BinaryOperator):
     def is_collection(self):
         return self.left.is_collection() and self.right.is_collection()
 
+    def description(self):
+        return self.left.description() + self.right.description()
+
+    def short_label(self):
+        raise NotImplementedError
 
 class Or(BinaryOperator):
     def filter1(self):
@@ -627,6 +833,11 @@ class Or(BinaryOperator):
             return self.left.score(photo, negated) + self.right.score(photo, negated)
         return self.left.score(photo, negated) * self.right.score(photo, negated)
 
+    def description(self):
+        raise NotImplemented
+
+    def short_label(self):
+        raise NotImplementedError
 
 def Any(s):
     expr = Or(Donor(s), Or(Caption(s), Or(State(s), Or(Country(s), Or(County(s), Or(City(s), Or(Tag(s), Term(s))))))))
