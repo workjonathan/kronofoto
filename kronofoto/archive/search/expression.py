@@ -442,6 +442,18 @@ class SingleWordTag(Expression):
             return sum(scores)
         return reduce(operator.mul, scores, 1)
 
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def group(self):
+        return "tag"
+
 Tag = lambda s: MultiWordTag(s) if len(s.split()) > 1 else SingleWordTag(s)
 
 
@@ -621,14 +633,14 @@ class County(Expression):
         self.value = value
 
     def filter1(self):
-        q = Q(county__icontains=self.value)
+        q = Q(county__iexact=self.value)
         return q
 
     def scoreF(self, negated):
         if not negated:
-            return Case(When(county__icontains=self.value, then=1), default=0, output_field=FloatField())
+            return Case(When(county__iexact=self.value, then=1), default=0, output_field=FloatField())
         else:
-            return Case(When(county__icontains=self.value, then=0), default=1, output_field=FloatField())
+            return Case(When(county__iexact=self.value, then=0), default=1, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
@@ -892,7 +904,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(BasicTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
+    expr = Maximum(Tag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:
