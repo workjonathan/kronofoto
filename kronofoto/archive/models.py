@@ -221,8 +221,30 @@ class Photo(models.Model):
     original = models.ImageField(null=True, editable=False)
     h700 = models.ImageField(null=True, editable=False)
     thumbnail = models.ImageField(null=True, editable=False)
-    donor = models.ForeignKey(Donor, models.PROTECT)
+    donor = models.ForeignKey(Donor, models.PROTECT, null=True)
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
+    terms = models.ManyToManyField(Term, blank=True)
+    photographer = models.TextField(blank=True)
+    city = models.CharField(max_length=128, blank=True)
+    county = models.CharField(max_length=128, blank=True)
+    state = models.CharField(max_length=64, blank=True)
+    country = models.CharField(max_length=64, null=True, blank=True)
+    year = models.SmallIntegerField(null=True, blank=True, db_index=True)
+    circa = models.BooleanField(default=False)
+    caption = models.TextField(blank=True)
+    is_featured = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    scanner = models.ForeignKey(
+        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
+    )
+
+    objects = PhotoQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
+        ]
 
     @classmethod
     def count(cls):
@@ -337,23 +359,6 @@ class Photo(models.Model):
         return Photo.index_by_fields('city', 'state')
 
 
-    terms = models.ManyToManyField(Term, blank=True)
-    photographer = models.TextField(blank=True)
-    city = models.CharField(max_length=128, blank=True)
-    county = models.CharField(max_length=128, blank=True)
-    state = models.CharField(max_length=64, blank=True)
-    country = models.CharField(max_length=64, null=True, blank=True)
-    year = models.SmallIntegerField(null=True, blank=True, db_index=True)
-    circa = models.BooleanField(default=False)
-    caption = models.TextField(blank=True)
-    is_featured = models.BooleanField(default=False)
-    is_published = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    scanner = models.ForeignKey(
-        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
-    )
-
-    objects = PhotoQuerySet.as_manager()
     def __str__(self):
         return self.accession_number
 

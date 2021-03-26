@@ -92,12 +92,28 @@ class YearIsSetFilter(admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(year__isnull=True)
 
+class IsPublishedFilter(admin.SimpleListFilter):
+    title = "photo is published"
+    parameter_name = "is published"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(is_published=True)
+        elif self.value() == 'No':
+            return queryset.filter(is_published=False)
+
 
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = (TagFilter, YearIsSetFilter)
+    list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter)
     list_display = ('thumb_image', 'accession_number', 'year', 'caption')
 
     def thumb_image(self, obj):
