@@ -89,6 +89,9 @@ class MaxReporter:
         else:
             return expr.value
 
+class NewPhotosReporter:
+    def describe(self, exprs):
+        return "new" if exprs[0].value else 'not new'
 
 class Description:
     def __init__(self, values):
@@ -113,6 +116,8 @@ class Description:
             return GenericFilterReporter('tagged with')
         if group == 'donor':
             return GenericFilterReporter('donated by')
+        if group == 'new':
+            return NewPhotosReporter()
 
     def __str__(self):
         by_group = {}
@@ -186,6 +191,41 @@ class Expression:
 
     def group(self):
         raise NotImplementedError
+
+class IsNew(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def filter1(self):
+        if models.NewCutoff.objects.exists():
+            cutoff = models.NewCutoff.objects.all()[0].date
+            if self.value:
+                return Q(created__gte=cutoff)
+            else:
+                return Q(created__lt=cutoff)
+        return Q()
+
+    def scoreF(self, negated):
+        if models.NewCutoff.objects.exists():
+            cutoff = models.NewCutoff.objects.all()[0].date
+            if (not negated) ^ (not self.value):
+                return Case(When(created__gte=cutoff, then=1), default=0, output_field=FloatField())
+            else:
+                return Case(When(created__lt=cutoff, then=1), default=0, output_field=FloatField())
+        else:
+            return 1
+
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "New: {}".format(self.value.term.lower())
+
+    def group(self):
+        return "new"
 
 
 class TermExactly(Expression):

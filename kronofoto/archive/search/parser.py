@@ -2,10 +2,16 @@ import parsy
 from .expression import *
 from functools import reduce
 
+upper = lambda s: s.upper()
+singleton = lambda x: [x]
+const = lambda x: lambda _: x
+is_instance = lambda t: lambda x: isinstance(x, t)
 number = parsy.regex(r'-?[0-9]+').map(int)
+
 #numberplus = parsy.regex(r'-?[0-9]+\+').map(int)
 quoted = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
 string = quoted | parsy.regex(r'[^\s\(\)]+')
+boolean = parsy.string('TRUE', transform=upper).map(const(True)) | parsy.string('FALSE', transform=upper).map(const(False))
 
 yearExpr = parsy.string('year:') >> (
       parsy.seq((number << parsy.string('-')).map(YearGTE), number.map(YearLTE)).combine(And)
@@ -24,16 +30,13 @@ countryExpr = parsy.string('country:') >> string.map(Country)
 countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
-
-upper = lambda s: s.upper()
-singleton = lambda x: [x]
-const = lambda x: lambda _: x
-is_instance = lambda t: lambda x: isinstance(x, t)
+isNewExpr = parsy.string('is_new:') >> boolean.map(IsNew)
 
 token = (
       parsy.string('|', transform=upper).map(upper)
     | parsy.string('AND', transform=upper).map(upper)
     | parsy.string('OR', transform=upper).map(upper)
+    | isNewExpr
     | yearExpr
     | tagExpr
     | tagExactExpr
