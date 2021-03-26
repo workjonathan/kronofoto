@@ -347,7 +347,7 @@ class MultiWordTag(Expression):
         self.field = 'TA_' + '_'.join(self.value.split())
 
 
-    def filter1(self):
+    def filter2(self):
         return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
 
 
@@ -386,7 +386,7 @@ class TagExactly(Expression):
         self.value = value
         self.field = 'TAE_' + '_'.join(self.value.split())
 
-    def filter1(self):
+    def filter2(self):
         return Q(phototag__tag__tag__iexact=self.value)
 
     def annotations1(self):
