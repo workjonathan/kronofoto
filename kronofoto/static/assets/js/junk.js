@@ -96,7 +96,7 @@ const moveMarker = year => {
     let markerStyle = window.getComputedStyle(marker);
     let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
     let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
-    marker.style.left = (offset + 'px');
+    marker.style.transform = `translateX(${offset}px)`;
 }
 
 window.onpopstate = evt => {
