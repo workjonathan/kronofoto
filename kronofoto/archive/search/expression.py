@@ -410,10 +410,8 @@ class MultiWordTerm(Expression):
         self.value = value.lower()
         self.field = 'TE_' + '_'.join(self.value.split())
 
-
     def filter1(self):
         return Q(terms__term__icontains=self.value)
-
 
     def annotations1(self):
         term_minusval = Cast(
@@ -433,6 +431,12 @@ class MultiWordTerm(Expression):
 
     def group(self):
         return "term"
+
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
 
 
 class SingleWordTerm(Expression):
@@ -470,7 +474,7 @@ class SingleWordTerm(Expression):
         return "term"
 
     def description(self):
-        return
+        return Description([self])
 
 Term = lambda s: MultiWordTerm(s) if len(s.split()) > 1 else SingleWordTerm(s)
 
@@ -603,14 +607,14 @@ class City(Expression):
         self.value = value
 
     def filter1(self):
-        q = Q(city__icontains=self.value)
+        q = Q(city__iexact=self.value)
         return q
 
     def scoreF(self, negated):
         if not negated:
-            return Case(When(city__icontains=self.value, then=1), default=0, output_field=FloatField())
+            return Case(When(city__iexact=self.value, then=1), default=0, output_field=FloatField())
         else:
-            return Case(When(city__icontains=self.value, then=0), default=1, output_field=FloatField())
+            return Case(When(city__iexact=self.value, then=0), default=1, output_field=FloatField())
 
     def score(self, photo, negated):
         return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0

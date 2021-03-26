@@ -525,7 +525,8 @@ class SearchResultsView(GridBase):
         try:
             self.expr = expr = self.form.as_expression()
             if expr.is_collection():
-                qs = expr.as_collection(self.model.objects)
+                self.collection = CollectionQuery(expr, self.request.user)
+                qs = self.model.objects.filter_photos(self.collection)
             else:
                 qs = expr.as_search(self.model.objects)
             if qs.count() == 1:

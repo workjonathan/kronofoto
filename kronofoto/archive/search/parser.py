@@ -65,6 +65,19 @@ def tokenize():
 
     return start + tokens + endsep
 
+@parsy.generate
+def basic_tokenize():
+    start = yield separator.many()
+    start = sum(start, [])
+    token1 = yield string
+    start.append(token1)
+    tokens = yield (separator.at_least(1).map(lambda x: sum(x,[])) + string.map(singleton)).many()
+    tokens = sum(tokens, [])
+    endsep = yield separator.many()
+    endsep = sum(endsep, [])
+
+    return start + tokens + endsep
+
 negate = lambda expr: ((parsy.match_item('-') >> expr.map(Not)) | expr)
 wrap = lambda expr: (parsy.match_item('(') >> expr << parsy.match_item(')'))
 
@@ -126,7 +139,7 @@ class BasicParser:
 
     @classmethod
     def tokenize(cls, s):
-        return cls(s.split())
+        return cls(basic_tokenize.parse(s))
 
     def parse(self):
         if len(self.tokens):

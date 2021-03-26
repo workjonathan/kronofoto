@@ -134,7 +134,6 @@ bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):
         year_index = self.year_index()
-        print(year_index.query)
         years = [p.year for p in year_index]
         year_range = Photo.objects.year_range()
         allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
@@ -144,10 +143,11 @@ class PhotoQuerySet(models.QuerySet):
         ]
 
     def year_index(self):
-        yearid = self.values('year').annotate(min_id=Min('id'))
-        yearcount = self.filter(year=OuterRef('year')).values('year').annotate(count=Count('id'))
+        set = Photo.objects.filter(id__in=Subquery(self.values('id')))
+        yearid = set.values('year').annotate(min_id=Min('id'))
+        yearcount = set.filter(year=OuterRef('year')).values('year').annotate(count=Count('id'))
 
-        return self.filter(
+        return set.filter(
             id__in=Subquery(yearid.values('min_id'))
         ).annotate(
             row_number=Window(
@@ -165,7 +165,7 @@ class PhotoQuerySet(models.QuerySet):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
     def filter_photos(self, collection):
-        return collection.filter(self)
+        return collection.filter(self.filter(year__isnull=False, is_published=True))
 
 
 def format_location(**kwargs):
@@ -199,7 +199,9 @@ class CollectionQuery:
         return repr(self.expr)
 
     def __str__(self):
-        return str(self.expr)
+        if not self.expr:
+            return "All Photos"
+        return str(self.expr.description())
 
 
 class NewCutoff(models.Model):
