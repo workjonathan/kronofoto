@@ -15,6 +15,7 @@ from functools import reduce
 import operator
 from bisect import bisect_left
 from django.utils.http import urlencode
+import hashlib
 
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
@@ -195,8 +196,13 @@ class CollectionQuery:
         else:
             return self.expr.as_search(qs)
 
+    def make_key(self, s):
+        m = hashlib.md5()
+        m.update(s.encode('utf-8'))
+        return m.hexdigest()
+
     def cache_encoding(self):
-        return repr(self.expr)
+        return self.make_key(repr(self.expr))
 
     def __str__(self):
         if not self.expr:
