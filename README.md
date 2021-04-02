@@ -10,6 +10,9 @@ Run the migrations:
 
     ./manage.py migrate
 
+Create the cache table:
+
+    ./manage.py createcachetable
 
 There is a command to load existing data from the standard arbitrary csv format. This command only loads records into a table that will not be needed later. 
 
