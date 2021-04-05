@@ -7,6 +7,10 @@ from django.db.models import Count
 from django.conf import settings
 from django.urls import reverse
 
+admin.site.site_header = 'Fortepan Administration'
+admin.site.site_title = 'Fortepan Administration'
+admin.site.index_title = 'Fortepan Administration Index'
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
