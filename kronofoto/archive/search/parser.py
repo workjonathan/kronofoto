@@ -31,12 +31,14 @@ countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
 isNewExpr = parsy.string('is_new:') >> boolean.map(IsNew)
+collectionExpr = parsy.string('collection:') >> string.map(UserCollection)
 
 token = (
       parsy.string('|', transform=upper).map(upper)
     | parsy.string('AND', transform=upper).map(upper)
     | parsy.string('OR', transform=upper).map(upper)
     | isNewExpr
+    | collectionExpr
     | yearExpr
     | tagExpr
     | tagExactExpr

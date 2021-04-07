@@ -21,7 +21,7 @@
         <div class="collection-grid">
             <ul>
                 {% for collection in object_list %}
-                    <li><a href="{% url "gridview" 1 %}?collection={{collection.id}}">{{ collection.name }}</a>
+                    <li><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a>
                     {% if profile_user == request.user %}
                     <a href="{% url "collection-delete" collection.id %}" style="margin-left: 10px;"><i class="fas fa-times" title="Delete"></i></a>
                     {% endif %}

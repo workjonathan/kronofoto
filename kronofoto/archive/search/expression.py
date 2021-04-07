@@ -89,6 +89,10 @@ class MaxReporter:
         else:
             return expr.value
 
+class CollectionReporter:
+    def describe(self, exprs):
+        return ', '.join(expr.name for expr in exprs)
+
 class NewPhotosReporter:
     def describe(self, exprs):
         return "new" if exprs[0].value else 'not new'
@@ -118,6 +122,8 @@ class Description:
             return GenericFilterReporter('donated by')
         if group == 'new':
             return NewPhotosReporter()
+        if group == 'user-collection':
+            return CollectionReporter()
 
     def __str__(self):
         by_group = {}
@@ -191,6 +197,45 @@ class Expression:
 
     def group(self):
         raise NotImplementedError
+
+
+class UserCollection(Expression):
+    def __init__(self, value):
+        self.value = value
+        self._object = None
+
+    def filter2(self):
+        return Q(collection__uuid=self.value)
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(collection__uuid=self.value, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(collection__uuid=self.value, then=0), default=1, output_field=FloatField())
+
+    @property
+    def object(self):
+        if not self._object:
+            print(self.value)
+            self._object = models.Collection.objects.get(uuid=self.value)
+        return self._object
+
+    @property
+    def name(self):
+        return self.object.name
+
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return 'Collection: {}'.format(self.name)
+
+    def group(self):
+        return 'user-collection'
+
 
 class IsNew(Expression):
     def __init__(self, value):
