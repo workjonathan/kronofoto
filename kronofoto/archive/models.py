@@ -196,9 +196,9 @@ class CollectionQuery:
         if not self.expr:
             return qs.filter(year__isnull=False, is_published=True)
         if self.expr.is_collection():
-            return self.expr.as_collection(qs)
+            return self.expr.as_collection(qs, self.user)
         else:
-            return self.expr.as_search(qs)
+            return self.expr.as_search(qs, self.user)
 
     def make_key(self, s):
         m = hashlib.md5()

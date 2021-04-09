@@ -158,10 +158,10 @@ class Expression:
     def shakeout(self):
         return self
 
-    def filter1(self):
+    def filter1(self, user):
         return None
 
-    def filter2(self):
+    def filter2(self, user):
         return None
 
     def annotations1(self):
@@ -171,9 +171,9 @@ class Expression:
     def is_collection(self):
         return False
 
-    def _filter(self, qs):
-        f2 = self.filter2()
-        f1 = self.filter1()
+    def _filter(self, qs, user):
+        f2 = self.filter2(user)
+        f1 = self.filter1(user)
         q = (f1 | f2) if f1 and f2 else f1 if f1 else f2
 
         return (qs.filter(q)
@@ -183,11 +183,11 @@ class Expression:
             .filter(relevance__gt=0)
         )
 
-    def as_collection(self, qs):
-        return self._filter(qs).order_by('year', 'id')
+    def as_collection(self, qs, user):
+        return self._filter(qs, user).order_by('year', 'id')
 
-    def as_search(self, qs):
-        return self._filter(qs).order_by('-relevance', 'year', 'id')
+    def as_search(self, qs, user):
+        return self._filter(qs, user).order_by('-relevance', 'year', 'id')
 
     def description(self):
         return Description([self])
@@ -204,8 +204,12 @@ class UserCollection(Expression):
         self.value = value
         self._object = None
 
-    def filter2(self):
-        return Q(collection__uuid=self.value)
+    def filter2(self, user):
+        uuid_filter = Q(collection__uuid=self.value)
+        visibility_filter = ~Q(collection__visibility='PR')
+        if user.is_authenticated:
+            visibility_filter |= Q(collection__owner=user)
+        return uuid_filter & visibility_filter
 
     def scoreF(self, negated):
         if not negated:
@@ -241,7 +245,7 @@ class IsNew(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         if models.NewCutoff.objects.exists():
             cutoff = models.NewCutoff.objects.all()[0].date
             if self.value:
@@ -277,7 +281,7 @@ class TermExactly(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         return Q(terms__id=self.value.id)
 
     def scoreF(self, negated):
@@ -303,7 +307,7 @@ class DonorExactly(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         return Q(donor__id=self.value.id)
 
     def scoreF(self, negated):
@@ -329,7 +333,7 @@ class Donor(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
         return q
 
@@ -367,7 +371,7 @@ class AccessionNumber(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(id=self.value)
         return q
 
@@ -392,7 +396,7 @@ class MultiWordTag(Expression):
         self.field = 'TA_' + '_'.join(self.value.split())
 
 
-    def filter2(self):
+    def filter2(self, user):
         return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
 
 
@@ -431,7 +435,7 @@ class TagExactly(Expression):
         self.value = value
         self.field = 'TAE_' + '_'.join(self.value.split())
 
-    def filter2(self):
+    def filter2(self, user):
         return Q(phototag__tag__tag__iexact=self.value)
 
     def annotations1(self):
@@ -466,7 +470,7 @@ class SingleWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def filter2(self):
+    def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TA')
 
     def annotations1(self):
@@ -507,7 +511,7 @@ class MultiWordTerm(Expression):
         self.value = value.lower()
         self.field = 'TE_' + '_'.join(self.value.split())
 
-    def filter1(self):
+    def filter1(self, user):
         return Q(terms__term__icontains=self.value)
 
     def annotations1(self):
@@ -540,7 +544,7 @@ class SingleWordTerm(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
-    def filter2(self):
+    def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
 
     def annotations1(self):
@@ -581,7 +585,7 @@ class MultiWordCaption(Expression):
         self.caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
         self.captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
 
-    def filter1(self):
+    def filter1(self, user):
         return Q(caption__icontains=self.value)
 
     def scoreF(self, negated):
@@ -600,7 +604,7 @@ class SingleWordCaption(Expression):
             return None
         return self
 
-    def filter2(self):
+    def filter2(self, user):
         return Q(wordcount__word=self.value, wordcount__field='CA')
 
     def annotations1(self):
@@ -625,7 +629,7 @@ class State(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(state__icontains=self.value)
         return q
 
@@ -651,7 +655,7 @@ class Country(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(country__icontains=self.value)
         return q
 
@@ -677,7 +681,7 @@ class County(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(county__iexact=self.value)
         return q
 
@@ -703,7 +707,7 @@ class City(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(city__iexact=self.value)
         return q
 
@@ -730,7 +734,7 @@ class YearLTE(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(year__lte=self.value)
         return q
 
@@ -754,7 +758,7 @@ class YearGTE(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(year__gte=self.value)
         return q
 
@@ -778,7 +782,7 @@ class YearEquals(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
+    def filter1(self, user):
         q = Q(year=self.value)
         return q
 
@@ -806,12 +810,12 @@ class Not(Expression):
     def __init__(self, value):
         self.value = value
 
-    def filter1(self):
-        v = self.value.filter1()
+    def filter1(self, user):
+        v = self.value.filter1(user)
         return ~v if v else v
 
-    def filter2(self):
-        v = self.value.filter2()
+    def filter2(self, user):
+        v = self.value.filter2(user)
         return ~v if v else v
 
     def annotations1(self):
@@ -841,9 +845,9 @@ class BinaryOperator(Expression):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
 
-    def filter2(self):
-        l = self.left.filter2()
-        r = self.right.filter2()
+    def filter2(self, user):
+        l = self.left.filter2(user)
+        r = self.right.filter2(user)
         if l and r:
             return l | r
         return l if l else r
@@ -862,9 +866,9 @@ class BinaryOperator(Expression):
 
 
 class Maximum(BinaryOperator):
-    def filter1(self):
-        l = self.left.filter1()
-        r = self.right.filter1()
+    def filter1(self, user):
+        l = self.left.filter1(user)
+        r = self.right.filter1(user)
         if l and r:
             return l | r
         return l if l else r
@@ -890,9 +894,9 @@ class Maximum(BinaryOperator):
 
 
 class And(BinaryOperator):
-    def filter1(self):
-        l = self.left.filter1()
-        r = self.right.filter1()
+    def filter1(self, user):
+        l = self.left.filter1(user)
+        r = self.right.filter1(user)
         if l and r:
             return l & r
         return l if l else r
@@ -917,9 +921,9 @@ class And(BinaryOperator):
         raise NotImplementedError
 
 class Or(BinaryOperator):
-    def filter1(self):
-        l = self.left.filter1()
-        r = self.right.filter1()
+    def filter1(self, user):
+        l = self.left.filter1(user)
+        r = self.right.filter1(user)
         if l and r:
             return l | r
         return l if l else r
