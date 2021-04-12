@@ -306,8 +306,15 @@ class Photo(models.Model):
         }
 
     def get_grid_url(self, params=None):
-        url = reverse('gridview', kwargs={'page': self.row_number//settings.GRID_DISPLAY_COUNT + 1})
-        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+        page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
+        params = params or hasattr(self, 'params') and self.params
+        if params:
+            url = reverse('search-results')
+            params = params.copy()
+            params['page'] = page
+        else:
+            url = reverse('gridview')
+        return self.add_params(url=url, params=params)
 
 
     def get_absolute_url(self, queryset=None, params=None):

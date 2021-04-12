@@ -504,6 +504,7 @@ class SearchResultsView(GridBase):
         context['collection_name'] = 'Search Results'
         if self.expr and self.expr.is_collection():
             context['collection_name'] = str(self.expr.description())
+            context['timeline_url'] = context['page_obj'][0].get_absolute_url()
         return context
 
     def attach_params(self, photos):
