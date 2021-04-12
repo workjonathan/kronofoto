@@ -115,7 +115,7 @@ class Tag(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return '{}?{}'.format(reverse('search-results'), urlencode({'tag': self.slug}))
+        return '{}?{}'.format(reverse('search-results'), urlencode({'tag': self.tag}))
 
     @staticmethod
     def dead_tags():
