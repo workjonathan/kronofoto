@@ -529,7 +529,7 @@ class SearchResultsView(GridBase):
                 self.collection = CollectionQuery(expr, self.request.user)
                 qs = self.model.objects.filter_photos(self.collection)
             else:
-                qs = expr.as_search(self.model.objects)
+                qs = expr.as_search(self.model.objects, self.request.user)
             if qs.count() == 1:
                 self.redirect = redirect(qs[0].get_absolute_url())
             return qs
