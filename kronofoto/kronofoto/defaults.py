@@ -131,3 +131,5 @@ CACHES = {
         'LOCATION': 'kfcache',
     }
 }
+
+GRID_DISPLAY_COUNT = 48
