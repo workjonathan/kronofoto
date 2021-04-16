@@ -16,28 +16,24 @@ class CollectionQueryTest(TestCase):
         self.tag = models.Tag.objects.create(tag='dog')
 
     def testShouldDescribeCounty(self):
-        coll = models.CollectionQuery(dict(county='Place', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'Photos from Place County, State')
+        coll = models.CollectionQuery(County('Place') & State('State'), AnonymousUser)
+        self.assertEqual(str(coll), 'from Place County, State')
 
     def testShouldDescribeCity(self):
-        coll = models.CollectionQuery(dict(city='CityTown', state='State'), AnonymousUser)
-        self.assertEqual(str(coll), 'Photos from CityTown, State')
+        coll = models.CollectionQuery(City('CityTown') & State('State'), AnonymousUser)
+        self.assertEqual(str(coll), 'from CityTown, State')
 
     def testShouldDescribeTag(self):
-        coll = models.CollectionQuery(dict(tag=self.tag.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Photos tagged with dog')
+        coll = models.CollectionQuery(TagExactly(self.tag.tag), AnonymousUser)
+        self.assertEqual(str(coll), 'tagged with dog')
 
     def testShouldDescribeTerm(self):
-        coll = models.CollectionQuery(dict(term=self.term.slug), AnonymousUser)
-        self.assertEqual(str(coll), 'Photos termed with Airplane')
+        coll = models.CollectionQuery(TermExactly(self.term), AnonymousUser)
+        self.assertEqual(str(coll), 'termed with Airplane')
 
     def testShouldDescribeDonor(self):
-        coll = models.CollectionQuery(dict(donor=self.donor.id), AnonymousUser)
-        self.assertEqual(str(coll), 'Photos in First Last\'s Collection')
-
-    def testShouldDescribeUnfilteredCollection(self):
-        coll = models.CollectionQuery(dict(page=2), AnonymousUser)
-        self.assertEqual(str(coll), 'All Photos')
+        coll = models.CollectionQuery(DonorExactly(self.donor), AnonymousUser)
+        self.assertEqual(str(coll), 'donated by Last, First')
 
 
 class FakeImageTest(SimpleTestCase):
@@ -83,7 +79,7 @@ class PhotoTest(TestCase):
         phototag.creator.add(user)
         phototag.save()
         photo.save()
-        self.assertEqual(models.Photo.objects.filter_photos(models.CollectionQuery({'tag': tag.slug}, user)).count(), 1)
+        self.assertEqual(models.Photo.objects.filter_photos(models.CollectionQuery(TagExactly("test tag"), user)).count(), 1)
         self.assertEqual(photo.get_accepted_tags().count(), 1)
 
     def testCityURL(self):
@@ -189,7 +185,7 @@ class TagTest(TestCase):
 
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
-        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'tag': tag.slug})))
+        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'tag': tag.tag})))
 
     def testShouldEnforceLowerCase(self):
         tag = models.Tag.objects.create(tag='CAPITALIZED')
@@ -392,16 +388,17 @@ class WhenHave50Photos(TestCase):
             self.assertEqual(photo.page_number(), i//10 + 1)
 
     def testSearchShouldSupportBooleanLogic(self):
+        user = AnonymousUser()
         expr1 = expression.YearEquals(1911) & expression.YearEquals(1912)
         expr2 = expression.YearEquals(1911) | expression.YearEquals(1912)
-        self.assertEqual(len(evaluate(expr1, models.Photo.objects)), 0)
-        self.assertEqual(len(evaluate(~expr1, models.Photo.objects)), 50)
-        photomatches = evaluate(expr2, models.Photo.objects)
-        self.assertEqual(len(photomatches), 2)
+        self.assertEqual(expr1.as_search(models.Photo.objects, user).count(), 0)
+        self.assertEqual((~expr1).as_search(models.Photo.objects, user).count(), 50)
+        photomatches = expr2.as_search(models.Photo.objects, user)
+        self.assertEqual(photomatches.count(), 2)
         for photo in photomatches:
             self.assertIn(photo.year, (1911, 1912))
-        photomatches = evaluate(~expr2, models.Photo.objects)
-        self.assertEqual(len(photomatches), 48)
+        photomatches = (~expr2).as_search(models.Photo.objects, user)
+        self.assertEqual(photomatches.count(), 48)
         for photo in photomatches:
             self.assertNotIn(photo.year, (1911, 1912))
 
@@ -472,7 +469,7 @@ class WhenHave50Photos(TestCase):
         photos = [self.photos[2], self.photos[5], self.photos[15]]
         for photo in photos:
             photo.terms.add(term)
-        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'term': term.slug})
+        resp = self.client.get(term.get_absolute_url())
         self.assertEqual(len(resp.context['page_obj']), len(photos))
         our_ids = {photo.id for photo in photos}
         got_ids = {photo.id for photo in resp.context['page_obj']}
@@ -487,7 +484,7 @@ class WhenHave50Photos(TestCase):
         photos = [self.photos[2], self.photos[5], self.photos[15]]
         for photo in photos:
             models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
-        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': tag.slug})
+        resp = self.client.get(tag.get_absolute_url())
         self.assertEqual(len(resp.context['page_obj']), len(photos))
         our_ids = {photo.id for photo in photos}
         got_ids = {photo.id for photo in resp.context['page_obj']}
@@ -568,11 +565,11 @@ class BasicParserTest(SimpleTestCase):
 
     def testParserShouldAcceptSimpleWords(self):
         expr = parser.BasicParser.tokenize("dog").parse()
-        self.assertEqual(expr, Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
+        self.assertEqual(expr, Maximum(Tag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
 
     def testParserShouldCombineTerms(self):
         expr = parser.BasicParser.tokenize("dog waterloo").parse()
-        self.assertEqual(expr, And(Maximum(BasicTag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))), Maximum(BasicTag('waterloo'), Maximum(Term('waterloo'), Maximum(City('waterloo'), Maximum(State('waterloo'), Maximum(Country('waterloo'), County('waterloo'))))))))
+        self.assertEqual(expr, And(CollectionExpr('dog'), CollectionExpr('waterloo')))
 
 class ExpressionTest(SimpleTestCase):
     def testThingsAreCollections(self):
