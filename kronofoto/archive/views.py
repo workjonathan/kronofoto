@@ -363,6 +363,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return {
             'url': photo.get_absolute_url(),
             'h700': photo.h700.url,
+            'tags': str(context['tags']),
             'original': photo.original.url,
             'grid_url': photo.get_grid_url(),
             'metadata': render_to_string('archive/photometadata.html', context, self.request),

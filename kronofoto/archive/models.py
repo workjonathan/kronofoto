@@ -104,10 +104,15 @@ class Term(models.Model):
     def __str__(self):
         return self.term
 
+class TagQuerySet(models.QuerySet):
+    def __str__(self):
+        return ', '.join(str(t) for t in self)
 
 class Tag(models.Model):
     tag = LowerCaseCharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
+
+    objects = TagQuerySet.as_manager()
 
     def save(self, *args, **kwargs):
         if not self.slug:
