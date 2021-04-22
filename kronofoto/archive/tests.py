@@ -126,6 +126,10 @@ class PhotoTagTest(TestCase):
         phototag.delete()
         self.assertEqual(models.Tag.objects.filter(tag='tag').count(), 1)
 
+    def testShouldAllowDeletionOfTags(self):
+        self.tag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='tag').count(), 0)
+
 
 class DonorTest(TestCase):
     def testURL(self):
@@ -403,7 +407,6 @@ class WhenHave50Photos(TestCase):
                 {'name': 'new decade', 'count': 5, 'href': endswithzero.get_absolute_url()},
             ],
         )
-
 
     def testYearIndex(self):
         for i, photo in enumerate(models.Photo.objects.year_index()):

@@ -2,7 +2,7 @@ from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, 
 from django.urls import reverse
 from django.db.models.functions import RowNumber
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
@@ -464,7 +464,16 @@ def remove_deadtags(sender, instance, **kwargs):
     if instance.tag.phototag_set.count() == 0:
         instance.tag.delete()
 
+def disconnect_deadtags(sender, instance, **kwargs):
+    post_delete.disconnect(remove_deadtags, sender=Photo.tags.through)
+
+def connect_deadtags(sender, instance, **kwargs):
+    post_delete.connect(remove_deadtags, sender=Photo.tags.through)
+
 post_delete.connect(remove_deadtags, sender=Photo.tags.through)
+pre_delete.connect(disconnect_deadtags, sender=Tag)
+post_delete.connect(connect_deadtags, sender=Tag)
+
 
 class PrePublishPhoto(models.Model):
     id = models.AutoField(primary_key=True)
