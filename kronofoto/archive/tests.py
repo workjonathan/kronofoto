@@ -90,6 +90,42 @@ class PhotoTest(TestCase):
         photo = models.Photo(county='CountyName', state='StateName')
         self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
 
+class PhotoTagTest(TestCase):
+    def setUp(self):
+        user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
+        self.photo = models.Photo(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=open('testdata/test.jpg', 'rb').read(),
+                content_type='image/jpeg'),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+            is_published=True,
+            year=1950,
+        )
+        self.photo.save()
+        self.photo2 = models.Photo(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=open('testdata/test.jpg', 'rb').read(),
+                content_type='image/jpeg'),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+            is_published=True,
+            year=1950,
+        )
+        self.photo2.save()
+        self.tag = models.Tag.objects.create(tag='tag')
+        self.phototag = models.PhotoTag.objects.create(tag=self.tag, photo=self.photo, accepted=False)
+
+    def testShouldAutomaticallyRemoveDeadTags(self):
+        self.phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='tag').count(), 0)
+
+    def testShouldNotAutomaticallyRemoveLiveTags(self):
+        phototag = models.PhotoTag.objects.create(tag=self.tag, photo=self.photo2, accepted=False)
+        phototag.delete()
+        self.assertEqual(models.Tag.objects.filter(tag='tag').count(), 1)
+
 
 class DonorTest(TestCase):
     def testURL(self):
@@ -303,19 +339,6 @@ class WhenHave50Photos(TestCase):
                 county='county{}'.format(y % 3),
             )
             cls.photos.append(p)
-
-    def testShouldAutomaticallyRemoveDeadTags(self):
-        tag = models.Tag.objects.create(tag='unused tag')
-        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
-        phototag.delete()
-        self.assertEqual(models.Tag.objects.filter(tag='unused tag').count(), 0)
-
-    def testShouldNotAutomaticallyRemoveLiveTags(self):
-        tag = models.Tag.objects.create(tag='still used tag')
-        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[0], accepted=False)
-        phototag = models.PhotoTag.objects.create(tag=tag, photo=self.photos[1], accepted=False)
-        phototag.delete()
-        self.assertEqual(models.Tag.objects.filter(tag='still used tag').count(), 1)
 
     def testCountyIndex(self):
         self.assertEqual(
