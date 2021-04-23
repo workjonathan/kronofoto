@@ -4,8 +4,10 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
 from django.db.models import Count
+from django.db import IntegrityError
 from django.conf import settings
 from django.urls import reverse
+from django.contrib import messages
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -113,12 +115,27 @@ class IsPublishedFilter(admin.SimpleListFilter):
             return queryset.filter(is_published=False)
 
 
+def publish_photos(modeladmin, request, queryset):
+    try:
+        queryset.update(is_published=True)
+    except IntegrityError:
+        modeladmin.message_user(request, 'All published photos must have a donor', messages.ERROR)
+
+publish_photos.short_description = 'Publish photos'
+
+def unpublish_photos(modeladmin, request, queryset):
+    queryset.update(is_published=False)
+unpublish_photos.short_description = 'Unpublish photos'
+
+
+
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
     list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter)
-    list_display = ('thumb_image', 'accession_number', 'year', 'caption')
+    list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
+    actions = [publish_photos, unpublish_photos]
 
     def thumb_image(self, obj):
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
