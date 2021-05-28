@@ -420,10 +420,10 @@ class Photo(models.Model):
                         img = img.resize(dim, Image.ANTIALIAS)
                         results.append(img)
                 thumb, h700 = results
-                fname = 'thumb/{}.jpg'.format(self.uuid)
+                fname = os.path.join('thumb', '{}.jpg'.format(self.uuid))
                 thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
                 self.thumbnail.name = fname
-                fname = 'h700/{}.jpg'.format(self.uuid)
+                fname = os.path.join('h700', '{}.jpg'.format(self.uuid))
                 h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
                 self.h700.name = fname
         super().save(*args, **kwargs)

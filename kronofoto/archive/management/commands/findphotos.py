@@ -49,14 +49,13 @@ class Command(BaseCommand):
                         photographer=photographer,
                         scanner=scanner if record.scanner else None,
                     )
-                    fname = 'original/{}.jpg'.format(photo.uuid)
-                    shutil.copyfile(filename, os.path.join(settings.MEDIA_ROOT, fname))
-                    photo.original.name = fname
+                    fname = os.path.join('original', '{}.jpg'.format(photo.uuid))
+                    with open(filename, 'rb') as fileobj:
+                        photo.original.save(fname, fileobj)
                     photo.save()
                     photo.created = record.added_to_archive
                     photo.save()
                     record.photo = photo
                     record.save()
-                    record.original.close()
                 except Exception as err:
                     print(record.filename, err)

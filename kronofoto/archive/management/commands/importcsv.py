@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        with open(options['csvfile'][0], newline='') as csvfile:
+        with open(options['csvfile'][0], newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             #with transaction.atomic():
             for row in reader:
