@@ -59,7 +59,7 @@ class GenericFilterReporter:
     def __init__(self, verb):
         self.verb = verb
     def describe(self, exprs):
-        words = [expr.value for expr in exprs]
+        words = [str(expr.value) for expr in exprs]
         if len(words) == 1:
             clauses = words[0]
         else:
@@ -155,6 +155,9 @@ class Expression:
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
 
+    def __str__(self):
+        raise NotImplementedError
+
     def shakeout(self):
         return self
 
@@ -199,10 +202,14 @@ class Expression:
         raise NotImplementedError
 
 
+
 class UserCollection(Expression):
     def __init__(self, value):
         self.value = value
         self._object = None
+
+    def __str__(self):
+        return 'collection:{}'.format(self.value)
 
     def filter2(self, user):
         uuid_filter = Q(collection__uuid=self.value)
@@ -220,7 +227,6 @@ class UserCollection(Expression):
     @property
     def object(self):
         if not self._object:
-            print(self.value)
             self._object = models.Collection.objects.get(uuid=self.value)
         return self._object
 
@@ -244,6 +250,9 @@ class UserCollection(Expression):
 class IsNew(Expression):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return 'is_new:{}'.format(self.value).lower()
 
     def filter1(self, user):
         if models.NewCutoff.objects.exists():
@@ -281,6 +290,9 @@ class TermExactly(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'term_exact:{}'.format(self.value)
+
     def filter1(self, user):
         return Q(terms__id=self.value.id)
 
@@ -305,7 +317,16 @@ class TermExactly(Expression):
 
 class DonorExactly(Expression):
     def __init__(self, value):
+        try:
+            value = models.Donor.objects.get(pk=int(value))
+        except ValueError:
+            pass
+        except TypeError:
+            pass
         self.value = value
+
+    def __str__(self):
+        return 'donor_exact:{}'.format(self.value.id)
 
     def filter1(self, user):
         return Q(donor__id=self.value.id)
@@ -332,6 +353,9 @@ class DonorExactly(Expression):
 class Donor(Expression):
     def __init__(self, value):
         self.value = value.lower()
+
+    def __str__(self):
+        return 'donor:{}'.format(self.value)
 
     def filter1(self, user):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
@@ -371,6 +395,9 @@ class AccessionNumber(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'FI{}'.format(self.value)
+
     def filter1(self, user):
         q = Q(id=self.value)
         return q
@@ -395,6 +422,8 @@ class MultiWordTag(Expression):
         self.value = value.lower()
         self.field = 'TA_' + '_'.join(self.value.split())
 
+    def __str__(self):
+        return 'tag:"{}"'.format(self.value)
 
     def filter2(self, user):
         return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
@@ -435,6 +464,9 @@ class TagExactly(Expression):
         self.value = value
         self.field = 'TAE_' + '_'.join(self.value.split())
 
+    def __str__(self):
+        return 'tag_exact:"{}"'.format(self.value)
+
     def filter2(self, user):
         return Q(phototag__tag__tag__iexact=self.value)
 
@@ -469,6 +501,9 @@ class TagExactly(Expression):
 class SingleWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
+
+    def __str__(self):
+        return 'tag:{}'.format(self.value)
 
     def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TA')
@@ -511,6 +546,9 @@ class MultiWordTerm(Expression):
         self.value = value.lower()
         self.field = 'TE_' + '_'.join(self.value.split())
 
+    def __str__(self):
+        return 'term:"{}"'.format(self.value)
+
     def filter1(self, user):
         return Q(terms__term__icontains=self.value)
 
@@ -543,6 +581,9 @@ class MultiWordTerm(Expression):
 class SingleWordTerm(Expression):
     def __init__(self, value):
         self.value = value.lower()
+
+    def __str__(self):
+        return 'term:{}'.format(self.value)
 
     def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
@@ -585,6 +626,9 @@ class MultiWordCaption(Expression):
         self.caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
         self.captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
 
+    def __str__(self):
+        return 'caption:"{}"'.format(self.value)
+
     def filter1(self, user):
         return Q(caption__icontains=self.value)
 
@@ -598,6 +642,9 @@ class MultiWordCaption(Expression):
 class SingleWordCaption(Expression):
     def __init__(self, value):
         self.value = value.lower()
+
+    def __str__(self):
+        return 'caption:{}'.format(self.value)
 
     def shakeout(self):
         if self.value in STOPWORDS:
@@ -629,6 +676,9 @@ class State(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'state:{}'.format(self.value)
+
     def filter1(self, user):
         q = Q(state__icontains=self.value)
         return q
@@ -654,6 +704,9 @@ class State(Expression):
 class Country(Expression):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return 'country:{}'.format(self.value)
 
     def filter1(self, user):
         q = Q(country__icontains=self.value)
@@ -681,6 +734,9 @@ class County(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'county:{}'.format(self.value)
+
     def filter1(self, user):
         q = Q(county__iexact=self.value)
         return q
@@ -706,6 +762,9 @@ class County(Expression):
 class City(Expression):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return 'city:{}'.format(self.value)
 
     def filter1(self, user):
         q = Q(city__iexact=self.value)
@@ -734,6 +793,9 @@ class YearLTE(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'year:{}-'.format(self.value)
+
     def filter1(self, user):
         q = Q(year__lte=self.value)
         return q
@@ -758,6 +820,9 @@ class YearGTE(Expression):
     def __init__(self, value):
         self.value = value
 
+    def __str__(self):
+        return 'year:{}+'.format(self.value)
+
     def filter1(self, user):
         q = Q(year__gte=self.value)
         return q
@@ -781,6 +846,9 @@ class YearGTE(Expression):
 class YearEquals(Expression):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return 'year:{}'.format(self.value)
 
     def filter1(self, user):
         q = Q(year=self.value)
@@ -809,6 +877,9 @@ class YearEquals(Expression):
 class Not(Expression):
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return '-({})'.format(self.value)
 
     def filter1(self, user):
         v = self.value.filter1(user)
@@ -873,6 +944,9 @@ class Maximum(BinaryOperator):
             return l | r
         return l if l else r
 
+    def __str__(self):
+        return '({}) | ({})'.format(self.left, self.right)
+
     def scoreF(self, negated):
         if negated:
             return Least(self.left.scoreF(negated), self.right.scoreF(negated))
@@ -901,6 +975,9 @@ class And(BinaryOperator):
             return l & r
         return l if l else r
 
+    def __str__(self):
+        return '({}) AND ({})'.format(self.left, self.right)
+
     def scoreF(self, negated):
         if negated:
             return self.left.scoreF(negated) + self.right.scoreF(negated)
@@ -927,6 +1004,9 @@ class Or(BinaryOperator):
         if l and r:
             return l | r
         return l if l else r
+
+    def __str__(self):
+        return '{} OR {}'.format(self.left, self.right)
 
     def scoreF(self, negated):
         if negated:

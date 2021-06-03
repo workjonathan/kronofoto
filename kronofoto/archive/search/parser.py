@@ -22,7 +22,9 @@ yearExpr = parsy.string('year:') >> (
 
 tagExpr = parsy.string('tag:') >> string.map(Tag)
 tagExactExpr = parsy.string('tag_exact:') >> string.map(TagExactly)
+termExactExpr = parsy.string('term_exact:') >> string.map(TermExactly)
 donorExpr = parsy.string('donor:') >> string.map(Donor)
+donorExactExpr = parsy.string('donor_exact:') >> string.map(DonorExactly)
 termExpr = parsy.string('term:') >> string.map(Term)
 cityExpr = parsy.string('city:') >> string.map(City)
 stateExpr = parsy.string('state:') >> string.map(State)
@@ -43,7 +45,9 @@ token = (
     | tagExpr
     | tagExactExpr
     | donorExpr
+    | donorExactExpr
     | termExpr
+    | termExactExpr
     | cityExpr
     | stateExpr
     | countryExpr
