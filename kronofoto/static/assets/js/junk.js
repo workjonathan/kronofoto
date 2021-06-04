@@ -23,11 +23,11 @@ const carousel = document.getElementById('fi-thumbnail-carousel-images')
 
 const delay = ms => new Promise((resolve, reject) => setTimeout(resolve, ms))
 
-const mouseUp = element => new Promise((resolve, reject) => 
+const mouseUp = element => new Promise((resolve, reject) =>
     element.addEventListener("mouseup", resolve, {once: true})
 )
 
-const animationEnd = element => new Promise((resolve, reject) => 
+const animationEnd = element => new Promise((resolve, reject) =>
     element.addEventListener('animationend', resolve, {once: true})
 )
 
@@ -135,7 +135,7 @@ const scrollAction = (element, direction, target) => evt => {
         if (evt.event === 'click') {
             carousel.setAttribute('style', `animation: from${evt.position}-to${target} 500ms ease-out; animation-fill-mode: forwards`)
             return animationEnd(carousel)
-        } 
+        }
         return evt
     })
     Promise.all([next_page, scroll2end]).then(([data, evt]) => {
@@ -149,7 +149,7 @@ const scrollAction = (element, direction, target) => evt => {
 
 if (forward) {
     forward.addEventListener("mousedown", () =>
-        forward.getAttribute('href') != '#' ? 
+        forward.getAttribute('href') != '#' ?
             Promise.race([
                 mouseUp(forward).then(() => ({event: 'click', position: -100})),
                 delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
@@ -158,30 +158,75 @@ if (forward) {
 
 if (backward) {
     backward.addEventListener("mousedown", () =>
-        backward.getAttribute('href') != '#' ? 
+        backward.getAttribute('href') != '#' ?
         Promise.race([
             mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
             delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
         ]).then(scrollAction(backward, 'backward', 0)) : undefined)
 }
 
-//search dropdown
-$('.search-options').click(() => {
-    $('.search-form').toggle()
-    /* $('.overlay').toggle() */
-})
-/* $('.search-options').click(() => {
-    if($('.arrow').hasClass('down')) {
-        $('.search-form').show()
-        $('.arrow').removeClass('down').addClass('up')
-    } else if ($('.arrow').hasClass('up')) {
-        $('.search-form').hide()
-        $('.arrow').removeClass('up').addClass('down')
+//RETRACT SEARCH DROPDOWN MENU WHEN CLICKING ON BACKGROUND OF WEBSITE WHILE THE DROPDOWN IS EXTENDED
+//code copied from https://www.tutorialrepublic.com/codelab.php?topic=faq&file=jquery-close-dropdown-by-clicking-outside-of-them on 6/2/21 by SS
+//Only issue with the function as of 6/4 is that it will not close the menu if you click on something with the class "<empty-string>" - SS
+/*Pseudo Code:
+
+    if the menu is open and anything else except the menu is clicked:
+        close the menu
+
+    if carrot is clicked:
+        toggle the menu
+
+*/
+
+$(document).click(function(event)
+{
+    //~TESTING LINE
+    //console.log(event.target.className)
+
+    var classOfThingClickedOn = event.target.className
+
+    //~TESTING LINE
+    //console.log($('.search-form').find('*'))
+
+    //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
+    var $descendantsOfSearchForm = $('.search-form').find('*')
+
+    //---creates an array of all components of the search menu dropdown---
+    //adds the search menu itself to the array
+    var componentsOfSearchMenuArray = ['search-form']
+
+    //adds the class of all the components of the search menu to the array
+    $descendantsOfSearchForm.each(function(index)
+    {
+        //checks to make sure the class isn't already in the array
+        if($.inArray(this.className, componentsOfSearchMenuArray) == -1)
+        {
+            //adds the class to the array
+            componentsOfSearchMenuArray.push(this.className)
+        }
+    })
+
+    //~TESTING LINES
+    //console.log(componentsOfSearchMenuArray)
+    //console.log('Class:'+'"'+classOfThingClickedOn+'"')
+    //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
+
+    //if the search menu is open and the user clicks on something outside of the menu, close the menu
+    if($('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
+    {
+        $('.search-form').toggle()
     }
-}) */
+    //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
+    else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')
+    {
+        $('.search-form').toggle()
+    }
+})
+
+
 $('#tag-search').autocomplete({
     source: '/tags/',
-    minLength: 2, 
+    minLength: 2,
 })
 
 $('input[name="startYear"]').parent().parent('div').addClass('daterange')
@@ -232,7 +277,7 @@ $('#search-box').focus(function() {
     $('.search-icon').css('filter', 'brightness(0) invert(1)')
     $('.carrot').css('filter', 'brightness(0) invert(1)')
     $('#search-box').addClass('placeholder-light').css('color', 'white')
-    
+
 }).blur(function() {
     $('#search-box-container').css('background','var(--fp-light-grey)')
     $('.search-icon').css('filter', 'none')
@@ -241,7 +286,8 @@ $('#search-box').focus(function() {
     //('#search-box').css('color', 'var(--fp-light-grey)')
 });
 
-//changes colors of icons and --fp-main-blue css variable on page load
+
+//----------changes colors of icons and --fp-main-blue css variable on page load----------
 //NEEDS CLEANED UP
 const img1 = "/static/assets/images/skyblue/logo.svg"
 const img2 = "/static/assets/images/golden/logo.svg"
@@ -323,3 +369,4 @@ window.addEventListener('DOMContentLoaded', () => {
     } */
 
 });
+//----------_----------
