@@ -1,0 +1,11 @@
+{% load widgets %}
+<div class="grid-navigation">
+    <h2>{{ collection_name }}</h2>
+    {% page_links formatter page_obj %}
+</div>
+
+{% grid page_obj %}
+
+<div class="grid-navigation">
+    {% page_links formatter page_obj %}
+</div>

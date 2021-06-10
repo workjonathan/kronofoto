@@ -1,0 +1,6 @@
+{% load widgets %}
+<ul class="photo-grid">
+    {% for photo in page_obj %}
+    <li>{% h700_link photo %}</li>
+    {% endfor %}
+</ul>

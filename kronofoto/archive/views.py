@@ -440,18 +440,21 @@ class GridBase(BaseTemplateMixin, ListView):
         for i, photo in enumerate(page_obj):
             photo.row_number = page_obj.start_index() + i - 1
         self.attach_params(page_obj)
-        paginator = context['paginator']
-        links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
-        if page_obj.number != 1:
-            links[0]['url'] = self.format_page_url(1)
-            links[1]['url'] = self.format_page_url(page_obj.previous_page_number())
-        if page_obj.has_next():
-            links[2]['url'] = self.format_page_url(page_obj.next_page_number())
-        if page_obj.number != paginator.num_pages:
-            links[3]['url'] = self.format_page_url(paginator.num_pages)
-        context['links'] = links
         return context
 
+class GridViewFormatter:
+    def __init__(self, parameters):
+        self.parameters = parameters
+    def page_url(self, num):
+        return "{}?{}".format(reverse('gridview', args=(num,)), self.parameters.urlencode())
+
+class SearchResultsViewFormatter:
+    def __init__(self, parameters):
+        self.parameters = parameters
+    def page_url(self, num):
+        params = self.parameters.copy()
+        params['page'] = num
+        return "{}?{}".format(reverse('search-results'), params.urlencode())
 
 class GridView(GridBase):
     def get_queryset(self):
@@ -476,14 +479,12 @@ class GridView(GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
+        context['formatter'] = GridViewFormatter(self.request.GET)
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
         except IndexError:
             pass
         return context
-
-    def format_page_url(self, num):
-        return "{}?{}".format(reverse('gridview', args=(num,)), self.request.GET.urlencode())
 
     def attach_params(self, photos):
         params = self.request.GET.copy()
@@ -494,14 +495,10 @@ class GridView(GridBase):
 
 
 class SearchResultsView(GridBase):
-    def format_page_url(self, num):
-        params = self.request.GET.copy()
-        params['page'] = num
-        return "{}?{}".format(reverse('search-results'), params.urlencode())
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
+        context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results'
         if self.expr and self.expr.is_collection():
             context['collection_name'] = str(self.expr.description())
