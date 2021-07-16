@@ -111,12 +111,14 @@
        
       </div>
     </nav>
-  </header>
-    {% block content %}
-    {% endblock %}
-  <!-- <footer></footer> -->
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="{% static "assets/js/junk.js" %}"></script>
   <script src="{% static "assets/js/drag-drop.js" %}"></script>
+  </header>
+  <div id="app">
+    {% block content %}
+    {% endblock %}
+  </div>
+  <!-- <footer></footer> -->
 </body>
 </html>

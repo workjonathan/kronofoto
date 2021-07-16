@@ -15,11 +15,15 @@ def page_links(formatter, page_obj):
     links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
     if page_obj.number != 1:
         links[0]['url'] = formatter.page_url(1)
+        links[0]['url_json'] = formatter.page_url(1, json=True)
         links[1]['url'] = formatter.page_url(page_obj.previous_page_number())
+        links[1]['url_json'] = formatter.page_url(page_obj.previous_page_number(), json=True)
     if page_obj.has_next():
         links[2]['url'] = formatter.page_url(page_obj.next_page_number())
+        links[2]['url_json'] = formatter.page_url(page_obj.next_page_number(), json=True)
     if page_obj.number != page_obj.paginator.num_pages:
         links[3]['url'] = formatter.page_url(page_obj.paginator.num_pages)
+        links[3]['url_json'] = formatter.page_url(page_obj.paginator.num_pages, json=True)
     return dict(
         links=links,
         page_obj=page_obj
@@ -32,4 +36,16 @@ def grid_content(collection_name, formatter, page_obj):
         collection_name=collection_name,
         formatter=formatter,
         page_obj=page_obj,
+    )
+
+@register.inclusion_tag('archive/photo-details.html', takes_context=False)
+def photo_details(photo, page, years, timeline, timeline_key, prev_page, next_page):
+    return dict(
+        photo=photo,
+        page=page,
+        years=years,
+        timeline=timeline,
+        timeline_key=timeline_key,
+        prev_page=prev_page,
+        next_page=next_page,
     )
