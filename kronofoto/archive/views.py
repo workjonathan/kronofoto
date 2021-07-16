@@ -361,11 +361,13 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             return {}
         photo = context['photo']
         return {
+            'type': 'TIMELINE',
             'url': photo.get_absolute_url(),
             'h700': photo.h700.url,
             'tags': str(context['tags']),
             'original': photo.original.url,
             'grid_url': photo.get_grid_url(),
+            'frame': render_to_string('archive/photo-details.html', context, self.request),
             'metadata': render_to_string('archive/photometadata.html', context, self.request),
             'thumbnails': render_to_string('archive/thumbnails.html', context, self.request),
             'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else NO_URLS,
@@ -429,10 +431,13 @@ class GridBase(BaseTemplateMixin, ListView):
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
 
+    def render(self, context, **kwargs):
+        return super().render_to_response(context, **kwargs)
+
     def render_to_response(self, context, **kwargs):
         if hasattr(self, 'redirect'):
             return self.redirect
-        return super().render_to_response(context, **kwargs)
+        return self.render(context, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -445,18 +450,22 @@ class GridBase(BaseTemplateMixin, ListView):
 class GridViewFormatter:
     def __init__(self, parameters):
         self.parameters = parameters
-    def page_url(self, num):
-        return "{}?{}".format(reverse('gridview', args=(num,)), self.parameters.urlencode())
+    def page_url(self, num, json=False):
+        view = 'gridview-json' if json else 'gridview'
+        return "{}?{}".format(reverse(view, args=(num,)), self.parameters.urlencode())
 
 class SearchResultsViewFormatter:
     def __init__(self, parameters):
         self.parameters = parameters
-    def page_url(self, num):
+    def page_url(self, num, json=False):
         params = self.parameters.copy()
         params['page'] = num
-        return "{}?{}".format(reverse('search-results'), params.urlencode())
+        view = 'search-results-json' if json else 'search-results'
+        return "{}?{}".format(reverse(view), params.urlencode())
+    def render(self, context, **kwargs):
+        return super().render_to_response(context, **kwargs)
 
-class GridView(GridBase):
+class GridView(JSONResponseMixin, GridBase):
     def get_queryset(self):
         form = SearchForm(self.request.GET)
         expr = None
@@ -476,10 +485,18 @@ class GridView(GridBase):
             self.redirect = redirect(qs[0].get_absolute_url())
         return qs
 
+    def get_data(self, context):
+        return dict(
+            type="GRID",
+            frame=render_to_string('archive/grid-content.html', context, self.request),
+            url=self.request.get_full_path(),
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
         context['formatter'] = GridViewFormatter(self.request.GET)
+        context['initialstate'] = self.get_data(context)
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
         except IndexError:
@@ -494,12 +511,13 @@ class GridView(GridBase):
             photo.save_params(params=params)
 
 
-class SearchResultsView(GridBase):
+class SearchResultsView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results'
+        context['initialstate'] = self.get_data(context)
         if self.expr and self.expr.is_collection():
             context['collection_name'] = str(self.expr.description())
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
@@ -512,6 +530,13 @@ class SearchResultsView(GridBase):
                 params.pop('display')
             for photo in photos:
                 photo.save_params(params=params)
+
+    def get_data(self, context):
+        return dict(
+            type="GRID",
+            frame=render_to_string('archive/grid-content.html', context, self.request),
+            url=self.request.get_full_path(),
+        )
 
     def dispatch(self, request, *args, **kwargs):
         self.form = SearchForm(self.request.GET)
@@ -535,6 +560,13 @@ class SearchResultsView(GridBase):
             self.expr = None
             return []
 
+class JSONGridView(GridView):
+    def render(self, context, **kwargs):
+        return self.render_to_json_response(context, **kwargs)
+
+class JSONSearchResultsView(SearchResultsView):
+    def render(self, context, **kwargs):
+        return self.render_to_json_response(context, **kwargs)
 
 class Profile(BaseTemplateMixin, ListView):
     model = Collection

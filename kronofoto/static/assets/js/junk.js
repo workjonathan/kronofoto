@@ -1,3 +1,89 @@
+class FortepanApp {
+    constructor(element, initialState, {scrollSpeed=4}={}) {
+        this.elem = element
+        this.scrollSpeed = scrollSpeed
+        window.history.replaceState(initialState, 'Fortepan Iowa', initialState.url)
+        this.loadFrame(initialState)
+        const _this = this
+        document.addEventListener('click', function(e) {
+            const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
+            if (jsonhref) {
+                e.preventDefault()
+                if (jsonhref !== "#") {
+                    const id = e.target.getAttribute('id')
+                    if (id !== 'forward' && id !== 'backward') {
+                        request('GET', jsonhref).then(data => {
+                            _this.loadstate(data)
+                            window.history.pushState(data, 'Fortepan Iowa', data.url)
+                        })
+                    }
+                }
+            }
+        })
+        window.onpopstate = evt => {
+            if (evt.state) {
+                this.loadstate(evt.state)
+            }
+        }
+    }
+    loadFrame(initialState) {
+        this.carousel = undefined
+        this.currentState = initialState
+        this.forward = undefined
+        this.backward = undefined
+        if (initialState.type === 'GRID') {
+            this.elem.innerHTML = initialState.frame
+        }
+        else if (initialState.type === 'TIMELINE') {
+            this.elem.innerHTML = initialState.frame
+            this.carousel = document.querySelector('#fi-thumbnail-carousel-images')
+            this.carousel.innerHTML = this.currentState.thumbnails
+            this.forward = document.querySelector('#forward')
+            this.backward = document.querySelector('#backward')
+            document.querySelector('#metadata').innerHTML = initialState.metadata
+            document.addEventListener('DOMContentLoaded', function() {
+                moveMarker(initialState.year)
+            })
+            this.forward.addEventListener("mousedown", () =>
+                this.forward.getAttribute('href') != '#' ? 
+                    Promise.race([
+                        mouseUp(this.forward).then(() => ({event: 'click', position: -100})),
+                        delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+                    ]).then(scrollAction(this.forward, 'forward', -200)) : undefined)
+
+            this.backward.addEventListener("mousedown", () =>
+                this.backward.getAttribute('href') != '#' ? 
+                Promise.race([
+                    mouseUp(this.backward).then(() => ({event: 'click', position: -100})),
+                    delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
+                ]).then(scrollAction(this.backward, 'backward', 0)) : undefined)
+        }
+    }
+    loadstate(data) {
+        if (data.type === 'TIMELINE' && this.currentState.type === 'TIMELINE') {
+            this.currentState = data
+            this.carousel.innerHTML = data.thumbnails
+            this.carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
+            document.querySelector('#metadata').innerHTML = data.metadata
+            document.querySelector('.fi-image figure img').setAttribute('src', data.h700)
+            document.querySelector('.fi-image figure img').setAttribute('alt', data.tags)
+            document.querySelector('#fi-arrow-left').setAttribute('href', data.previous.url)
+            document.querySelector('#fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
+            document.querySelector('#fi-arrow-right').setAttribute('href', data.next.url)
+            document.querySelector('#fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
+            this.forward.setAttribute('href', data.forward && data.forward.url ? data.forward.url : "#")
+            this.forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
+            this.backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
+            this.backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
+            document.querySelector('#grid-a').setAttribute('href', data.grid_url)
+            document.querySelector('#dl > a').setAttribute('href', data.original)
+            moveMarker(data.year)
+        }
+        else {
+            this.loadFrame(data)
+        }
+    }
+}
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
@@ -17,9 +103,6 @@ const toggleElement = el => {
         el.classList.replace('gridden', 'hidden')
     }
 }
-const forward = document.getElementById('forward')
-const backward = document.getElementById('backward')
-const carousel = document.getElementById('fi-thumbnail-carousel-images')
 
 const delay = ms => new Promise((resolve, reject) => setTimeout(resolve, ms))
 
@@ -44,42 +127,6 @@ const request = (verb, resource) => new Promise((resolve, reject) => {
     xhr.send()
 })
 
-const loadstate = data => {
-    current_state = data
-    carousel.innerHTML = data.thumbnails
-    carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
-    document.getElementById('metadata').innerHTML = data.metadata
-    document.getElementById('fi-image').setAttribute('src', data.h700)
-    document.getElementById('fi-image').setAttribute('alt', data.tags)
-    document.getElementById('fi-arrow-left').setAttribute('href', data.previous.url)
-    document.getElementById('fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
-    document.getElementById('fi-arrow-right').setAttribute('href', data.next.url)
-    document.getElementById('fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
-    forward.setAttribute('href', data.forward && data.forward.url ? data.forward.url : "#")
-    forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
-    backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
-    backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
-    document.getElementById('grid-a').setAttribute('href', data.grid_url)
-    document.querySelector('#dl > a').setAttribute('href', data.original)
-    moveMarker(data.year)
-}
-
-
-document.addEventListener('click', e => {
-    const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
-    if (jsonhref) {
-        e.preventDefault()
-        if (jsonhref !== "#") {
-            id = e.target.getAttribute('id')
-            if (id !== 'forward' && id !== 'backward') {
-                request('GET', jsonhref).then(data => {
-                    loadstate(data)
-                    window.history.pushState(data, 'Fortepan Iowa', data.url)
-                })
-            }
-        }
-    }
-})
 
 const moveMarker = year => {
     const marker = document.querySelector('.active-year-marker');
@@ -100,11 +147,6 @@ const moveMarker = year => {
     marker.style.transform = `translateX(${offset}px)`;
 }
 
-window.onpopstate = evt => {
-    if (evt.state) {
-        loadstate(evt.state)
-    }
-}
 
 const trace = v => {
     console.log(v)
@@ -145,24 +187,6 @@ const scrollAction = (element, direction, target) => evt => {
             scrollAction(element, direction, target)(evt)
         }
     })
-}
-
-if (forward) {
-    forward.addEventListener("mousedown", () =>
-        forward.getAttribute('href') != '#' ?
-            Promise.race([
-                mouseUp(forward).then(() => ({event: 'click', position: -100})),
-                delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-            ]).then(scrollAction(forward, 'forward', -200)) : undefined)
-}
-
-if (backward) {
-    backward.addEventListener("mousedown", () =>
-        backward.getAttribute('href') != '#' ?
-        Promise.race([
-            mouseUp(backward).then((backward) => ({event: 'click', position: -100})),
-            delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-        ]).then(scrollAction(backward, 'backward', 0)) : undefined)
 }
 
 //RETRACT SEARCH DROPDOWN MENU WHEN CLICKING ON BACKGROUND OF WEBSITE WHILE THE DROPDOWN IS EXTENDED

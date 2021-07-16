@@ -2,5 +2,11 @@
 {% load widgets %}
 
 {% block content %}
-{% grid_content collection_name formatter page_obj %}
+{{ initialstate | json_script:"initial-state" }}
+  <script>
+    let current_state = JSON.parse(document.getElementById('initial-state').textContent)
+    const elem = document.querySelector('#app')
+    const app = new FortepanApp(elem, current_state)
+  </script>
 {% endblock %}
+
