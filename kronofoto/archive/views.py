@@ -489,7 +489,7 @@ class GridView(JSONResponseMixin, GridBase):
         return dict(
             type="GRID",
             frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=self.request.get_full_path(),
+            url=context['page_obj'][0].get_grid_url(params=self.request.GET),
         )
 
     def get_context_data(self, **kwargs):
@@ -535,7 +535,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         return dict(
             type="GRID",
             frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=self.request.get_full_path(),
+            url=context['page_obj'][0].get_grid_url(params=self.request.GET),
         )
 
     def dispatch(self, request, *args, **kwargs):
