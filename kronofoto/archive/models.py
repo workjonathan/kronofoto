@@ -16,6 +16,7 @@ import operator
 from bisect import bisect_left
 from django.utils.http import urlencode
 import hashlib
+from django.http import QueryDict
 
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
@@ -31,7 +32,19 @@ class DonorQuerySet(models.QuerySet):
     def filter_donated(self, at_least=1):
         return self.annotate_donatedcount().filter(donated_count__gte=at_least)
 
-class Donor(models.Model):
+class Collectible:
+    def get_absolute_url(self, params=None):
+        return self.format_url(viewname='search-results', params=params)
+
+    def get_json_url(self, params=None):
+        return self.format_url(viewname='search-results-json', params=params)
+
+    def format_url(self, viewname, params=None):
+        if not params:
+            params = QueryDict(mutable=True)
+        return '{}?{}'.format(reverse(viewname), self.encode_params(params))
+
+class Donor(Collectible, models.Model):
     last_name = models.CharField(max_length=256, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
     home_phone = models.CharField(max_length=256, blank=True)
@@ -50,8 +63,9 @@ class Donor(models.Model):
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
-    def get_absolute_url(self):
-        return '{}?{}'.format(reverse('search-results'), urlencode({'donor': self.id}))
+    def encode_params(self, params):
+        params['donor'] = self.id
+        return params.urlencode()
 
     @staticmethod
     def index():
@@ -59,8 +73,6 @@ class Donor(models.Model):
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
             for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
-
-
 
 
 class Collection(models.Model):
@@ -82,7 +94,7 @@ class Collection(models.Model):
         return self.name
 
 
-class Term(models.Model):
+class Term(Collectible, models.Model):
     term = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
@@ -91,8 +103,9 @@ class Term(models.Model):
             self.slug = slugify(self.term)
         super().save(*args, **kwargs)
 
-    def get_absolute_url(self):
-        return '{}?{}'.format(reverse('search-results'), urlencode({'term': self.id}))
+    def encode_params(self, params):
+        params['term'] = self.id
+        return params.urlencode()
 
     @staticmethod
     def index():
@@ -108,7 +121,7 @@ class TagQuerySet(models.QuerySet):
     def __str__(self):
         return ', '.join(str(t) for t in self)
 
-class Tag(models.Model):
+class Tag(Collectible, models.Model):
     tag = LowerCaseCharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
@@ -119,8 +132,9 @@ class Tag(models.Model):
             self.slug = slugify(self.tag)
         super().save(*args, **kwargs)
 
-    def get_absolute_url(self):
-        return '{}?{}'.format(reverse('search-results'), urlencode({'tag': self.tag}))
+    def encode_params(self, params):
+        params['tag'] = self.tag
+        return params.urlencode()
 
     @staticmethod
     def dead_tags():
@@ -291,7 +305,7 @@ class Photo(models.Model):
             url = '{}?{}'.format(url, params.urlencode())
         return url
 
-    def get_json_url(self, queryset=None, params=None):
+    def create_url(self, viewname, queryset=None, params=None):
         kwargs = {'photo': self.accession_number}
         try:
             kwargs['page'] = self.page_number(queryset=queryset)
@@ -299,15 +313,21 @@ class Photo(models.Model):
             pass
 
         url = reverse(
-            'photoview-json',
+            viewname,
             kwargs=kwargs,
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
-    def get_urls(self):
+    def get_json_url(self, queryset=None, params=None):
+        return self.create_url('photoview-json', queryset=queryset, params=params)
+
+    def get_embedded_json_url(self, queryset=None, params=None):
+        return self.create_url('embedded-photoview-json', queryset=queryset, params=params)
+
+    def get_urls(self, embed=False):
         return {
-            'url': self.get_absolute_url(),
-            'json_url': self.get_json_url(),
+            'url': self.get_embedded_url() if embed else self.get_absolute_url(),
+            'json_url': self.get_embedded_json_url() if embed else self.get_json_url(),
         }
 
     def get_grid_url(self, params=None):
@@ -318,26 +338,20 @@ class Photo(models.Model):
             params = params.copy()
             params['page'] = page
         else:
-            url = reverse('gridview', kwargs=dict(page=page))
+            url = reverse('gridview')
         return self.add_params(url=url, params=params)
 
 
-    def get_absolute_url(self, queryset=None, params=None):
-        kwargs = {'photo': self.accession_number}
-        try:
-            kwargs['page'] = self.page_number(queryset=queryset)
-        except AttributeError:
-            pass
+    def get_embedded_url(self, queryset=None, params=None):
+        return self.create_url('embedded-photoview', queryset=queryset, params=params)
 
-        url = reverse(
-            'photoview',
-            kwargs=kwargs,
-        )
-        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+    def get_absolute_url(self, queryset=None, params=None):
+        return self.create_url('photoview', queryset=queryset, params=params)
 
     def get_edit_url(self):
         return reverse('admin:archive_photo_change', args=(self.id,))
 
+    @staticmethod
     def format_url(**kwargs):
         return "{}?{}".format(
             reverse('gridview'), urlencode(kwargs)
@@ -420,10 +434,10 @@ class Photo(models.Model):
                         img = img.resize(dim, Image.ANTIALIAS)
                         results.append(img)
                 thumb, h700 = results
-                fname = os.path.join('thumb', '{}.jpg'.format(self.uuid))
+                fname = 'thumb/{}.jpg'.format(self.uuid)
                 thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
                 self.thumbnail.name = fname
-                fname = os.path.join('h700', '{}.jpg'.format(self.uuid))
+                fname = 'h700/{}.jpg'.format(self.uuid)
                 h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
                 self.h700.name = fname
         super().save(*args, **kwargs)
