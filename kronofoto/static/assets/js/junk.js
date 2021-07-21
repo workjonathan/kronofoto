@@ -41,9 +41,7 @@ class FortepanApp {
             this.forward = document.querySelector('#forward')
             this.backward = document.querySelector('#backward')
             document.querySelector('#metadata').innerHTML = initialState.metadata
-            document.addEventListener('DOMContentLoaded', function() {
-                moveMarker(initialState.year)
-            })
+            moveMarker(initialState.year)
             this.forward.addEventListener("mousedown", () =>
                 this.forward.getAttribute('href') != '#' ? 
                     Promise.race([
