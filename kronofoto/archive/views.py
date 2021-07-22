@@ -496,11 +496,11 @@ class GridView(JSONResponseMixin, GridBase):
         context = super().get_context_data(**kwargs)
         context['collection_name'] = str(self.collection)
         context['formatter'] = GridViewFormatter(self.request.GET)
-        context['initialstate'] = self.get_data(context)
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
         except IndexError:
             pass
+        context['initialstate'] = self.get_data(context)
         return context
 
     def attach_params(self, photos):
@@ -517,10 +517,10 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context['search-form'] = self.form
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results'
-        context['initialstate'] = self.get_data(context)
         if self.expr and self.expr.is_collection():
             context['collection_name'] = str(self.expr.description())
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+        context['initialstate'] = self.get_data(context)
         return context
 
     def attach_params(self, photos):
