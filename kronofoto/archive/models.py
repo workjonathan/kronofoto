@@ -338,7 +338,7 @@ class Photo(models.Model):
             params = params.copy()
             params['page'] = page
         else:
-            url = reverse('gridview')
+            url = reverse('gridview', kwargs=dict(page=page))
         return self.add_params(url=url, params=params)
 
 
