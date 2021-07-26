@@ -61,10 +61,6 @@ header {
   padding: 15px;
 }
 
-#logo {
-  /* width: 120px; */
-}
-
 nav {
   display: flex;
 }
@@ -310,7 +306,7 @@ button#login-btn:hover {
 .new-label_container:hover, .grid-icon:hover, .timeline-container:hover {
   background-color: var(--fp-secondary-ticker-color);
 }
-.new-label_container:hover > img, .grid-icon:hover > a img, .timeline-container:hover > a img {
+.new-label_container:hover > a img, .grid-icon:hover > a img, .timeline-container:hover > a img {
   opacity: 1 !important;
   filter: brightness(0) invert(1);
 }
@@ -318,7 +314,11 @@ button#login-btn:hover {
   padding: 10px;
 }
 .current-view {
-  border: 1px solid var(--fp-main-grey);
+  background: var(--fp-main-blue);
+}
+.current-view a img{
+  opacity: 1 !important;
+  filter: brightness(0) invert(1);
 }
 
 input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
