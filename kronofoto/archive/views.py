@@ -381,11 +381,14 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     def render(self, context, **kwargs):
         return super().render_to_response(context, **kwargs)
 
+    def get_redirect_url(self, photo):
+        return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
+
     def render_to_response(self, context, **kwargs):
         if 'years' not in context:
             try:
                 photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
-                return redirect(photo.get_absolute_url(queryset=self.queryset, params=self.request.GET))
+                return redirect(self.get_redirect_url(photo))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
@@ -422,6 +425,8 @@ class XSendImage(XSendFile):
 class JSONPhotoView(PhotoView):
     def render(self, context, **kwargs):
         return self.render_to_json_response(context, **kwargs)
+    def get_redirect_url(self, photo):
+        return photo.get_json_url(queryset=self.queryset, params=self.request.GET)
 
 
 class GridBase(BaseTemplateMixin, ListView):
