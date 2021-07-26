@@ -32,6 +32,9 @@ class FortepanApp {
         this.currentState = initialState
         this.forward = undefined
         this.backward = undefined
+        document.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
+        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
+        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
         if (initialState.type === 'GRID') {
             this.elem.innerHTML = initialState.frame
         }

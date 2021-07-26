@@ -347,11 +347,11 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context["photo"] = photo_rec
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
-            context['initialstate'] = self.get_data(context)
             context['collection_name'] = str(self.collection)
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
+            context['initialstate'] = self.get_data(context)
         except KeyError:
             pass
         return context
@@ -367,6 +367,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'tags': str(context['tags']),
             'original': photo.original.url,
             'grid_url': photo.get_grid_url(),
+            'timeline_url': context['timeline_url'],
             'frame': render_to_string('archive/photo-details.html', context, self.request),
             'metadata': render_to_string('archive/photometadata.html', context, self.request),
             'thumbnails': render_to_string('archive/thumbnails.html', context, self.request),
@@ -490,6 +491,8 @@ class GridView(JSONResponseMixin, GridBase):
             type="GRID",
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
+            grid_url=context['grid_url'],
+            timeline_url=context['timeline_url'],
         )
 
     def get_context_data(self, **kwargs):
@@ -536,6 +539,8 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             type="GRID",
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
+            grid_url=context['grid_url'],
+            timeline_url=context['timeline_url'],
         )
 
     def dispatch(self, request, *args, **kwargs):
