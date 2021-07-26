@@ -37,8 +37,18 @@ class FortepanApp {
         document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
         if (initialState.type === 'GRID') {
             this.elem.innerHTML = initialState.frame
+            $('.timeline-container').removeClass('current-view')
+            $('.grid-icon').addClass('current-view')
+            $('.timeline-icon').css('opacity', '0.5')
+            $('.grid-icon_reg').css('opacity', '1.0')
+            $('.collection-name').css('display', 'none')
         }
         else if (initialState.type === 'TIMELINE') {
+            $('.grid-icon').removeClass('current-view')
+            $('.timeline-container').addClass('current-view')
+            $('.grid-icon_reg').css('opacity', '0.5')
+            $('.timeline-icon').css('opacity', '1.0')
+            $('.collection-name').css('display', 'block')
             this.elem.innerHTML = initialState.frame
             this.carousel = document.querySelector('#fi-thumbnail-carousel-images')
             this.carousel.innerHTML = this.currentState.thumbnails
@@ -287,17 +297,6 @@ $('#login-btn').click(() => {
     }
 })
 
-$(() => {
-    if(window.location.href.includes('grid')) {
-        $('.grid-icon').addClass('current-view')
-        $('.timeline-icon').css('opacity', '0.5')
-        $('.collection-name').css('display', 'none')
-    } else {
-        $('.timeline-container').addClass('current-view')
-        $('.grid-icon_reg').css('opacity', '0.5')
-        $('.collection-name').css('display', 'block')
-    }
-})
 
 $('#search-box').focus(function() {
     $('#search-box-container').css('background','var(--fp-main-blue)')
