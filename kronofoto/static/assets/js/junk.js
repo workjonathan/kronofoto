@@ -61,14 +61,14 @@ class FortepanApp {
                     Promise.race([
                         mouseUp(this.forward).then(() => ({event: 'click', position: -100})),
                         delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-                    ]).then(scrollAction(this.forward, 'forward', -200)) : undefined)
+                    ]).then(scrollAction(this.forward, this, 'forward', -200)) : undefined)
 
             this.backward.addEventListener("mousedown", () =>
                 this.backward.getAttribute('href') != '#' ? 
                 Promise.race([
                     mouseUp(this.backward).then(() => ({event: 'click', position: -100})),
                     delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-                ]).then(scrollAction(this.backward, 'backward', 0)) : undefined)
+                ]).then(scrollAction(this.backward, this, 'backward', 0)) : undefined)
         }
         applyTheme(this.randomTheme)
     }
@@ -166,9 +166,9 @@ const trace = v => {
     return v
 }
 
-const scrollAction = (element, direction, target) => evt => {
+const scrollAction = (element, app, direction, target) => evt => {
     const next_page = request('GET', current_state[direction].json_url).then(data => {
-        document.getElementById('fi-image').setAttribute('src', data.h700)
+        document.querySelector('.fi-image').setAttribute('src', data.h700)
         document.getElementById('metadata').innerHTML = data.metadata
         document.getElementById('fi-preload-zone').innerHTML = data.thumbnails
         return data
@@ -177,9 +177,9 @@ const scrollAction = (element, direction, target) => evt => {
     if (evt.event === 'click') {
         p = Promise.resolve(evt)
     } else if (evt.event === 'startScroll') {
-        const scrollEnd = animationEnd(carousel)
-        void carousel.offsetWidth
-        carousel.setAttribute('style', `animation: from-100-to${target} ${scrollSpeed}s linear;`)
+        const scrollEnd = animationEnd(app.carousel)
+        void app.carousel.offsetWidth
+        app.carousel.setAttribute('style', `animation: from-100-to${target} ${scrollSpeed}s linear;`)
 
         p = Promise.race([
             mouseUp(element).then(() => ({event: 'click', position: Math.round(-10 * scrollSpeed - (new Date() - evt.begin)/(-target - scrollSpeed * 10))})),
@@ -188,16 +188,16 @@ const scrollAction = (element, direction, target) => evt => {
     }
     const scroll2end = p.then(evt => {
         if (evt.event === 'click') {
-            carousel.setAttribute('style', `animation: from${evt.position}-to${target} 500ms ease-out; animation-fill-mode: forwards`)
-            return animationEnd(carousel)
+            app.carousel.setAttribute('style', `animation: from${evt.position}-to${target} 500ms ease-out; animation-fill-mode: forwards`)
+            return animationEnd(app.carousel)
         }
         return evt
     })
     Promise.all([next_page, scroll2end]).then(([data, evt]) => {
-        loadstate(data)
+        app.loadstate(data)
         window.history.pushState(data, 'Fortepan Iowa', data.url)
         if (evt.event === 'startScroll') {
-            scrollAction(element, direction, target)(evt)
+            scrollAction(element, app, direction, target)(evt)
         }
     })
 }
