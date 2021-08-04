@@ -11,7 +11,7 @@ class FortepanApp {
             if (jsonhref) {
                 e.preventDefault()
                 if (jsonhref !== "#") {
-                    const id = e.target.getAttribute('id')
+                    const id = e.target.parentNode.getAttribute('id')
                     if (id !== 'forward' && id !== 'backward') {
                         request('GET', jsonhref).then(data => {
                             _this.loadstate(data)
@@ -93,6 +93,8 @@ class FortepanApp {
             moveMarker(data.year)
         }
         else {
+            this.forward = document.querySelector('#forward')
+            this.backward = document.querySelector('#backward')
             this.loadFrame(data)
         }
     }
@@ -167,7 +169,7 @@ const trace = v => {
 }
 
 const scrollAction = (element, app, direction, target) => evt => {
-    const next_page = request('GET', current_state[direction].json_url).then(data => {
+    const next_page = request('GET', app.currentState[direction].json_url).then(data => {
         document.querySelector('.fi-image').setAttribute('src', data.h700)
         document.getElementById('metadata').innerHTML = data.metadata
         document.getElementById('fi-preload-zone').innerHTML = data.thumbnails

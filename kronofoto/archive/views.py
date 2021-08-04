@@ -421,7 +421,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
             'next': photo.next.get_urls() if hasattr(photo, 'next') else NO_URLS,
             'year': photo.year,
-            'theme': context['theme']
         }
 
     def render(self, context, **kwargs):
