@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import urllib
 import os
+import random
 import urllib.request
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
 from django.contrib.auth.models import User
@@ -13,6 +14,7 @@ from django.utils.http import urlencode
 from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.templatetags.static import static
 import json
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.list import BaseListView
@@ -37,6 +39,48 @@ FAKE_PHOTO = dict(thumbnail=dict(url=EMPTY_PNG, height=75, width=75))
 
 NO_URLS = dict(url='#', json_url='#')
 
+THEME = [
+    {
+        'color': "#6c84bd",
+        "logo": static("assets/images/skyblue/logo.svg"),
+        "menuSvg": static("assets/images/skyblue/menu.svg"),
+        "infoSvg": static("assets/images/skyblue/info.svg"),
+        "downloadSvg": static("assets/images/skyblue/download.svg"),
+        "searchSvg": static("assets/images/skyblue/search.svg"),
+        "carrotSvg": static("assets/images/skyblue/carrot.svg"),
+        "timelineSvg": static("assets/images/skyblue/toggle.svg"),
+    },
+    {
+        'color': "#c28800",
+        'logo': static("assets/images/golden/logo.svg"),
+        'menuSvg': static("assets/images/golden/menu.svg"),
+        'infoSvg': static("assets/images/golden/info.svg"),
+        'downloadSvg': static("assets/images/golden/download.svg"),
+        'searchSvg': static("assets/images/golden/search.svg"),
+        'carrotSvg': static("assets/images/golden/carrot.svg"),
+        "timelineSvg": static("assets/images/golden/toggle.svg"),
+    },
+    {
+        'color': "#c2a55e",
+        'logo': static("assets/images/haybail/logo.svg"),
+        'menuSvg': static("assets/images/haybail/menu.svg"),
+        'infoSvg': static("assets/images/haybail/info.svg"),
+        'downloadSvg': static("assets/images/haybail/download.svg"),
+        'searchSvg': static("assets/images/haybail/search.svg"),
+        'carrotSvg': static("assets/images/haybail/carrot.svg"),
+        "timelineSvg": static("assets/images/haybail/toggle.svg"),
+    },
+    {
+        'color': "#445170",
+        'logo': static("assets/images/navy/logo.svg"),
+        'menuSvg': static("assets/images/navy/menu.svg"),
+        'infoSvg': static("assets/images/navy/info.svg"),
+        'downloadSvg': static("assets/images/navy/download.svg"),
+        'searchSvg': static("assets/images/navy/search.svg"),
+        'carrotSvg': static("assets/images/navy/carrot.svg"),
+        "timelineSvg": static("assets/images/navy/toggle.svg"),
+    }
+]
 
 class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
@@ -48,6 +92,7 @@ class BaseTemplateMixin:
         context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
+        context['theme'] = random.choice(THEME)
         return context
 
 
@@ -376,6 +421,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
             'next': photo.next.get_urls() if hasattr(photo, 'next') else NO_URLS,
             'year': photo.year,
+            'theme': context['theme']
         }
 
     def render(self, context, **kwargs):
@@ -572,7 +618,9 @@ class SearchResultsView(JSONResponseMixin, GridBase):
 
 class JSONGridView(GridView):
     def render(self, context, **kwargs):
-        return self.render_to_json_response(context, **kwargs)
+        response = self.render_to_json_response(context, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
 class JSONSearchResultsView(SearchResultsView):
     def render(self, context, **kwargs):
