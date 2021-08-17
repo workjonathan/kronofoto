@@ -26,6 +26,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth import login
 from math import floor
 from itertools import islice,chain
+from .reverse import get_request, set_request, as_absolute
 
 from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
 from .search import evaluate
@@ -83,6 +84,14 @@ THEME = [
 ]
 
 class BaseTemplateMixin:
+    def set_request(self, request):
+        # By default, the request should not be globally available.
+        set_request(None)
+
+    def dispatch(self, request, *args, **kwargs):
+        self.set_request(request)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         photo_count = cache.get('photo_count:')
@@ -275,9 +284,10 @@ class Keyframes(TemplateView):
 
 
 class JSONResponseMixin:
+    def set_request(self, request):
+        set_request(request)
     def render_to_json_response(self, context, **response_kwargs):
         return JsonResponse(self.get_data(context), **response_kwargs)
-
     def get_data(self, context):
         return context
 
@@ -407,10 +417,10 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         photo = context['photo']
         return {
             'type': 'TIMELINE',
-            'url': photo.get_absolute_url(),
-            'h700': photo.h700.url,
+            'url': as_absolute(photo.get_absolute_url()),
+            'h700': as_absolute(photo.h700.url),
             'tags': str(context['tags']),
-            'original': photo.original.url,
+            'original': as_absolute(photo.original.url),
             'grid_url': photo.get_grid_url(),
             'timeline_url': context['timeline_url'],
             'frame': render_to_string('archive/photo-details.html', context, self.request),
@@ -468,6 +478,8 @@ class XSendImage(XSendFile):
 
 
 class JSONPhotoView(PhotoView):
+    def get_data(self, context):
+        return super().get_data(context)
     def render(self, context, **kwargs):
         return self.render_to_json_response(context, **kwargs)
     def get_redirect_url(self, photo):
@@ -617,9 +629,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
 
 class JSONGridView(GridView):
     def render(self, context, **kwargs):
-        response = self.render_to_json_response(context, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
-        return response
+        return self.render_to_json_response(context, **kwargs)
 
 class JSONSearchResultsView(SearchResultsView):
     def render(self, context, **kwargs):

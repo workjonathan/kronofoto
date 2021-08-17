@@ -1,4 +1,5 @@
 from django import template
+from .. import reverse
 
 register = template.Library()
 
@@ -49,3 +50,7 @@ def photo_details(photo, page, years, timeline, timeline_key, prev_page, next_pa
         prev_page=prev_page,
         next_page=next_page,
     )
+
+@register.simple_tag
+def absolutify(url):
+    return reverse.as_absolute(url)
