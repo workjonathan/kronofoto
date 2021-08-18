@@ -85,4 +85,4 @@ class RegisterAccount(BaseTemplateMixin, FormView):
         return super().form_valid(form)
 
 class EmailSentView(BaseTemplateMixin, TemplateView):
-    template_view  = 'archive/email-sent.html'
+    template_name  = 'archive/email-sent.html'
