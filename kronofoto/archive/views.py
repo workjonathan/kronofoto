@@ -3,19 +3,16 @@ from django.core.paginator import Paginator, EmptyPage, Page
 from django.core.cache import cache
 from django.conf import settings
 from django.db.models import Min, Count, Q
-import urllib
 import os
 import random
-import urllib.request
 from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
 from django.contrib.auth.models import User
-from .forms import TagForm, AddToListForm, RegisterUserForm, SearchForm
+from .forms import TagForm, AddToListForm, SearchForm
 from django.utils.http import urlencode
 from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.templatetags.static import static
-import json
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.list import BaseListView
 from django.views.generic.base import RedirectView
@@ -23,14 +20,11 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
-from django.contrib.auth import login
 from math import floor
 from itertools import islice,chain
-
 from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
 from .search import evaluate
 
-from .token import UserEmailVerifier
 
 
 EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
@@ -94,53 +88,6 @@ class BaseTemplateMixin:
         context['timeline_url'] = '#'
         context['theme'] = random.choice(THEME)
         return context
-
-
-class VerifyToken(RedirectView):
-    permanent = False
-    pattern_name = 'random-image'
-    verifier = UserEmailVerifier()
-
-    def get_redirect_url(self, *args, **kwargs):
-        user = self.verifier.verify_token(uid=kwargs['uid'], token=kwargs['token'])
-        if user:
-            login(self.request, user)
-        return super().get_redirect_url()
-
-
-class RegisterAccount(BaseTemplateMixin, FormView):
-    form_class = RegisterUserForm
-    template_name = 'archive/register.html'
-    success_url = '/'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['RECAPTCHA_SITE_KEY'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
-        return context
-
-    def user_is_human(self):
-        recaptcha_response = self.request.POST.get('g-recaptcha-response')
-        data = {
-            'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
-            'response': recaptcha_response,
-        }
-        args = urllib.parse.urlencode(data).encode()
-        req = urllib.request.Request('https://www.google.com/recaptcha/api/siteverify', data=args)
-        response = urllib.request.urlopen(req)
-        result = json.loads(response.read().decode())
-        return result['success']
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        return kwargs
-
-    def form_valid(self, form):
-        if self.user_is_human():
-            form.create_user()
-            self.success_url = reverse('email-sent')
-        else:
-            self.success_url = reverse('register-account')
-        return super().form_valid(form)
 
 
 class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):

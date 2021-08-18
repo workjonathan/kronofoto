@@ -1,11 +1,8 @@
 from django import forms
 from .models import Tag, PhotoTag, Collection, Term, Donor, Photo
-from django.contrib.auth.models import User
-from django.contrib.auth.password_validation import validate_password
 from .search import expression
 from .search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
-from .token import UserEmailVerifier
 from django.utils.text import slugify
 from django.core.cache import cache
 
@@ -117,30 +114,6 @@ class SearchForm(forms.Form):
         raise NoExpression
 
 
-class RegisterUserForm(forms.Form):
-    email = forms.EmailField()
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput())
-    password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput())
-
-    def __init__(self, user_checker=UserEmailVerifier(), **kwargs):
-        self.user_checker = user_checker
-        super().__init__(**kwargs)
-
-    def clean(self):
-        data = super().clean()
-        if 'email' in data and User.objects.filter(username=data['email']).exists():
-            self.add_error('email', 'There is already an account associated with that email address.')
-        if 'password1' in data:
-            validate_password(data['password1'])
-            if 'password2' not in data or data['password1'] != data['password2']:
-                self.add_error('password1', 'The password fields must be identical')
-        return data
-
-    def create_user(self):
-        username = self.cleaned_data['email']
-        password = self.cleaned_data['password1']
-        user = User.objects.create_user(username, password=password, email=username, is_active=False)
-        self.user_checker.verify(user)
 
 
 class TagForm(forms.Form):

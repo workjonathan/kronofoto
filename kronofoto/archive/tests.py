@@ -1,4 +1,5 @@
 from django.test import TestCase, SimpleTestCase, RequestFactory
+from .auth.views import RegisterAccount
 from . import models, views
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User, AnonymousUser, Permission
@@ -579,7 +580,7 @@ class RegisterAccountTest(TestCase):
     def testUserIsHumanShouldReturnFalse(self):
         req = RequestFactory().post(reverse('register-account'), data={'g-recaptcha-response': ''})
         req.user = AnonymousUser()
-        v = views.RegisterAccount()
+        v = RegisterAccount()
         v.request = req
         self.assertFalse(v.user_is_human())
 
