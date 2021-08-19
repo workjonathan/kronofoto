@@ -1,9 +1,9 @@
-class FortepanApp {
+class FortepanBase {
     constructor(element, initialState, {scrollSpeed=4}={}) {
         this.elem = element
         this.randomTheme = themes[Math.floor(Math.random()*themes.length)]
         this.scrollSpeed = scrollSpeed
-        window.history.replaceState(initialState, 'Fortepan Iowa', initialState.url)
+        this.initializeWindowState(initialState)
         this.loadFrame(initialState)
         const _this = this
         document.addEventListener('click', function(e) {
@@ -15,17 +15,12 @@ class FortepanApp {
                     if (id !== 'forward' && id !== 'backward') {
                         request('GET', jsonhref).then(data => {
                             _this.loadstate(data)
-                            window.history.pushState(data, 'Fortepan Iowa', data.url)
+                            _this.pushWindowState(data)
                         })
                     }
                 }
             }
         })
-        window.onpopstate = evt => {
-            if (evt.state) {
-                this.loadstate(evt.state)
-            }
-        }
     }
     loadFrame(initialState) {
         this.carousel = undefined
@@ -99,6 +94,28 @@ class FortepanApp {
         }
     }
 }
+
+class FortepanApp extends FortepanBase {
+    initializeWindowState(initialState) {
+        window.history.replaceState(initialState, 'Fortepan Iowa', initialState.url)
+        window.onpopstate = evt => {
+            if (evt.state) {
+                this.loadstate(evt.state)
+            }
+        }
+    }
+    pushWindowState(data) {
+        window.history.pushState(data, 'Fortepan Iowa', data.url)
+    }
+}
+
+class FortepanWidget extends FortepanBase {
+    initializeWindowState(initialState) {
+    }
+    pushWindowState(data) {
+    }
+}
+
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
