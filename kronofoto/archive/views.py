@@ -223,7 +223,9 @@ class Keyframes(TemplateView):
 
 class JSONResponseMixin:
     def render_to_json_response(self, context, **response_kwargs):
-        return JsonResponse(self.get_data(context), **response_kwargs)
+        response = JsonResponse(self.get_data(context), **response_kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     def get_data(self, context):
         return context
@@ -564,9 +566,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
 
 class JSONGridView(GridView):
     def render(self, context, **kwargs):
-        response = self.render_to_json_response(context, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
-        return response
+        return self.render_to_json_response(context, **kwargs)
 
 class JSONSearchResultsView(SearchResultsView):
     def render(self, context, **kwargs):
