@@ -65,7 +65,7 @@ class FortepanBase {
                     delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
                 ]).then(scrollAction(this.backward, this, 'backward', 0)) : undefined)
         }
-        applyTheme(this.randomTheme)
+        applyTheme(initialState.static_url, this.randomTheme)
     }
     loadstate(data) {
         if (data.type === 'TIMELINE' && this.currentState.type === 'TIMELINE') {
@@ -337,48 +337,49 @@ $('#search-box').focus(function() {
 const themes = [
     { 
         color: "#6c84bd",
-        logo: "/static/assets/images/skyblue/logo.svg",
-        menuSvg: "/static/assets/images/skyblue/menu.svg",
-        infoSvg: "/static/assets/images/skyblue/info.svg",
-        downloadSvg: "/static/assets/images/skyblue/download.svg",
-        searchSvg: "/static/assets/images/skyblue/search.svg",
-        carrotSvg: "/static/assets/images/skyblue/carrot.svg",
-        timelineSvg: '/static/assets/images/skyblue/toggle.svg'
+        logo: "assets/images/skyblue/logo.svg",
+        menuSvg: "assets/images/skyblue/menu.svg",
+        infoSvg: "assets/images/skyblue/info.svg",
+        downloadSvg: "assets/images/skyblue/download.svg",
+        searchSvg: "assets/images/skyblue/search.svg",
+        carrotSvg: "assets/images/skyblue/carrot.svg",
+        timelineSvg: 'assets/images/skyblue/toggle.svg'
     },
     {
         color: "#c28800",
-        logo: "/static/assets/images/golden/logo.svg",
-        menuSvg: "/static/assets/images/golden/menu.svg",
-        infoSvg: "/static/assets/images/golden/info.svg",
-        downloadSvg: "/static/assets/images/golden/download.svg",
-        searchSvg: "/static/assets/images/golden/search.svg",
-        carrotSvg: "/static/assets/images/golden/carrot.svg",
-        timelineSvg: '/static/assets/images/golden/toggle.svg'
+        logo: "assets/images/golden/logo.svg",
+        menuSvg: "assets/images/golden/menu.svg",
+        infoSvg: "assets/images/golden/info.svg",
+        downloadSvg: "assets/images/golden/download.svg",
+        searchSvg: "assets/images/golden/search.svg",
+        carrotSvg: "assets/images/golden/carrot.svg",
+        timelineSvg: 'assets/images/golden/toggle.svg'
     },
     {
         color: "#c2a55e",
-        logo: "/static/assets/images/haybail/logo.svg",
-        menuSvg: "/static/assets/images/haybail/menu.svg",
-        infoSvg: "/static/assets/images/haybail/info.svg",
-        downloadSvg: "/static/assets/images/haybail/download.svg",
-        searchSvg: "/static/assets/images/haybail/search.svg",
-        carrotSvg: "/static/assets/images/haybail/carrot.svg",
-        timelineSvg: '/static/assets/images/haybail/toggle.svg'
+        logo: "assets/images/haybail/logo.svg",
+        menuSvg: "assets/images/haybail/menu.svg",
+        infoSvg: "assets/images/haybail/info.svg",
+        downloadSvg: "assets/images/haybail/download.svg",
+        searchSvg: "assets/images/haybail/search.svg",
+        carrotSvg: "assets/images/haybail/carrot.svg",
+        timelineSvg: 'assets/images/haybail/toggle.svg'
     },
     {
         color: "#445170",
-        logo: "/static/assets/images/navy/logo.svg",
-        menuSvg: "/static/assets/images/navy/menu.svg",
-        infoSvg: "/static/assets/images/navy/info.svg",
-        downloadSvg: "/static/assets/images/navy/download.svg",
-        searchSvg: "/static/assets/images/navy/search.svg",
-        carrotSvg: "/static/assets/images/navy/carrot.svg",
-        timelineSvg: '/static/assets/images/navy/toggle.svg'
+        logo: "assets/images/navy/logo.svg",
+        menuSvg: "assets/images/navy/menu.svg",
+        infoSvg: "assets/images/navy/info.svg",
+        downloadSvg: "assets/images/navy/download.svg",
+        searchSvg: "assets/images/navy/search.svg",
+        carrotSvg: "assets/images/navy/carrot.svg",
+        timelineSvg: 'assets/images/navy/toggle.svg'
     }
 ]
 
+const _static = (static_url, path) => static_url + path
 
-const applyTheme = theme => {
+const applyTheme = (static_url, theme) => {
     const hamburger = document.querySelector(".hamburger-icon")
     const info = document.querySelector('.meta-info-icon')
     const dl = document.querySelector('.meta-dl-icon')
@@ -386,17 +387,17 @@ const applyTheme = theme => {
     const carrot = document.querySelector('.carrot')
     const timelineMarker = document.querySelector('.marker-image')
 
-    document.getElementsByClassName("logo-img")[0].src = theme.logo
+    document.getElementsByClassName("logo-img")[0].src = _static(static_url, theme.logo)
     document.documentElement.style.setProperty("--fp-main-blue", theme.color)
-    hamburger.setAttribute("src", theme.menuSvg)
+    hamburger.setAttribute("src", _static(static_url, theme.menuSvg))
     if(info && dl) {
-        info.setAttribute("src", theme.infoSvg)
-        dl.setAttribute("src", theme.downloadSvg)
+        info.setAttribute("src", _static(static_url, theme.infoSvg))
+        dl.setAttribute("src", _static(static_url, theme.downloadSvg))
     }
-    search.setAttribute("src", theme.searchSvg);
-    carrot.setAttribute("src", theme.carrotSvg);
+    search.setAttribute("src", _static(static_url, theme.searchSvg))
+    carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
     if (timelineMarker) {
-        timelineMarker.style.backgroundImage = `url('${theme.timelineSvg}')`
+        timelineMarker.style.backgroundImage = `url('${_static(static_url, theme.timelineSvg)}')`
     }
 }
 //----------_----------

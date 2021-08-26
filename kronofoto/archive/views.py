@@ -11,7 +11,6 @@ from .forms import TagForm, AddToListForm, SearchForm
 from django.utils.http import urlencode
 from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
-from django.contrib.staticfiles.storage import staticfiles_storage
 from django.templatetags.static import static
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.list import BaseListView
@@ -367,6 +366,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         photo = context['photo']
         return {
             'type': 'TIMELINE',
+            'static_url': settings.STATIC_URL,
             'url': as_absolute(photo.get_absolute_url()),
             'h700': as_absolute(photo.h700.url),
             'tags': str(context['tags']),
@@ -501,6 +501,7 @@ class GridView(JSONResponseMixin, GridBase):
     def get_data(self, context):
         return dict(
             type="GRID",
+            static_url=settings.STATIC_URL,
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
             grid_url=context['grid_url'],
@@ -549,6 +550,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
     def get_data(self, context):
         return dict(
             type="GRID",
+            static_url=settings.STATIC_URL,
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
             grid_url=context['grid_url'],
