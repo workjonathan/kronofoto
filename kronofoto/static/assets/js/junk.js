@@ -1,6 +1,7 @@
 class FortepanBase {
-    constructor(element, initialState, {scrollSpeed=4}={}) {
+    constructor(element, initialState, {scrollSpeed=4, constraint=undefined}={}) {
         this.elem = element
+        this.constraint = constraint
         this.randomTheme = themes[Math.floor(Math.random()*themes.length)]
         this.scrollSpeed = scrollSpeed
         this.initializeWindowState(initialState)
@@ -11,9 +12,10 @@ class FortepanBase {
             if (jsonhref) {
                 e.preventDefault()
                 if (jsonhref !== "#") {
+                    const updatedhref = update_url(jsonhref, _this.constraint)
                     const id = e.target.parentNode.getAttribute('id')
                     if (id !== 'forward' && id !== 'backward') {
-                        request('GET', jsonhref).then(data => {
+                        request('GET', updatedhref).then(data => {
                             _this.loadstate(data)
                             _this.pushWindowState(data)
                         })
@@ -116,6 +118,27 @@ class FortepanWidget extends FortepanBase {
     }
 }
 
+const initialize_fortepan = (element, {constraint=undefined, host="https://fortepan.us"}={}) => {
+    const req = new Request(update_url(`${host}/search.json`, constraint), {mode:'cors'})
+    const elem = document.querySelector('#app')
+    fetch(req)
+        .then(response => response.json())
+        .then(response => {
+            const app = new FortepanWidget(elem, response, {constraint})
+        })
+}
+
+const update_url = (href, constraint, title) => {
+    const url = new URL(href)
+    if (!url.searchParams.has('embed')) {
+        url.searchParams.append("embed", 1)
+    }
+    if (constraint && !url.searchParams.has('constraint')) {
+        url.searchParams.append("constraint", constraint)
+    }
+    return url.toString()
+}
+
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
 const toggleVis = evt => {
     const el = document.querySelector('#metadata')
@@ -186,7 +209,7 @@ const trace = v => {
 }
 
 const scrollAction = (element, app, direction, target) => evt => {
-    const next_page = request('GET', app.currentState[direction].json_url).then(data => {
+    const next_page = request('GET', update_url(app.currentState[direction].json_url, app.constraint)).then(data => {
         document.querySelector('.fi-image').setAttribute('src', data.h700)
         document.getElementById('metadata').innerHTML = data.metadata
         document.getElementById('fi-preload-zone').innerHTML = data.thumbnails
@@ -214,7 +237,7 @@ const scrollAction = (element, app, direction, target) => evt => {
     })
     Promise.all([next_page, scroll2end]).then(([data, evt]) => {
         app.loadstate(data)
-        window.history.pushState(data, 'Fortepan Iowa', data.url)
+        app.pushWindowState(data)
         if (evt.event === 'startScroll') {
             scrollAction(element, app, direction, target)(evt)
         }

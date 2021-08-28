@@ -84,6 +84,22 @@ class BaseTemplateMixin:
 
     def dispatch(self, request, *args, **kwargs):
         self.set_request(request)
+        self.form = SearchForm(self.request.GET)
+        self.expr = None
+        if self.form.is_valid():
+            try:
+                self.expr = self.form.as_expression()
+            except NoExpression:
+                pass
+        self.constraint_expr = None
+        if 'constraint' in self.request.GET:
+            constraint = self.request.GET['constraint']
+            self.constraint_expr = Parser.tokenize(constraint).parse().shakeout()
+        self.final_expr = None
+        if self.expr and self.constraint_expr:
+            self.final_expr = self.expr & self.constraint_expr
+        else:
+            self.final_expr = self.expr or self.constraint_expr
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -96,6 +112,8 @@ class BaseTemplateMixin:
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
         context['theme'] = random.choice(THEME)
+        if 'constraint' in self.request.GET:
+            context['constraint_param'] = "&constraint={}".format(self.request.GET['constraint'])
         return context
 
 
@@ -309,14 +327,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         return self._queryset
 
     def get_queryset(self):
-        form = SearchForm(self.request.GET)
-        expr = None
-        if form.is_valid():
-            try:
-                expr = form.as_expression()
-            except NoExpression:
-                pass
-        self.collection = CollectionQuery(expr, self.request.user)
+        self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
     def get_paginator(self):
@@ -480,13 +491,7 @@ class SearchResultsViewFormatter:
 
 class GridView(JSONResponseMixin, GridBase):
     def get_queryset(self):
-        form = SearchForm(self.request.GET)
-        expr = None
-        if form.is_valid():
-            try:
-                expr = form.as_expression()
-            except NoExpression:
-                pass
+        expr = self.final_expr
         self.collection = CollectionQuery(expr, self.request.user)
         qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
         cache_info = 'photo_count:' + self.collection.cache_encoding()
@@ -533,8 +538,8 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context['search-form'] = self.form
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results'
-        if self.expr and self.expr.is_collection():
-            context['collection_name'] = str(self.expr.description())
+        if self.final_expr and self.final_expr.is_collection():
+            context['collection_name'] = str(self.expr.description() if self.expr else "All Photos")
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
         context['initialstate'] = self.get_data(context)
         return context
@@ -565,19 +570,19 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             return HttpResponseBadRequest('Invalid search parameters')
 
     def get_queryset(self):
-        try:
-            self.expr = expr = self.form.as_expression()
-            if expr.is_collection():
-                self.collection = CollectionQuery(expr, self.request.user)
-                qs = self.model.objects.filter_photos(self.collection)
-            else:
-                qs = expr.as_search(self.model.objects, self.request.user)
-            if qs.count() == 1:
-                self.redirect = redirect(qs[0].get_absolute_url())
-            return qs
-        except NoExpression:
+        expr = self.final_expr
+        if not expr:
             self.expr = None
             return []
+
+        if expr.is_collection():
+            self.collection = CollectionQuery(expr, self.request.user)
+            qs = self.model.objects.filter_photos(self.collection)
+        else:
+            qs = expr.as_search(self.model.objects, self.request.user)
+        if qs.count() == 1:
+            self.redirect = redirect(qs[0].get_absolute_url())
+        return qs
 
 class JSONGridView(GridView):
     def render(self, context, **kwargs):
