@@ -1,7 +1,7 @@
 class FortepanBase {
-    constructor(element, initialState, {scrollSpeed=4, constraint=undefined}={}) {
+    constructor(element, initialState, {scrollSpeed=4, urlUpdater=undefined}={}) {
         this.elem = element
-        this.constraint = constraint
+        this.urlUpdater = urlUpdater || new URLUpdater(new Map())
         this.randomTheme = themes[Math.floor(Math.random()*themes.length)]
         this.scrollSpeed = scrollSpeed
         this.initializeWindowState(initialState)
@@ -12,7 +12,7 @@ class FortepanBase {
             if (jsonhref) {
                 e.preventDefault()
                 if (jsonhref !== "#") {
-                    const updatedhref = update_url(jsonhref, _this.constraint)
+                    const updatedhref = _this.urlUpdater.update(jsonhref)
                     const id = e.target.parentNode.getAttribute('id')
                     if (id !== 'forward' && id !== 'backward') {
                         request('GET', updatedhref).then(data => {
@@ -118,25 +118,38 @@ class FortepanWidget extends FortepanBase {
     }
 }
 
+class URLUpdater {
+    constructor(constraints) {
+        this.constraints = constraints
+    }
+    update(href) {
+        const url = new URL(href)
+        this.updateParameters(url.searchParams)
+        return url.toString()
+    }
+    updateParameters(params) {
+        for (let [key, value] of this.constraints) {
+            if (!params.has(key)) {
+                params.append(key, value)
+            }
+        }
+    }
+}
+
 const initialize_fortepan = (element, {constraint=undefined, host="https://fortepan.us"}={}) => {
-    const req = new Request(update_url(`${host}/search.json`, constraint), {mode:'cors'})
+    const m = new Map()
+    if (constraint) {
+        m.set('constraint', constraint)
+    }
+    m.set('embed', 1)
+    const updater = new URLUpdater(m)
+    const req = new Request(updater.update(`${host}/search.json`), {mode:'cors'})
     const elem = document.querySelector('#app')
     fetch(req)
         .then(response => response.json())
         .then(response => {
-            const app = new FortepanWidget(elem, response, {constraint})
+            const app = new FortepanWidget(elem, response, {urlUpdater:updater})
         })
-}
-
-const update_url = (href, constraint, title) => {
-    const url = new URL(href)
-    if (!url.searchParams.has('embed')) {
-        url.searchParams.append("embed", 1)
-    }
-    if (constraint && !url.searchParams.has('constraint')) {
-        url.searchParams.append("constraint", constraint)
-    }
-    return url.toString()
 }
 
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
@@ -209,7 +222,7 @@ const trace = v => {
 }
 
 const scrollAction = (element, app, direction, target) => evt => {
-    const next_page = request('GET', update_url(app.currentState[direction].json_url, app.constraint)).then(data => {
+    const next_page = request('GET', app.urlUpdater.update(app.currentState[direction].json_url)).then(data => {
         document.querySelector('.fi-image').setAttribute('src', data.h700)
         document.getElementById('metadata').innerHTML = data.metadata
         document.getElementById('fi-preload-zone').innerHTML = data.thumbnails
