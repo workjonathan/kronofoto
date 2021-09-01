@@ -38,12 +38,12 @@ class FortepanBase {
             $('.collection-name').css('display', 'none')
         }
         else if (initialState.type === 'TIMELINE') {
+            this.elem.innerHTML = initialState.frame
             $('.grid-icon').removeClass('current-view')
             $('.timeline-container').addClass('current-view')
             $('.grid-icon_reg').css('opacity', '0.5')
             $('.timeline-icon').css('opacity', '1.0')
             $('.collection-name').css('display', 'block')
-            this.elem.innerHTML = initialState.frame
             this.carousel = document.querySelector('#fi-thumbnail-carousel-images')
             this.carousel.innerHTML = this.currentState.thumbnails
             this.forward = document.querySelector('#forward')
