@@ -418,24 +418,27 @@ const themes = [
 const _static = (static_url, path) => static_url + path
 
 const applyTheme = (static_url, theme) => {
-    const hamburger = document.querySelector(".hamburger-icon")
-    const info = document.querySelector('.meta-info-icon')
-    const dl = document.querySelector('.meta-dl-icon')
-    const search = document.querySelector('.search-icon')
-    const carrot = document.querySelector('.carrot')
-    const timelineMarker = document.querySelector('.marker-image')
-
-    document.getElementsByClassName("logo-img")[0].src = _static(static_url, theme.logo)
-    document.documentElement.style.setProperty("--fp-main-blue", theme.color)
-    hamburger.setAttribute("src", _static(static_url, theme.menuSvg))
-    if(info && dl) {
+    for (const hamburger of document.querySelectorAll(".hamburger-icon")) {
+        hamburger.setAttribute("src", _static(static_url, theme.menuSvg))
+    }
+    for (const info of document.querySelectorAll('.meta-info-icon')) {
         info.setAttribute("src", _static(static_url, theme.infoSvg))
+    }
+    for (const dl of document.querySelectorAll('.meta-dl-icon')) {
         dl.setAttribute("src", _static(static_url, theme.downloadSvg))
     }
-    search.setAttribute("src", _static(static_url, theme.searchSvg))
-    carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
-    if (timelineMarker) {
+    for (const search of document.querySelectorAll('.search-icon')) {
+        search.setAttribute("src", _static(static_url, theme.searchSvg))
+    }
+    for (const carrot of document.querySelectorAll('.carrot')) {
+        carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
+    }
+    for (const timelineMarker of document.querySelectorAll('.marker-image')) {
         timelineMarker.style.backgroundImage = `url('${_static(static_url, theme.timelineSvg)}')`
     }
+    for (const logoImg of document.querySelectorAll(".logo-img")) {
+        logoImg.src = _static(static_url, theme.logo)
+    }
+    document.documentElement.style.setProperty("--fp-main-blue", theme.color)
 }
 //----------_----------
