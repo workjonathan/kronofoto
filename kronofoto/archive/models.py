@@ -330,6 +330,17 @@ class Photo(models.Model):
             'json_url': self.get_embedded_json_url() if embed else self.get_json_url(),
         }
 
+    def get_grid_json_url(self, params=None):
+        page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
+        params = params or hasattr(self, 'params') and self.params
+        if params:
+            url = reverse('search-results-json')
+            params = params.copy()
+            params['page'] = page
+        else:
+            url = reverse('gridview-json', kwargs=dict(page=page))
+        return self.add_params(url=url, params=params)
+
     def get_grid_url(self, params=None):
         page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
         params = params or hasattr(self, 'params') and self.params

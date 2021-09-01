@@ -111,9 +111,10 @@ class BaseTemplateMixin:
         context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
+        context['grid_json_url'] = '#'
+        context['timeline_json_url'] = '#'
         context['theme'] = random.choice(THEME)
-        if 'constraint' in self.request.GET:
-            context['constraint_param'] = "&constraint={}".format(self.request.GET['constraint'])
+        context['embed'] = 'embed' in self.request.GET
         return context
 
 
@@ -354,11 +355,15 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         try:
             photo_rec = page_selection.find_accession_number(photo)
 
+            params = self.request.GET.copy()
+            if 'embed' in params:
+                params.pop('embed')
             for p in page_selection.photos():
-                p.save_params(self.request.GET)
+                p.save_params(params)
 
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
+            context['grid_json_url'] = photo_rec.get_grid_json_url()
             context["photo"] = photo_rec
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
@@ -382,6 +387,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'h700': as_absolute(photo.h700.url),
             'tags': str(context['tags']),
             'original': as_absolute(photo.original.url),
+            'grid_json_url': photo.get_grid_json_url(),
+            'timeline_json_url': context['timeline_json_url'],
             'grid_url': photo.get_grid_url(),
             'timeline_url': context['timeline_url'],
             'frame': render_to_string('archive/photo-details.html', context, self.request),
@@ -509,6 +516,8 @@ class GridView(JSONResponseMixin, GridBase):
             static_url=settings.STATIC_URL,
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
+            grid_json_url=context['grid_json_url'],
+            timeline_json_url=context['timeline_json_url'],
             grid_url=context['grid_url'],
             timeline_url=context['timeline_url'],
         )
@@ -519,6 +528,7 @@ class GridView(JSONResponseMixin, GridBase):
         context['formatter'] = GridViewFormatter(self.request.GET)
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+            context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         except IndexError:
             pass
         context['initialstate'] = self.get_data(context)
@@ -541,6 +551,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         if self.final_expr and self.final_expr.is_collection():
             context['collection_name'] = str(self.expr.description() if self.expr else "All Photos")
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+            context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         context['initialstate'] = self.get_data(context)
         return context
 
@@ -559,7 +570,9 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             frame=render_to_string('archive/grid-content.html', context, self.request),
             url=context['page_obj'][0].get_grid_url(params=self.request.GET),
             grid_url=context['grid_url'],
+            grid_json_url=context['grid_json_url'],
             timeline_url=context['timeline_url'],
+            timeline_json_url=context['timeline_json_url'],
         )
 
     def dispatch(self, request, *args, **kwargs):

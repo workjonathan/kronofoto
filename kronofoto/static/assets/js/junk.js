@@ -29,9 +29,6 @@ class FortepanBase {
         this.currentState = initialState
         this.forward = undefined
         this.backward = undefined
-        document.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
-        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
-        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
         if (initialState.type === 'GRID') {
             this.elem.innerHTML = initialState.frame
             $('.timeline-container').removeClass('current-view')
@@ -67,6 +64,10 @@ class FortepanBase {
                     delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
                 ]).then(scrollAction(this.backward, this, 'backward', 0)) : undefined)
         }
+        document.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
+        document.querySelector('#fi-timeline-a').setAttribute('data-json-href', initialState.timeline_json_url)
+        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
+        document.querySelector('#grid-a').setAttribute('data-json-href', initialState.grid_json_url)
         applyTheme(initialState.static_url, this.randomTheme)
     }
     loadstate(data) {
@@ -86,6 +87,7 @@ class FortepanBase {
             this.backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
             this.backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
             document.querySelector('#grid-a').setAttribute('href', data.grid_url)
+            document.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
             document.querySelector('#dl > a').setAttribute('href', data.original)
             moveMarker(data.year)
         }

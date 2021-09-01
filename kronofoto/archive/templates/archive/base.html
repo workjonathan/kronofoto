@@ -3,6 +3,7 @@
 {% load static %}
 {% load login %}
 {% load searchform %}
+{% load widgets %}
 {% load docnav %}
 {% load gtm_tags %}
 <head>
@@ -46,8 +47,6 @@
             </div>
           </div>
 
-          
-
           <div class="header-text">{{photo_count}} images</div>
 
           <div id="search-box-container">
@@ -67,14 +66,7 @@
         </div> <!-- end nav left -->
 
         <div class="main-nav_center">
-          <div class="timeline-container">
-            <a id="fi-timeline-a" href="{{ timeline_url }}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" title="Timeline View"></a>
-          </div>
-          <div class="grid-icon">
-            <a id="grid-a" href="{{ grid_url }}">
-              <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
-            </a>
-          </div>
+          {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
           <div class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div> <!-- end nav center -->

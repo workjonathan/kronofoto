@@ -39,6 +39,15 @@ def grid_content(collection_name, formatter, page_obj):
         page_obj=page_obj,
     )
 
+@register.inclusion_tag('archive/view-buttons.html', takes_context=False)
+def view_buttons(timeline_url, timeline_json_url, grid_url, grid_json_url):
+    return dict(
+        timeline_url=timeline_url,
+        timeline_json_url=timeline_json_url,
+        grid_url=grid_url,
+        grid_json_url=grid_json_url,
+    )
+
 @register.inclusion_tag('archive/photo-details.html', takes_context=False)
 def photo_details(photo, page, years, timeline, timeline_key, prev_page, next_page):
     return dict(

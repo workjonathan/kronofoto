@@ -1,4 +1,9 @@
 {% load widgets %}
+{% if embed %}
+<div class="main-nav_center">
+{% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
+</div>
+{% endif %}
 <div class="grid-navigation">
     <h2>{{ collection_name }}</h2>
     {% page_links formatter page_obj %}

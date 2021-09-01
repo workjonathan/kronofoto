@@ -4,6 +4,11 @@
 {% load cache %}
 {% load photometadata %}
 {% load widgets %}
+{% if embed %}
+<div class="main-nav_center">
+{% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
+</div>
+{% endif %}
   <main>
     <div class="click-content"></div>
 
