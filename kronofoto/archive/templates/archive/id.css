@@ -25,10 +25,6 @@
   overflow-x: hidden;
 }
 
-#{{ id }} img {
-  width: 100%;
-}
-
 #{{ id }} a {
   color: var(--fp-main-blue);
   text-decoration: none;
