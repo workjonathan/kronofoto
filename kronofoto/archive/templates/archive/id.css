@@ -1,17 +1,22 @@
-@import "kronofoto.css";
+{% load static %}
+@import "{% static "assets/css/kronofoto.css" %}";
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css");
 
-*, body {
+:root {
+    --fp-main-font: 'Montserrat', sans-serif;
+    --fp-secondary-ticker-color: #9d9d9c;
+    --fp-main-grey: #d6d6da;
+    --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
+    --fp-light-grey: #efeff1;
+    --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
+    --fp-main-blue: #c2a55e;
+}
+
+#{{ id }} {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: var(--fp-main-font);
-}
-
-img {
-  width: 100%;
-}
-
-body {
   display: grid;
   height: 100vh;
   grid-template-rows: minmax(min-content, 0fr) auto;
@@ -20,7 +25,11 @@ body {
   overflow-x: hidden;
 }
 
-a {
+#{{ id }} img {
+  width: 100%;
+}
+
+#{{ id }} a {
   color: var(--fp-main-blue);
   text-decoration: none;
 }
@@ -29,18 +38,18 @@ a {
  ** HEADER / NAV **
  ******************/
 
-header {
+#{{ id }} header {
   max-height: 200px;
   grid-row: 1 / span 1;
   padding: 15px;
 }
 
-nav {
+#{{ id }} nav {
   display: flex;
 }
 
 
-nav ul {
+#{{ id }} nav ul {
   display: flex;
   display: -webkit-flex;
   align-self: center;
@@ -49,20 +58,28 @@ nav ul {
   align-items: center;
 }
 
-nav ul li {
+#{{ id }} nav ul li {
   list-style: none;
   text-transform: uppercase;
 }
 
-header nav div img {
+#{{ id }} header nav div img {
   width: 30px;
 }
 
-input[type="submit"] {
+#{{ id }} input[type="submit"] {
   background-color: var(--fp-main-blue);
   color: white;
 }
-input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+#{{ id }} input[type="email"], 
+#{{ id }} input[type="number"], 
+#{{ id }} input[type="search"], 
+#{{ id }} input[type="text"], 
+#{{ id }} input[type="tel"], 
+#{{ id }} input[type="url"], 
+#{{ id }} input[type="password"], 
+#{{ id }} textarea, 
+#{{ id }} select {
   -moz-appearance:none; /* Firefox */
   -webkit-appearance:none; /* Safari and Chrome */
   appearance:none;
@@ -77,30 +94,30 @@ input[type="email"], input[type="number"], input[type="search"], input[type="tex
   width: 100%;
 }
 
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
+#{{ id }} input[type=number]::-webkit-inner-spin-button, 
+#{{ id }} input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none; 
   margin: 0; 
 }
 
-select::-ms-expand {
+#{{ id }} select::-ms-expand {
   display: none;
 }
 
-select {
+#{{ id }} select {
   background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
 }
-main {
+#{{ id }} main {
   grid-row: 2 / span 1;
   display: grid;
   /* grid-template-rows: minmax(500px, 1fr) minmax(min-content, 190px); */
   grid-template-rows: 1fr auto auto;
   flex-direction: column;
 }
-main article {
+#{{ id }} main article {
   grid-row: 1 / span 1;
 }
-main nav {
+#{{ id }} main nav {
   grid-row: 2 / span 1;
   height: 100%;
 }
