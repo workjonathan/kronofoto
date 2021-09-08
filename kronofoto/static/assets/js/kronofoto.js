@@ -89,6 +89,9 @@ class FortepanBase {
             document.querySelector('#grid-a').setAttribute('href', data.grid_url)
             document.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
             document.querySelector('#dl > a').setAttribute('href', data.original)
+            for (let a of document.querySelectorAll('#app a.fpi-fpilink')) {
+                a.setAttribute('href', data.url)
+            }
             moveMarker(data.year)
         }
         else {

@@ -356,6 +356,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             photo_rec = page_selection.find_accession_number(photo)
 
             params = self.request.GET.copy()
+            if 'constraint' in params:
+                params.pop('constraint')
             if 'embed' in params:
                 params.pop('embed')
             for p in page_selection.photos():
@@ -367,7 +369,10 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context["photo"] = photo_rec
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
-            context['collection_name'] = str(self.collection)
+            if self.final_expr and self.final_expr.is_collection() and self.expr:
+                context['collection_name'] = str(self.expr.description())
+            else:
+                context['collection_name'] = 'All Photos'
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
@@ -549,7 +554,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results'
         if self.final_expr and self.final_expr.is_collection():
-            context['collection_name'] = str(self.expr.description() if self.expr else "All Photos")
+            context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
             context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         context['initialstate'] = self.get_data(context)

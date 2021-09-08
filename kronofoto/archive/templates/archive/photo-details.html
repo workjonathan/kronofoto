@@ -5,9 +5,20 @@
 {% load photometadata %}
 {% load widgets %}
 {% if embed %}
+<center>
 <div class="main-nav_center">
-{% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
+    {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
+    <div>
+    {{ collection_name }}
+    </div>
+    {% if collection_name != "All Photos" %}
+        <a data-json-href="{% url "search-results-json" %}" href="#">Back to All Photos</a>
+    {% endif %}
+    <div>
+    <a class="fpi-fpilink" href="{{ photo.get_absolute_url }}">Fortepan</a>
+    </div>
 </div>
+</center>
 {% endif %}
   <main>
     <div class="click-content"></div>
