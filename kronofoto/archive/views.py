@@ -529,8 +529,11 @@ class GridView(JSONResponseMixin, GridBase):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['collection_name'] = str(self.collection)
         context['formatter'] = GridViewFormatter(self.request.GET)
+        if self.final_expr and self.final_expr.is_collection() and self.expr:
+            context['collection_name'] = str(self.expr.description())
+        else:
+            context['collection_name'] = 'All Photos'
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
             context['timeline_json_url'] = context['page_obj'][0].get_json_url()

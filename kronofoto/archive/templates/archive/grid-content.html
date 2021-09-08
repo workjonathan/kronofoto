@@ -6,9 +6,11 @@
     <div>
     {{ collection_name }}
     </div>
+    <div>
     {% if collection_name != "All Photos" %}
         <a data-json-href="{% url "search-results-json" %}" href="#">Back to All Photos</a>
     {% endif %}
+    </div>
     <div>
     <a class="fpi-fpilink" href="{{ timeline_url }}">Fortepan</a>
     </div>
