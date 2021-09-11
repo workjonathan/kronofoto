@@ -25,6 +25,11 @@ a {
   text-decoration: none;
 }
 
+
+
+
+
+
 /******************
  ** HEADER / NAV **
  ******************/
@@ -38,7 +43,6 @@ header {
 nav {
   display: flex;
 }
-
 
 nav ul {
   display: flex;
@@ -62,6 +66,7 @@ input[type="submit"] {
   background-color: var(--fp-main-blue);
   color: white;
 }
+
 input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
   -moz-appearance:none; /* Firefox */
   -webkit-appearance:none; /* Safari and Chrome */
@@ -77,10 +82,10 @@ input[type="email"], input[type="number"], input[type="search"], input[type="tex
   width: 100%;
 }
 
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 select::-ms-expand {
@@ -88,18 +93,21 @@ select::-ms-expand {
 }
 
 select {
-  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
+  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
+  /* !important used for overriding all other customisations */
 }
+
 main {
   grid-row: 2 / span 1;
   display: grid;
-  /* grid-template-rows: minmax(500px, 1fr) minmax(min-content, 190px); */
   grid-template-rows: 1fr auto auto;
   flex-direction: column;
 }
+
 main article {
   grid-row: 1 / span 1;
 }
+
 main nav {
   grid-row: 2 / span 1;
   height: 100%;
