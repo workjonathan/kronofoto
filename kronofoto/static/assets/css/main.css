@@ -1,3 +1,7 @@
+/********************
+ ** FONT IMPORTING **
+ ********************/
+
 @font-face {
   font-family: 'Gotham';
   font-weight: normal;
@@ -33,6 +37,14 @@
   src: url('/static/assets/fonts/Montserrat-Medium.ttf') format('truetype');
   font-weight: 500;
 }
+
+
+
+
+
+/************************
+ * VARIABLE DECLARATION *
+ ************************/
 
 :root {
   --fp-main-font: 'Montserrat', sans-serif;
