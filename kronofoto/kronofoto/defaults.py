@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['fortepan.us']
+ALLOWED_HOSTS = ['fortepan.us', 'localhost']
 import django.urls
 from archive.reverse import reverse as krono_reverse
 
