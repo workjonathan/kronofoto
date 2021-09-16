@@ -82,7 +82,8 @@ class BaseTemplateMixin:
         # By default, the request should not be globally available.
         set_request(None)
 
-    def dispatch(self, request, *args, **kwargs):
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
         self.set_request(request)
         self.form = SearchForm(self.request.GET)
         self.expr = None
@@ -100,7 +101,6 @@ class BaseTemplateMixin:
             self.final_expr = self.expr & self.constraint_expr
         else:
             self.final_expr = self.expr or self.constraint_expr
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -502,6 +502,14 @@ class SearchResultsViewFormatter:
         return super().render_to_response(context, **kwargs)
 
 class GridView(JSONResponseMixin, GridBase):
+    _queryset = None
+
+    @property
+    def queryset(self):
+        if self._queryset is None:
+            self._queryset = self.get_queryset()
+        return self._queryset
+
     def get_queryset(self):
         expr = self.final_expr
         self.collection = CollectionQuery(expr, self.request.user)
@@ -520,7 +528,7 @@ class GridView(JSONResponseMixin, GridBase):
             type="GRID",
             static_url=settings.STATIC_URL,
             frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=context['page_obj'][0].get_grid_url(params=self.request.GET),
+            url=context['page_obj'][0].get_grid_url(params=self.request.GET) if self.queryset.count() else "#",
             grid_json_url=context['grid_json_url'],
             timeline_json_url=context['timeline_json_url'],
             grid_url=context['grid_url'],
@@ -551,6 +559,7 @@ class GridView(JSONResponseMixin, GridBase):
 
 
 class SearchResultsView(JSONResponseMixin, GridBase):
+    _queryset = None
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
@@ -558,8 +567,8 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context['collection_name'] = 'Search Results'
         if self.final_expr and self.final_expr.is_collection():
             context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
-            context['timeline_url'] = context['page_obj'][0].get_absolute_url()
-            context['timeline_json_url'] = context['page_obj'][0].get_json_url()
+            context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
+            context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
         context['initialstate'] = self.get_data(context)
         return context
 
@@ -576,7 +585,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             type="GRID",
             static_url=settings.STATIC_URL,
             frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=context['page_obj'][0].get_grid_url(params=self.request.GET),
+            url=context['page_obj'][0].get_grid_url(params=self.request.GET) if self.queryset.count() else "#",
             grid_url=context['grid_url'],
             grid_json_url=context['grid_json_url'],
             timeline_url=context['timeline_url'],
@@ -584,11 +593,16 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         )
 
     def dispatch(self, request, *args, **kwargs):
-        self.form = SearchForm(self.request.GET)
         if self.form.is_valid():
             return super().dispatch(request, *args, **kwargs)
         else:
             return HttpResponseBadRequest('Invalid search parameters')
+
+    @property
+    def queryset(self):
+        if self._queryset is None:
+            self._queryset = self.get_queryset()
+        return self._queryset
 
     def get_queryset(self):
         expr = self.final_expr
