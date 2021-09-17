@@ -463,6 +463,13 @@ class GridBase(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = settings.GRID_DISPLAY_COUNT
     template_name = 'archive/photo_grid.html'
+    _queryset = None
+
+    @property
+    def queryset(self):
+        if self._queryset is None:
+            self._queryset = self.get_queryset()
+        return self._queryset
 
     def get_paginate_by(self, qs):
         return self.request.GET.get('display', self.paginate_by)
@@ -502,13 +509,6 @@ class SearchResultsViewFormatter:
         return super().render_to_response(context, **kwargs)
 
 class GridView(JSONResponseMixin, GridBase):
-    _queryset = None
-
-    @property
-    def queryset(self):
-        if self._queryset is None:
-            self._queryset = self.get_queryset()
-        return self._queryset
 
     def get_queryset(self):
         expr = self.final_expr
@@ -559,26 +559,32 @@ class GridView(JSONResponseMixin, GridBase):
 
 
 class SearchResultsView(JSONResponseMixin, GridBase):
-    _queryset = None
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
-        context['collection_name'] = 'Search Results'
-        if self.final_expr and self.final_expr.is_collection():
-            context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
-            context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
-            context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
+        context['collection_name'] = 'Search Results' if self.final_expr else "All Photos"
+        if self.queryset.count() == 0:
+            context['noresults'] = True
+            photo_rec = Photo.objects.filter(phototag__tag__tag='silly', phototag__accepted=True).order_by('?')[0]
+            context['oops_photo'] = photo_rec
+            context['query_expr'] = str(self.final_expr)
+            context["tags"] = photo_rec.get_accepted_tags(self.request.user)
+        else:
+            context['noresults'] = False
+            if self.final_expr and self.final_expr.is_collection():
+                context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
+                context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
+                context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
         context['initialstate'] = self.get_data(context)
         return context
 
     def attach_params(self, photos):
-        if self.expr and self.expr.is_collection():
-            params = self.request.GET.copy()
-            if 'display' in params:
-                params.pop('display')
-            for photo in photos:
-                photo.save_params(params=params)
+        params = self.request.GET.copy()
+        if 'display' in params:
+            params.pop('display')
+        for photo in photos:
+            photo.save_params(params=params)
 
     def get_data(self, context):
         return dict(
@@ -598,21 +604,12 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         else:
             return HttpResponseBadRequest('Invalid search parameters')
 
-    @property
-    def queryset(self):
-        if self._queryset is None:
-            self._queryset = self.get_queryset()
-        return self._queryset
-
     def get_queryset(self):
         expr = self.final_expr
-        if not expr:
-            self.expr = None
-            return []
 
-        if expr.is_collection():
+        if expr is None or expr.is_collection():
             self.collection = CollectionQuery(expr, self.request.user)
-            qs = self.model.objects.filter_photos(self.collection)
+            qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
         else:
             qs = expr.as_search(self.model.objects, self.request.user)
         if qs.count() == 1:
