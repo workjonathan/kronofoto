@@ -17,7 +17,10 @@
 </div>
 </center>
 {% endif %}
-{% if noresults == False %}
+{% if noresults %}
+    <h3>Whoops! No photos match your query: {{ query_expr }}</h3>
+    <img style="width:50%" src="{% absolutify oops_photo.h700.url %}" alt="{{ tags }}">
+{% else %}
 <div class="grid-navigation">
     {% if not embed %}
     <h2>{{ collection_name }}</h2>
@@ -30,7 +33,4 @@
 <div class="grid-navigation">
     {% page_links formatter page_obj %}
 </div>
-{% else %}
-    <h3>There are no photos matching your query: {{ query_expr }}</h3>
-    <img src="{% absolutify oops_photo.h700.url %}" alt="{{ tags }}">
 {% endif %}
