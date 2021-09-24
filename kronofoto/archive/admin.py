@@ -115,6 +115,22 @@ class IsPublishedFilter(base_admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(is_published=False)
 
+class HasLocationFilter(base_admin.SimpleListFilter):
+    title = "photo is geolocated"
+    parameter_name = "is geolocated"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(location_point__isnull=False)
+        elif self.value() == 'No':
+            return queryset.filter(location_point__isnull=True)
+
 
 def publish_photos(modeladmin, request, queryset):
     try:
@@ -134,7 +150,7 @@ unpublish_photos.short_description = 'Unpublish photos'
 class PhotoAdmin(admin.OSMGeoAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter)
+    list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter, HasLocationFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
 
