@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib.gis import admin
+from django.contrib import admin as base_admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
@@ -65,7 +66,7 @@ class TagInline(admin.TabularInline):
         return mark_safe(creators)
 
 
-class TagFilter(admin.SimpleListFilter):
+class TagFilter(base_admin.SimpleListFilter):
     title = "tag status"
     parameter_name = "phototag__accepted"
 
@@ -82,7 +83,7 @@ class TagFilter(admin.SimpleListFilter):
             return queryset.filter(phototag__accepted=False)
 
 
-class YearIsSetFilter(admin.SimpleListFilter):
+class YearIsSetFilter(base_admin.SimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
 
@@ -98,7 +99,7 @@ class YearIsSetFilter(admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(year__isnull=True)
 
-class IsPublishedFilter(admin.SimpleListFilter):
+class IsPublishedFilter(base_admin.SimpleListFilter):
     title = "photo is published"
     parameter_name = "is published"
 
@@ -130,7 +131,7 @@ unpublish_photos.short_description = 'Unpublish photos'
 
 
 @admin.register(Photo)
-class PhotoAdmin(admin.ModelAdmin):
+class PhotoAdmin(admin.OSMGeoAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
     list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter)

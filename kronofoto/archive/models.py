@@ -1,7 +1,7 @@
 from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.urls import reverse
 from django.db.models.functions import RowNumber
-from django.db import models
+from django.contrib.gis.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -254,6 +254,8 @@ class Photo(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
+    location_point = models.PointField(null=True, srid=4326)
+    location_bounds = models.MultiPolygonField(null=True, srid=4326)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
@@ -522,6 +524,30 @@ class PhotoVote(models.Model):
     infavor = models.BooleanField()
 
 
+class CSVRecordQuerySet(models.QuerySet):
+    def bulk_clean(self):
+        records = list(self.all())
+        for record in records:
+            record.clean_whitespace()
+        self.bulk_update(
+            records,
+            [
+                'donorFirstName',
+                'donorLastName',
+                'scanner',
+                'photographer',
+                'address',
+                'city',
+                'county',
+                'state',
+                'country',
+                'comments',
+            ],
+        )
+
+    def exclude_geocoded(self):
+        return self.filter(photo__isnull=False, photo__location_point__isnull=True)
+
 class CSVRecord(models.Model):
     filename = models.TextField(unique=True)
     # unique constraint seems to make sense to me, but there are quite a few
@@ -542,3 +568,32 @@ class CSVRecord(models.Model):
     comments = models.TextField()
     added_to_archive = models.DateField()
     photo = models.OneToOneField(Photo, on_delete=models.SET_NULL, null=True)
+
+    objects = CSVRecordQuerySet.as_manager()
+
+    def location(self):
+        components = []
+        if self.country:
+            components.append(self.country)
+        if self.state:
+            components.append(self.state)
+        if self.city:
+            components.append(self.city)
+        elif self.county:
+            components.append(self.county)
+        if self.address:
+            components.append(self.address)
+        return ' '.join(reversed(components))
+
+
+    def clean_whitespace(self):
+        self.donorFirstName = self.donorFirstName.strip()
+        self.donorLastName = self.donorLastName.strip()
+        self.scanner = self.scanner.strip()
+        self.photographer = self.photographer.strip()
+        self.address = self.address.strip()
+        self.city = self.city.strip()
+        self.county = self.county.strip()
+        self.country = self.country.strip()
+        self.state = self.state.strip()
+        self.comments = self.comments.strip()
