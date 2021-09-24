@@ -505,15 +505,30 @@ button#login-btn:hover {
 
 
 main article.fi-image {
+  grid-area: current-image;
+
   display: grid;
   grid-template-rows: 30% auto 30%;
   grid-template-columns: 30px 3% 1fr 1fr 3% 30px;
 
   position: relative;
-  z-index: 3;
-  background-color: white;
   margin: auto;
   max-width: 100vh;
+}
+
+main .img-left-space{
+  grid-area: img-left-space;
+  background: #dcddde;
+}
+
+main .img-right-space{
+  grid-area: img-right-space;
+  background: #dcddde;
+}
+
+main .fi-image-background{
+  grid-area: current-image;
+  background: #c7c8ca;
 }
 .fi-image figure {
   grid-row-start: 1;
@@ -525,8 +540,7 @@ main article.fi-image {
 }
 
 .fi-image figure img {
-  max-height: 450px;
-  width: auto;
+  margin: auto;
 }
 
 .fi-image .control {
@@ -536,14 +550,14 @@ main article.fi-image {
 }
 
 .fi-image .control.previous {
-  grid-column: 1 / span 3;
+  grid-column: 1 / 4;
   cursor: url('../images/arrow-cursor-back.png'), auto;
   width: 100vw;
   transform: translateX(-50%);
 }
 
 .fi-image .control.forward {
-  grid-column: 4 / span 3;
+  grid-column-start: 4;
   cursor: url('../images/arrow-cursor.png'), auto;
   width: 100vw;
 }
@@ -691,14 +705,26 @@ main article.fi-image {
  ** MAIN TIMELINE **
  *******************/
 
+ main .car-left-space{
+   grid-area: car-left-space;
+   background: #f1f2f2;
+ }
+
+ main .car-right-space{
+   grid-area: car-right-space;
+   background: #f1f2f2;
+ }
+
 .fi-timeline {
+    grid-area: timeline;
   flex-direction: column;
   max-width: 1140px;
   justify-self: center;
-  width: -webkit-fill-available;
   width: 1140px;
   min-height: 150px;
   align-self: center;
+
+  background: #e6e7e8;
 }
 
 .fi-thumbnail-carousel {
@@ -796,6 +822,8 @@ main article.fi-image {
 }
 
 .year-ticker {
+    grid-area: year-ticker;
+
   display: flex;
   flex-direction: row;
   background: white;

@@ -14,8 +14,9 @@ img {
 body {
   display: grid;
   height: 100vh;
-  grid-template-rows: minmax(min-content, 0fr) auto;
-  max-width: 2100px;
+  grid-template: "header" 8vh
+                 "main" 92vh
+                 / 1fr;
   margin: 0 auto;
   overflow-x: hidden;
 }
@@ -37,7 +38,7 @@ a {
 header {
   max-height: 200px;
   grid-row: 1 / span 1;
-  padding: 15px;
+  padding: 10px;
 }
 
 nav {
@@ -98,17 +99,12 @@ select {
 }
 
 main {
-  grid-row: 2 / span 1;
+  grid-area: main;
+
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template: "img-left-space current-image img-right-space" minmax(auto, 700px) /*700px is the max height for an FI image*/
+                 "car-left-space timeline car-right-space" auto
+                 "year-ticker year-ticker year-ticker" auto
+                 / 1fr 2fr 1fr;
   flex-direction: column;
-}
-
-main article {
-  grid-row: 1 / span 1;
-}
-
-main nav {
-  grid-row: 2 / span 1;
-  height: 100%;
 }
