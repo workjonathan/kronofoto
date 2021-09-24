@@ -363,17 +363,17 @@ class Donor(Expression):
 
     def scoreF(self, negated):
         lastname_minusval = Cast(Length(Replace(Lower(F('donor__last_name')), Value(self.value))), FloatField())
-        lastnamelen = Cast(Greatest(1.0, Length('donor__last_name')), FloatField())
+        lastnamelen = Cast(Greatest(1.0, Length('donor__last_name'), output_field=FloatField()), FloatField())
         lastnamebadness = lastname_minusval / lastnamelen
         firstname_minusval = Cast(Length(Replace(Lower(F('donor__first_name')), Value(self.value))), FloatField())
-        firstnamelen = Cast(Greatest(1, Length('donor__first_name', output_field=FloatField())), FloatField())
+        firstnamelen = Cast(Greatest(1, Length('donor__first_name'), output_field=FloatField()), FloatField())
         firstnamebadness = firstname_minusval / firstnamelen
 
         if negated:
             score = firstnamebadness * lastnamebadness
         else:
             score = 2 - firstnamebadness - lastnamebadness
-        return score ** 4 # raising to fourth power pushes the score down unless the name is very close to an exact match.
+        return score ** 4.0 # raising to fourth power pushes the score down unless the name is very close to an exact match.
 
     def score(self, photo, negated):
         ln = fn = 0
