@@ -38,7 +38,7 @@ a {
 header {
   max-height: 200px;
   grid-row: 1 / span 1;
-  padding: 10px;
+  padding: 1.6vh;
 }
 
 nav {
