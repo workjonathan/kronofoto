@@ -254,8 +254,8 @@ class Photo(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
-    location_point = models.PointField(null=True, srid=4326)
-    location_bounds = models.MultiPolygonField(null=True, srid=4326)
+    location_point = models.PointField(null=True, srid=4326, blank=True)
+    location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
@@ -486,6 +486,9 @@ class PhotoTag(models.Model):
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
     creator = models.ManyToManyField(User, editable=False)
+
+    def __str__(self):
+        return str(self.tag)
 
 def remove_deadtags(sender, instance, **kwargs):
     if instance.tag.phototag_set.count() == 0:

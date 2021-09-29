@@ -1,6 +1,7 @@
 from django.contrib.gis import admin
 from django.contrib import admin as base_admin
 from django.contrib.auth.models import User
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
@@ -187,3 +188,37 @@ class KronofotoUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, KronofotoUserAdmin)
+
+@admin.register(LogEntry)
+class LogEntryAdmin(base_admin.ModelAdmin):
+    date_hierarchy = 'action_time'
+
+    list_filter = [
+        'user',
+        'content_type',
+        'action_flag',
+    ]
+
+    search_fields = [
+        'object_repr',
+        'change_message',
+    ]
+
+    list_display = [
+        'action_time',
+        'user',
+        'content_type',
+        'action_flag',
+    ]
+
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_change_permission(self, *args, **kwargs):
+        return False
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+    def has_view_permission(self, request, *args, **kwargs):
+        return request.user.is_superuser
