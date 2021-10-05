@@ -8,6 +8,8 @@ from django.utils.http import urlencode
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 from .forms import TagForm
+from django.conf import settings
+from os.path import join
 
 
 class CollectionQueryTest(TestCase):
@@ -800,4 +802,21 @@ class TimelineDisplay(SimpleTestCase):
             for key in ('box', 'notch'):
                 self.assertIsPosition(notch[key])
 
+
+from .admin import PhotoAdmin
+from django.contrib.admin.sites import AdminSite
+class PhotoAdminTest(TestCase):
+    def testEnforceUUIDName(self):
+        model_admin = PhotoAdmin(model=models.Photo, admin_site=AdminSite())
+        photo = models.Photo(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=open('testdata/test.jpg', 'rb').read(),
+                content_type='image/jpeg'),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+            is_published=True,
+            year=1950,
+        )
+        model_admin.save_model(obj=photo, request=None, form=None, change=None)
+        self.assertEqual(photo.original.path, join(settings.MEDIA_ROOT, 'original', '{}.jpg'.format(photo.uuid)))
 

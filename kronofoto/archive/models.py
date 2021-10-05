@@ -17,6 +17,8 @@ from bisect import bisect_left
 from django.utils.http import urlencode
 import hashlib
 from django.http import QueryDict
+from os import path
+from .storage import OverwriteStorage
 
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):
@@ -245,9 +247,12 @@ class NewCutoff(models.Model):
         return 'Cutoff date for "new" photos'
 
 
+def get_original_path(instance, filename):
+    return path.join('original', '{}.jpg'.format(instance.uuid))
+
 class Photo(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    original = models.ImageField(null=True, editable=False)
+    original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
     h700 = models.ImageField(null=True, editable=False)
     thumbnail = models.ImageField(null=True, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)

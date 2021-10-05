@@ -161,6 +161,13 @@ class PhotoAdmin(admin.OSMGeoAdmin):
     def h700_image(self, obj):
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
 
+    def save_form(self, request, form, change):
+        photo = super().save_form(request, form, change)
+        if len(request.FILES):
+            photo.thumbnail = None
+            photo.h700 = None
+        return photo
+
 class UserTagInline(admin.TabularInline):
     model = PhotoTag.creator.through
     extra = 0
