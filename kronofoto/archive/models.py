@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import datetime
 import uuid
 from PIL import Image, ExifTags, ImageOps
 from io import BytesIO
@@ -265,7 +267,7 @@ class Photo(models.Model):
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
     country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
-    year = models.SmallIntegerField(null=True, blank=True, db_index=True)
+    year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
