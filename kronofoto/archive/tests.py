@@ -65,19 +65,25 @@ class TimelinePaginatorTest(TestCase):
             self.assertEqual(photo['thumbnail']['url'], views.EMPTY_PNG)
 
 class PhotoTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        with open('testdata/test.jpg', 'rb') as f:
+            cls.test_img = f.read()
+
     def testShouldNotAppearTwiceWhenTwoUsersSubmitSameTag(self):
         user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
-        photo = models.Photo(
+        photo = models.Photo.objects.create(
             original=SimpleUploadedFile(
                 name='test_img.jpg',
-                content=open('testdata/test.jpg', 'rb').read(),
-                content_type='image/jpeg'),
+                content=self.test_img,
+                content_type='image/jpeg',
+            ),
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
             is_published=True,
             year=1950,
         )
-        photo.save()
         tag = models.Tag.objects.create(tag="test tag")
         phototag = models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
         phototag.creator.add(user2)
@@ -91,14 +97,14 @@ class PhotoTest(TestCase):
         photo = models.Photo.objects.create(
             original=SimpleUploadedFile(
                 name='test_img.jpg',
-                content=open('testdata/test.jpg', 'rb').read(),
-                content_type='image/jpeg'),
+                content=self.test_img,
+                content_type='image/jpeg',
+            ),
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
             is_published=True,
             year=1950,
         )
-        with open('testdata/test.jpg', 'rb') as f:
-            photo.original.save('badname.png', File(f))
+        photo.original.save('badname.png', ContentFile(self.test_img))
         self.assertEqual(photo.original.path, join(settings.MEDIA_ROOT, 'original', '{}.jpg'.format(photo.uuid)))
 
     def testShouldDisallowYearsBefore1800(self):
