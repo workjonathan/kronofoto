@@ -10,6 +10,8 @@ from archive.search.expression import *
 from .forms import TagForm
 from django.conf import settings
 from os.path import join
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile, File
 
 
 class CollectionQueryTest(TestCase):
@@ -84,6 +86,26 @@ class PhotoTest(TestCase):
         photo.save()
         self.assertEqual(models.Photo.objects.filter_photos(models.CollectionQuery(TagExactly("test tag"), user)).count(), 1)
         self.assertEqual(photo.get_accepted_tags().count(), 1)
+
+    def testShouldEnforceUUIDFilename(self):
+        photo = models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=open('testdata/test.jpg', 'rb').read(),
+                content_type='image/jpeg'),
+            donor=models.Donor.objects.create(last_name='last', first_name='first'),
+            is_published=True,
+            year=1950,
+        )
+        with open('testdata/test.jpg', 'rb') as f:
+            photo.original.save('badname.png', File(f))
+        self.assertEqual(photo.original.path, join(settings.MEDIA_ROOT, 'original', '{}.jpg'.format(photo.uuid)))
+
+    def testShouldDisallowYearsBefore1800(self):
+        photo = models.Photo(year=1799)
+        with self.assertRaises(ValidationError) as cm:
+            year = photo.clean_fields()
+        self.assertIn('year', cm.exception.message_dict)
 
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')
@@ -332,20 +354,22 @@ class WhenHave50Photos(TestCase):
             first_name='first',
         )
         cls.photos = []
-        for y in range(1900, 1950):
-            p = models.Photo.objects.create(
-                original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'),
-                donor=donor,
-                year=y,
-                is_published=True,
-                city='city{}'.format(y % 3),
-                state='state{}'.format(y % 3),
-                county='county{}'.format(y % 3),
-            )
-            cls.photos.append(p)
+        with open('testdata/test.jpg', 'rb') as f:
+            test_img = f.read()
+            for y in range(1900, 1950):
+                p = models.Photo.objects.create(
+                    original=SimpleUploadedFile(
+                        name='test_img.jpg',
+                        content=test_img,
+                        content_type='image/jpeg'),
+                    donor=donor,
+                    year=y,
+                    is_published=True,
+                    city='city{}'.format(y % 3),
+                    state='state{}'.format(y % 3),
+                    county='county{}'.format(y % 3),
+                )
+                cls.photos.append(p)
 
     def testCountyIndex(self):
         self.assertEqual(
@@ -801,22 +825,3 @@ class TimelineDisplay(SimpleTestCase):
                 self.assertIn(key, notch)
             for key in ('box', 'notch'):
                 self.assertIsPosition(notch[key])
-
-
-from .admin import PhotoAdmin
-from django.contrib.admin.sites import AdminSite
-class PhotoAdminTest(TestCase):
-    def testEnforceUUIDName(self):
-        model_admin = PhotoAdmin(model=models.Photo, admin_site=AdminSite())
-        photo = models.Photo(
-            original=SimpleUploadedFile(
-                name='test_img.jpg',
-                content=open('testdata/test.jpg', 'rb').read(),
-                content_type='image/jpeg'),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-            is_published=True,
-            year=1950,
-        )
-        model_admin.save_model(obj=photo, request=None, form=None, change=None)
-        self.assertEqual(photo.original.path, join(settings.MEDIA_ROOT, 'original', '{}.jpg'.format(photo.uuid)))
-
