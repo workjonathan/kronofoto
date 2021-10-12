@@ -1,4 +1,4 @@
-from django.test import TestCase, SimpleTestCase, RequestFactory
+from django.test import TestCase, SimpleTestCase, RequestFactory, tag
 from .auth.views import RegisterAccount
 from . import models, views
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile, File
 
 
+@tag("fast")
 class CollectionQueryTest(TestCase):
     def setUp(self):
         self.donor = models.Donor.objects.create(first_name='First', last_name='Last')
@@ -41,6 +42,7 @@ class CollectionQueryTest(TestCase):
         self.assertEqual(str(coll), 'donated by Last, First')
 
 
+@tag("fast")
 class FakeImageTest(SimpleTestCase):
     def testShouldHaveThumbnail(self):
         self.assertEqual(views.FAKE_PHOTO['thumbnail']['url'], views.EMPTY_PNG)
@@ -51,6 +53,7 @@ class FakeImageTest(SimpleTestCase):
     def testShouldHaveHeight(self):
         self.assertEqual(views.FAKE_PHOTO['thumbnail']['height'], 75)
 
+@tag("fast")
 class FakeTimelinePageTest(SimpleTestCase):
     def testShouldNotHavePhotos(self):
         self.assertEqual(len(list(views.FakeTimelinePage())), 0)
@@ -58,32 +61,46 @@ class FakeTimelinePageTest(SimpleTestCase):
     def testShouldHaveAnObjectListWithTenFakePhotos(self):
         self.assertEqual(len(list(views.FakeTimelinePage().object_list)), 10)
 
+@tag("fast")
 class TimelinePaginatorTest(TestCase):
     def testInvalidPageShouldGetFakePage(self):
         page = views.TimelinePaginator(models.Photo.objects.all().order_by('id'), per_page=10).get_page(2)
         for photo in page.object_list:
             self.assertEqual(photo['thumbnail']['url'], views.EMPTY_PNG)
 
-class PhotoTest(TestCase):
+class TestImageMixin:
     @classmethod
     def setUpClass(cls):
-        super().setUpClass()
         with open('testdata/test.jpg', 'rb') as f:
             cls.test_img = f.read()
+        super().setUpClass()
+
+    @classmethod
+    def createPhoto(cls, is_published=True, year=1950, donor=None, **kwargs):
+        donor = donor or models.Donor.objects.create(last_name='last', first_name='first')
+        return models.Photo.objects.create(
+            original=SimpleUploadedFile(
+                name='test_img.jpg',
+                content=cls.test_img,
+                content_type='image/jpeg',
+            ),
+            donor=donor,
+            is_published=is_published,
+            year=year,
+            **kwargs,
+        )
+
+
+@tag("fast")
+class PhotoTest(TestImageMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.photo = cls.createPhoto()
 
     def testShouldNotAppearTwiceWhenTwoUsersSubmitSameTag(self):
         user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                name='test_img.jpg',
-                content=self.test_img,
-                content_type='image/jpeg',
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-            is_published=True,
-            year=1950,
-        )
+        photo = self.photo
         tag = models.Tag.objects.create(tag="test tag")
         phototag = models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
         phototag.creator.add(user2)
@@ -94,59 +111,35 @@ class PhotoTest(TestCase):
         self.assertEqual(photo.get_accepted_tags().count(), 1)
 
     def testShouldEnforceUUIDFilename(self):
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                name='test_img.jpg',
-                content=self.test_img,
-                content_type='image/jpeg',
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-            is_published=True,
-            year=1950,
-        )
+        photo = self.photo
         photo.original.save('badname.png', ContentFile(self.test_img))
         self.assertEqual(photo.original.path, join(settings.MEDIA_ROOT, 'original', '{}.jpg'.format(photo.uuid)))
 
+    @tag("fast")
     def testShouldDisallowYearsBefore1800(self):
         photo = models.Photo(year=1799)
         with self.assertRaises(ValidationError) as cm:
             year = photo.clean_fields()
         self.assertIn('year', cm.exception.message_dict)
 
+    @tag("fast")
     def testCityURL(self):
         photo = models.Photo(city='CityName', state='StateName')
         self.assertEqual(photo.get_city_url(), '{}?{}'.format(reverse('gridview'), urlencode({'city': photo.city, 'state': photo.state})))
 
+    @tag("fast")
     def testCountyURL(self):
         photo = models.Photo(county='CountyName', state='StateName')
         self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
 
-class PhotoTagTest(TestCase):
-    def setUp(self):
-        user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
-        user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
-        self.photo = models.Photo(
-            original=SimpleUploadedFile(
-                name='test_img.jpg',
-                content=open('testdata/test.jpg', 'rb').read(),
-                content_type='image/jpeg'),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-            is_published=True,
-            year=1950,
-        )
-        self.photo.save()
-        self.photo2 = models.Photo(
-            original=SimpleUploadedFile(
-                name='test_img.jpg',
-                content=open('testdata/test.jpg', 'rb').read(),
-                content_type='image/jpeg'),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-            is_published=True,
-            year=1950,
-        )
-        self.photo2.save()
-        self.tag = models.Tag.objects.create(tag='tag')
-        self.phototag = models.PhotoTag.objects.create(tag=self.tag, photo=self.photo, accepted=False)
+@tag("fast")
+class PhotoTagTest(TestImageMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.photo = cls.createPhoto()
+        cls.photo2 = cls.createPhoto()
+        cls.tag = models.Tag.objects.create(tag='tag')
+        cls.phototag = models.PhotoTag.objects.create(tag=cls.tag, photo=cls.photo, accepted=False)
 
     def testShouldAutomaticallyRemoveDeadTags(self):
         self.phototag.delete()
@@ -162,6 +155,7 @@ class PhotoTagTest(TestCase):
         self.assertEqual(models.Tag.objects.filter(tag='tag').count(), 0)
 
 
+@tag("fast")
 class DonorTest(TestCase):
     def testURL(self):
         donor = models.Donor.objects.create(
@@ -170,38 +164,28 @@ class DonorTest(TestCase):
         )
         self.assertEqual(donor.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'donor': donor.id})))
 
+@tag("fast")
 class TermTest(TestCase):
     def testURL(self):
         term = models.Term.objects.create(term="test term")
         self.assertEqual(term.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'term': term.id})))
 
-class TagTest(TestCase):
+@tag("fast")
+class TagTest(TestImageMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.photo = cls.createPhoto()
+
     def testSubstringSearchShouldNotReturnTooManyThings(self):
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-        )
+        photo = self.photo
         for x in range(11):
             tag = models.Tag.objects.create(tag="test tag {}".format(x))
             models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
-
         obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
-
         self.assertEqual(len(obj), 10)
 
     def testSubstringSearchShouldOnlyReturnMatchingTags(self):
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-        )
+        photo = self.photo
         tag1 = models.Tag.objects.create(tag="test tag")
         models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=True)
 
@@ -217,14 +201,7 @@ class TagTest(TestCase):
         self.assertEqual(len(obj), 3)
 
     def testSubstringSearchShouldOnlyReturnAcceptedTags(self):
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-        )
+        photo = self.photo
         tag1 = models.Tag.objects.create(tag="test tag")
         models.PhotoTag.objects.create(tag=tag1, photo=photo, accepted=True)
 
@@ -238,14 +215,7 @@ class TagTest(TestCase):
 
 
     def testFindDeadTags(self):
-        photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-        )
+        photo = self.photo
         tag1 = models.Tag.objects.create(tag="test tag")
         tag2 = models.Tag.objects.create(tag="dead tag 1")
         tag3 = models.Tag.objects.create(tag="dead tag 2")
@@ -254,28 +224,25 @@ class TagTest(TestCase):
         for tag in models.Tag.dead_tags():
             self.assertNotEqual(tag.tag, tag1.tag)
 
+    @tag("fast")
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
         self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'tag': tag.tag})))
 
+    @tag("fast")
     def testShouldEnforceLowerCase(self):
         tag = models.Tag.objects.create(tag='CAPITALIZED')
         tag.refresh_from_db()
         self.assertEqual(tag.tag, 'capitalized')
 
 
-class TagFormTest(TestCase):
-    def setUp(self):
-        self.photo = models.Photo.objects.create(
-            original=SimpleUploadedFile(
-                    name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
-                    content_type='image/jpeg'
-            ),
-            donor=models.Donor.objects.create(last_name='last', first_name='first'),
-        )
-        self.user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
-        self.admin = User.objects.create_superuser('testuser2', 'user2@email.com', 'testpassword')
+@tag("fast")
+class TagFormTest(TestImageMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.photo = cls.createPhoto()
+        cls.user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        cls.admin = User.objects.create_superuser('testuser2', 'user2@email.com', 'testpassword')
 
     def testShouldNotAllowTagsWhichAreAlreadyTerms(self):
         models.Term.objects.create(term='dog')
@@ -333,7 +300,7 @@ class TagFormTest(TestCase):
         photo = models.Photo.objects.create(
             original=SimpleUploadedFile(
                     name='test_img.jpg',
-                    content=open('testdata/test.jpg', 'rb').read(),
+                    content=self.test_img,
                     content_type='image/jpeg'
             ),
             donor=models.Donor.objects.create(last_name='last', first_name='first'),
@@ -352,7 +319,7 @@ class TagFormTest(TestCase):
         self.assertEqual(models.Tag.objects.filter(tag='cat').count(), 1)
         self.assertEqual(models.Tag.objects.filter(tag='human').count(), 1)
 
-class WhenHave50Photos(TestCase):
+class WhenHave50Photos(TestImageMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.donor = donor = models.Donor.objects.create(
@@ -360,22 +327,15 @@ class WhenHave50Photos(TestCase):
             first_name='first',
         )
         cls.photos = []
-        with open('testdata/test.jpg', 'rb') as f:
-            test_img = f.read()
-            for y in range(1900, 1950):
-                p = models.Photo.objects.create(
-                    original=SimpleUploadedFile(
-                        name='test_img.jpg',
-                        content=test_img,
-                        content_type='image/jpeg'),
-                    donor=donor,
-                    year=y,
-                    is_published=True,
-                    city='city{}'.format(y % 3),
-                    state='state{}'.format(y % 3),
-                    county='county{}'.format(y % 3),
-                )
-                cls.photos.append(p)
+        for y in range(1900, 1950):
+            p = cls.createPhoto(
+                year=y,
+                donor=donor,
+                city='city{}'.format(y % 3),
+                state='state{}'.format(y % 3),
+                county='county{}'.format(y % 3),
+            )
+            cls.photos.append(p)
 
     def testCountyIndex(self):
         self.assertEqual(
@@ -583,6 +543,7 @@ class WhenHave50Photos(TestCase):
         resp = self.client.get(reverse('user-page', args=['notarealuser']))
         self.assertEqual(resp.status_code, 404)
 
+@tag("fast")
 class RegisterAccountTest(TestCase):
     def testUserIsHumanShouldReturnFalse(self):
         req = RequestFactory().post(reverse('register-account'), data={'g-recaptcha-response': ''})
@@ -592,6 +553,7 @@ class RegisterAccountTest(TestCase):
         self.assertFalse(v.user_is_human())
 
 
+@tag("fast")
 class BasicParserTest(SimpleTestCase):
     def testParserShouldProduceCollectionExpressions(self):
         expr = parser.BasicParser.tokenize("dog").parse()
@@ -605,6 +567,7 @@ class BasicParserTest(SimpleTestCase):
         expr = parser.BasicParser.tokenize("dog waterloo").parse()
         self.assertEqual(expr, And(CollectionExpr('dog'), CollectionExpr('waterloo')))
 
+@tag("fast")
 class ExpressionTest(SimpleTestCase):
     def testThingsAreCollections(self):
         self.assertTrue(YearEquals(1912).is_collection())
@@ -666,6 +629,7 @@ class ExpressionTest(SimpleTestCase):
         self.assertEqual((Maximum(Term("dog"), Term("dog"))).group(), "max")
 
 
+@tag("fast")
 class DescriptionTest(SimpleTestCase):
     def testHasLongDescription(self):
         self.assertEqual(str(Description([Term("dog"), Term("Farm"), YearEquals(1912)])), "from 1912; and termed with dog and farm")
@@ -673,6 +637,7 @@ class DescriptionTest(SimpleTestCase):
         self.assertEqual(str(Description([Term("dog"), YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920; and termed with dog")
 
 
+@tag("fast")
 class ParserTest(SimpleTestCase):
     def testParserShouldParseTypedNumbers(self):
         self.assertEqual(parser.tokenize.parse('year:1912'), [YearEquals(1912)])
@@ -807,6 +772,7 @@ class ParserTest(SimpleTestCase):
 
 
 from archive.templatetags import timeline
+@tag("fast")
 class TimelineDisplay(SimpleTestCase):
     def assertIsPosition(self, obj):
         for key in ('x', 'y', 'width', 'height'):
