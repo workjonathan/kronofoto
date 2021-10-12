@@ -266,6 +266,9 @@ class FakeTimelinePage:
 
     object_list = [FAKE_PHOTO] * 10
 
+    def find_accession_number(self, accession_number):
+        raise KeyError(accession_number)
+
 class TimelinePage(Page):
     def find_accession_number(self, accession_number):
         for i, p in enumerate(self):
