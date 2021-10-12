@@ -132,6 +132,30 @@ class PhotoTest(TestImageMixin, TestCase):
         photo = models.Photo(county='CountyName', state='StateName')
         self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
 
+    def testShouldNotAllowGuestsToTagPhotos(self):
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.accession_number}))
+        self.assertEqual(resp.status_code, 302)
+
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.accession_number}), {'tag': 'test tag'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(len(self.photo.get_proposed_tags()), 0)
+        self.assertEqual(len(self.photo.get_accepted_tags()), 0)
+
+    def testShouldBeAbleToTagPhotos(self):
+        User.objects.create_user('testuser', 'user@email.com', 'testpassword')
+        self.client.login(username='testuser', password='testpassword')
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.accession_number}))
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.accession_number}), { 'tag': 'test tag'})
+        self.assertEqual(len(self.photo.get_proposed_tags()), 1)
+        self.assertEqual(self.photo.get_proposed_tags()[0].tag, 'test tag')
+        self.assertEqual(len(self.photo.get_accepted_tags()), 0)
+
+    def testShould404WhenPhotoNotFound(self):
+        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 'FI99999'}))
+        self.assertEqual(resp.status_code, 404)
+
 @tag("fast")
 class PhotoTagTest(TestImageMixin, TestCase):
     @classmethod
@@ -327,7 +351,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             first_name='first',
         )
         cls.photos = []
-        for y in range(1900, 1950):
+        for y in range(1900, 1905):
             p = cls.createPhoto(
                 year=y,
                 donor=donor,
@@ -341,9 +365,9 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(
             models.Photo.county_index(),
             [
-                {'name': 'county0, state0', 'count': 16, 'href': self.photos[2].get_county_url()},
-                {'name': 'county1, state1', 'count': 17, 'href': self.photos[0].get_county_url()},
-                {'name': 'county2, state2', 'count': 17, 'href': self.photos[1].get_county_url()},
+                {'name': 'county0, state0', 'count': 1, 'href': self.photos[2].get_county_url()},
+                {'name': 'county1, state1', 'count': 2, 'href': self.photos[0].get_county_url()},
+                {'name': 'county2, state2', 'count': 2, 'href': self.photos[1].get_county_url()},
             ]
         )
 
@@ -351,9 +375,9 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(
             models.Photo.city_index(),
             [
-                {'name': 'city0, state0', 'count': 16, 'href': self.photos[2].get_city_url()},
-                {'name': 'city1, state1', 'count': 17, 'href': self.photos[0].get_city_url()},
-                {'name': 'city2, state2', 'count': 17, 'href': self.photos[1].get_city_url()},
+                {'name': 'city0, state0', 'count': 1, 'href': self.photos[2].get_city_url()},
+                {'name': 'city1, state1', 'count': 2, 'href': self.photos[0].get_city_url()},
+                {'name': 'city2, state2', 'count': 2, 'href': self.photos[1].get_city_url()},
             ]
         )
 
@@ -361,7 +385,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(
             models.Donor.index(),
             [
-                {'name': 'last, first', 'count': 50, 'href': self.donor.get_absolute_url()},
+                {'name': 'last, first', 'count': 5, 'href': self.donor.get_absolute_url()},
             ]
         )
 
@@ -377,8 +401,8 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(
             models.Term.index(),
             [
-                {'name': 'even year', 'count': 25, 'href': even.get_absolute_url()},
-                {'name': 'new decade', 'count': 5, 'href': endswithzero.get_absolute_url()},
+                {'name': 'even year', 'count': 3, 'href': even.get_absolute_url()},
+                {'name': 'new decade', 'count': 1, 'href': endswithzero.get_absolute_url()},
             ],
         )
 
@@ -396,8 +420,8 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(
             models.Tag.index(),
             [
-                {'name': 'even year', 'count': 25, 'href': eventag.get_absolute_url()},
-                {'name': 'new decade', 'count': 5, 'href': endswithzero.get_absolute_url()},
+                {'name': 'even year', 'count': 3, 'href': eventag.get_absolute_url()},
+                {'name': 'new decade', 'count': 1, 'href': endswithzero.get_absolute_url()},
             ],
         )
 
@@ -408,42 +432,18 @@ class WhenHave50Photos(TestImageMixin, TestCase):
 
     def testSearchShouldSupportBooleanLogic(self):
         user = AnonymousUser()
-        expr1 = expression.YearEquals(1911) & expression.YearEquals(1912)
-        expr2 = expression.YearEquals(1911) | expression.YearEquals(1912)
+        expr1 = expression.YearEquals(1901) & expression.YearEquals(1902)
+        expr2 = expression.YearEquals(1901) | expression.YearEquals(1902)
         self.assertEqual(expr1.as_search(models.Photo.objects, user).count(), 0)
-        self.assertEqual((~expr1).as_search(models.Photo.objects, user).count(), 50)
+        self.assertEqual((~expr1).as_search(models.Photo.objects, user).count(), 5)
         photomatches = expr2.as_search(models.Photo.objects, user)
         self.assertEqual(photomatches.count(), 2)
         for photo in photomatches:
-            self.assertIn(photo.year, (1911, 1912))
+            self.assertIn(photo.year, (1901, 1902))
         photomatches = (~expr2).as_search(models.Photo.objects, user)
-        self.assertEqual(photomatches.count(), 48)
+        self.assertEqual(photomatches.count(), 3)
         for photo in photomatches:
-            self.assertNotIn(photo.year, (1911, 1912))
-
-    def testShouldNotAllowGuestsToTagPhotos(self):
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}))
-        self.assertEqual(resp.status_code, 302)
-
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}), { 'tag': 'test tag'})
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(len(self.photos[0].get_proposed_tags()), 0)
-        self.assertEqual(len(self.photos[0].get_accepted_tags()), 0)
-
-    def testShouldBeAbleToTagPhotos(self):
-        User.objects.create_user('testuser', 'user@email.com', 'testpassword')
-        self.client.login(username='testuser', password='testpassword')
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}))
-        self.assertEqual(resp.status_code, 200)
-
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photos[0].accession_number}), { 'tag': 'test tag'})
-        self.assertEqual(len(self.photos[0].get_proposed_tags()), 1)
-        self.assertEqual(self.photos[0].get_proposed_tags()[0].tag, 'test tag')
-        self.assertEqual(len(self.photos[0].get_accepted_tags()), 0)
-
-    def testShould404WhenPhotoNotFound(self):
-        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 'FI99999'}))
-        self.assertEqual(resp.status_code, 404)
+            self.assertNotIn(photo.year, (1901, 1902))
 
     def testShouldRedirectToCorrectPageForPhoto(self):
         photos = self.photos
@@ -474,7 +474,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
 
     def testGridShouldRespectTermFilters(self):
         term = models.Term.objects.create(term="test term")
-        photos = [self.photos[2], self.photos[5], self.photos[15]]
+        photos = [self.photos[2], self.photos[3], self.photos[1]]
         for photo in photos:
             photo.terms.add(term)
         resp = self.client.get(term.get_absolute_url())
@@ -489,7 +489,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
 
     def testGridShouldRespectTagFilters(self):
         tag = models.Tag.objects.create(tag="test tag")
-        photos = [self.photos[2], self.photos[5], self.photos[15]]
+        photos = [self.photos[2], self.photos[0], self.photos[3]]
         for photo in photos:
             models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
         resp = self.client.get(tag.get_absolute_url())
@@ -500,14 +500,14 @@ class WhenHave50Photos(TestImageMixin, TestCase):
 
     def testFilteringShouldNotShowUnapprovedTags(self):
         tag = models.Tag.objects.create(tag="test tag")
-        photos = [self.photos[2], self.photos[5], self.photos[15]]
+        photos = [self.photos[2], self.photos[1], self.photos[4]]
         for photo in photos:
             models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=False)
         resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': tag.slug})
         self.assertEqual(len(resp.context['page_obj']), 0)
 
     def testGridViewShouldHonorDisplayParameter(self):
-        for disp in range(15, 24):
+        for disp in range(2, 5):
             resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'display': disp})
             self.assertEqual(len(resp.context['page_obj']), disp)
 
