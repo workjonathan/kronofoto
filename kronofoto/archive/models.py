@@ -126,7 +126,7 @@ class TagQuerySet(models.QuerySet):
         return ', '.join(str(t) for t in self)
 
 class Tag(Collectible, models.Model):
-    tag = LowerCaseCharField(max_length=64, unique=True)
+    tag = LowerCaseCharField(max_length=64, unique=True, editable=False)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
     objects = TagQuerySet.as_manager()
