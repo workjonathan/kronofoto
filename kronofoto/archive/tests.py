@@ -156,6 +156,16 @@ class PhotoTest(TestImageMixin, TestCase):
         resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 'FI99999'}))
         self.assertEqual(resp.status_code, 404)
 
+    def testShouldHaveUniqueDownloadPage(self):
+        self.assertEqual(self.photo.get_download_page_url(), reverse('download', kwargs={'pk': self.photo.id}))
+        resp = self.client.get(reverse('download', kwargs={'pk': self.photo.id}))
+        self.assertEqual(resp.status_code, 200)
+        templates = {template.name for template in resp.templates}
+        self.assertIn('archive/download-page.html', templates)
+        self.assertIn('archive/base.html', templates)
+        self.assertEqual(resp.context['host_uri'], settings.HOST_URI)
+
+
 @tag("fast")
 class PhotoTagTest(TestImageMixin, TestCase):
     @classmethod

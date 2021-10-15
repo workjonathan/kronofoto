@@ -758,3 +758,12 @@ class EmbedStyleSheet(TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context['id'] = self.kwargs['id']
         return context
+
+class DownloadPageView(BaseTemplateMixin, DetailView):
+    model = Photo
+    template_name = "archive/download-page.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['host_uri'] = settings.HOST_URI
+        return context

@@ -46,9 +46,8 @@
                 data-json-href="{{ photo.next.get_json_url }}"
             {% endif %}>
         </a>
-        <!--download="{{ photo.accession_number}}.jpg"-->
         <button id="dl">
-            <a href="{% absolutify photo.original.url %}" target="_blank">
+            <a href="{{ photo.get_download_page_url }}">
                 <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
             </a>
         </button>

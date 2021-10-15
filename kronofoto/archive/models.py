@@ -327,6 +327,9 @@ class Photo(models.Model):
         )
         return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
 
+    def get_download_page_url(self):
+        return reverse('download', kwargs=dict(pk=self.id))
+
     def get_json_url(self, queryset=None, params=None):
         return self.create_url('photoview-json', queryset=queryset, params=params)
 
