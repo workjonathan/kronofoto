@@ -6,7 +6,7 @@
     <p>
     <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>
     <p>
-    [“{{ object.accession_number }},”] {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ host_uri }}{{ object.get_absolute_url }},” CC-BY-SA 4.0 <a href="https://creativecommons.org/licenses/by-sa/4.0/">
+    “{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ host_uri }}{{ citation_url }},” <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>
     <p>
     <img src="{{ object.original.url }}" />
 {% endblock %}
