@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User, AnonymousUser, Permission
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.http import QueryDict
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
 from .forms import TagForm
@@ -164,6 +165,9 @@ class PhotoTest(TestImageMixin, TestCase):
         self.assertIn('archive/download-page.html', templates)
         self.assertIn('archive/base.html', templates)
         self.assertEqual(resp.context['host_uri'], settings.HOST_URI)
+
+    def testShouldHaveSearchFiltersOnDownloadUrl(self):
+        self.assertEqual(self.photo.get_download_page_url(params=QueryDict('a=1')), reverse('download', kwargs={'pk': self.photo.id}) + '?a=1')
 
 
 @tag("fast")

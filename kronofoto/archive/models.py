@@ -325,10 +325,15 @@ class Photo(models.Model):
             viewname,
             kwargs=kwargs,
         )
-        return self.add_params(url=url, params=params or hasattr(self, 'params') and self.params)
+        return self.add_params(
+            url=url, params=params or hasattr(self, 'params') and self.params or None
+        )
 
-    def get_download_page_url(self):
-        return reverse('download', kwargs=dict(pk=self.id))
+    def get_download_page_url(self, params=None):
+        params = params or hasattr(self, 'params') and self.params or None
+        return self.add_params(
+            url=reverse('download', kwargs=dict(pk=self.id)), params=params
+        )
 
     def get_json_url(self, queryset=None, params=None):
         return self.create_url('photoview-json', queryset=queryset, params=params)
@@ -344,7 +349,7 @@ class Photo(models.Model):
 
     def get_grid_json_url(self, params=None):
         page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
-        params = params or hasattr(self, 'params') and self.params
+        params = params or hasattr(self, 'params') and self.params or None
         if params:
             url = reverse('search-results-json')
             params = params.copy()
@@ -355,7 +360,7 @@ class Photo(models.Model):
 
     def get_grid_url(self, params=None):
         page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
-        params = params or hasattr(self, 'params') and self.params
+        params = params or hasattr(self, 'params') and self.params or None
         if params:
             url = reverse('search-results')
             params = params.copy()
