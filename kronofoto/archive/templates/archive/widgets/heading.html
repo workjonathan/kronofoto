@@ -1,0 +1,26 @@
+{% load static %}
+{% block extrastyle %}
+<style type="text/css">
+  #{{ id }}_sphere { width: {{ sphere_width }}px; height: {{ sphere_height }}px; }
+  #{{ id }}_admin_sphere { position: relative; float: left; }
+  #{{ id }}_gui { position: absolute; right: 0; z-index: 10;}
+  #{{ id }}_input { display: none }
+</style>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static "assets/js/three.min.js" %}"></script>
+<script src="{% static "assets/js/panolens.min.js" %}"></script>
+{% endblock %}
+<script type="module">
+import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
+const container = document.querySelector('#{{ id }}_sphere')
+const input = document.querySelector('#{{ id }}_input')
+const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", input})
+sphere.addHeadingSphere({azimuth: {{ widget.value }}, container: document.querySelector("#{{ id }}_gui")})
+</script>
+<div id="{{ id }}_admin_sphere">
+    <div id="{{ id }}_sphere">
+        <div id="{{ id }}_gui"></div>
+    </div>
+    <input id="{{ id }}_input" type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+</div>

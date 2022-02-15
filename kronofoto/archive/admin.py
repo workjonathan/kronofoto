@@ -4,12 +4,16 @@ from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
+from .widgets import HeadingWidget, PositioningWidget
+from django.forms import widgets
+from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff
 from django.db.models import Count
 from django.db import IntegrityError
 from django.conf import settings
 from django.urls import reverse
 from django.contrib import messages
+from django import forms
+from django.forms import ModelForm, Textarea
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -122,6 +126,7 @@ class YearIsSetFilter(base_admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(year__isnull=True)
 
+
 class IsPublishedFilter(base_admin.SimpleListFilter):
     title = "photo is published"
     parameter_name = "is published"
@@ -167,6 +172,57 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+
+class PhotoSphereForm(ModelForm):
+    class Meta:
+        model = PhotoSphere
+        widgets = {
+            'heading': HeadingWidget,
+        }
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'instance' in kwargs and kwargs['instance']:
+            self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
+
+
+class PhotoPositionField(forms.Field):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class PhotoSpherePairForm(ModelForm):
+    position = PhotoPositionField(widget=PositioningWidget(), required=False, help_text="Set photo and sphere before using interactive positioning")
+    class Meta:
+        model = PhotoSpherePair
+        fields = ['photo', 'photosphere', 'azimuth', 'inclination', 'distance']
+        widgets = {
+            'azimuth': forms.HiddenInput(),
+            'inclination': forms.HiddenInput(),
+            'distance': forms.HiddenInput(),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'instance' in kwargs and kwargs['instance']:
+            self.fields['position'].widget.attrs['photosphere'] = kwargs['instance'].photosphere.image.url
+            self.fields['position'].widget.attrs['photo'] = kwargs['instance'].photo.h700.url
+            self.fields['position'].widget.attrs['photo_w'] = kwargs['instance'].photo.h700.width
+            self.fields['position'].widget.attrs['photo_h'] = kwargs['instance'].photo.h700.height
+            self.fields['position'].widget.attrs['inclination'] = kwargs['instance'].inclination
+            self.fields['position'].widget.attrs['azimuth'] = kwargs['instance'].azimuth
+            self.fields['position'].widget.attrs['distance'] = kwargs['instance'].distance
+
+
+@admin.register(PhotoSphere)
+class PhotoSphereAdmin(admin.OSMGeoAdmin):
+    form = PhotoSphereForm
+
+
+@admin.register(PhotoSpherePair)
+class PhotoSpherePairAdmin(admin.ModelAdmin):
+    # check admin for user in django source to see how a better two stage editing process works.
+    form = PhotoSpherePairForm
 
 
 @admin.register(Photo)
