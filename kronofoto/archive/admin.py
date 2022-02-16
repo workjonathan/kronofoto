@@ -184,10 +184,13 @@ class PhotoSphereChangeForm(ModelForm):
             'heading': HeadingWidget,
         }
         fields = '__all__'
+    class Media:
+        js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
+        print(self.media)
 
 
 class PhotoPositionField(forms.Field):

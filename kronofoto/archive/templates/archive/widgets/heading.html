@@ -7,10 +7,6 @@
   #{{ id }}_input { display: none }
 </style>
 {% endblock %}
-{% block extra_js %}
-<script src="{% static "assets/js/three.min.js" %}"></script>
-<script src="{% static "assets/js/panolens.min.js" %}"></script>
-{% endblock %}
 <script type="module">
 import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
 const container = document.querySelector('#{{ id }}_sphere')

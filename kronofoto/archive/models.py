@@ -501,7 +501,6 @@ class PhotoSphere(models.Model):
     name = models.CharField(max_length=512, blank=False)
     image = models.ImageField(upload_to=get_photosphere_path, storage=OverwriteStorage(), null=True, editable=True)
     heading = models.FloatField(
-        help_text="Upload an image then edit again to use the interactive tool",
         default=0,
         validators=[MinValueValidator(limit_value=-180), MaxValueValidator(limit_value=180)],
     )
