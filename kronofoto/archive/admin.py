@@ -172,8 +172,12 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+class PhotoSphereAddForm(ModelForm):
+    class Meta:
+        model = PhotoSphere
+        fields = ('name', 'image', 'location')
 
-class PhotoSphereForm(ModelForm):
+class PhotoSphereChangeForm(ModelForm):
     class Meta:
         model = PhotoSphere
         widgets = {
@@ -183,8 +187,7 @@ class PhotoSphereForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'instance' in kwargs and kwargs['instance']:
-            self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
+        self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
 
 
 class PhotoPositionField(forms.Field):
@@ -216,7 +219,27 @@ class PhotoSpherePairForm(ModelForm):
 
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.OSMGeoAdmin):
-    form = PhotoSphereForm
+    form = PhotoSphereChangeForm
+    add_form = PhotoSphereAddForm
+    def get_form(self, request, obj=None, **kwargs):
+        defaults = {}
+        if obj is None:
+            defaults['form'] = self.add_form
+        defaults.update(kwargs)
+        return super().get_form(request, obj, **defaults)
+
+    def get_fieldsets(self, request, obj=None):
+        if obj is None:
+            fieldsets = (
+                (None, {
+                    'fields': ('name', 'image', 'location'),
+                    'description': "First fill out these options. After clicking Save and continue editing, you'll be able to edit more options.",
+                }),
+            )
+
+        else:
+            fieldsets = super().get_fieldsets(request, obj)
+        return fieldsets
 
 
 @admin.register(PhotoSpherePair)
