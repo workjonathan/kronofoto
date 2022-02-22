@@ -13,6 +13,6 @@ def as_absolute(uri):
     req = get_request()
     return req.build_absolute_uri(uri) if req else uri
 
-def reverse(viewname, args=None, kwargs=None, current_app=None):
-    uri = django_reverse(viewname, args=args, kwargs=kwargs, current_app=current_app)
+def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
+    uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)
     return as_absolute(uri)
