@@ -65,6 +65,28 @@ class TagInline(admin.TabularInline):
         return mark_safe(creators)
 
 
+class TermFilter(admin.SimpleListFilter):
+    title = "term count"
+    parameter_name = "terms__count"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("0", "0"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("4+", "4+"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value():
+            queryset = queryset.annotate(Count("terms"))
+        if self.value() in ("0", "1", "2", "3"):
+            return queryset.filter(terms__count=int(self.value()))
+        elif self.value() == "4+":
+            return queryset.filter(terms__count__gte=4)
+
+
 class TagFilter(admin.SimpleListFilter):
     title = "tag status"
     parameter_name = "phototag__accepted"
@@ -133,7 +155,7 @@ unpublish_photos.short_description = 'Unpublish photos'
 class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = (TagFilter, YearIsSetFilter, IsPublishedFilter)
+    list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
 
