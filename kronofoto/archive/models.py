@@ -424,7 +424,12 @@ class Photo(models.Model):
         if not self.thumbnail:
             Image.MAX_IMAGE_PIXELS = 195670000
             filedata = self.original.read()
-            self.original.close()
+            # TODO: when inevitably getting "too many files open" errors during
+            # imports in the future, closing the file here, as commented out
+            # below, is not the correct fix. It must either be closed during the
+            # import script or this must be reworked. Closing it here results in
+            # runtime errors in tests and in the admin backend.
+            # self.original.close()
             with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
                 dims = ((75, 75), (None, 700))
                 results = []
@@ -463,6 +468,12 @@ class Photo(models.Model):
             del kwargs['county']
         return format_location(**kwargs)
 
+    def describe(self, user=None):
+        terms = {str(t) for t in self.terms.all()}
+        tags = {str(t) for t in self.get_accepted_tags(user)}
+        location = self.location()
+        location = {location} if location != "Location: n/a" else set()
+        return terms | tags | location | { str(self.donor), "history of Iowa" }
 
 class WordCount(models.Model):
     FIELDS = [
