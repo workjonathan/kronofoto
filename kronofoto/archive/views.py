@@ -368,6 +368,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['grid_json_url'] = photo_rec.get_grid_json_url()
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
+            context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
             if self.final_expr and self.final_expr.is_collection() and self.expr:
                 context['collection_name'] = str(self.expr.description())
@@ -391,6 +392,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'url': as_absolute(photo.get_absolute_url()),
             'h700': as_absolute(photo.h700.url),
             'alttext': str(context['alttext']),
+            'tags': str(context['tags']),
             'original': as_absolute(photo.original.url),
             'grid_json_url': photo.get_grid_json_url(),
             'timeline_json_url': context['timeline_json_url'],
