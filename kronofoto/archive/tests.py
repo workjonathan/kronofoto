@@ -98,6 +98,18 @@ class PhotoTest(TestImageMixin, TestCase):
     def setUpTestData(cls):
         cls.photo = cls.createPhoto()
 
+    def testShouldDescribeItself(self):
+        models.PhotoTag.objects.create(tag=models.Tag.objects.create(tag="dog"), photo=self.photo, accepted=True)
+        models.PhotoTag.objects.create(tag=models.Tag.objects.create(tag="cat"), photo=self.photo, accepted=True)
+        models.PhotoTag.objects.create(tag=models.Tag.objects.create(tag="car"), photo=self.photo, accepted=False)
+        self.photo.terms.add(models.Term.objects.create(term="Animals"))
+        self.photo.terms.add(models.Term.objects.create(term="Portraits"))
+        self.photo.city = "Cedar Falls"
+        self.photo.state = "IA"
+        self.photo.county = "Black Hawk"
+        self.photo.country = "USA"
+        self.assertEqual(self.photo.describe(), {"dog", "cat", "Animals", "Portraits", "Cedar Falls, IA", "last, first", "history of Iowa"})
+
     def testShouldNotAppearTwiceWhenTwoUsersSubmitSameTag(self):
         user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         user2 = User.objects.create_user('testuser2', 'user@email.com', 'testpassword')
