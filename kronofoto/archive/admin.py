@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from .widgets import HeadingWidget, PositioningWidget
 from django.forms import widgets
-from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff
+from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
 from django.db.models import Count
 from django.db import IntegrityError
 from django.conf import settings
@@ -172,6 +172,7 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+
 class PhotoSphereAddForm(ModelForm):
     class Meta:
         model = PhotoSphere
@@ -249,6 +250,45 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
 class PhotoSpherePairAdmin(admin.ModelAdmin):
     # check admin for user in django source to see how a better two stage editing process works.
     form = PhotoSpherePairForm
+
+
+@admin.register(CSVRecord)
+class CSVRecordAdmin(admin.ModelAdmin):
+    search_fields = (
+        'filename',
+        'donorFirstName',
+        'donorLastName',
+        'city',
+        'county',
+        'state',
+        'country',
+        'comments',
+    )
+    list_display = (
+        'filename',
+        'donorFirstName',
+        'donorLastName',
+        'year',
+        'circa',
+        'scanner',
+        'photographer',
+        'address',
+        'city',
+        'county',
+        'state',
+        'country',
+        'comments',
+        'added_to_archive',
+    )
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(photo__isnull=True)
 
 
 @admin.register(Photo)
