@@ -728,14 +728,9 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
         return context
 
 
-class MissingPhotosView(UserPassesTestMixin, ListView):
-    template_name = 'archive/missingphotos.html'
-
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def get_queryset(self):
-        return CSVRecord.objects.filter(photo__isnull=True).order_by('added_to_archive', 'year', 'id')
+class MissingPhotosView(RedirectView):
+    permanent = True
+    pattern_name = 'admin:archive_csvrecord_changelist'
 
 
 class TagSearchView(JSONResponseMixin, BaseListView):
