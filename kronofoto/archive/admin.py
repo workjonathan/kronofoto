@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff
+from .models import Photo, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
 from django.db.models import Count
 from django.db import IntegrityError
 from django.conf import settings
@@ -167,6 +167,43 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+@admin.register(CSVRecord)
+class CSVRecordAdmin(admin.ModelAdmin):
+    search_fields = (
+        'filename',
+        'donorFirstName',
+        'donorLastName',
+        'city',
+        'county',
+        'state',
+        'country',
+        'comments',
+    )
+    list_display = (
+        'filename',
+        'donorFirstName',
+        'donorLastName',
+        'year',
+        'circa',
+        'scanner',
+        'photographer',
+        'address',
+        'city',
+        'county',
+        'state',
+        'country',
+        'comments',
+        'added_to_archive',
+    )
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(photo__isnull=True)
 
 
 @admin.register(Photo)

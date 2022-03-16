@@ -26,18 +26,18 @@ class Command(BaseCommand):
                         circa = None
                     CSVRecord(
                         filename=row['FILE NAME'].strip(),
-                        donorFirstName=row['DONOR FIRST NAME'],
-                        donorLastName=row['DONOR LAST NAME'],
+                        donorFirstName=row['DONOR FIRST NAME'].strip(),
+                        donorLastName=row['DONOR LAST NAME'].strip(),
                         year=year,
                         circa=circa,
-                        scanner=row['Scanner'],
-                        photographer=row['Photographer'],
-                        address=row['Address'],
-                        city=row['City/Town'],
-                        county=row['County'],
-                        state=row["State"],
-                        country=row['Country'],
-                        comments=row['Comments'],
+                        scanner=row['Scanner'].strip(),
+                        photographer=row['Photographer'].strip(),
+                        address=row['Address'].strip(),
+                        city=row['City/Town'].strip(),
+                        county=row['County'].strip(),
+                        state=row["State"].strip(),
+                        country=row['Country'].strip(),
+                        comments=row['Comments'].strip(),
                         added_to_archive=row['ADDED TO ARCHIVE']
                     ).save()
                 except IntegrityError as err:
