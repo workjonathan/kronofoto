@@ -26,6 +26,7 @@ urlpatterns = [
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('original/FI<int:pk>/', views.DownloadPageView.as_view(), name='download'),
+    path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
     path('accounts/', include('archive.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
