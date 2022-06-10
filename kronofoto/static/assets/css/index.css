@@ -14,9 +14,8 @@ img {
 body {
   display: grid;
   height: 100vh;
-  grid-template: "header" 8vh
-                 "main" 92vh
-                 / 1fr;
+  grid-template-rows: minmax(min-content, 0fr) auto;
+  max-width: 2100px;
   margin: 0 auto;
   overflow-x: hidden;
 }
@@ -26,11 +25,6 @@ a {
   text-decoration: none;
 }
 
-
-
-
-
-
 /******************
  ** HEADER / NAV **
  ******************/
@@ -38,12 +32,13 @@ a {
 header {
   max-height: 200px;
   grid-row: 1 / span 1;
-  padding: 1.6vh;
+  padding: 15px;
 }
 
 nav {
   display: flex;
 }
+
 
 nav ul {
   display: flex;
@@ -67,7 +62,6 @@ input[type="submit"] {
   background-color: var(--fp-main-blue);
   color: white;
 }
-
 input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
   -moz-appearance:none; /* Firefox */
   -webkit-appearance:none; /* Safari and Chrome */
@@ -83,10 +77,10 @@ input[type="email"], input[type="number"], input[type="search"], input[type="tex
   width: 100%;
 }
 
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
 }
 
 select::-ms-expand {
@@ -94,17 +88,19 @@ select::-ms-expand {
 }
 
 select {
-  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
-  /* !important used for overriding all other customisations */
+  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
 }
-
 main {
-  grid-area: main;
-
+  grid-row: 2 / span 1;
   display: grid;
-  grid-template: "img-left-space current-image img-right-space" minmax(auto, 700px) /*700px is the max height for an FI image*/
-                 "car-left-space timeline car-right-space" auto
-                 "year-ticker year-ticker year-ticker" auto
-                 / 1fr 2fr 1fr;
+  /* grid-template-rows: minmax(500px, 1fr) minmax(min-content, 190px); */
+  grid-template-rows: 1fr auto auto;
   flex-direction: column;
+}
+main article {
+  grid-row: 1 / span 1;
+}
+main nav {
+  grid-row: 2 / span 1;
+  height: 100%;
 }
