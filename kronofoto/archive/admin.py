@@ -144,15 +144,24 @@ class HasLocationFilter(base_admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ("Yes", "Yes"),
+            ("Yes", "Point and Polygon"),
+            ("Maybe", "Point or Polygon"),
+            ("Point only", "Point only"),
+            ("Polygon only", "Polygon only"),
             ("No", "No"),
         )
 
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
-            return queryset.filter(location_point__isnull=False)
+            return queryset.filter(location_point__isnull=False) & queryset.filter(location_bounds__isnull=False)
+        elif self.value() == 'Maybe':
+            return queryset.filter(location_point__isnull=False) | queryset.filter(location_bounds__isnull=False)
+        elif self.value() == 'Point only':
+            return queryset.filter(location_point__isnull=False) & queryset.filter(location_bounds__isnull=True)
+        elif self.value() == 'Polygon only':
+            return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=False)
         elif self.value() == 'No':
-            return queryset.filter(location_point__isnull=True)
+            return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=True)
 
 
 def publish_photos(modeladmin, request, queryset):

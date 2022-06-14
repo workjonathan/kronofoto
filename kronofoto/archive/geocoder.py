@@ -10,10 +10,12 @@ class CSVGeocoder:
     def geocode_from_csv_data(self):
         for record in CSVRecord.objects.exclude_geocoded():
             try:
-                location = self.geocoder.geocode(description=record.location())
-                photo = record.photo
-                photo.location_point = location.centroid
-                photo.location_bounds = location.bounds
-                photo.save()
+                description = record.location()
+                if description.strip():
+                    location = self.geocoder.geocode(description=description)
+                    photo = record.photo
+                    photo.location_point = location.centroid
+                    photo.location_bounds = location.bounds
+                    photo.save()
             except GeocodeError:
                 logging.exception('geocoding error')
