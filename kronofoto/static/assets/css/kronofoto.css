@@ -536,6 +536,8 @@ main .fi-image-background{
   grid-column-end: span 6;
   display: flex;
   justify-content: center;
+  margin-left: 50%;
+  transform: translateX(-50%);
 }
 
 .fi-image figure img {
