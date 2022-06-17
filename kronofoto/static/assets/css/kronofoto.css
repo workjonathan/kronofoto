@@ -944,12 +944,12 @@ main .fi-image-background{
 #metadata {
   grid-row: 3 / span 2;
   grid-column: 1 / span 6;
-  background-color: rgb(255,255,255,0.9);
+  background-color: rgb(230,231,232);
   padding: 20px;
-  position: absolute;
+  position: relative;
   z-index: 10;
   bottom: 0;
-  width: 100%;
+  min-width: 1140px;
 }
 
 #metadata ul {
