@@ -263,6 +263,7 @@ class Photo(models.Model):
     photographer = models.TextField(blank=True)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
+    address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
