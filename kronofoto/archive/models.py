@@ -261,6 +261,7 @@ class Photo(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
+    location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     address = models.CharField(max_length=128, blank=True, db_index=True)

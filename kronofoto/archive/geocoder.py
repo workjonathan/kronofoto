@@ -35,6 +35,7 @@ class CSVGeocoder:
                 if description.strip():
                     location = self.geocoder.geocode(description=description)
                     photo = record.photo
+                    photo.location_from_google = True
                     photo.location_point = location.centroid
                     photo.location_bounds = location.bounds
                     photo.save()
