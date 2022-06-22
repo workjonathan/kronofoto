@@ -198,7 +198,7 @@ class PhotoQuerySet(models.QuerySet):
     def exclude_geocoded(self):
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
 
-def format_location(**kwargs):
+def format_location(force_country=False, **kwargs):
     parts = []
     if kwargs.get('address', None):
         parts.append(kwargs['address'])
@@ -208,7 +208,7 @@ def format_location(**kwargs):
         parts.append('{} County'.format(kwargs['county']))
     if kwargs.get('state', None):
         parts.append(kwargs['state'])
-    if not parts and kwargs.get('country', None):
+    if (force_country or not parts) and kwargs.get('country', None):
         parts.append(kwargs['country'])
     s = ', '.join(parts)
     return s or 'Location: n/a'
@@ -483,7 +483,7 @@ class Photo(models.Model):
                 self.h700.name = fname
         super().save(*args, **kwargs)
 
-    def location(self, with_address=False):
+    def location(self, with_address=False, force_country=False):
         kwargs = dict(
             city=self.city, state=self.state, county=self.county, country=self.country
         )
@@ -491,7 +491,7 @@ class Photo(models.Model):
             kwargs['address'] = self.address
         if self.city:
             del kwargs['county']
-        return format_location(**kwargs)
+        return format_location(force_country=force_country, **kwargs)
 
     def describe(self, user=None):
         terms = {str(t) for t in self.terms.all()}

@@ -31,7 +31,7 @@ class CSVGeocoder:
     def geocode_from_csv_data(self):
         for photo in Photo.objects.exclude_geocoded():
             try:
-                description = photo.location(with_address=True)
+                description = photo.location(with_address=True, force_country=True)
                 if description.strip():
                     location = self.geocoder.geocode(description=description)
                     photo.location_from_google = True
@@ -39,4 +39,4 @@ class CSVGeocoder:
                     photo.location_bounds = location.bounds
                     photo.save()
             except GeocodeError:
-                logging.exception('geocoding error')
+                logging.exception('geocoding error on {}'.format(photo.id))
