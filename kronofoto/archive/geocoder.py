@@ -32,7 +32,8 @@ class CSVGeocoder:
         for photo in Photo.objects.exclude_geocoded():
             try:
                 description = photo.location(with_address=True, force_country=True)
-                if description.strip():
+                description = description.strip()
+                if description and description != 'Location: n/a':
                     location = self.geocoder.geocode(description=description)
                     photo.location_from_google = True
                     photo.location_point = location.centroid
