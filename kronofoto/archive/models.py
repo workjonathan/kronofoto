@@ -195,9 +195,13 @@ class PhotoQuerySet(models.QuerySet):
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
+    def exclude_geocoded(self):
+        return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
 
 def format_location(**kwargs):
     parts = []
+    if kwargs.get('address', None):
+        parts.append(kwargs['address'])
     if kwargs.get('city', None):
         parts.append(kwargs['city'])
     if kwargs.get('county', None):
@@ -479,10 +483,12 @@ class Photo(models.Model):
                 self.h700.name = fname
         super().save(*args, **kwargs)
 
-    def location(self):
+    def location(self, with_address=False):
         kwargs = dict(
             city=self.city, state=self.state, county=self.county, country=self.country
         )
+        if with_address:
+            kwargs['address'] = self.address
         if self.city:
             del kwargs['county']
         return format_location(**kwargs)

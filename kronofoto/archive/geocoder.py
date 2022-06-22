@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import CSVRecord, Location
+from .models import CSVRecord, Location, Photo
 from geocoding import geom
 from geocoding.google import Geocoder, GeocodeError
 import logging
@@ -29,12 +29,11 @@ class CSVGeocoder:
         self.geocoder = geocoder
 
     def geocode_from_csv_data(self):
-        for record in CSVRecord.objects.exclude_geocoded():
+        for photo in Photo.objects.exclude_geocoded():
             try:
-                description = record.location()
+                description = photo.location(with_address=True)
                 if description.strip():
                     location = self.geocoder.geocode(description=description)
-                    photo = record.photo
                     photo.location_from_google = True
                     photo.location_point = location.centroid
                     photo.location_bounds = location.bounds
