@@ -64,6 +64,9 @@ class Donor(Collectible, models.Model):
         ordering = ('last_name', 'first_name')
         index_together = ('last_name', 'first_name')
 
+    def display_format(self):
+        return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
