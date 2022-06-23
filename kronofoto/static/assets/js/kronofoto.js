@@ -9,6 +9,7 @@ class FortepanBase {
         const _this = this
         document.addEventListener('click', function(e) {
             const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
+            const scrolltarget = e.target.getAttribute('data-json-scroll')
             if (jsonhref) {
                 e.preventDefault()
                 if (jsonhref !== "#") {
@@ -18,6 +19,7 @@ class FortepanBase {
                         request('GET', updatedhref).then(data => {
                             _this.loadstate(data)
                             _this.pushWindowState(data)
+                            document.querySelector(`#${scrolltarget}`).scrollIntoView(true)
                         })
                     }
                 }
