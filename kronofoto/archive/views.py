@@ -396,7 +396,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             'h700': as_absolute(photo.h700.url),
             'alttext': str(context['alttext']),
             'tags': str(context['tags']),
-            'original': as_absolute(photo.original.url),
+            'original': photo.get_download_page_url(),
             'grid_json_url': photo.get_grid_json_url(),
             'timeline_json_url': context['timeline_json_url'],
             'grid_url': photo.get_grid_url(),
