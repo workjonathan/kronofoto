@@ -19,7 +19,9 @@ class FortepanBase {
                         request('GET', updatedhref).then(data => {
                             _this.loadstate(data)
                             _this.pushWindowState(data)
-                            document.querySelector(`#${scrolltarget}`).scrollIntoView(true)
+                            if (scrolltarget) {
+                                document.querySelector(`#${scrolltarget}`).scrollIntoView(true)
+                            }
                         })
                     }
                 }
