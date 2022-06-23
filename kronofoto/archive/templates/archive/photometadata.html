@@ -38,7 +38,7 @@
             {% endif %}
             <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a>
             </li>
-            <li><span class="field-name">Comments:</span>{{ photo.caption | urlize | linebreaksbr }}</li>
+            <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
             <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li>
           </ul>
         </div>

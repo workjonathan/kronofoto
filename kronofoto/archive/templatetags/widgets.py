@@ -1,5 +1,10 @@
 from django import template
 from .. import reverse
+import markdown as md
+from django.template.defaultfilters import stringfilter
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+
 
 register = template.Library()
 
@@ -63,3 +68,8 @@ def photo_details(photo, page, years, timeline, timeline_key, prev_page, next_pa
 @register.simple_tag
 def absolutify(url):
     return reverse.as_absolute(url)
+
+@register.filter(is_safe=True)
+@stringfilter
+def markdown(text):
+    return mark_safe(md.markdown(escape(text)))
