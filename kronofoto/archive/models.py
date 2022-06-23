@@ -498,7 +498,7 @@ class Photo(models.Model):
         tags = {str(t) for t in self.get_accepted_tags(user)}
         location = self.location()
         location = {location} if location != "Location: n/a" else set()
-        return terms | tags | location | { str(self.donor), "history of Iowa" }
+        return terms | tags | location | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
 
 class WordCount(models.Model):
     FIELDS = [
