@@ -131,7 +131,7 @@ class PhotoTest(TestImageMixin, TestCase):
         self.photo.state = "IA"
         self.photo.county = "Black Hawk"
         self.photo.country = "USA"
-        self.assertEqual(self.photo.describe(), {"dog", "cat", "Animals", "Portraits", "Cedar Falls, IA", "last, first", "history of Iowa"})
+        self.assertEqual(self.photo.describe(), {"dog", "cat", "Animals", "Portraits", "Cedar Falls, IA", "last, first", "history of Iowa", "Iowa", "Iowa History"})
 
     def testShouldNotAppearTwiceWhenTwoUsersSubmitSameTag(self):
         user = User.objects.create_user('testuser', 'user@email.com', 'testpassword')
