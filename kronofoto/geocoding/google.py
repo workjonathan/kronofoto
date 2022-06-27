@@ -21,10 +21,15 @@ class Geocoder:
 
     def extract_shape(self, data):
         for result in data:
+            #try:
+            geometry = result['geometry']
             try:
-                geometry = result['geometry']
                 location = geometry['location']
-                centroid=(location['lng'], location['lat'])
+                centroid = (location['lng'], location['lat'])
+                centroid = Point(x=centroid[0], y=centroid[1], srid=4326)
+            except KeyError:
+                centroid = None
+            try:
                 bounds = geometry['bounds']
                 bounds = Bounds(
                     xmin=bounds['southwest']['lng'],
@@ -32,12 +37,16 @@ class Geocoder:
                     xmax=bounds['northeast']['lng'],
                     ymax=bounds['northeast']['lat'],
                 )
+                bounds = MultiPolygon([Polygon.from_bbox(b.astuple()) for b in bounds.as_shifted_bounds()], srid=4326)
+            except KeyError:
+                bounds = None
+            if centroid or bounds:
                 return Location(
-                    centroid=Point(x=centroid[0], y=centroid[1], srid=4326),
-                    bounds=MultiPolygon([Polygon.from_bbox(b.astuple()) for b in bounds.as_shifted_bounds()], srid=4326),
+                    centroid=centroid,
+                    bounds=bounds,
                 )
-            except:
-                pass
+            #except:
+            #    pass
 
 
     def geocode(self, description):
@@ -74,5 +83,5 @@ class Geocoder:
             logging.warning("DAILY GOOGLE MAPS RATE LIMIT HIT")
         location = self.extract_shape(data['results'])
         if not location:
-            raise GeocodeError(description)
+            raise GeocodeError(description, data)
         return location

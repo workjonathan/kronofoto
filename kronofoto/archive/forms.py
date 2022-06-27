@@ -45,7 +45,7 @@ class SearchForm(forms.Form):
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
     endYear.group = 'DATE RANGE'
 
-    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated())
+    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated().order_by('last_name', 'first_name'))
     donor.group = "DONOR"
 
     city = LocationChoiceField(required=False, label='', field='city')

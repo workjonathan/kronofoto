@@ -2,4 +2,5 @@
 {% for list_item in pages %}
     <li{% if list_item.is_active %} class='active' active{% endif %}><a href="{% url list_item.view_name %}">{{ list_item.text }}</a></li>
 {% endfor %}
+    <li><a href="https://blog.fortepan.us/">Blog</a></li>
 </ul>

@@ -8,7 +8,7 @@
 }
 
 img {
-  width: 100%;
+  max-height: calc(100vh - 278px);
 }
 
 body {
@@ -102,7 +102,7 @@ main {
   grid-area: main;
 
   display: grid;
-  grid-template: "img-left-space current-image img-right-space" minmax(auto, 700px) /*700px is the max height for an FI image*/
+  grid-template: "img-left-space current-image img-right-space" minmax(auto, calc(100vh - 278px)) /*700px is the max height for an FI image*/
                  "car-left-space timeline car-right-space" auto
                  "year-ticker year-ticker year-ticker" auto
                  / 1fr 2fr 1fr;

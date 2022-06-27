@@ -64,6 +64,9 @@ class Donor(Collectible, models.Model):
         ordering = ('last_name', 'first_name')
         index_together = ('last_name', 'first_name')
 
+    def display_format(self):
+        return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+
     def __str__(self):
         return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
@@ -195,16 +198,20 @@ class PhotoQuerySet(models.QuerySet):
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
+    def exclude_geocoded(self):
+        return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
 
-def format_location(**kwargs):
+def format_location(force_country=False, **kwargs):
     parts = []
+    if kwargs.get('address', None):
+        parts.append(kwargs['address'])
     if kwargs.get('city', None):
         parts.append(kwargs['city'])
     if kwargs.get('county', None):
         parts.append('{} County'.format(kwargs['county']))
     if kwargs.get('state', None):
         parts.append(kwargs['state'])
-    if not parts and kwargs.get('country', None):
+    if (force_country or not parts) and kwargs.get('country', None):
         parts.append(kwargs['country'])
     s = ', '.join(parts)
     return s or 'Location: n/a'
@@ -261,8 +268,10 @@ class Photo(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
+    location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
+    address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
@@ -477,20 +486,22 @@ class Photo(models.Model):
                 self.h700.name = fname
         super().save(*args, **kwargs)
 
-    def location(self):
+    def location(self, with_address=False, force_country=False):
         kwargs = dict(
             city=self.city, state=self.state, county=self.county, country=self.country
         )
+        if with_address:
+            kwargs['address'] = self.address
         if self.city:
             del kwargs['county']
-        return format_location(**kwargs)
+        return format_location(force_country=force_country, **kwargs)
 
     def describe(self, user=None):
         terms = {str(t) for t in self.terms.all()}
         tags = {str(t) for t in self.get_accepted_tags(user)}
         location = self.location()
         location = {location} if location != "Location: n/a" else set()
-        return terms | tags | location | { str(self.donor), "history of Iowa" }
+        return terms | tags | location | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
 
 def get_photosphere_path(instance, filename):
     return path.join('photosphere', '{}.jpg'.format(instance.uuid))
@@ -658,3 +669,20 @@ class CSVRecord(models.Model):
         self.country = self.country.strip()
         self.state = self.state.strip()
         self.comments = self.comments.strip()
+
+
+class LocationQuerySet(models.QuerySet):
+    def locate(self, description):
+        return self.get(description=description)
+
+class Location(models.Model):
+    description = models.TextField(unique=True)
+    location_point = models.PointField(null=True, srid=4326, blank=True)
+    location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
+    objects = LocationQuerySet.as_manager()
+
+    def describe(self):
+        return self.description
+
+    def __str__(self):
+        return self.description
