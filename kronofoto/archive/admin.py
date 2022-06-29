@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
-from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairForm
+from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairAddForm, PhotoSpherePairChangeForm
 from django.db.models import Count
 from django.db import IntegrityError
 from django.conf import settings
@@ -209,8 +209,29 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
 
 @admin.register(PhotoSpherePair)
 class PhotoSpherePairAdmin(admin.ModelAdmin):
-    # check admin for user in django source to see how a better two stage editing process works.
-    form = PhotoSpherePairForm
+    form = PhotoSpherePairChangeForm
+    add_form = PhotoSphereAddForm
+
+    def get_form(self, request, obj=None, **kwargs):
+        defaults = {}
+        if obj is None:
+            defaults['form'] = self.add_form
+        defaults.update(kwargs)
+        return super().get_form(request, obj, **defaults)
+
+    def get_fieldsets(self, request, obj=None):
+        if obj is None:
+            fieldsets = (
+                (None, {
+                    'fields': ('photo', 'photosphere'),
+                    'description': "First fill out these options. After clicking Save and continue editing, you'll be able to edit more options.",
+                }),
+            )
+
+        else:
+            fieldsets = super().get_fieldsets(request, obj)
+        return fieldsets
+
 
 
 @admin.register(CSVRecord)

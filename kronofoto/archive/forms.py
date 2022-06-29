@@ -115,8 +115,6 @@ class SearchForm(forms.Form):
         raise NoExpression
 
 
-
-
 class TagForm(forms.Form):
     tag = forms.CharField()
 
@@ -202,32 +200,36 @@ class PhotoPositionField(forms.MultiValueField):
         return dict(azimuth=data_list[0], inclination=data_list[1], distance=data_list[2])
 
 
-class PhotoSpherePairForm(forms.ModelForm):
-    position = PhotoPositionField(required=False, help_text="Set photo and sphere before using interactive positioning")
+class PhotoSpherePairAddForm(forms.ModelForm):
     class Meta:
         model = PhotoSpherePair
         fields = ['photo', 'photosphere']
+
+
+class PhotoSpherePairChangeForm(forms.ModelForm):
+    position = PhotoPositionField(required=False, help_text="Set photo position using the sliders in the top right")
+    class Meta:
+        model = PhotoSpherePair
+        fields = ['photo', 'photosphere']
+
     def __init__(self, *args, **kwargs):
-        if 'instance' in kwargs and kwargs['instance']:
-            instance = kwargs['instance']
-            super().__init__(
-                *args,
-                initial=dict(
-                    position=dict(
-                        azimuth=instance.azimuth,
-                        inclination=instance.inclination,
-                        distance=instance.distance,
-                    )
-                ),
-                **kwargs,
-            )
-            position = self.fields['position'].widget
-            position.attrs['photosphere'] = instance.photosphere.image.url
-            position.attrs['photo'] = instance.photo.h700.url
-            position.attrs['photo_w'] = instance.photo.h700.width
-            position.attrs['photo_h'] = instance.photo.h700.height
-        else:
-            super().__init__(*args, **kwargs)
+        instance = kwargs['instance']
+        super().__init__(
+            *args,
+            initial=dict(
+                position=dict(
+                    azimuth=instance.azimuth,
+                    inclination=instance.inclination,
+                    distance=instance.distance,
+                )
+            ),
+            **kwargs,
+        )
+        position = self.fields['position'].widget
+        position.attrs['photosphere'] = instance.photosphere.image.url
+        position.attrs['photo'] = instance.photo.h700.url
+        position.attrs['photo_w'] = instance.photo.h700.width
+        position.attrs['photo_h'] = instance.photo.h700.height
 
     def save(self, *args, **kwargs):
         position = self.cleaned_data['position']

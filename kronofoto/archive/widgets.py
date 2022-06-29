@@ -7,13 +7,12 @@ class HeadingWidget(NumberInput):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        if 'photo' in self.attrs:
-            self.template_name = 'archive/widgets/heading.html'
-            context['sphere_image'] = self.attrs['photo']
-            context['id'] = attrs['id']
-            context['sphere_width'] = self.sphere_width
-            context['sphere_height'] = self.sphere_height
-            context['module'] = 'archive_heading'
+        self.template_name = 'archive/widgets/heading.html'
+        context['sphere_image'] = self.attrs['photo']
+        context['id'] = attrs['id']
+        context['sphere_width'] = self.sphere_width
+        context['sphere_height'] = self.sphere_height
+        context['module'] = 'archive_heading'
         return context
 
 class PositioningWidget(MultiWidget):
@@ -31,14 +30,13 @@ class PositioningWidget(MultiWidget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        if 'photo' in self.attrs:
-            context['sphere_image'] = self.attrs['photosphere']
-            context['photo'] = self.attrs['photo']
-            context['photo_h'] = self.attrs['photo_h']
-            context['photo_w'] = self.attrs['photo_w']
-            context['id'] = attrs['id']
-            context['sphere_width'] = self.sphere_width
-            context['sphere_height'] = self.sphere_height
+        context['sphere_image'] = self.attrs['photosphere']
+        context['photo'] = self.attrs['photo']
+        context['photo_h'] = self.attrs['photo_h']
+        context['photo_w'] = self.attrs['photo_w']
+        context['id'] = attrs['id']
+        context['sphere_width'] = self.sphere_width
+        context['sphere_height'] = self.sphere_height
         return context
 
     def decompress(self, value):
