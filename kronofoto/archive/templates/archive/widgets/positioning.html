@@ -4,7 +4,9 @@
   #{{ id }}_sphere { width: {{ sphere_width }}px; height: {{ sphere_height }}px; }
   #{{ id }}_admin_sphere { position: relative; float: left; }
   #{{ id }}_gui { position: absolute; right: 0; z-index: 10;}
-  #{{ id }}_input { display: none }
+{% for subwidget in widget.subwidgets %}
+  #{{subwidget.attrs.id}} { display: none }
+{% endfor %}
 </style>
 {% endblock %}
 {% block extra_js %}
@@ -14,17 +16,17 @@
 <script type="module">
 import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
 const container = document.querySelector('#{{ id }}_sphere')
-const azimuth = document.querySelector('#id_azimuth')
-const inclination = document.querySelector('#id_inclination')
-const distance = document.querySelector('#id_distance')
+{% for subwidget in widget.subwidgets %}
+const {{ subwidget.attrs.anglename }} = document.querySelector('#{{ subwidget.attrs.id }}')
+{% endfor %}
 const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", azimuth_el: azimuth, inclination_el: inclination, distance_el: distance})
 sphere.addPhoto({
     url: "{{ photo }}", 
     height: {{ photo_h }}, 
     width: {{ photo_w }}, 
-    azimuth: {{ init_azimuth }}, 
-    inclination: {{ init_inclination }}, 
-    distance: {{ init_distance }}, 
+{% for subwidget in widget.subwidgets %}
+    {{ subwidget.attrs.anglename }}: {{ subwidget.value }},
+{% endfor %}
     container: document.querySelector("#{{ id }}_gui")})
 </script>
 <div id="{{ id }}_admin_sphere">
@@ -32,3 +34,6 @@ sphere.addPhoto({
         <div id="{{ id }}_gui"></div>
     </div>
 </div>
+{% for subwidget in widget.subwidgets %}
+    {% include subwidget.template_name with widget=subwidget %}
+{% endfor %}

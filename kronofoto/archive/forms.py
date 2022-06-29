@@ -1,10 +1,11 @@
 from django import forms
-from .models import Tag, PhotoTag, Collection, Term, Donor, Photo
+from .models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
 from .search import expression
 from .search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
+from .widgets import HeadingWidget, PositioningWidget
 
 
 class LocationChoiceField(forms.ChoiceField):
@@ -165,3 +166,72 @@ class AddToListForm(forms.Form):
         if not data['collection'] and not data['name']:
             self.add_error('name', 'A name must be provided')
         return data
+
+class PhotoSphereAddForm(forms.ModelForm):
+    class Meta:
+        model = PhotoSphere
+        fields = ('name', 'image', 'location')
+
+class PhotoSphereChangeForm(forms.ModelForm):
+    class Meta:
+        model = PhotoSphere
+        widgets = {
+            'heading': HeadingWidget,
+        }
+        fields = '__all__'
+
+    class Media:
+        js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
+
+
+class PhotoPositionField(forms.MultiValueField):
+    widget = PositioningWidget
+    def __init__(self, **kwargs):
+        fields = (
+            forms.FloatField(),
+            forms.FloatField(),
+            forms.FloatField(),
+        )
+        super().__init__(fields=fields, **kwargs)
+
+    def compress(self, data_list):
+        return dict(azimuth=data_list[0], inclination=data_list[1], distance=data_list[2])
+
+
+class PhotoSpherePairForm(forms.ModelForm):
+    position = PhotoPositionField(required=False, help_text="Set photo and sphere before using interactive positioning")
+    class Meta:
+        model = PhotoSpherePair
+        fields = ['photo', 'photosphere']
+    def __init__(self, *args, **kwargs):
+        if 'instance' in kwargs and kwargs['instance']:
+            instance = kwargs['instance']
+            super().__init__(
+                *args,
+                initial=dict(
+                    position=dict(
+                        azimuth=instance.azimuth,
+                        inclination=instance.inclination,
+                        distance=instance.distance,
+                    )
+                ),
+                **kwargs,
+            )
+            position = self.fields['position'].widget
+            position.attrs['photosphere'] = instance.photosphere.image.url
+            position.attrs['photo'] = instance.photo.h700.url
+            position.attrs['photo_w'] = instance.photo.h700.width
+            position.attrs['photo_h'] = instance.photo.h700.height
+        else:
+            super().__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        position = self.cleaned_data['position']
+        self.instance.azimuth = position['azimuth']
+        self.instance.inclination = position['inclination']
+        self.instance.distance = position['distance']
+        return super().save(*args, **kwargs)

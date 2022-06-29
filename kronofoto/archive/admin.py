@@ -4,9 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
-from .widgets import HeadingWidget, PositioningWidget
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
+from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairForm
 from django.db.models import Count
 from django.db import IntegrityError
 from django.conf import settings
@@ -180,54 +180,6 @@ publish_photos.short_description = 'Publish photos'
 def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
-
-
-class PhotoSphereAddForm(ModelForm):
-    class Meta:
-        model = PhotoSphere
-        fields = ('name', 'image', 'location')
-
-class PhotoSphereChangeForm(ModelForm):
-    class Meta:
-        model = PhotoSphere
-        widgets = {
-            'heading': HeadingWidget,
-        }
-        fields = '__all__'
-    class Media:
-        js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
-        print(self.media)
-
-
-class PhotoPositionField(forms.Field):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
-class PhotoSpherePairForm(ModelForm):
-    position = PhotoPositionField(widget=PositioningWidget(), required=False, help_text="Set photo and sphere before using interactive positioning")
-    class Meta:
-        model = PhotoSpherePair
-        fields = ['photo', 'photosphere', 'azimuth', 'inclination', 'distance']
-        widgets = {
-            'azimuth': forms.HiddenInput(),
-            'inclination': forms.HiddenInput(),
-            'distance': forms.HiddenInput(),
-        }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'instance' in kwargs and kwargs['instance']:
-            self.fields['position'].widget.attrs['photosphere'] = kwargs['instance'].photosphere.image.url
-            self.fields['position'].widget.attrs['photo'] = kwargs['instance'].photo.h700.url
-            self.fields['position'].widget.attrs['photo_w'] = kwargs['instance'].photo.h700.width
-            self.fields['position'].widget.attrs['photo_h'] = kwargs['instance'].photo.h700.height
-            self.fields['position'].widget.attrs['inclination'] = kwargs['instance'].inclination
-            self.fields['position'].widget.attrs['azimuth'] = kwargs['instance'].azimuth
-            self.fields['position'].widget.attrs['distance'] = kwargs['instance'].distance
 
 
 @admin.register(PhotoSphere)
