@@ -1,6 +1,6 @@
 <div>Items {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}</div>
 <div>
 {% for link in links %}
-    {% if link.url %}<a data-json-href="{{ link.url_json }}" href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
+    {% if link.url %}<a data-json-href="{{ link.url_json }}" {% if link.target %}data-json-scroll="{{ link.target }}"{% endif%} href="{{ link.url }}">{% endif %}{{ link.label }}{% if link.url %}</a>{% endif %}
 {% endfor %}
 </div>
