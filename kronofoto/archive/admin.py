@@ -184,7 +184,7 @@ unpublish_photos.short_description = 'Unpublish photos'
 
 class PhotoInline(admin.StackedInline):
     model = PhotoSpherePair
-    extra = 1
+    extra = 0
     fields = ['photo', 'position']
     raw_id_fields = ['photo']
     form = PhotoSpherePairInlineForm
