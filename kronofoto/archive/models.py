@@ -523,11 +523,14 @@ class PhotoSphere(models.Model):
 
 
 class PhotoSpherePair(models.Model):
-    photo = models.ForeignKey(Photo, on_delete=models.CASCADE, help_text="Select a photo and photo sphere then click Save and Continue Editing to use the interactive tool")
+    photo = models.ForeignKey(Photo, on_delete=models.CASCADE, help_text="Select a photo then click Save and Continue Editing to use the interactive tool")
     photosphere = models.ForeignKey(PhotoSphere, on_delete=models.CASCADE, help_text="Select a photo and photo sphere then click Save and Continue Editing to use the interactive tool")
     azimuth = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-180), MaxValueValidator(limit_value=180)])
     inclination = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-90), MaxValueValidator(limit_value=90)])
     distance = models.FloatField(default=500, validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=2000)])
+
+    class Meta:
+        verbose_name = 'Photo position'
 
     def __str__(self):
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)
