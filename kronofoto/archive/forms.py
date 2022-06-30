@@ -206,6 +206,9 @@ class PhotoSpherePairInlineForm(forms.ModelForm):
         model = PhotoSpherePair
         fields = ['photo', 'photosphere']
 
+    class Media:
+        js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
+
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
             instance = kwargs['instance']
