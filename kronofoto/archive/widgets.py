@@ -18,7 +18,6 @@ class HeadingWidget(NumberInput):
 class PositioningWidget(MultiWidget):
     sphere_width = 600
     sphere_height = 800
-    template_name = 'archive/widgets/positioning.html'
 
     def __init__(self, attrs=None, **kwargs):
         widgets = (
@@ -30,13 +29,15 @@ class PositioningWidget(MultiWidget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['sphere_image'] = self.attrs['photosphere']
-        context['photo'] = self.attrs['photo']
-        context['photo_h'] = self.attrs['photo_h']
-        context['photo_w'] = self.attrs['photo_w']
-        context['id'] = attrs['id']
-        context['sphere_width'] = self.sphere_width
-        context['sphere_height'] = self.sphere_height
+        if 'photosphere' in self.attrs:
+            self.template_name = 'archive/widgets/positioning.html'
+            context['sphere_image'] = self.attrs['photosphere']
+            context['photo'] = self.attrs['photo']
+            context['photo_h'] = self.attrs['photo_h']
+            context['photo_w'] = self.attrs['photo_w']
+            context['id'] = attrs['id']
+            context['sphere_width'] = self.sphere_width
+            context['sphere_height'] = self.sphere_height
         return context
 
     def decompress(self, value):
