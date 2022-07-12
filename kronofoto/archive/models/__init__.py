@@ -20,7 +20,7 @@ from django.utils.http import urlencode
 import hashlib
 from django.http import QueryDict
 from os import path
-from .storage import OverwriteStorage
+from ..storage import OverwriteStorage
 
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value):

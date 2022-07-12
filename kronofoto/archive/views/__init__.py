@@ -5,9 +5,9 @@ from django.conf import settings
 from django.db.models import Min, Count, Q
 import os
 import random
-from .models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
+from ..models import Photo, Collection, PrePublishPhoto, ScannedPhoto, PhotoVote, Term, Tag, Donor, CSVRecord, CollectionQuery
 from django.contrib.auth.models import User
-from .forms import TagForm, AddToListForm, SearchForm
+from ..forms import TagForm, AddToListForm, SearchForm
 from django.utils.http import urlencode
 from django.http import Http404, HttpResponseForbidden, JsonResponse, HttpResponseBadRequest, HttpResponse, QueryDict
 from django.template.loader import render_to_string
@@ -21,10 +21,10 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from math import floor
 from itertools import islice,chain
-from .reverse import get_request, set_request, as_absolute
+from ..reverse import get_request, set_request, as_absolute
 
-from .search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
-from .search import evaluate
+from ..search.parser import Parser, UnexpectedParenthesis, ExpectedParenthesis, NoExpression
+from ..search import evaluate
 
 
 

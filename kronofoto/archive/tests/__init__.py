@@ -1,6 +1,6 @@
 from django.test import TestCase, SimpleTestCase, RequestFactory, tag
-from .auth.views import RegisterAccount
-from . import models, views
+from ..auth.views import RegisterAccount
+from .. import models, views
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User, AnonymousUser, Permission
 from django.urls import reverse
@@ -8,7 +8,7 @@ from django.utils.http import urlencode
 from django.http import QueryDict
 from archive.search import expression, evaluate, parser
 from archive.search.expression import *
-from .forms import TagForm
+from ..forms import TagForm
 from django.conf import settings
 from os.path import join
 from django.core.exceptions import ValidationError
