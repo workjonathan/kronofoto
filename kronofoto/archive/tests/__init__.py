@@ -1,46 +1,17 @@
 from django.test import TestCase, SimpleTestCase, RequestFactory, tag
 from ..auth.views import RegisterAccount
-from .. import models, views
+from .. import views, models
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.models import User, AnonymousUser, Permission
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.http import QueryDict
-from archive.search import expression, evaluate, parser
-from archive.search.expression import *
 from ..forms import TagForm
 from django.conf import settings
 from os.path import join
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile, File
-
-
-@tag("fast")
-class CollectionQueryTest(TestCase):
-    def setUp(self):
-        self.donor = models.Donor.objects.create(first_name='First', last_name='Last')
-        self.term = models.Term.objects.create(term='Airplane')
-        self.tag = models.Tag.objects.create(tag='dog')
-
-    def testShouldDescribeCounty(self):
-        coll = models.CollectionQuery(County('Place') & State('State'), AnonymousUser)
-        self.assertEqual(str(coll), 'from Place County, State')
-
-    def testShouldDescribeCity(self):
-        coll = models.CollectionQuery(City('CityTown') & State('State'), AnonymousUser)
-        self.assertEqual(str(coll), 'from CityTown, State')
-
-    def testShouldDescribeTag(self):
-        coll = models.CollectionQuery(TagExactly(self.tag.tag), AnonymousUser)
-        self.assertEqual(str(coll), 'tagged with dog')
-
-    def testShouldDescribeTerm(self):
-        coll = models.CollectionQuery(TermExactly(self.term), AnonymousUser)
-        self.assertEqual(str(coll), 'termed with Airplane')
-
-    def testShouldDescribeDonor(self):
-        coll = models.CollectionQuery(DonorExactly(self.donor), AnonymousUser)
-        self.assertEqual(str(coll), 'donated by Last, First')
+from django.core.files.base import ContentFile
+from archive.search.expression import TagExactly
 
 
 @tag("fast")
@@ -456,20 +427,6 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             self.assertEqual(photo.row_number, i)
             self.assertEqual(photo.page_number(), i//10 + 1)
 
-    def testSearchShouldSupportBooleanLogic(self):
-        user = AnonymousUser()
-        expr1 = expression.YearEquals(1901) & expression.YearEquals(1902)
-        expr2 = expression.YearEquals(1901) | expression.YearEquals(1902)
-        self.assertEqual(expr1.as_search(models.Photo.objects, user).count(), 0)
-        self.assertEqual((~expr1).as_search(models.Photo.objects, user).count(), 5)
-        photomatches = expr2.as_search(models.Photo.objects, user)
-        self.assertEqual(photomatches.count(), 2)
-        for photo in photomatches:
-            self.assertIn(photo.year, (1901, 1902))
-        photomatches = (~expr2).as_search(models.Photo.objects, user)
-        self.assertEqual(photomatches.count(), 3)
-        for photo in photomatches:
-            self.assertNotIn(photo.year, (1901, 1902))
 
     def testShouldRedirectToCorrectPageForPhoto(self):
         photos = self.photos
@@ -579,222 +536,8 @@ class RegisterAccountTest(TestCase):
         self.assertFalse(v.user_is_human())
 
 
-@tag("fast")
-class BasicParserTest(SimpleTestCase):
-    def testParserShouldProduceCollectionExpressions(self):
-        expr = parser.BasicParser.tokenize("dog").parse()
-        self.assertTrue(expr.is_collection())
-
-    def testParserShouldAcceptSimpleWords(self):
-        expr = parser.BasicParser.tokenize("dog").parse()
-        self.assertEqual(expr, Maximum(Tag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
-
-    def testParserShouldCombineTerms(self):
-        expr = parser.BasicParser.tokenize("dog waterloo").parse()
-        self.assertEqual(expr, And(CollectionExpr('dog'), CollectionExpr('waterloo')))
-
-@tag("fast")
-class ExpressionTest(SimpleTestCase):
-    def testThingsAreCollections(self):
-        self.assertTrue(YearEquals(1912).is_collection())
-        self.assertTrue(YearLTE(1912).is_collection())
-        self.assertTrue(YearGTE(1912).is_collection())
-        self.assertTrue(City("Waterloo").is_collection())
-        self.assertTrue(County("Black Hawk").is_collection())
-        self.assertTrue(State("IA").is_collection())
-        self.assertTrue(Country("USA").is_collection())
-        self.assertTrue(Term("Farm").is_collection())
-
-    def testMaximumCanBeCollection(self):
-        self.assertTrue(Maximum(Term("Farm"), Term("Animals")).is_collection())
-        self.assertFalse(Maximum(Term("Farm"), Caption("Animals")).is_collection())
-
-    def testAndCanBeCollection(self):
-        self.assertTrue(And(Term("Farm"), Term("Animals")).is_collection())
-        self.assertFalse(And(Term("Farm"), Caption("Animals")).is_collection())
-
-    def testOrIsNotCollection(self):
-        self.assertFalse(Or(Term("Farm"), Term("Animals")).is_collection())
-
-    def testHasDescription(self):
-        self.assertEqual(YearEquals(1912).description(), Description([YearEquals(1912)]))
-        self.assertEqual(YearLTE(1912).description(), Description([YearLTE(1912)]))
-        self.assertEqual(YearGTE(1912).description(), Description([YearGTE(1912)]))
-        self.assertEqual(City("Waterloo").description(), Description([City("Waterloo")]))
-        self.assertEqual(County("Black Hawk").description(), Description([County("Black Hawk")]))
-        self.assertEqual(State("IA").description(), Description([State("IA")]))
-        self.assertEqual(Country("USA").description(), Description([Country("USA")]))
-        self.assertEqual(Term("Farm").description(), Description([Term("Farm")]))
-        self.assertEqual((Term("dog") & Term("Farm")).description(), Description([Term("dog"), Term("Farm")]))
-        self.assertEqual((Maximum(Term("dog"), Term("dog"))).description(), Description([Maximum(Term("dog"), Term("dog"))]))
-
-    def testShortLabels(self):
-        self.assertEqual(YearEquals(1912).short_label(), "Year: 1912")
-        self.assertEqual(YearLTE(1912).short_label(), "Year: 1912-")
-        self.assertEqual(YearGTE(1912).short_label(), "Year: 1912+")
-        self.assertEqual(City("Waterloo").short_label(), "City: Waterloo")
-        self.assertEqual(County("Black Hawk").short_label(), "County: Black Hawk")
-        self.assertEqual(State("IA").short_label(), "State: IA")
-        self.assertEqual(Country("USA").short_label(), "Country: USA")
-        self.assertEqual(Term("Farm").short_label(), "Term: farm")
-        with self.assertRaises(NotImplementedError):
-            (Term("dog") & Term("Farm")).short_label()
-        self.assertEqual((Maximum(Term("dog"), Term("dog"))).short_label(), "dog")
-
-    def testGroupLabels(self):
-        self.assertEqual(YearEquals(1912).group(), "year")
-        self.assertEqual(YearLTE(1912).group(), "year")
-        self.assertEqual(YearGTE(1912).group(), "year")
-        self.assertEqual(City("Waterloo").group(), "location")
-        self.assertEqual(County("Black Hawk").group(), "location")
-        self.assertEqual(State("IA").group(), "location")
-        self.assertEqual(Country("USA").group(), "location")
-        self.assertEqual(Term("Farm").group(), "term")
-        with self.assertRaises(NotImplementedError):
-            (Term("dog") & Term("Farm")).group()
-        self.assertEqual((Maximum(Term("dog"), Term("dog"))).group(), "max")
 
 
-@tag("fast")
-class DescriptionTest(SimpleTestCase):
-    def testHasLongDescription(self):
-        self.assertEqual(str(Description([Term("dog"), Term("Farm"), YearEquals(1912)])), "from 1912; and termed with dog and farm")
-        self.assertEqual(str(Description([YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920")
-        self.assertEqual(str(Description([Term("dog"), YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920; and termed with dog")
-
-
-@tag("fast")
-class ParserTest(SimpleTestCase):
-    def testParserShouldParseTypedNumbers(self):
-        self.assertEqual(parser.tokenize.parse('year:1912'), [YearEquals(1912)])
-        self.assertEqual(parser.parse('year:1912'), YearEquals(1912))
-
-    def testParserShouldParseTypedStrings(self):
-        self.assertEqual(parser.tokenize.parse('caption:dog'), [Caption('dog')])
-        self.assertEqual(parser.parse('caption:dog'), Caption('dog'))
-
-    def testParserShouldParseUntypedStrings(self):
-        self.assertEqual(
-            parser.tokenize.parse('dog'),
-            [Or(Donor('dog'), Or(Caption('dog'), Or(State('dog'), Or(Country('dog'), Or(County('dog'), Or(City('dog'), Or(Tag('dog'), Term('dog'))))))))],
-        )
-        self.assertEqual(
-            parser.parse('dog'),
-            Or(Donor('dog'), Or(Caption('dog'), Or(State('dog'), Or(Country('dog'), Or(County('dog'), Or(City('dog'), Or(Tag('dog'), Term('dog')))))))),
-        )
-
-    def testParserShouldParseUntypedNumbers(self):
-        self.assertEqual(parser.tokenize.parse('1912'), [Or(YearEquals(1912), Or(Donor('1912'), Or(Caption('1912'), Or(State('1912'), Or(Country('1912'), Or(County('1912'), Or(City('1912'), Or(Tag('1912'), Term('1912')))))))))])
-        self.assertEqual(parser.parse('1912'), Or(YearEquals(1912), Or(Donor('1912'), Or(Caption('1912'), Or(State('1912'), Or(Country('1912'), Or(County('1912'), Or(City('1912'), Or(Tag('1912'), Term('1912'))))))))))
-
-    def testParserShouldNegateTerms(self):
-        self.assertEqual(parser.tokenize.parse('-caption:dog'), ['-', Caption('dog')])
-        self.assertEqual(parser.parse('-caption:dog'), Not(Caption('dog')))
-
-    def testParserShouldParseAndExpressions(self):
-        self.assertEqual(parser.tokenize.parse('caption:dog AND caption:cat'), [Caption('dog'), 'AND', Caption('cat')])
-        self.assertEqual(parser.parse('caption:dog AND caption:cat'), And(Caption('dog'), Caption('cat')))
-
-    def testParserShouldParseOrExpressions(self):
-        self.assertEqual(parser.tokenize.parse('caption:dog OR caption:cat'), [Caption('dog'), 'OR', Caption('cat')])
-        self.assertEqual(parser.parse('caption:dog OR caption:cat'), Or(Caption('dog'), Caption('cat')))
-
-    def testParserShouldSupportOrderOfOperations(self):
-        self.assertEqual(
-            parser.tokenize.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
-            [Caption('bird'), 'OR', Caption('dog'), '|', Caption('cat'), 'OR', Caption('banana')],
-        )
-        self.assertEqual(
-            parser.parse('caption:bird OR caption:dog | caption:cat OR caption:banana'),
-            Maximum(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
-        )
-        self.assertEqual(
-            parser.tokenize.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            [Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
-        )
-        self.assertEqual(
-            parser.parse('caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            Or(And(Caption('bird'), Caption('dog')), And(Caption('cat'), Caption('banana'))),
-        )
-        self.assertEqual(
-            parser.tokenize.parse('-caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            ['-', Caption('bird'), 'AND', Caption('dog'), 'OR', Caption('cat'), 'AND', Caption('banana')],
-        )
-        self.assertEqual(
-            parser.parse('-caption:bird AND caption:dog OR caption:cat AND caption:banana'),
-            Or(And(Not(Caption('bird')), Caption('dog')), And(Caption('cat'), Caption('banana'))),
-        )
-
-    def testParserShouldSupportParentheses(self):
-        self.assertEqual(parser.tokenize.parse('(caption:bird)'), ['(', Caption('bird'), ')'])
-        self.assertEqual(parser.parse('(caption:bird)'), Caption('bird'))
-        self.assertEqual(
-            parser.tokenize.parse('caption:bird AND (caption:dog OR caption:cat) AND caption:banana'),
-            [Caption('bird'), 'AND', '(', Caption('dog'), 'OR', Caption('cat'), ')', 'AND', Caption('banana')]
-        )
-        self.assertEqual(
-            parser.parse('caption:bird AND (caption:dog OR caption:cat) AND caption:banana'),
-            And(And(Caption('bird'), Or(Caption('dog'), Caption('cat'))), Caption('banana')),
-        )
-        self.assertEqual(
-            parser.tokenize.parse('(caption:bird OR caption:dog) AND (caption:cat OR caption:banana)'),
-            ['(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', Caption('cat'), 'OR', Caption('banana'), ')'],
-        )
-        self.assertEqual(
-            parser.parse('(caption:bird OR caption:dog) AND (caption:cat OR caption:banana)'),
-            And(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
-        )
-        self.assertEqual(
-            parser.tokenize.parse('((caption:bird OR caption:dog) AND (caption:cat caption:banana))'),
-            ['(', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', Caption('cat'), Caption('banana'), ')', ')'],
-        )
-        self.assertEqual(
-            parser.parse('((caption:bird OR caption:dog) AND (caption:cat caption:banana))'),
-            And(Or(Caption('bird'), Caption('dog')), Or(Caption('cat'), Caption('banana'))),
-        )
-
-    def testParserShouldSupportNegatedParentheses(self):
-        self.assertEqual(parser.tokenize.parse('-(caption:bird)'), ['-', '(', Caption('bird'), ')'])
-        self.assertEqual(parser.parse('-(caption:bird)'), Not(Caption('bird')))
-        self.assertEqual(
-            parser.tokenize.parse('caption:bird AND -(caption:dog OR caption:cat) AND caption:banana'),
-            [Caption('bird'), 'AND', '-', '(', Caption('dog'), 'OR', Caption('cat'), ')', 'AND', Caption('banana')],
-        )
-        self.assertEqual(
-            parser.parse('caption:bird AND -(caption:dog OR caption:cat) AND caption:banana'),
-            And(And(Caption('bird'), Not(Or(Caption('dog'), Caption('cat')))), Caption('banana')),
-        )
-        self.assertEqual(
-            parser.tokenize.parse('-(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)'),
-            ['-', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', '-', Caption('cat'), 'OR', Caption('banana'), ')'],
-        )
-        self.assertEqual(
-            parser.parse('-(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)'),
-            And(Not(Or(Caption('bird'), Caption('dog'))), Or(Not(Caption('cat')), Caption('banana'))),
-        )
-
-    def testParserShouldNotTripOverExtraneousSpacesAndRandomStuff(self):
-        self.assertEqual(parser.tokenize.parse('((caption:bird))'), ['(', '(', Caption('bird'), ')', ')'])
-        self.assertEqual(parser.parse('((caption:bird))'), Caption('bird'))
-        self.assertEqual(
-            parser.tokenize.parse(' -( caption:bird OR caption:dog  )AND(- caption:cat OR caption:banana) '),
-            ['-', '(', Caption('bird'), 'OR', Caption('dog'), ')', 'AND', '(', '-', Caption('cat'), 'OR', Caption('banana'), ')'],
-        )
-        self.assertEqual(
-            parser.parse(' -( caption:bird OR caption:dog  )AND(- caption:cat OR caption:banana) '),
-            And(Not(Or(Caption('bird'), Caption('dog'))), Or(Not(Caption('cat')), Caption('banana'))),
-        )
-
-    def testParserShouldNotDieDueToUnmatchedParens(self):
-        with self.assertRaises(parser.UnexpectedParenthesis) as cm:
-            parser.parse('caption:bird OR caption:dog) AND (-caption:cat OR caption:banana)')
-        self.assertEqual(cm.exception.index, 3)
-
-        with self.assertRaises(parser.ExpectedParenthesis):
-            parser.parse('(caption:bird OR caption:dog) AND (-caption:cat OR caption:banana')
-
-        with self.assertRaises(parser.UnexpectedParenthesis):
-            parser.parse('() AND (-caption:cat OR caption:banana')
 
 
 from archive.templatetags import timeline
