@@ -55,6 +55,16 @@ class YearFilterReporter:
             return 'before {}'.format(lt_year)
 
 
+class DonorFilterReporter:
+    def __init__(self, verb):
+        self.verb = verb
+    def describe(self, exprs):
+        words = [str(expr.value.display_format()) for expr in exprs]
+        if len(words) == 1:
+            clauses = words[0]
+        else:
+            clauses = ' and '.join([', '.join(words[:-1]), words[-1]])
+        return "{verb} {clauses}".format(verb=self.verb, clauses=clauses)
 class GenericFilterReporter:
     def __init__(self, verb):
         self.verb = verb
@@ -119,7 +129,7 @@ class Description:
         if group == 'tag':
             return GenericFilterReporter('tagged with')
         if group == 'donor':
-            return GenericFilterReporter('donated by')
+            return DonorFilterReporter('donated by')
         if group == 'new':
             return NewPhotosReporter()
         if group == 'user-collection':
@@ -174,10 +184,13 @@ class Expression:
     def is_collection(self):
         return False
 
-    def _filter(self, qs, user):
+    def buildQ(self, *, user):
         f2 = self.filter2(user)
         f1 = self.filter1(user)
-        q = (f1 | f2) if f1 and f2 else f1 if f1 else f2
+        return (f1 | f2) if f1 and f2 else f1 if f1 else f2
+
+    def _filter(self, qs, user):
+        q = self.buildQ(user=user)
 
         return (qs.filter(q)
             .annotate(**{k: Sum(v, output_field=FloatField()) for (k, v) in self.annotations1().items()})
