@@ -1,8 +1,7 @@
-from django.test import TestCase, SimpleTestCase, RequestFactory, tag
-from ..auth.views import RegisterAccount
-from .. import views, models
+from django.test import TestCase, SimpleTestCase, tag
+from .. import models
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.models import User, AnonymousUser, Permission
+from django.contrib.auth.models import User, Permission
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.http import QueryDict
@@ -13,32 +12,6 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from archive.search.expression import TagExactly
 
-
-@tag("fast")
-class FakeImageTest(SimpleTestCase):
-    def testShouldHaveThumbnail(self):
-        self.assertEqual(views.FAKE_PHOTO['thumbnail']['url'], views.EMPTY_PNG)
-
-    def testShouldHaveWidth(self):
-        self.assertEqual(views.FAKE_PHOTO['thumbnail']['width'], 75)
-
-    def testShouldHaveHeight(self):
-        self.assertEqual(views.FAKE_PHOTO['thumbnail']['height'], 75)
-
-@tag("fast")
-class FakeTimelinePageTest(SimpleTestCase):
-    def testShouldNotHavePhotos(self):
-        self.assertEqual(len(list(views.FakeTimelinePage())), 0)
-
-    def testShouldHaveAnObjectListWithTenFakePhotos(self):
-        self.assertEqual(len(list(views.FakeTimelinePage().object_list)), 10)
-
-@tag("fast")
-class TimelinePaginatorTest(TestCase):
-    def testInvalidPageShouldGetFakePage(self):
-        page = views.TimelinePaginator(models.Photo.objects.all().order_by('id'), per_page=10).get_page(2)
-        for photo in page.object_list:
-            self.assertEqual(photo['thumbnail']['url'], views.EMPTY_PNG)
 
 class TestImageMixin:
     @classmethod
@@ -548,44 +521,3 @@ class WhenHave50Photos(TestImageMixin, TestCase):
     def testUserProfileShould404IfUserDoesNotExist(self):
         resp = self.client.get(reverse('user-page', args=['notarealuser']))
         self.assertEqual(resp.status_code, 404)
-
-@tag("fast")
-class RegisterAccountTest(TestCase):
-    def testUserIsHumanShouldReturnFalse(self):
-        req = RequestFactory().post(reverse('register-account'), data={'g-recaptcha-response': ''})
-        req.user = AnonymousUser()
-        v = RegisterAccount()
-        v.request = req
-        self.assertFalse(v.user_is_human())
-
-
-
-
-
-
-from archive.templatetags import timeline
-@tag("fast")
-class TimelineDisplay(SimpleTestCase):
-    def assertIsPosition(self, obj):
-        for key in ('x', 'y', 'width', 'height'):
-            self.assertIn(key, obj)
-            self.assertTrue(isinstance(obj[key], int) or isinstance(obj[key], float))
-    def testShouldDefineMinorMarkerPositions(self):
-        years = [(year, '/{}'.format(year), '/{}.json'.format(year)) for year in [1900, 1901, 1902, 1903, 1904, 1905]]
-        result = timeline.make_timeline(years, width=60)
-        self.assertIn('majornotches', result)
-        self.assertEqual(len(result['majornotches']), 1)
-        for notch in result['majornotches']:
-            for key in ('target', 'json_target', 'box', 'notch', 'label'):
-                self.assertIn(key, notch)
-            for key in ('box', 'notch'):
-                self.assertIsPosition(notch[key])
-            for key in ('text', 'x', 'y'):
-                self.assertIn(key, notch['label'])
-        self.assertIn('minornotches', result)
-        self.assertEqual(len(result['minornotches']), 5)
-        for notch in result['minornotches']:
-            for key in ('target', 'json_target', 'box', 'notch'):
-                self.assertIn(key, notch)
-            for key in ('box', 'notch'):
-                self.assertIsPosition(notch[key])
