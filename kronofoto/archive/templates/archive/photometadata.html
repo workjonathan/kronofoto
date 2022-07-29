@@ -4,7 +4,7 @@
           <ul>
             <li>{{ photo.year }}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
             <li>ID#: {{photo.accession_number}}</li>
-	    <li>Donated by <a data-json-href="{{ photo.donor.get_json_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
+	    <li>Contributed by <a data-json-href="{{ photo.donor.get_json_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
           </ul>
         </div>
         <div class="metadata-2a">
@@ -14,7 +14,7 @@
             {% endif %}
 
             {% if photo.scanner %}
-            <li>Scanned by {{ photo.scanner.display_format }}</li>
+            <li>Digitized by {{ photo.scanner.display_format }}</li>
             {% endif %}
             <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>

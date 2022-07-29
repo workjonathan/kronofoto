@@ -46,7 +46,7 @@ class SearchForm(forms.Form):
     endYear.group = 'DATE RANGE'
 
     donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated().order_by('last_name', 'first_name'))
-    donor.group = "DONOR"
+    donor.group = "CONTRIBUTOR"
 
     city = LocationChoiceField(required=False, label='', field='city')
     city.group = 'LOCATION'
@@ -59,7 +59,7 @@ class SearchForm(forms.Form):
 
     query = forms.CharField(required=False, label='')
     query.widget.attrs.update({
-        'placeholder': 'Keywords, terms, photo ID#, donor',
+        'placeholder': 'Keywords, terms, photo ID#, contributor',
     })
     query.group = "ADVANCED SEARCH"
 
