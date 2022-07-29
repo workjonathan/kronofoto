@@ -17,6 +17,9 @@ class Term(Collectible, models.Model):
         params['term'] = self.id
         return params.urlencode()
 
+    class Meta:
+        ordering = ['term']
+
     @staticmethod
     def index():
         return [

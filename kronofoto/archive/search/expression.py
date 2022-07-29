@@ -129,7 +129,7 @@ class Description:
         if group == 'tag':
             return GenericFilterReporter('tagged with')
         if group == 'donor':
-            return DonorFilterReporter('donated by')
+            return DonorFilterReporter('contributed by')
         if group == 'new':
             return NewPhotosReporter()
         if group == 'user-collection':
@@ -339,7 +339,7 @@ class DonorExactly(Expression):
         self.value = value
 
     def __str__(self):
-        return 'donor_exact:{}'.format(self.value.id)
+        return 'contributor_exact:{}'.format(self.value.id)
 
     def filter1(self, user):
         return Q(donor__id=self.value.id)
@@ -357,7 +357,7 @@ class DonorExactly(Expression):
         return Description([self])
 
     def short_label(self):
-        return "Donor: {}".format(self.value)
+        return "Contributor: {}".format(self.value)
 
     def group(self):
         return "donor"
@@ -368,7 +368,7 @@ class Donor(Expression):
         self.value = value.lower()
 
     def __str__(self):
-        return 'donor:{}'.format(self.value)
+        return 'contributor:{}'.format(self.value)
 
     def filter1(self, user):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
