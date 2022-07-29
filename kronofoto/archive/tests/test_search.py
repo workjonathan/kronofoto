@@ -273,4 +273,4 @@ class CollectionQueryTest(TestCase):
     def testShouldDescribeDonor(self, first, last):
         donor = models.Donor(first_name=first, last_name=last)
         coll = models.CollectionQuery(DonorExactly(donor), AnonymousUser)
-        self.assertEqual(str(coll), 'donated by {}'.format(donor.display_format()))
+        self.assertEqual(str(coll), 'contributed by {}'.format(donor.display_format()))
