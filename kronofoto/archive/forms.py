@@ -168,7 +168,7 @@ class AddToListForm(forms.Form):
 class PhotoSphereAddForm(forms.ModelForm):
     class Meta:
         model = PhotoSphere
-        fields = ('name', 'image', 'location')
+        fields = ('title', 'image', 'location')
 
 class PhotoSphereChangeForm(forms.ModelForm):
     class Meta:

@@ -206,7 +206,7 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
         if obj is None:
             fieldsets = (
                 (None, {
-                    'fields': ('name', 'image', 'location'),
+                    'fields': ('title', 'description', 'image', 'location'),
                     'description': "First fill out these options. After clicking Save and continue editing, you'll be able to edit more options.",
                 }),
             )

@@ -11,7 +11,8 @@ def get_photosphere_path(instance, filename):
 
 class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=512, blank=False)
+    title = models.CharField(max_length=512, blank=False)
+    description = models.TextField()
     image = models.ImageField(upload_to=get_photosphere_path, storage=OverwriteStorage(), null=True, editable=True)
     heading = models.FloatField(
         default=0,
@@ -21,7 +22,7 @@ class PhotoSphere(models.Model):
     location = models.PointField(null=True, srid=4326, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
 class PhotoSpherePair(models.Model):
