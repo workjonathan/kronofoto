@@ -37,7 +37,7 @@ class SearchForm(forms.Form):
         'id': 'tag-search',
         'placeholder': 'Tag Search',
     })
-    term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all().order_by('term'))
+    term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all())
     term.group = "CATEGORY"
 
     startYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'Start'}) )
