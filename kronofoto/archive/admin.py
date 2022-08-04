@@ -58,6 +58,7 @@ class TagInline(admin.TabularInline):
     model = PhotoTag
     extra = 1
     fields = ['tag', 'accepted', 'submitter']
+    raw_id_fields = ['tag']
     readonly_fields = ['submitter']
 
     def submitter(self, instance):
