@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView
 from django.views.generic.base import TemplateView
+from archive.views.photosphere import PhotoSphereView
 
 class NegativeIntConverter:
     regex = '-?\d+'
@@ -39,6 +40,7 @@ urlpatterns = [
     path('photo/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
+    path('mainstreet360/<int:pk>/', PhotoSphereView.as_view(), name="mainstreetview"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('tags/', views.TagSearchView.as_view(), name='tag-search'),
     path('grid/', views.GridView.as_view(), name='gridview'),

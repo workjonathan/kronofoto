@@ -3,6 +3,7 @@ from django.contrib.gis.db import models
 import uuid
 from os import path
 from ..storage import OverwriteStorage
+from django.urls import reverse
 
 
 def get_photosphere_path(instance, filename):
@@ -20,6 +21,9 @@ class PhotoSphere(models.Model):
     )
     photos = models.ManyToManyField("Photo", through="PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
+
+    def get_absolute_url(self):
+        return reverse('mainstreetview', kwargs=dict(pk=self.pk))
 
     def __str__(self):
         return self.title
