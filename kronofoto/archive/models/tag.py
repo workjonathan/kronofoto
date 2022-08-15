@@ -15,7 +15,7 @@ class TagQuerySet(models.QuerySet):
 
 
 class Tag(Collectible, models.Model):
-    tag = LowerCaseCharField(max_length=64, unique=True, editable=False)
+    tag = LowerCaseCharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
 
     objects = TagQuerySet.as_manager()
