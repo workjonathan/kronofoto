@@ -23,6 +23,13 @@ admin.site.index_title = 'Fortepan Administration Index'
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
 
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if obj:
+            fields += ('tag',)
+        return fields
+
+
 
 @admin.register(NewCutoff)
 class NewCutoffAdmin(admin.ModelAdmin):
