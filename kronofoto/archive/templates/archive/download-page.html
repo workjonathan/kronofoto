@@ -2,11 +2,80 @@
 {% load widgets %}
 
 {% block content %}
-    <a href="{{ object.get_absolute_url }}">Back</a>
-    <p>
-    <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>
-    <p>
-    “{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ host_uri }}{{ citation_url }},” <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>
-    <p>
-    <img src="{{ object.original.url }}" />
+    <div id="download-container">
+        <p>
+        
+            <a href="{{ object.get_absolute_url }}" class="download-text" >Go Back</a>
+        
+            
+            <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg" class="download-text" style="position:absolute; right: 10vw;">Continue Download</a>
+        </p>
+        <br/>
+        <p>Hover over image to zoom.</p>
+        <p>Attribution: <em>
+            “{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ host_uri }}{{ citation_url }},” <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a></em>
+    
+
+        </p>
+    </div>
+    
+    
+    
+    
+   
+        
+   <div style='background: url("{{ object.original.url }}");' id="follow-zoom">
+
+    </div>
+<!--        <img src="{{ object.original.url }}" id="download-img"/>-->
+  
+    <script type="text/javascript">
+        /*Credits https://code-boxx.com/image-zoom-css-javascript/, https://www.cssscript.com/image-zoom-pan-hover-detail-view/*/
+        var addZoom = (target) => {
+            let container = document.getElementById(target),
+                imgsrc = container.currentStyle || window.getComputedStyle(container, false);
+                imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+            
+          let img = new Image();
+          img.src = imgsrc;
+          img.onload = () => {
+              
+              
+            let ratio = img.naturalHeight / img.naturalWidth;
+              
+                Object.assign(container.style, {
+                    width: "80vw",
+                    //margin: "0px auto 50px auto";
+                    height: 80*ratio +"vw",
+                    backgroundPosition: "top",
+                    backgroundSize: "cover"
+                  }); 
+              
+            container.onmousemove = (e) => {
+              let rect = e.target.getBoundingClientRect(),
+                  xPos = e.clientX - rect.left,
+                  yPos = e.clientY - rect.top,
+                  xPercent = xPos / (container.clientWidth / 100) + "%",
+                  yPercent = yPos / ((container.clientWidth * ratio) / 100) + "%";
+
+              Object.assign(container.style, {
+                backgroundPosition: xPercent + " " + yPercent,
+                backgroundSize: img.naturalWidth + "px"
+              });
+            };
+
+            container.onmouseleave = (e) => {
+              Object.assign(container.style, {
+                backgroundPosition: "top",
+                backgroundSize: "cover"
+                  });
+                };
+              }
+            };
+
+            window.onload = () => { addZoom("follow-zoom"); };
+
+    </script>
+
+    
 {% endblock %}
