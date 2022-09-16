@@ -202,6 +202,7 @@ class PhotoInline(admin.StackedInline):
 class PhotoSphereAdmin(admin.OSMGeoAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
+    list_display = ('title', 'description')
     inlines = (PhotoInline,)
     def get_form(self, request, obj=None, **kwargs):
         defaults = {}
