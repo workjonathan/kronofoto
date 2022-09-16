@@ -203,6 +203,7 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
     list_display = ('title', 'description')
+    search_fields = ('title', 'description')
     inlines = (PhotoInline,)
     def get_form(self, request, obj=None, **kwargs):
         defaults = {}
