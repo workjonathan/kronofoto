@@ -216,11 +216,12 @@ const moveMarker = year => {
     marker.style.display = 'block';
 
     // move marker to position of tick
+    let embedmargin = document.querySelector('.year-ticker').getBoundingClientRect().left;
     let tick = document.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
     let bounds = tick.getBoundingClientRect();
     let markerStyle = window.getComputedStyle(marker);
     let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
-    let offset = (bounds.x - (markerWidth / 2)); // calculate marker width offset for centering on tick
+    let offset = (bounds.x - (markerWidth / 2) - embedmargin); // calculate marker width offset for centering on tick
     marker.style.transform = `translateX(${offset}px)`;
 }
 

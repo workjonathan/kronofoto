@@ -1,5 +1,7 @@
 {% load static %}
 @import "{% static "assets/css/kronofoto.css" %}";
+/*Only need a few things from index for embeds, so should add them to kronofoto.css and remove index import later*/
+@import "{% static "assets/css/index.css" %}";
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css");
 
 :root {
@@ -17,7 +19,7 @@
   padding: 0;
   box-sizing: border-box;
   font-family: var(--fp-main-font);
-  display: grid;
+  /*display: grid;*/
   height: 100vh;
   grid-template-rows: minmax(min-content, 0fr) auto;
   max-width: 2100px;
