@@ -20,13 +20,36 @@ class FortepanBase {
                             _this.loadstate(data)
                             _this.pushWindowState(data)
                             if (scrolltarget) {
-                                document.querySelector(`#${scrolltarget}`).scrollIntoView(true)
+                                _this.elem.querySelector(`#${scrolltarget}`).scrollIntoView(true)
                             }
                         })
                     }
                 }
             }
         })
+    }
+    toggleVis(evt) {
+        const el = this.elem.querySelector('#metadata')
+        toggleElement(el);
+    }
+    moveMarker(year) {
+        const marker = this.elem.querySelector('.active-year-marker');
+        const markerYearElement = this.elem.querySelector('.marker-year');
+
+        // Update year text
+        markerYearElement.textContent = year;
+
+        // Show Marker (might not be necessary to do this display stuff)
+        marker.style.display = 'block';
+
+        // move marker to position of tick
+        let embedmargin = this.elem.querySelector('.year-ticker').getBoundingClientRect().left;
+        let tick = this.elem.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
+        let bounds = tick.getBoundingClientRect();
+        let markerStyle = window.getComputedStyle(marker);
+        let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+        let offset = (bounds.x - (markerWidth / 2) - embedmargin); // calculate marker width offset for centering on tick
+        marker.style.transform = `translateX(${offset}px)`;
     }
     loadFrame(initialState) {
         this.carousel = undefined
@@ -35,25 +58,28 @@ class FortepanBase {
         this.backward = undefined
         if (initialState.type === 'GRID') {
             this.elem.innerHTML = initialState.frame
-            $('.timeline-container').removeClass('current-view')
-            $('.grid-icon').addClass('current-view')
-            $('.timeline-icon').css('opacity', '0.5')
-            $('.grid-icon_reg').css('opacity', '1.0')
-            $('.collection-name').css('display', 'none')
+            document.querySelector('.timeline-container').classList.remove('current-view')
+            document.querySelector('.grid-icon').classList.add('current-view')
+            document.querySelector('.timeline-icon').style.opacity = '0.5'
+            document.querySelector('.grid-icon_reg').style.opacity = '1.0'
+            document.querySelector('.collection-name').style.display = 'none'
         }
         else if (initialState.type === 'TIMELINE') {
             this.elem.innerHTML = initialState.frame
-            $('.grid-icon').removeClass('current-view')
-            $('.timeline-container').addClass('current-view')
-            $('.grid-icon_reg').css('opacity', '0.5')
-            $('.timeline-icon').css('opacity', '1.0')
-            $('.collection-name').css('display', 'block')
-            this.carousel = document.querySelector('#fi-thumbnail-carousel-images')
+            document.querySelector('.grid-icon').classList.remove('current-view')
+            document.querySelector('.timeline-container').classList.add('current-view')
+            document.querySelector('.grid-icon_reg').style.opacity = '0.5'
+            document.querySelector('.timeline-icon').style.opacity = '1.0'
+            document.querySelector('.collection-name').style.display = 'block'
+            this.carousel = this.elem.querySelector('#fi-thumbnail-carousel-images')
             this.carousel.innerHTML = this.currentState.thumbnails
-            this.forward = document.querySelector('#forward')
-            this.backward = document.querySelector('#backward')
-            document.querySelector('#metadata').innerHTML = initialState.metadata
-            moveMarker(initialState.year)
+            this.forward = this.elem.querySelector('#forward')
+            this.backward = this.elem.querySelector('#backward')
+            this.elem.querySelector('#metadata').innerHTML = initialState.metadata
+            this.moveMarker(initialState.year)
+            this.elem.querySelector("#expand").addEventListener("click", evt => {
+                this.toggleVis()
+            })
             this.forward.addEventListener("mousedown", () =>
                 this.forward.getAttribute('href') != '#' ? 
                     Promise.race([
@@ -79,28 +105,28 @@ class FortepanBase {
             this.currentState = data
             this.carousel.innerHTML = data.thumbnails
             this.carousel.setAttribute('style', 'animation: none; animation-fill-mode: none;')
-            document.querySelector('#metadata').innerHTML = data.metadata
-            document.querySelector('.fi-image figure img').setAttribute('src', data.h700)
-            document.querySelector('.fi-image figure img').setAttribute('alt', data.tags)
-            document.querySelector('#fi-arrow-left').setAttribute('href', data.previous.url)
-            document.querySelector('#fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
-            document.querySelector('#fi-arrow-right').setAttribute('href', data.next.url)
-            document.querySelector('#fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
+            this.elem.querySelector('#metadata').innerHTML = data.metadata
+            this.elem.querySelector('.fi-image figure img').setAttribute('src', data.h700)
+            this.elem.querySelector('.fi-image figure img').setAttribute('alt', data.tags)
+            this.elem.querySelector('#fi-arrow-left').setAttribute('href', data.previous.url)
+            this.elem.querySelector('#fi-arrow-left').setAttribute('data-json-href', data.previous.json_url)
+            this.elem.querySelector('#fi-arrow-right').setAttribute('href', data.next.url)
+            this.elem.querySelector('#fi-arrow-right').setAttribute('data-json-href', data.next.json_url)
             this.forward.setAttribute('href', data.forward && data.forward.url ? data.forward.url : "#")
             this.forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
             this.backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
             this.backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
             document.querySelector('#grid-a').setAttribute('href', data.grid_url)
             document.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
-            document.querySelector('#dl > a').setAttribute('href', data.original)
-            for (let a of document.querySelectorAll('#app a.fpi-fpilink')) {
+            this.elem.querySelector('#dl > a').setAttribute('href', data.original)
+            for (let a of this.elem.querySelectorAll('#app a.fpi-fpilink')) {
                 a.setAttribute('href', data.url)
             }
-            moveMarker(data.year)
+            this.moveMarker(data.year)
         }
         else {
-            this.forward = document.querySelector('#forward')
-            this.backward = document.querySelector('#backward')
+            this.forward = this.elem.querySelector('#forward')
+            this.backward = this.elem.querySelector('#backward')
             this.loadFrame(data)
         }
     }
@@ -162,10 +188,6 @@ const initialize_fortepan = (element, {constraint=undefined, host="https://forte
 }
 
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
-const toggleVis = evt => {
-    const el = document.querySelector('#metadata')
-    toggleElement(el);
-}
 const toggleLogin = evt => {
     const el = document.querySelector('#login');
     toggleElement(el);
@@ -205,25 +227,6 @@ const request = (verb, resource) => new Promise((resolve, reject) => {
 })
 
 
-const moveMarker = year => {
-    const marker = document.querySelector('.active-year-marker');
-    const markerYearElement = document.querySelector('.marker-year');
-
-    // Update year text
-    markerYearElement.textContent = year;
-
-    // Show Marker (might not be necessary to do this display stuff)
-    marker.style.display = 'block';
-
-    // move marker to position of tick
-    let embedmargin = document.querySelector('.year-ticker').getBoundingClientRect().left;
-    let tick = document.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
-    let bounds = tick.getBoundingClientRect();
-    let markerStyle = window.getComputedStyle(marker);
-    let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
-    let offset = (bounds.x - (markerWidth / 2) - embedmargin); // calculate marker width offset for centering on tick
-    marker.style.transform = `translateX(${offset}px)`;
-}
 
 
 const trace = v => {
