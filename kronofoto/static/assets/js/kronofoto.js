@@ -62,7 +62,9 @@ class FortepanBase {
             document.querySelector('.grid-icon').classList.add('current-view')
             document.querySelector('.timeline-icon').style.opacity = '0.5'
             document.querySelector('.grid-icon_reg').style.opacity = '1.0'
-            document.querySelector('.collection-name').style.display = 'none'
+            for (let el of document.querySelectorAll('.collection-name')) {
+                el.style.display = 'none'
+            }
         }
         else if (initialState.type === 'TIMELINE') {
             this.elem.innerHTML = initialState.frame
@@ -70,7 +72,9 @@ class FortepanBase {
             document.querySelector('.timeline-container').classList.add('current-view')
             document.querySelector('.grid-icon_reg').style.opacity = '0.5'
             document.querySelector('.timeline-icon').style.opacity = '1.0'
-            document.querySelector('.collection-name').style.display = 'block'
+            for (let el of document.querySelectorAll('.collection-name')) {
+                el.style.display = 'block'
+            }
             this.carousel = this.elem.querySelector('#fi-thumbnail-carousel-images')
             this.carousel.innerHTML = this.currentState.thumbnails
             this.forward = this.elem.querySelector('#forward')
