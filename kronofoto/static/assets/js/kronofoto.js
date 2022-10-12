@@ -1,13 +1,56 @@
+const themes = [
+    { 
+        color: "#6c84bd",
+        logo: "assets/images/skyblue/logo.svg",
+        menuSvg: "assets/images/skyblue/menu.svg",
+        infoSvg: "assets/images/skyblue/info.svg",
+        downloadSvg: "assets/images/skyblue/download.svg",
+        searchSvg: "assets/images/skyblue/search.svg",
+        carrotSvg: "assets/images/skyblue/carrot.svg",
+        timelineSvg: 'assets/images/skyblue/toggle.svg'
+    },
+    {
+        color: "#c28800",
+        logo: "assets/images/golden/logo.svg",
+        menuSvg: "assets/images/golden/menu.svg",
+        infoSvg: "assets/images/golden/info.svg",
+        downloadSvg: "assets/images/golden/download.svg",
+        searchSvg: "assets/images/golden/search.svg",
+        carrotSvg: "assets/images/golden/carrot.svg",
+        timelineSvg: 'assets/images/golden/toggle.svg'
+    },
+    {
+        color: "#c2a55e",
+        logo: "assets/images/haybail/logo.svg",
+        menuSvg: "assets/images/haybail/menu.svg",
+        infoSvg: "assets/images/haybail/info.svg",
+        downloadSvg: "assets/images/haybail/download.svg",
+        searchSvg: "assets/images/haybail/search.svg",
+        carrotSvg: "assets/images/haybail/carrot.svg",
+        timelineSvg: 'assets/images/haybail/toggle.svg'
+    },
+    {
+        color: "#445170",
+        logo: "assets/images/navy/logo.svg",
+        menuSvg: "assets/images/navy/menu.svg",
+        infoSvg: "assets/images/navy/info.svg",
+        downloadSvg: "assets/images/navy/download.svg",
+        searchSvg: "assets/images/navy/search.svg",
+        carrotSvg: "assets/images/navy/carrot.svg",
+        timelineSvg: 'assets/images/navy/toggle.svg'
+    }
+]
 class FortepanBase {
-    constructor(element, initialState, {scrollSpeed=4, urlUpdater=undefined}={}) {
+    constructor(element, initialState, {scrollSpeed=4, urlUpdater=undefined, root=document}={}) {
         this.elem = element
+        this.root = root
         this.urlUpdater = urlUpdater || new URLUpdater(new Map())
         this.randomTheme = themes[Math.floor(Math.random()*themes.length)]
         this.scrollSpeed = scrollSpeed
         this.initializeWindowState(initialState)
         this.loadFrame(initialState)
         const _this = this
-        document.addEventListener('click', function(e) {
+        this.root.addEventListener('click', function(e) {
             const jsonhref = e.target.getAttribute('data-json-href') || e.target.parentNode.getAttribute('data-json-href')
             const scrolltarget = e.target.getAttribute('data-json-scroll')
             if (jsonhref) {
@@ -58,21 +101,21 @@ class FortepanBase {
         this.backward = undefined
         if (initialState.type === 'GRID') {
             this.elem.innerHTML = initialState.frame
-            document.querySelector('.timeline-container').classList.remove('current-view')
-            document.querySelector('.grid-icon').classList.add('current-view')
-            document.querySelector('.timeline-icon').style.opacity = '0.5'
-            document.querySelector('.grid-icon_reg').style.opacity = '1.0'
-            for (let el of document.querySelectorAll('.collection-name')) {
+            this.root.querySelector('.timeline-container').classList.remove('current-view')
+            this.root.querySelector('.grid-icon').classList.add('current-view')
+            this.root.querySelector('.timeline-icon').style.opacity = '0.5'
+            this.root.querySelector('.grid-icon_reg').style.opacity = '1.0'
+            for (let el of this.root.querySelectorAll('.collection-name')) {
                 el.style.display = 'none'
             }
         }
         else if (initialState.type === 'TIMELINE') {
             this.elem.innerHTML = initialState.frame
-            document.querySelector('.grid-icon').classList.remove('current-view')
-            document.querySelector('.timeline-container').classList.add('current-view')
-            document.querySelector('.grid-icon_reg').style.opacity = '0.5'
-            document.querySelector('.timeline-icon').style.opacity = '1.0'
-            for (let el of document.querySelectorAll('.collection-name')) {
+            this.root.querySelector('.grid-icon').classList.remove('current-view')
+            this.root.querySelector('.timeline-container').classList.add('current-view')
+            this.root.querySelector('.grid-icon_reg').style.opacity = '0.5'
+            this.root.querySelector('.timeline-icon').style.opacity = '1.0'
+            for (let el of this.root.querySelectorAll('.collection-name')) {
                 el.style.display = 'block'
             }
             this.carousel = this.elem.querySelector('#fi-thumbnail-carousel-images')
@@ -89,20 +132,20 @@ class FortepanBase {
                     Promise.race([
                         mouseUp(this.forward).then(() => ({event: 'click', position: -100})),
                         delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-                    ]).then(scrollAction(this.forward, this, 'forward', -200)) : undefined)
+                    ]).then(scrollAction(this.forward, this, 'forward', -200, this.root)) : undefined)
 
             this.backward.addEventListener("mousedown", () =>
                 this.backward.getAttribute('href') != '#' ? 
                 Promise.race([
                     mouseUp(this.backward).then(() => ({event: 'click', position: -100})),
                     delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
-                ]).then(scrollAction(this.backward, this, 'backward', 0)) : undefined)
+                ]).then(scrollAction(this.backward, this, 'backward', 0, this.root)) : undefined)
         }
-        document.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
-        document.querySelector('#fi-timeline-a').setAttribute('data-json-href', initialState.timeline_json_url)
-        document.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
-        document.querySelector('#grid-a').setAttribute('data-json-href', initialState.grid_json_url)
-        applyTheme(initialState.static_url, this.randomTheme)
+        this.root.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
+        this.root.querySelector('#fi-timeline-a').setAttribute('data-json-href', initialState.timeline_json_url)
+        this.root.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
+        this.root.querySelector('#grid-a').setAttribute('data-json-href', initialState.grid_json_url)
+        applyTheme(initialState.static_url, this.randomTheme, {root: this.root})
     }
     loadstate(data) {
         if (data.type === 'TIMELINE' && this.currentState.type === 'TIMELINE') {
@@ -120,8 +163,8 @@ class FortepanBase {
             this.forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
             this.backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
             this.backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
-            document.querySelector('#grid-a').setAttribute('href', data.grid_url)
-            document.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
+            this.root.querySelector('#grid-a').setAttribute('href', data.grid_url)
+            this.root.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
             this.elem.querySelector('#dl > a').setAttribute('href', data.original)
             for (let a of this.elem.querySelectorAll('#app a.fpi-fpilink')) {
                 a.setAttribute('href', data.url)
@@ -157,6 +200,36 @@ class FortepanWidget extends FortepanBase {
     }
 }
 
+class FortepanViewer extends HTMLElement {
+    constructor() {
+        super()
+        const shadow = this.attachShadow({mode: "open"})
+    }
+    connectedCallback() {
+        const constraint = this.getAttribute("constraint")
+        const host = this.getAttribute("host")
+        const template = document.createElement("template")
+        template.innerHTML = `
+            <style>
+            @import "${host}/app.css";
+            </style>
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+            <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+            <script
+			  src="https://code.jquery.com/jquery-3.5.1.min.js"
+			  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+			  crossorigin="anonymous"></script>
+            <div id="app"></div>
+		`
+
+        const doc = template.content.cloneNode(true)
+        this.shadowRoot.appendChild(doc)
+        initialize_fortepan(this.shadowRoot.querySelector("#app"), {host, constraint, root: this.shadowRoot})
+    }
+}
+customElements.define("fortepan-viewer", FortepanViewer)
+
 class URLUpdater {
     constructor(constraints) {
         this.constraints = constraints
@@ -175,7 +248,7 @@ class URLUpdater {
     }
 }
 
-const initialize_fortepan = (element, {constraint=undefined, host="https://fortepan.us"}={}) => {
+const initialize_fortepan = (element, {constraint=undefined, host="https://fortepan.us", root=document}={}) => {
     const m = new Map()
     if (constraint) {
         m.set('constraint', constraint)
@@ -183,11 +256,10 @@ const initialize_fortepan = (element, {constraint=undefined, host="https://forte
     m.set('embed', 1)
     const updater = new URLUpdater(m)
     const req = new Request(updater.update(`${host}/search.json`), {mode:'cors'})
-    const elem = document.querySelector('#app')
     fetch(req)
         .then(response => response.json())
         .then(response => {
-            const app = new FortepanWidget(elem, response, {urlUpdater:updater})
+            const app = new FortepanWidget(element, response, {urlUpdater:updater, root})
         })
 }
 
@@ -238,11 +310,11 @@ const trace = v => {
     return v
 }
 
-const scrollAction = (element, app, direction, target) => evt => {
+const scrollAction = (element, app, direction, target, root) => evt => {
     const next_page = request('GET', app.urlUpdater.update(app.currentState[direction].json_url)).then(data => {
-        document.querySelector('.fi-image').setAttribute('src', data.h700)
-        document.getElementById('metadata').innerHTML = data.metadata
-        document.getElementById('fi-preload-zone').innerHTML = data.thumbnails
+        root.querySelector('.fi-image').setAttribute('src', data.h700)
+        root.getElementById('metadata').innerHTML = data.metadata
+        root.getElementById('fi-preload-zone').innerHTML = data.thumbnails
         return data
     })
     let p
@@ -269,7 +341,7 @@ const scrollAction = (element, app, direction, target) => evt => {
         app.loadstate(data)
         app.pushWindowState(data)
         if (evt.event === 'startScroll') {
-            scrollAction(element, app, direction, target)(evt)
+            scrollAction(element, app, direction, target, root)(evt)
         }
     })
 }
@@ -287,173 +359,141 @@ const scrollAction = (element, app, direction, target) => evt => {
 
 */
 
-$(document).click(function(event)
-{
-    //~TESTING LINE
-    //console.log(event.target.className)
-
-    var classOfThingClickedOn = event.target.className
-
-    //~TESTING LINE
-    //console.log($('.search-form').find('*'))
-
-    //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
-    var $descendantsOfSearchForm = $('.search-form').find('*')
-
-    //---creates an array of all components of the search menu dropdown---
-    //adds the search menu itself to the array
-    var componentsOfSearchMenuArray = ['search-form']
-
-    //adds the class of all the components of the search menu to the array
-    $descendantsOfSearchForm.each(function(index)
+const init = () => {
+    $(document).click(function(event)
     {
-        //checks to make sure the class isn't already in the array
-        if($.inArray(this.className, componentsOfSearchMenuArray) == -1)
+        //~TESTING LINE
+        //console.log(event.target.className)
+
+        var classOfThingClickedOn = event.target.className
+
+        //~TESTING LINE
+        //console.log($('.search-form').find('*'))
+
+        //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
+        var $descendantsOfSearchForm = $('.search-form').find('*')
+
+        //---creates an array of all components of the search menu dropdown---
+        //adds the search menu itself to the array
+        var componentsOfSearchMenuArray = ['search-form']
+
+        //adds the class of all the components of the search menu to the array
+        $descendantsOfSearchForm.each(function(index)
         {
-            //adds the class to the array
-            componentsOfSearchMenuArray.push(this.className)
+            //checks to make sure the class isn't already in the array
+            if($.inArray(this.className, componentsOfSearchMenuArray) == -1)
+            {
+                //adds the class to the array
+                componentsOfSearchMenuArray.push(this.className)
+            }
+        })
+
+        //~TESTING LINES
+        //console.log(componentsOfSearchMenuArray)
+        //console.log('Class:'+'"'+classOfThingClickedOn+'"')
+        //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
+
+        //if the search menu is open and the user clicks on something outside of the menu, close the menu
+        if($('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
+        {
+            $('.search-form').toggle()
+        }
+        //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
+        else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')
+        {
+            $('.search-form').toggle()
         }
     })
 
-    //~TESTING LINES
-    //console.log(componentsOfSearchMenuArray)
-    //console.log('Class:'+'"'+classOfThingClickedOn+'"')
-    //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
 
-    //if the search menu is open and the user clicks on something outside of the menu, close the menu
-    if($('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
-    {
-        $('.search-form').toggle()
-    }
-    //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
-    else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')
-    {
-        $('.search-form').toggle()
-    }
-})
+    $('#tag-search').autocomplete({
+        source: '/tags/',
+        minLength: 2,
+    })
 
-
-$('#tag-search').autocomplete({
-    source: '/tags/',
-    minLength: 2,
-})
-
-$('input[name="startYear"]').parent().parent('div').addClass('daterange')
-
-
-$('.overlay, .close-btn').click(() => {
-    $('.gridden').removeClass('gridden').addClass('hidden')
-    $('.overlay').css('display', 'none')
-})
-
-
-const toggleHover = () => {
-    if($('.hamburger-menu').hasClass('gridden')) {
-        $('.overlay').css('display', 'block')
-        /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
-        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
-        /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
-    } else {
+    $('.overlay, .close-btn').click(() => {
+        $('.gridden').removeClass('gridden').addClass('hidden')
         $('.overlay').css('display', 'none')
-        /* $('.hamburger-container').css('background-color', '')
-        $('.hamburger-container div img').css('filter', '') */
-        /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
+    })
+
+
+    const toggleHover = () => {
+        if($('.hamburger-menu').hasClass('gridden')) {
+            $('.overlay').css('display', 'block')
+            /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
+            $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
+            /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
+        } else {
+            $('.overlay').css('display', 'none')
+            /* $('.hamburger-container').css('background-color', '')
+            $('.hamburger-container div img').css('filter', '') */
+            /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
+        }
     }
+
+    $('#login-btn').click(() => {
+        if($('#login').hasClass('gridden')) {
+            $('.overlay').css('display', 'block')
+        } else {
+            $('.overlay').css('display', 'none')
+        }
+    })
+
+
+    $('#search-box').focus(function() {
+        $('#search-box-container').css('background','var(--fp-main-blue)')
+        $('.search-icon').css('filter', 'brightness(0) invert(1)')
+        $('.carrot').css('filter', 'brightness(0) invert(1)')
+        $('#search-box').addClass('placeholder-light').css('color', 'white')
+
+    }).blur(function() {
+        $('#search-box-container').css('background','var(--fp-light-grey)')
+        $('.search-icon').css('filter', 'none')
+        $('.carrot').css('filter', 'none')
+        $('#search-box').removeClass('placeholder-light').css('color', '#333')
+        //('#search-box').css('color', 'var(--fp-light-grey)')
+    });
+
 }
 
-$('#login-btn').click(() => {
-    if($('#login').hasClass('gridden')) {
-        $('.overlay').css('display', 'block')
+const ready = fn => {
+    if (document.readyState !== "loading") {
+        fn()
     } else {
-        $('.overlay').css('display', 'none')
+        document.addEventListener("DOMContentLoaded", fn)
     }
-})
-
-
-$('#search-box').focus(function() {
-    $('#search-box-container').css('background','var(--fp-main-blue)')
-    $('.search-icon').css('filter', 'brightness(0) invert(1)')
-    $('.carrot').css('filter', 'brightness(0) invert(1)')
-    $('#search-box').addClass('placeholder-light').css('color', 'white')
-
-}).blur(function() {
-    $('#search-box-container').css('background','var(--fp-light-grey)')
-    $('.search-icon').css('filter', 'none')
-    $('.carrot').css('filter', 'none')
-    $('#search-box').removeClass('placeholder-light').css('color', '#333')
-    //('#search-box').css('color', 'var(--fp-light-grey)')
-});
-
+}
+ready(init)
 
 //----------changes colors of icons and --fp-main-blue css variable on page load----------
 
-const themes = [
-    { 
-        color: "#6c84bd",
-        logo: "assets/images/skyblue/logo.svg",
-        menuSvg: "assets/images/skyblue/menu.svg",
-        infoSvg: "assets/images/skyblue/info.svg",
-        downloadSvg: "assets/images/skyblue/download.svg",
-        searchSvg: "assets/images/skyblue/search.svg",
-        carrotSvg: "assets/images/skyblue/carrot.svg",
-        timelineSvg: 'assets/images/skyblue/toggle.svg'
-    },
-    {
-        color: "#c28800",
-        logo: "assets/images/golden/logo.svg",
-        menuSvg: "assets/images/golden/menu.svg",
-        infoSvg: "assets/images/golden/info.svg",
-        downloadSvg: "assets/images/golden/download.svg",
-        searchSvg: "assets/images/golden/search.svg",
-        carrotSvg: "assets/images/golden/carrot.svg",
-        timelineSvg: 'assets/images/golden/toggle.svg'
-    },
-    {
-        color: "#c2a55e",
-        logo: "assets/images/haybail/logo.svg",
-        menuSvg: "assets/images/haybail/menu.svg",
-        infoSvg: "assets/images/haybail/info.svg",
-        downloadSvg: "assets/images/haybail/download.svg",
-        searchSvg: "assets/images/haybail/search.svg",
-        carrotSvg: "assets/images/haybail/carrot.svg",
-        timelineSvg: 'assets/images/haybail/toggle.svg'
-    },
-    {
-        color: "#445170",
-        logo: "assets/images/navy/logo.svg",
-        menuSvg: "assets/images/navy/menu.svg",
-        infoSvg: "assets/images/navy/info.svg",
-        downloadSvg: "assets/images/navy/download.svg",
-        searchSvg: "assets/images/navy/search.svg",
-        carrotSvg: "assets/images/navy/carrot.svg",
-        timelineSvg: 'assets/images/navy/toggle.svg'
-    }
-]
 
 const _static = (static_url, path) => static_url + path
 
-const applyTheme = (static_url, theme) => {
-    for (const hamburger of document.querySelectorAll(".hamburger-icon")) {
+const applyTheme = (static_url, theme, {root=document}={}) => {
+    for (const hamburger of root.querySelectorAll(".hamburger-icon")) {
         hamburger.setAttribute("src", _static(static_url, theme.menuSvg))
     }
-    for (const info of document.querySelectorAll('.meta-info-icon')) {
+    for (const info of root.querySelectorAll('.meta-info-icon')) {
         info.setAttribute("src", _static(static_url, theme.infoSvg))
     }
-    for (const dl of document.querySelectorAll('.meta-dl-icon')) {
+    for (const dl of root.querySelectorAll('.meta-dl-icon')) {
         dl.setAttribute("src", _static(static_url, theme.downloadSvg))
     }
-    for (const search of document.querySelectorAll('.search-icon')) {
+    for (const search of root.querySelectorAll('.search-icon')) {
         search.setAttribute("src", _static(static_url, theme.searchSvg))
     }
-    for (const carrot of document.querySelectorAll('.carrot')) {
+    for (const carrot of root.querySelectorAll('.carrot')) {
         carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
     }
-    for (const timelineMarker of document.querySelectorAll('.marker-image')) {
+    for (const timelineMarker of root.querySelectorAll('.marker-image')) {
         timelineMarker.style.backgroundImage = `url('${_static(static_url, theme.timelineSvg)}')`
     }
-    for (const logoImg of document.querySelectorAll(".logo-img")) {
+    for (const logoImg of root.querySelectorAll(".logo-img")) {
         logoImg.src = _static(static_url, theme.logo)
     }
-    document.documentElement.style.setProperty("--fp-main-blue", theme.color)
+    if (root.documentElement) {
+        root.documentElement.style.setProperty("--fp-main-blue", theme.color)
+    }
 }
 //----------_----------
