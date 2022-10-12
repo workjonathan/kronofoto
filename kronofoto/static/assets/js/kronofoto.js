@@ -207,7 +207,7 @@ class FortepanViewer extends HTMLElement {
     }
     connectedCallback() {
         const constraint = this.getAttribute("constraint")
-        const host = this.getAttribute("host")
+        const host = this.getAttribute("host") || "https://fortepan.us"
         const template = document.createElement("template")
         const body = document.querySelector("body")
         const f = document.createElement("style")
