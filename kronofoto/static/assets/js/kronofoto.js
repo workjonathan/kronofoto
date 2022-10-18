@@ -140,6 +140,7 @@ class FortepanBase {
                     mouseUp(this.backward).then(() => ({event: 'click', position: -100})),
                     delay(500).then(() => ({event: 'startScroll', begin: new Date()}))
                 ]).then(scrollAction(this.backward, this, 'backward', 0, this.root)) : undefined)
+            enableMarkerDnD(this)
         }
         this.root.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
         this.root.querySelector('#fi-timeline-a').setAttribute('data-json-href', initialState.timeline_json_url)
