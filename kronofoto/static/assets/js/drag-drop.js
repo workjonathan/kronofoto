@@ -91,11 +91,19 @@ const enableMarkerDnD = app => {
         app.pushWindowState(data)
       });
     }
+    window.addEventListener("dragover", e => {
+        currentX = e.clientX
+        for (const el of document.querySelectorAll('.tl a')) {
+          const rect = el.getBoundingClientRect()
+          if (rect.left <= currentX && currentX <= rect.right) {
+              closestTick = el
+          }
+        }
+        currentTick = closestTick.children[0]
+    })
 
     function dragOver(e) {
       e.preventDefault();
-      currentTick = e.target;
-      currentTickX = currentTick.getBoundingClientRect().x;
       currentX = e.clientX;
       xOffset = currentX;
     }
