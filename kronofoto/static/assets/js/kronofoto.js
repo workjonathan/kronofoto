@@ -123,7 +123,12 @@ class FortepanBase {
             this.forward = this.elem.querySelector('#forward')
             this.backward = this.elem.querySelector('#backward')
             this.elem.querySelector('#metadata').innerHTML = initialState.metadata
-            this.moveMarker(initialState.year)
+            const observer = new ResizeObserver(entries => {
+                this.moveMarker(this.currentState.year)
+            })
+            for (const el of this.elem.querySelectorAll('.year-ticker')) {
+                observer.observe(el)
+            }
             this.elem.querySelector("#expand").addEventListener("click", evt => {
                 this.toggleVis()
             })
