@@ -10,9 +10,12 @@ from PIL.Image import Exif
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.geos import Point
 
+class IncompleteGPSInfo(Exception):
+    pass
 
 def get_photosphere_path(instance, filename):
     return path.join('photosphere', '{}.jpg'.format(instance.uuid))
+
 
 
 class PhotoSphere(models.Model):
@@ -50,9 +53,12 @@ class PhotoSphere(models.Model):
                 GPSTAGS.get(key, key): value
                 for key, value in exif['GPSInfo'].items()
             }
-            lon = self.decimal(pos=gps_info['GPSLongitude'], ref=gps_info['GPSLongitudeRef'])
-            lat = self.decimal(pos=gps_info['GPSLatitude'], ref=gps_info['GPSLatitudeRef'])
-            return Point(x=lon, y=lat, srid=4326)
+            try:
+                lon = self.decimal(pos=gps_info['GPSLongitude'], ref=gps_info['GPSLongitudeRef'])
+                lat = self.decimal(pos=gps_info['GPSLatitude'], ref=gps_info['GPSLatitudeRef'])
+                return Point(x=lon, y=lat, srid=4326)
+            except KeyError as error:
+                raise IncompleteGPSInfo from error
 
     def get_absolute_url(self):
         return reverse('mainstreetview', kwargs=dict(pk=self.pk))

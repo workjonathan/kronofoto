@@ -6,7 +6,7 @@ from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
 from .widgets import HeadingWidget, PositioningWidget
-
+from .models.photosphere import IncompleteGPSInfo
 
 class LocationChoiceField(forms.ChoiceField):
     def __init__(self, field, *args, **kwargs):
@@ -174,7 +174,10 @@ class PhotoSphereAddForm(forms.ModelForm):
     def save(self, commit=False):
         instance = super().save(commit=False)
         if instance.image:
-            instance.location = instance.exif_location()
+            try:
+                instance.location = instance.exif_location()
+            except IncompleteGPSInfo:
+                pass
         if commit:
             instance.save()
         return instance
