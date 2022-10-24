@@ -4,6 +4,11 @@ import uuid
 from os import path
 from ..storage import OverwriteStorage
 from django.urls import reverse
+from io import BytesIO
+from PIL import Image
+from PIL.Image import Exif
+from PIL.ExifTags import TAGS, GPSTAGS
+from django.contrib.gis.geos import Point
 
 
 def get_photosphere_path(instance, filename):
@@ -21,6 +26,33 @@ class PhotoSphere(models.Model):
     )
     photos = models.ManyToManyField("Photo", through="PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
+
+    @staticmethod
+    def decimal(*, pos, ref):
+        degrees = pos[0]
+        minutes = pos[1]
+        seconds = pos[2]
+        minutes += seconds/60
+        return float(degrees + minutes/60) * (-1 if ref in ('S', 'W') else 1)
+
+    def exif_location(self):
+        contents = self.image.read()
+        img = Image.open(BytesIO(contents))
+        exif_data = img.getexif()
+        exif = {}
+        for tag, value in exif_data.items():
+            decoded = TAGS.get(tag, tag)
+            if decoded == 'GPSInfo':
+                value = exif_data.get_ifd(tag)
+            exif[decoded] = value
+        if 'GPSInfo' in exif:
+            gps_info = {
+                GPSTAGS.get(key, key): value
+                for key, value in exif['GPSInfo'].items()
+            }
+            lon = self.decimal(pos=gps_info['GPSLongitude'], ref=gps_info['GPSLongitudeRef'])
+            lat = self.decimal(pos=gps_info['GPSLatitude'], ref=gps_info['GPSLatitudeRef'])
+            return Point(x=lon, y=lat, srid=4326)
 
     def get_absolute_url(self):
         return reverse('mainstreetview', kwargs=dict(pk=self.pk))

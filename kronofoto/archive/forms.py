@@ -6,11 +6,6 @@ from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
 from .widgets import HeadingWidget, PositioningWidget
-from io import BytesIO
-from PIL import Image
-from PIL.Image import Exif
-from PIL.ExifTags import TAGS, GPSTAGS
-from django.contrib.gis.geos import Point
 
 
 class LocationChoiceField(forms.ChoiceField):
@@ -175,35 +170,11 @@ class PhotoSphereAddForm(forms.ModelForm):
         model = PhotoSphere
         fields = ('title', 'image')
 
-    @staticmethod
-    def decimal(*, pos, ref):
-        degrees = pos[0]
-        minutes = pos[1]
-        seconds = pos[2]
-        minutes += seconds/60
-        return float(degrees + minutes/60) * (-1 if ref in ('S', 'W') else 1)
 
     def save(self, commit=False):
         instance = super().save(commit=False)
         if instance.image:
-            contents = instance.image.read()
-            img = Image.open(BytesIO(contents))
-            exif_data = img.getexif()
-            if exif_data:
-                exif = {}
-                for tag, value in exif_data.items():
-                    decoded = TAGS.get(tag, tag)
-                    if decoded == 'GPSInfo':
-                        value = exif_data.get_ifd(tag)
-                    exif[decoded] = value
-                if 'GPSInfo' in exif:
-                    gps_info = {
-                        GPSTAGS.get(key, key): value
-                        for key, value in exif['GPSInfo'].items()
-                    }
-                    lon = self.decimal(pos=gps_info['GPSLongitude'], ref=gps_info['GPSLongitudeRef'])
-                    lat = self.decimal(pos=gps_info['GPSLatitude'], ref=gps_info['GPSLatitudeRef'])
-                    instance.location = Point(lon, lat)
+            instance.location = instance.exif_location()
         if commit:
             instance.save()
         return instance
