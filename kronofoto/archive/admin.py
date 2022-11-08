@@ -152,6 +152,25 @@ class IsPublishedFilter(base_admin.SimpleListFilter):
             return queryset.filter(is_published=False)
 
 class HasLocationFilter(base_admin.SimpleListFilter):
+    title = "photo has city or county"
+    parameter_name = "is located"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("City", "City"),
+            ("County", "County"),
+            ("Neither", "Neither"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'County':
+            return queryset.exclude(county="")
+        elif self.value() == 'City':
+            return queryset.exclude(city="")
+        elif self.value() == 'Neither':
+            return queryset.filter(city="") & queryset.filter(county="")
+
+class HasGeoLocationFilter(base_admin.SimpleListFilter):
     title = "photo is geolocated"
     parameter_name = "is geolocated"
 
@@ -270,7 +289,7 @@ class CSVRecordAdmin(admin.ModelAdmin):
 class PhotoAdmin(admin.OSMGeoAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasLocationFilter)
+    list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
     search_fields = [
