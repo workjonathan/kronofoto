@@ -5,9 +5,49 @@ from django.contrib.auth.models import AnonymousUser
 from hypothesis.extra.django import TestCase
 from hypothesis import given, strategies
 from archive.search import expression, evaluate, parser
+from archive.search.parser import Lexer, OpenParen, SearchTerm
 from archive.search.expression import (
     And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly
 )
+
+@strategies.composite
+def tokens(draw):
+    type = draw(strategies.integers(min_value=0, max_value=6))
+    if type == 0:
+        return '-'
+    if type == 1:
+        return '('
+    if type == 2:
+        return ')'
+    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    if type == 3:
+        return draw(strategies.text(alphabet=alphabet))
+    if type == 4:
+        return '"{}"'.format(draw(strategies.text(alphabet=alphabet + ' ')))
+    if type == 5:
+        return '{}:{}'.format(draw(strategies.text(alphabet=alphabet, min_size=1)), draw(strategies.text(alphabet=alphabet)))
+    if type == 6:
+        return '{}:"{}"'.format(draw(strategies.text(alphabet=alphabet, min_size=1)), draw(strategies.text(alphabet=alphabet + ' ')))
+
+class AutocompleteParserTest(TestCase):
+    def testBasics(self):
+        lexer = Lexer()
+        self.assertEqual(tuple(lexer.parse("(")), ([OpenParen()], []))
+        self.assertEqual(tuple(lexer.parse("asdf\\ fdsa")), ([SearchTerm("asdf fdsa")], []))
+        self.assertEqual(tuple(lexer.parse('"asdf fdsa"')), ([SearchTerm("asdf fdsa")], []))
+        self.assertEqual(tuple(lexer.parse(' ')), ([], []))
+    @given(strategies.text(min_size=1))
+    def testParseEveryInput(self, input):
+        "Lexer should be able to convert any string to a list of tokens and a list of tokens to a string."
+        "All whitespace should be replaced by a single space, so string -> ([tokens], [errors]) -> string may fail."
+        "However, string -> ([tokens], [errors]) -> string -> ([tokens], [errors]) should produce identical tokens."
+        lexer = Lexer()
+        tokens, errors = lexer.parse(input)
+        tokens2, errors2 = lexer.parse(lexer.format(tokens))
+        self.assertEqual(tokens, tokens2)
+    @given(strategies.lists(tokens()))
+    def testFail(self, t):
+        self.assertFalse(t)
 
 @tag("fast")
 class BasicParserTest(SimpleTestCase):

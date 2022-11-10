@@ -1,6 +1,7 @@
 import parsy
 from .expression import *
 from functools import reduce
+from dataclasses import dataclass
 
 upper = lambda s: s.upper()
 singleton = lambda x: [x]
@@ -201,3 +202,92 @@ class ExpectedParenthesis(BaseException):
 
 class NoExpression(BaseException):
     pass
+
+@dataclass
+class OpenParen:
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string('(').map(const((cls(), [])))
+
+@dataclass
+class CloseParen:
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string(')').map(const((cls(), [])))
+
+@dataclass
+class NegateSign:
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string('-').map(const((cls(), [])))
+
+escaped = (
+      parsy.string(r'\\').map(const(('\\', [])))
+    | parsy.string(r'\ ').map(const((' ', [])))
+    | parsy.string(r'\t').map(const((' ', [])))
+    | parsy.string(r'\r').map(const((' ', [])))
+    | parsy.string(r'\n').map(const((' ', [])))
+    | parsy.string(r'\"').map(const(('"', [])))
+    | parsy.string(r'\'').map(const(('\'', [])))
+    | parsy.string(r'\(').map(const(('(', [])))
+    | parsy.string(r'\)').map(const((')', [])))
+    | parsy.string(r'\:').map(const((':', [])))
+)
+
+schunk = (
+      escaped
+    | parsy.regex(r'[^\\\s\(\)":]+').map(lambda s: (s, []))
+)
+
+qchunk = (
+      escaped
+    | parsy.regex(r'[^\\"]+').map(lambda s: (s, []))
+)
+
+@parsy.generate
+def quoted2():
+    yield parsy.string('"')
+    s = yield qchunk.many()
+    parts, errors = zip(*s)
+    yield parsy.string('"')
+    return ''.join(parts), [a for b in errors for a in b]
+
+@parsy.generate
+def string2():
+    s = yield schunk.at_least(1)
+    parts, errors = zip(*s)
+    return ''.join(parts), [a for b in errors for a in b]
+
+@dataclass
+class SearchTerm:
+    value: str
+    def __str__(self):
+        return self.value
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> (string2 | quoted2).map(lambda s: (cls(s[0]), s[1]))
+
+@dataclass
+class TypedSearchTerm:
+    field: str
+    value: str
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string2
+
+class Lexer:
+    def parse(self, s):
+        @parsy.generate
+        def parser():
+            s = yield (OpenParen.parser() | CloseParen.parser() | NegateSign.parser() | SearchTerm.parser()).many()
+            yield parsy.whitespace.many()
+            try:
+                tokens, errors = zip(*s)
+                return list(tokens), [error for a in errors for b in a]
+            except ValueError:
+                return [], []
+        return parser.parse(s)
+
+    def format(self, ts):
+        return ' '. join(str(t) for t in ts)
+
