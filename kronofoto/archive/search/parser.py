@@ -205,18 +205,24 @@ class NoExpression(BaseException):
 
 @dataclass
 class OpenParen:
+    def __str__(self):
+        return '('
     @classmethod
     def parser(cls):
         return parsy.whitespace.many() >> parsy.string('(').map(const((cls(), [])))
 
 @dataclass
 class CloseParen:
+    def __str__(self):
+        return ')'
     @classmethod
     def parser(cls):
         return parsy.whitespace.many() >> parsy.string(')').map(const((cls(), [])))
 
 @dataclass
 class NegateSign:
+    def __str__(self):
+        return '-'
     @classmethod
     def parser(cls):
         return parsy.whitespace.many() >> parsy.string('-').map(const((cls(), [])))
@@ -228,7 +234,6 @@ escaped = (
     | parsy.string(r'\r').map(const((' ', [])))
     | parsy.string(r'\n').map(const((' ', [])))
     | parsy.string(r'\"').map(const(('"', [])))
-    | parsy.string(r'\'').map(const(('\'', [])))
     | parsy.string(r'\(').map(const(('(', [])))
     | parsy.string(r'\)').map(const((')', [])))
     | parsy.string(r'\:').map(const((':', [])))
@@ -244,50 +249,126 @@ qchunk = (
     | parsy.regex(r'[^\\"]+').map(lambda s: (s, []))
 )
 
+qchunk_unmatched = (
+      escaped
+    | parsy.regex(r'[^\\]+').map(lambda s: (s, []))
+)
+
 @parsy.generate
 def quoted2():
     yield parsy.string('"')
     s = yield qchunk.many()
-    parts, errors = zip(*s)
     yield parsy.string('"')
+    parts, errors = zip(*s)
     return ''.join(parts), [a for b in errors for a in b]
+
+@parsy.generate
+def quoted2_unmatched():
+    ((_, c1), s, (_, c2)) = yield (parsy.string('"') >> qchunk_unmatched.many()).mark()
+    try:
+        parts, errors = zip(*s)
+    except ValueError:
+        parts = []
+        errors = []
+    return ''.join(parts), [a for b in errors for a in b] + ['Unmatched quote at index {}'.format(c1+1)]
 
 @parsy.generate
 def string2():
     s = yield schunk.at_least(1)
     parts, errors = zip(*s)
     return ''.join(parts), [a for b in errors for a in b]
+trans = str.maketrans({
+    " ": r"\ ",
+    "\\": r"\\",
+    "\t": r"\t",
+    "\r": r"\r",
+    "\n": r"\n",
+    "\"": r"\"",
+    "(": r"\(",
+    ")": r"\)",
+    ":": r"\:",
+})
+
+@dataclass
+class BinaryKeyword:
+    value: str
+    def __str__(self):
+        return self.value
+
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> (parsy.string("AND") | parsy.string("OR") | parsy.string("|")).map(lambda s: (cls(s), [])) << parsy.peek(parsy.whitespace)
 
 @dataclass
 class SearchTerm:
     value: str
     def __str__(self):
-        return self.value
+        return self.value.translate(trans)
     @classmethod
     def parser(cls):
         return parsy.whitespace.many() >> (string2 | quoted2).map(lambda s: (cls(s[0]), s[1]))
 
 @dataclass
+class UnmatchedSearchTermQuote:
+    value: str
+
+    def __str__(self):
+        return '"' + self.value
+
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> quoted2_unmatched.map(lambda s: (cls(s[0]), s[1]))
+
+@dataclass
 class TypedSearchTerm:
     field: str
     value: str
+    def __str__(self):
+        return '{field}:{value}'.format(field=self.field, value=self.value.translate(trans))
     @classmethod
     def parser(cls):
-        return parsy.whitespace.many() >> parsy.string2
+        @parsy.generate
+        def parse():
+            field, errors1 = yield parsy.whitespace.many() >> string2 << parsy.string(":")
+            value, errors2 = yield (string2 | quoted2)
+            errors = [a for b in errors1 for a in b] + [a for b in errors2 for a in b]
+            return cls(field, value), errors
+        return parse
+
+@dataclass
+class MissingField:
+    def __str__(self):
+        return ":"
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string(":").mark().map(lambda s: (cls(), ['Colon (:) with no field preceding it at index {}'.format(s[0][1]+1)]))
+
+@dataclass
+class LoneBackslash:
+    def __str__(self):
+        return "\\"
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string("\\").mark().map(lambda s: (cls(), [r'Unescaped \ at index {}'.format(s[0][1]+1)]))
 
 class Lexer:
     def parse(self, s):
         @parsy.generate
         def parser():
-            s = yield (OpenParen.parser() | CloseParen.parser() | NegateSign.parser() | SearchTerm.parser()).many()
+            s = yield (OpenParen.parser() | CloseParen.parser() | NegateSign.parser() | BinaryKeyword.parser() | TypedSearchTerm.parser() | SearchTerm.parser() | MissingField.parser() | LoneBackslash.parser() | UnmatchedSearchTermQuote.parser()).many()
             yield parsy.whitespace.many()
             try:
                 tokens, errors = zip(*s)
-                return list(tokens), [error for a in errors for b in a]
+                return list(tokens), [error for a in errors for error in a]
             except ValueError:
                 return [], []
-        return parser.parse(s)
+        s = parser.parse(s)
+        return s
 
     def format(self, ts):
-        return ' '. join(str(t) for t in ts)
-
+        fragments = []
+        for (i, t) in enumerate(ts):
+            if i > 0 and (isinstance(ts[i-1], CloseParen) or isinstance(ts[i-1], SearchTerm) or isinstance(ts[i-1], TypedSearchTerm) or isinstance(ts[i-1], BinaryKeyword)):
+                fragments.append(' ')
+            fragments.append(str(t))
+        return ''.join(fragments)
