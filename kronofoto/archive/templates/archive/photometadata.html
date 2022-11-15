@@ -2,7 +2,7 @@
 {% load widgets %}
         <div class="metadata-1a">
           <ul>
-            <li>{{ photo.year }}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
+            <li>{{ photo.year }}{% if photo.circa %}c{% endif %}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
             <li>ID#: {{photo.accession_number}}</li>
 	    <li>Contributed by <a data-json-href="{{ photo.donor.get_json_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
           </ul>

@@ -28,7 +28,7 @@ class PhotoQuerySet(models.QuerySet):
     def year_links(self, params=None):
         year_index = self.year_index()
         years = [p.year for p in year_index]
-        year_range = Photo.objects.year_range()
+        year_range = Photo.objects.filter(year__isnull=False, is_published=True).year_range()
         allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
         return [
             (year, photo.get_absolute_url(params=params), photo.get_json_url(params=params))
