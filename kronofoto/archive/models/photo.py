@@ -3,7 +3,7 @@ from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, 
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.urls import reverse
 from django.utils.http import urlencode
 from datetime import datetime
@@ -106,6 +106,12 @@ class Photo(models.Model):
     caption = models.TextField(blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
+    local_context_id = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(regex="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", message='This should be blank or 36 alphanumerics with hyphens grouped like this: 8-4-4-4-12')],
+    )
     created = models.DateTimeField(auto_now_add=True)
     scanner = models.ForeignKey(
         Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
