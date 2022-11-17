@@ -5,14 +5,25 @@
     <div id="download-container">
         <p>
         
-            <a href="{{ object.get_absolute_url }}" class="download-text" >Go Back</a>
-        
+            <span class="back-btn">
+                <a href="{{ object.get_absolute_url }}" >
+                    <i class="fas fa-long-arrow-alt-left"></i>
+                    Go back
+                </a>
+            </span>
             
-            <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg" class="download-text" style="position:absolute; right: 10vw;">Continue Download</a>
+        
+            <span class="back-btn">
+                <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg" style="position:absolute; right: 10vw;">
+                    Continue to download
+                    <i class="fas fa-long-arrow-alt-right"></i>
+                </a>
+            </span>
+            
         </p>
         <br/>
         <p>Hover over image to zoom.</p>
-        <p>Attribution: <em>
+        <p>Please attribute this photo as follows: <em>
             “{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ host_uri }}{{ citation_url }},” <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a></em>
     
 
@@ -30,6 +41,7 @@
 <!--        <img src="{{ object.original.url }}" id="download-img"/>-->
   
     <script type="text/javascript">
+               
         /*Credits https://code-boxx.com/image-zoom-css-javascript/, https://www.cssscript.com/image-zoom-pan-hover-detail-view/*/
         var addZoom = (target) => {
             let container = document.getElementById(target),

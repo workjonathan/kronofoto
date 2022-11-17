@@ -389,6 +389,7 @@ button#login-btn:hover {
 .add_tag-container img {
   margin-top: 40px;
   width: 50%;
+    max-height: 100%;
 }
 
 .add_tag-container form p {
@@ -492,6 +493,7 @@ button#login-btn:hover {
 
 .search-box-content_inner {
   width: 95%;
+    padding: 0 7px 0 5px;
 }
 
 
@@ -855,6 +857,31 @@ main .fi-image-background{
   margin-left: 40px;
   margin-right: 40px;
 }
+
+
+/*==============================*/
+/*       DOWNLOAD PAGE          */
+/*                              */
+/*==============================*/
+
+#download-container .back-btn a {
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 11px 15px;
+    
+}
+
+#download-container .back-btn a:hover {
+    color: white;
+    background: var(--fp-main-blue);
+}
+
+
+
+
+
+
 
 /* ======================================================================== */
 /* These styles are very fragile and are meant to only address the specific */
