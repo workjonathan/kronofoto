@@ -159,7 +159,9 @@ class HasLocationFilter(base_admin.SimpleListFilter):
         return (
             ("City", "City"),
             ("County", "County"),
-            ("Neither", "Neither"),
+            ("State only", "State only"),
+            ("Country only", "Country only"),
+            ("No location", "No location"),
         )
 
     def queryset(self, request, queryset):
@@ -167,8 +169,13 @@ class HasLocationFilter(base_admin.SimpleListFilter):
             return queryset.exclude(county="")
         elif self.value() == 'City':
             return queryset.exclude(city="")
-        elif self.value() == 'Neither':
-            return queryset.filter(city="") & queryset.filter(county="")
+        elif self.value() == 'State only':
+            return queryset.filter(city="", county="").exclude(state="")
+        elif self.value() == 'Country only':
+            return queryset.filter(city="", county="", state="", country__isnull=False).exclude(country='')
+        elif self.value() == 'No location':
+            queryset = queryset.filter(city="", county="", state="")
+            return queryset.filter(country="") | queryset.filter(country__isnull=True)
 
 class HasGeoLocationFilter(base_admin.SimpleListFilter):
     title = "photo is geolocated"
