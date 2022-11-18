@@ -19,6 +19,9 @@ from ..storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag
 from .term import Term
+import requests
+from dataclasses import dataclass
+from django.core.cache import cache
 
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
@@ -333,6 +336,35 @@ class Photo(models.Model):
         location = self.location()
         location = {location} if location != "Location: n/a" else set()
         return terms | tags | location | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
+
+    def notices(self):
+        if not self.local_context_id:
+            return []
+        def _():
+            url = '{base}projects/{id}/'.format(base=settings.LOCAL_CONTEXTS, id=self.local_context_id)
+            print(url)
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                return [
+                    LocalContextNotice(
+                        name=notice['name'],
+                        img_url=notice['img_url'],
+                        svg_url=notice['svg_url'],
+                        default_text=notice['default_text'],
+                    )
+                    for notice in resp.json()['notice']
+                ]
+            else:
+                return []
+        return cache.get_or_set(self.local_context_id, _, timeout=24*60*60)
+
+
+@dataclass
+class LocalContextNotice:
+    name: str
+    img_url: str
+    svg_url: str
+    default_text: str
 
 
 class PhotoTag(models.Model):

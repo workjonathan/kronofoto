@@ -140,3 +140,5 @@ CACHES = {
 
 GRID_DISPLAY_COUNT = 48
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+LOCAL_CONTEXTS = 'https://localcontextshub.org/api/v1/'

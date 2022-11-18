@@ -40,5 +40,10 @@
             </li>
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
             <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li>
+            {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>
+            {% for notice in photo.notices %}
+                <img style="width: 8rem;" src="{{notice.svg_url}}" title="{{notice.name}}">
+            {% endfor %}
+            {% endif%}
           </ul>
         </div>
