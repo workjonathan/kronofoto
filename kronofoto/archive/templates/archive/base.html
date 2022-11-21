@@ -100,7 +100,13 @@
             <div class="hamburger-menu hidden">
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
-              {% docnav "Archive" %}
+              <ul class="navigation-menu">
+                {% docnav "Archive" %}
+                <li><a data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}">Timeline View</a></li>
+                <li><a data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">Grid View</a></li>
+
+                <li><a href="https://blog.fortepan.us/">Blog</a></li>
+              </ul>
                 
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
@@ -116,6 +122,7 @@
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="{% static "assets/js/kronofoto.js" %}"></script>
+  <script src="{% static "assets/js/drag-drop.js" %}"></script>
   </header>
   <div id="app">
     {% block content %}

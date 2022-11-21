@@ -3,19 +3,13 @@
 {% load widgets %}
 {% load docnav %}
 {% load gtm_tags %}
-<ul class="navigation-menu">
 {% for list_item in pages %}
     <li{% if list_item.is_active %} class='active' active{% endif %}><a href="{% url list_item.view_name %}">{{ list_item.text }}</a></li>
 {% endfor %}
-<!--
+{% comment %}
     <div class="mobile-visible">
     {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
     </div>
     <div class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
--->
+{% endcomment %}
     
-    <li><a data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}">Timeline View</a></li>
-    <li><a data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">Grid View</a></li>
-
-    <li><a href="https://blog.fortepan.us/">Blog</a></li>
-</ul>
