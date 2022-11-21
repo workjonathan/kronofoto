@@ -28,6 +28,8 @@ from archive.reverse import reverse as krono_reverse
 django.urls.reverse = krono_reverse
 
 
+SITE_ID = 1
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -39,7 +41,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'archive.apps.ArchiveConfig',
     'django.contrib.gis',
+    'django.contrib.sites',
     'gtm',
+    'cms',
+    'menus',
+    'treebeard',
+    'sekizai',
+    'filer',
+    'djangocms_picture',
+    'djangocms_file',
+    'djangocms_text_ckeditor',
+    'djangocms_link',
+    'easy_thumbnails',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +63,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+	'cms.middleware.user.CurrentUserMiddleware',
+    'cms.middleware.page.CurrentPageMiddleware',
+    'cms.middleware.toolbar.ToolbarMiddleware',
+    'cms.middleware.language.LanguageCookieMiddleware',
 ]
 
 ROOT_URLCONF = 'kronofoto.urls'
@@ -65,6 +83,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sekizai.context_processors.sekizai',
             ],
             #'builtins': ['archive.builtins'],
         },
@@ -103,11 +122,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CMS_TEMPLATES = [
+    ('archive/doc-base.html', 'Default'),
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+LANGUAGES = [
+    ('en-us', 'English'),
+]
 
 TIME_ZONE = 'UTC'
 
