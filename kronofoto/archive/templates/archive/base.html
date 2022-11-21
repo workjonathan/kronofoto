@@ -63,12 +63,12 @@
           </div>
 
         </div> <!-- end nav left -->
-
-        <div class="main-nav_center">
+        <div class="main-nav_center mobile-hidden">
           {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
           <div class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
-        </div> <!-- end nav center -->
+        </div>
+          <!-- end nav center -->
 
         <div class="main-nav_right">
           
@@ -101,6 +101,7 @@
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
               {% docnav "Archive" %}
+                
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
               <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
@@ -115,7 +116,6 @@
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="{% static "assets/js/kronofoto.js" %}"></script>
-  <script src="{% static "assets/js/drag-drop.js" %}"></script>
   </header>
   <div id="app">
     {% block content %}

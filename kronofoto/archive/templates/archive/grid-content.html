@@ -18,8 +18,12 @@
 </center>
 {% endif %}
 {% if noresults %}
-    <h3>Whoops! No photos match your query: {{ query_expr }}</h3>
-    <img style="width:50%" src="{% absolutify oops_photo.h700.url %}" alt="{{ tags }}">
+    <div class="container-center add_tag-container">
+        <p style="width:50%">
+            <strong>Whoops! No photos match your query: {{ query_expr }}</strong>
+        </p>
+        <img style="width:50%" src="{% absolutify oops_photo.h700.url %}" alt="{{ tags }}">
+    </div>
 {% else %}
 <div id="grid-top" class="grid-navigation">
     {% if not embed %}

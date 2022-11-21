@@ -2,67 +2,43 @@
 {% load static %}
 
 {% block content %}
-
-
-<main>
+    <main>
       <section id="about">
-
+        <div class="img-grid">
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/hamburger/about1.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/hamburger/about2.jpg" %}" alt="">
+          </div>
+          <div class="img-grid_item">
+            <img src="{% static "assets/images/hamburger/about3.jpg" %}" alt="">
+          </div>
+        </div>
         <h1>About</h1>
         <p>
-          <strong>Fortepan.us</strong> [<a href="https://www.google.com/url?q=http://fortepan.us&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw1C1N4zdFyF-TmQn1DiFwaL" target="_blank" rel="noreferrer">fortepan.us</a>] is an open source, digital first archival platform that is inspiring cultural heritage institutions to rethink and revolutionize digital archiving practices. Because Fortepan.us is designed as a digital archive, we have been liberated to think differently about the structure and display of photographs online. Our inspiration (and name) comes from the <a href="https://www.google.com/url?q=https://fortepan.hu&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw2jD8c6YSOOOtich6295u_H" target="_blank" rel="noreferrer">Fortepan</a> project based in Hungary. In building our prototype, Fortepan Iowa, we focused on curated high-resolution photos taken by ordinary Iowans over the nineteenth and twentieth centuries. We work with families, public libraries, and museums to build an alternative public history of Iowa based on family snapshots and everyday moments. Our Iowa prototype aims to represent the personal, whimsical, poetic, significant, and accidentally artistic moments of everyday Iowa life, and tell a rich story of the state’s overlooked diversity and complexity. 
+          <strong>Fortepan.us</strong> is an open source archival platform that is inspiring cultural heritage institutions to rethink and revolutionize digital archiving practices. Because Fortepan.us is designed as a "digital first" archive, we have been liberated to think differently about the structure and display of photographs online. Our inspiration (and name) comes from the  <a href="https://fortepan.hu">Fortepan</a> project based in Hungary. In building our prototype, Fortepan Iowa, we focused on curated high-resolution photos taken by ordinary Iowans over the nineteenth and twentieth centuries. We work with families, public libraries, and museums to build an alternative public history of Iowa based on family snapshots and everyday moments. Our Iowa prototype aims to represent the personal, whimsical, poetic, significant, and accidentally artistic moments of everyday Iowa life, and tell a rich story of the state’s overlooked diversity and complexity.
         </p>
-        <br>
         <h2>Place, time, and theme</h2>
-<p>Drawing upon the power of <strong>place</strong>, the Fortepan.us platform (<a href="https://www.google.com/url?q=https://fortepan.us&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw0ikvx0Bq9cw9xIX6NBUUbO" target="_blank" rel="noreferrer">https://fortepan.us</a>) encourages family contributors, libraries, museums, and photo archives within a single U.S. state or Indigenous territory to join digital forces by uniting the historical photographs in their holdings through a single interface that can be controlled by multiple administrators. 
-</p>
-        <p> These place-based photos, now virtually unified in a single platform, are also organized according to <strong>time</strong>: thousands of photos from the same state or territory, across multiple collections, are situated along a timeline so all historical photographs are immediately contextualized alongside other photos from the same year. This gives users the feel of a collective family album that tells the visual story of that place. Users can view the photos in chronological order two ways: full-size  in timeline view or 12-at-a-time in grid view. Filtered versions of the archive are also displayed chronologically (for example, all photographs from a single town; all photographs tagged <a href="https://www.google.com/url?q=https://fortepan.us/search/?tag%3Dliving%2Broom&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw0paAKyJpvys6uW2MyyEs6F" target="_blank" rel="noreferrer">“living room”</a>; all the photos from a <a href="https://www.google.com/url?q=https://fortepan.us/search/?donor%3D1213&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw2-0znP1xzoYAk09DncXrFs" target="_blank" rel="noreferrer">single donor/collection</a>; all photographs documenting a cultural practice, like <a href="https://www.google.com/url?q=https://fortepan.us/search/?basic%3Dbaseball%26page&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw3sa9AgfaKcBowDMZkQzSOZ" target="_blank" rel="noreferrer">playing baseball</a>) to digitally communicate the evolving “story” of these places, technologies,  families, and practices. In this way, the photographs across collections can talk to each other and build meaning collectively.  
+        <p>Drawing upon the power of <strong>place</strong>, the Fortepan.us platform encourages family contributors and cultural heritage institutions  within a single U.S. state or Indigenous territory to join digital forces by uniting the historical photographs in their holdings through a single interface.  
+        </p>
+        <p>These place-based photos are also organized according to <strong>time</strong>: thousands of photos from the same state or territory, across multiple collections, are situated along a timeline so all historical photographs are immediately contextualized alongside other photos from the same year. This gives users the feel of a collective family album that tells the visual story of a region or town. Users can view the photos in chronological order two ways: full-size in timeline view or 12-at-a-time in grid view. Filtered versions of the archive are also displayed chronologically (for example, all photographs from a single town; all photographs tagged <a href="https://fortepan.us/search/?tag=living+room">“living room”</a> or coming  from a <a href="https://fortepan.us/search/?donor=1213">single donor/collection</a>; all photographs documenting a cultural practice, like <a href="https://fortepan.us/search/?basic=baseball&page">playing baseball</a>) to digitally communicate the evolving “story” of these places, technologies,  families, and practices. In this way, the photographs across collections can talk to each other and build meaning collectively. 
+          
         </p> 
-        <p>Finally, Fortepan.us is a powerful tool for grouping photographs by <strong>theme</strong>. We have a list of controlled category terms (currently customized to Iowa, like “barns” and “farms”) that administrators apply to each photo in the archive to increase its findability by subject. Descriptive tags offer an even more detailed layer of thematic grouping, offering users a convenient entry point to photographs that resonate with their interests and experiences. While we administrators can assign tags (and we do), the Fortepan.us platform is built to encourage crowd-sourced tagging so that our users can share their expertise in describing a photograph’s content, assigning idiosyncratic tags for Ford truck models (e.g., “F-350” ),  fish (e.g.,  “muskellunge”) or 19th-century clothing (“bishop sleeves”).  </p>
+        <p>Finally, Fortepan.us is a powerful tool for grouping photographs by <strong>theme</strong>. We have a list of controlled category terms (currently customized to Iowa, like “barns” and “farms”) that administrators apply to each photo in the archive to increase its findability by subject. Descriptive tags offer an even more detailed layer of thematic grouping, offering users a convenient entry point to photographs that resonate with their interests and experiences. While we administrators can assign tags (and we do), the Fortepan.us platform is built to encourage crowd-sourced tagging so our users can share their expertise in describing a photograph’s content.  </p>
         <p>
-          Through the platform’s “MyList” option, users can further build as many customizable lists as they want based on the relationships or connections they make between photographs, save these lists for future reference, share them with others, and even embed them in a website. Since all tags in a photo’s info box are also active links, users can “tag surf” a theme across the whole archive,  another enjoyable path for exploration (e.g., ice cream or cows). The Fortepan.us archive thus increases accessibility, offers joyful exploration with more publicly useful and immersive experiences, and inspires ardent participation in the tagging and interpretation of the images shared publicly online. There are also multiple ways to share Fortepan.us photos with others and even embed a filtered version of the platform into any website. 
+          Through the platform’s “MyList” option, users can further build as many customizable lists as they want based on the relationships or connections they make between photographs, save these lists for future reference, share them with others, and even embed them into a website. Since all tags in a photo’s info box are also active links, users can follow a theme across the whole archive (what we like to call "tag surfing”)—another enjoyable path for exploration. The Fortepan.us archive thus increases accessibility, offers joyfully immersive photo searching, and inspires ardent participation in the tagging and interpretation of the images shared publicly online. There are also multiple ways to share high-resolution Fortepan.us photos with others, and even embed any version of the platform into another website.  
         </p> 
-        <br>
-         <h2>An Open CC Project for the Public Good</h2>
-         <p>
-          Every high resolution Fortepan.us photograph is shared with the Creative Commons (CC) with a liberal <a href="https://www.google.com/url?q=https://creativecommons.org/licenses/by-sa/4.0/&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw08adhThs-5n0y0DAaxgrAb" target="_blank" rel="noreferrer">CC-BY-SA 4.0 license</a>, so users can freely  download images for creative reuse as long as image contributors and the archive are attributed. For more information on terms of use or photo contributions, go to the <a href="https://www.google.com/url?q=http://use.html&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw06QCn9h6RuEjlOnx2EzxvK" target="_blank" rel="noreferrer">Use</a> and <a href="https://www.google.com/url?q=http://contribute.html&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw3fgbJBwFflwV3H7n4gPnUr" target="_blank" rel="noreferrer">Contribute</a> links (also found in the navigation menu).  
+       
+         <h1>Why Fortepan?</h1>
+        <p>
+          The Fortepan.us project duplicates and builds upon the hugely successful Hungarian public website <a href="https://fortepan.hu">Fortepan</a>, an interactive photo chronology developed by Miklós Tamási and András Szepessy in 2009. They chose the name “Fortepan” to pay homage to the Hungarian company FORTE, which made the popular black and white negative film called "Fortepan." Fortepan film and paper were sold throughout the world after World War II until 2001.
         </p>
-        <p>Our team developed the <strong>kronofoto</strong> open source data management platform (available on <a href="https://www.google.com/url?q=https://github.com/fortepan-us/kronofoto&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw3uGDfuz8mzcdfkBNeNgZcx" target="_blank" rel="noreferrer">github</a>) to power the Fortepan.us project. Fortepan.us, which represents the presentation of the kronofoto data, is also open source, and will also be available on github soon. </p>
-        <p>The Fortepan.us platform infrastructure will soon be able to support photographs from every state (Fortepan Connecticut is up next!). We are searching for Indigenous partners interested in creating a separate and autonomous Fortepan FirstNation project based on this platform.</p>
-        <br>
-         
-          <h1>Our Team</h1>
-          <p>Behind Fortepan.us is an interdisciplinary team of scholars, practitioners, and developers–many based at the <a href="https://www.google.com/url?q=https://uni.edu&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw0Ba3tU5pYlMsHhYKYR3TEY" target="_blank" rel="noreferrer">University of Northern Iowa</a>–who come from disciplines outside of traditional archival communities. Our experience with creative and geography-based interactive web development has allowed us to bring fresh ideas to online archiving platforms, set up cultural heritage institutions to better serve their patrons and website users, and reimagine what is possible for local history engagement.</p>
-        <p><strong>Bettina Fabos—</strong> DIRECTOR <br>
-          Bettina Fabos is Professor of Interactive Digital Studies and Visual Communication at the University of Northern Iowa. She is an award-winning producer of <a href="https://www.google.com/url?q=https://proudandtorn.org&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw2XQJZgucrzIG9NKgyf1sWD" target="_blank" rel="noreferrer">digital history projects</a> and researches noncommercial digital archiving, the Creative Commons movement, and interactive timelines. 
+        
+       <img src="{% static "assets/images/hamburger/fortepan.png" %}" alt="Fortepan film">
+        <p>
+          It’s appropriate that we name the archive “Fortepan,” since many of the images, especially in Hungary, were taken with Fortepan film. Today, Fortepan is more of a concept for displaying high-resolution photos and  sharing them for public use. As Fortepan’s first “sister” site, Fortepan.us is primed to bring layers of understanding and engagement to local history.
         </p>
-        <p><strong>Kristina Poznan—</strong> PUBLIC HISTORIAN <br>
-        Kristina Poznan is a public historian who promotes community engagement through digital humanities projects. In addition to building out the Fortepan concept for future sites, she currently serves as the editorial associate at <a href="https://www.google.com/url?q=https://enslaved.org/&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw0S1lJaQdhwFq9NBLRaRQ9J" target="_blank" rel="noreferrer">“Enslaved: Peoples of the Historical Slave Trade.”</a> She has taught public history and digital history at La Salle University and New Mexico State University. 
-        </p>
-        <p><strong>Noah Doely—</strong> LEAD CURATOR <br>
-        Noah Doely is Associate Professor of Digital Photography at the University of Northern Iowa. He works with 19th-century photographic processes, pinhole cameras, digital collage and video, and is drawn to photography’s complicated relationship to truth and verifiability and its paradoxical ability to evoke both trust and skepticism (see <a href="https://www.google.com/url?q=http://www.noahdoely.com/&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw1wn_C0a-ZzNtYk6s6G8CQa" target="_blank" rel="noreferrer">http://www.noahdoely.com/</a>).  Noah has received national and international attention for his work. He curates Fortepan Iowa. 
-        </p>
-        <p><strong>Dana Potter—</strong> DESIGNER and CURATOR <br>
-          Dana Potter is Assistant Professor of Interactive Digital Studies at the University of Northern Iowa. Combining art and technology, Dana’s work uses biometric and sensory tools to create visual data for creative projects, and explores eye-tracking, geolocation mapping, computer-mouse movement recordings, and facial recognition (see <a href="https://www.google.com/url?q=http://www.danapotterart.com/&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw1J_3KivgmLg0L8crdoOG1w" target="_blank" rel="noreferrer">http://www.danapotterart.com/</a>)<wbr>.  Dana designs the Fortepan Iowa platform, and curates the archive with Noah Doely.
-        </p>
-        <p><strong>John DeGroote—</strong> MAPPING TECHNOLOGIES COORDINATOR <br>
-        John DeGroote is Director of the GeoInformatics Training Research Education and Extension (<a href="https://www.google.com/url?q=https://www.geotree.uni.edu/en/about-geotree/&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw0ok3qq79ewMYuo56KqndGl" target="_blank" rel="noreferrer">GeoTREE</a>) Center at the University of Northern Iowa. He coordinates Fortepan Iowa’s development and mapping technologies, including augmented reality initiatives with geolocated historical photos in a 360º plane. 
-        </p>
-        <p><strong>Jonathan Voss—</strong> DEVELOPER <br>
-        Jonathan Voss is the GeoTREE Center Application Developer. He continually upgrades Fortepan Iowa’s back end and develops new mapping and geolocation technologies. 
-        </p>
-        <p><strong>Isaac Campbell—</strong> DIRECTOR OF COMMUNITY OUTREACH <br>
-        Isaac Campbell is a Master’s Student in Communication and Media at the University of Northern Iowa. A video producer, public wheat paste artist, and Creative Commons disciple, Isaac’s work involves cultural memory studies and vernacular photography. He is the outreach coordinator for Fortepan Iowa.  
-        </p>
-         <h1>Affiliates</h1>
-        <p><strong>Dana Atwood-Blaine</strong> is an Assistant Professor of Curriculum and Instruction in Science Education at the University of Northern Iowa. Dana’s expertise lies in Augmented Reality game-based learning. She is working with the Fortepan Iowa team on augmented reality experiences. 
-        </p>
-        <p><strong>Laura Edwards</strong> is an Assistant Professor of Curriculum and Instruction in Social Studies Education at the University of Northern Iowa. Her work addresses critical literacy within a social justice framework. She coordinates and plans the curricular materials related to Fortepan Iowa. 
-        </p>
-        <p><strong>Philip Hopper</strong> is an Associate Professor of Digital Media at the University of Northern Iowa. His work concerns vernacular image-making that addresses political conflicts. Phil is involved with Fortepan Iowa’s global outreach. 
-        </p>
-        <p><strong>Jaycie Vos</strong> is the Special Collections Coordinator, University Archivist, and an Assistant Professor at the University of Northern Iowa’s Rod Library. Jaycie developed the category terminology for Fortepan Iowa.  
-        </p>
-        <br>
         <h1>Innovations</h1>
         <p>
           Beyond the unique timeline orientation and crowd-source tagging capabilities of Fortepan.us, here is a list of current open source platform innovations:
@@ -73,10 +49,13 @@
              <strong>Embedding</strong> (testing). Users can now embed any filtered version of this archive into their own website–giving them free and immediate access to a powerful public platform by simply copying two lines of code. We are currently working on clear embed instructions in partnership with multiple public libraries. 
            </li>
            <li>
-             <strong>Traditional Knowledge (TK) Labels</strong> (almost there): we are working with <a href="https://www.google.com/url?q=https://localcontexts.org&amp;source=gmail-html&amp;ust=1668616490777000&amp;usg=AOvVaw1B_I0yXiNShsF_wvQPR2qF" target="_blank" rel="noreferrer">LocalContexts.org</a> to effortlessly integrate TK notices and labels into the platform. Administrators will be able to work in partnership with Indigenous community groups and attach front-end facing TK labels labels through the platform’s back end. 
+             <strong>Traditional Knowledge (TK) Labels</strong> (almost there): we are working with <a href="https://localcontexts.org">LocalContexts.org</a> to effortlessly integrate TK notices and labels into the platform. Administrators will be able to work in partnership with Indigenous community groups and attach front-end facing TK labels labels through the platform’s back end. 
            </li>
            <li>
-             <strong>Mainstreet 360º</strong> (in development). This geolocation tool will allow users to reimagine main streets (and college campuses) from our “Mainstreet 360º” street view display. We are photo-matching  hundreds of historical photos to the precise perspective and location in which they were originally captured, overlaying them onto current-day 360º images (like a Google Historical Street View), and creating a decade-by-decade augmented reality experience whereby users can visit a town’s Main street (or college campus) across time (<a href="https://www.google.com/url?q=https://fortepan.us/mainstreet360/66/&amp;source=gmail-html&amp;ust=1668616490778000&amp;usg=AOvVaw0srUb8o0fV2LazsmpcukXc" target="_blank" rel="noreferrer">see an example here</a>). Photographs from the University of Northern Iowa Special Collections are the basis for our Mainstreet 360º prototype
+             <strong>Mainstreet 360º</strong> (in development). This geolocation tool will allow users to reimagine main streets (and college campuses) from our “Mainstreet 360º” street view display. <br>
+              <img src="{% static "assets/images/hamburger/mainstreet_360.png" %}" alt="Mainstreet 360º thumbnail and prototype" style="width:600px;">  <br>
+              We are photo-matching  hundreds of historical photos to the precise perspective and location in which they were originally captured, overlaying them onto current-day 360º images (like a Google Historical Street View), and creating a decade-by-decade augmented reality experience whereby users can visit a town’s Main street (or college campus) across time (<a href="https://fortepan.us/mainstreet360/66/">see an example here</a>). 
+              Photographs from the University of Northern Iowa Special Collections are the basis for our Mainstreet 360º prototype
            </li>
            <li>
              <strong>Exhibit Tool </strong>(in development). We will convert our “MyList” feature to an Exhibit Tool. Currently, any user can create a customized list drawing upon any photograph in the archive. The Exhibit Tool will further allow users to choose from a variety of photo+text template options, tell stories with the photos, and share the Exhibits online via direct link or embed.
@@ -85,27 +64,82 @@
              <strong>Federated Platform</strong> (in development). We are making Fortepan.us a national reality, building the platform so it can structurally accommodate any state, Indigenous territory, or national park, and exist on multiple servers for maximum platform sharing and administrative autonomy. Look for Fortepan CT soon! 
            </li>
          </ul>
-        <br>
-        <h1>Why Fortepan?</h1>
-        <p>
-          The Fortepan.us project duplicates and builds upon the hugely successful Hungarian public website <a href="https://www.google.com/url?q=https://fortepan.hu&amp;source=gmail-html&amp;ust=1668616490778000&amp;usg=AOvVaw31A4FdKHaMhphQSulIGJZq" target="_blank" rel="noreferrer">“Fortepan</a>,” an interactive photo chronology developed by Miklós Tamási and András Szepessy in 2009. They chose the name “Fortepan” to pay homage to the Hungarian company FORTE, which made the popular black and white negative film called Fortepan. Fortepan film and paper were sold throughout the world after World War II until 2001.
+         <h2>An Open CC Project for the Public Good</h2>
+         <p>
+          Every high resolution Fortepan.us photograph is shared with the Creative Commons (CC) with a liberal <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0 license</a>, so users can freely  download images for creative reuse as long as image contributors and the archive are attributed. For more information on terms of use or photo contributions, go to the <a href="use.html">Use</a> and <a href="contribute.html">Contribute</a> links (also found in the navigation menu).  
         </p>
+        <p>Our team developed the <strong>kronofoto</strong> open source data management platform (available on <a href="https://github.com/fortepan-us/kronofoto">github</a>) to power the Fortepan.us project. Fortepan.us, which represents the presentation of the kronofoto data, is also open source, and will also be available on github soon. </p>
+        <p>The Fortepan.us platform infrastructure will soon be able to support photographs from every state (Fortepan Connecticut is up next!). We are searching for Indigenous partners interested in creating a separate and autonomous Fortepan FirstNation project based on this platform.</p>
+        <br>
+         
+          <h1>Our Team</h1>
+          <p>Behind Fortepan.us is an interdisciplinary team of scholars, practitioners, and developers–many based at the <a href="https://uni.edu">University of Northern Iowa</a>–who come from disciplines outside of traditional archival communities. Our experience with creative and geography-based interactive web development has allowed us to bring fresh ideas to online archiving platforms, set up cultural heritage institutions to better serve their patrons and website users, and reimagine what is possible for local history engagement.</p>
+        <p><strong>Bettina Fabos—</strong> DIRECTOR <br>
+          Bettina Fabos is Professor of Interactive Digital Studies and Visual Communication at the University of Northern Iowa. She is an award-winning producer of <a href="https://proudandtorn.org">digital history projects</a> and researches noncommercial digital archiving, the Creative Commons movement, and interactive timelines. 
+        </p>
+        <p><strong>Kristina Poznan—</strong> PUBLIC HISTORIAN <br>
+        Kristina Poznan is a public historian who promotes community engagement through digital humanities projects. In addition to building out the Fortepan concept for future sites, she currently serves as the editorial associate at <a href="https://enslaved.org/">“Enslaved: Peoples of the Historical Slave Trade.”</a> She has taught public history and digital history at La Salle University and New Mexico State University. 
+        </p>
+        <p><strong>Noah Doely—</strong> LEAD CURATOR <br>
+        Noah Doely is Associate Professor of Digital Photography at the University of Northern Iowa. He works with 19th-century photographic processes, pinhole cameras, digital collage and video, and is drawn to photography’s complicated relationship to truth and verifiability and its paradoxical ability to evoke both trust and skepticism (see <a href="http://www.noahdoely.com/">http://www.noahdoely.com/</a>).  Noah has received national and international attention for his work. He curates Fortepan Iowa. 
+        </p>
+        <p><strong>Anastasia Parsons—</strong>CURATOR<br>
+        Anastasia Parsons is an artist and Youth Librarian at the Cedar Falls Public library. She also has experience working in archives and is especially attuned to public art and outreach. 
+        </p>
+        <p><strong>Dana Potter—</strong> DESIGNER<br>
+          Dana Potter is Assistant Professor of Interactive Digital Studies at the University of Northern Iowa. Combining art and technology, Dana’s work uses biometric and sensory tools to create visual data for creative projects, and explores eye-tracking, geolocation mapping, computer-mouse movement recordings, and facial recognition (see <a href="http://www.danapotterart.com/">http://www.danapotterart.com/</a>).  Dana designs the Fortepan Iowa platform, and curates the archive with Noah Doely.
+        </p>
+        <p><strong>John DeGroote—</strong> MAPPING TECHNOLOGIES COORDINATOR <br>
+        John DeGroote is Director of the GeoInformatics Training Research Education and Extension (<a href="https://www.geotree.uni.edu/en/about-geotree/">GeoTREE</a>) Center at the University of Northern Iowa. He coordinates Fortepan Iowa’s development and mapping technologies, including augmented reality initiatives with geolocated historical photos in a 360º plane. 
+        </p>
+        <p><strong>Jonathan Voss—</strong> DEVELOPER <br>
+        Jonathan Voss is the GeoTREE Center Application Developer. He continually upgrades Fortepan Iowa’s back end and develops new mapping and geolocation technologies. 
+        </p>
+        <p><strong>Stephen O'Baker—</strong> FRONT-END DEVELOPER<br>
+        Stephen O'Baker is an organist by training, and somehow found himself in the world of software development. He is working towards his B.S in Computer Science at Iowa State University and plays the organ at Faith Lutheran Church in Clive.
+        </p>
+        <p><strong>Isaac Campbell—</strong> DIRECTOR OF COMMUNITY OUTREACH <br>
+        Isaac Campbell is a Master’s Student in Communication and Media at the University of Northern Iowa. A video producer, public wheat paste artist, and Creative Commons disciple, Isaac’s work involves cultural memory studies and vernacular photography. He is the outreach coordinator for Fortepan Iowa.  
+        </p>
+         <h2>Affiliates</h2>
+        <p><strong>Dana Atwood-Blaine</strong> is an Assistant Professor of Curriculum and Instruction in Science Education at the University of Northern Iowa. Dana’s expertise lies in Augmented Reality game-based learning. She is working with the Fortepan Iowa team on augmented reality experiences. 
+        </p>
+        <p><strong>Laura Edwards</strong> is an Assistant Professor of Curriculum and Instruction in Social Studies Education at the University of Northern Iowa. Her work addresses critical literacy within a social justice framework. She coordinates and plans the curricular materials related to Fortepan Iowa. 
+        </p>
+        <p><strong>Philip Hopper</strong> is an Associate Professor of Digital Media at the University of Northern Iowa. His work concerns vernacular image-making that addresses political conflicts. Phil is involved with Fortepan Iowa’s global outreach. 
+        </p>
+        <p><strong>Jaycie Vos</strong> is the Special Collections Coordinator, University Archivist, and an Assistant Professor at the University of Northern Iowa’s Rod Library. Jaycie developed the category terminology for Fortepan Iowa.  
+        </p>
+        <p><strong>Janet Croft</strong> is an Associate University Librarian and Associate Professor at the University of Northern Iowa’s Rod Library.   
+        </p>
+        <p><strong>Nathan Arndt</strong> is Assistant Director and Chief Curator of Museums and Collections at the University of Northern Iowa.   
+        </p>
+        <p><strong>Allison Guild</strong> is a Library Assistant at the University of Northern Iowa’s Rod Library.   
+        </p>
+        <p><strong>Jeanne Little</strong> is a Library Assistant at the University of Northern Iowa’s Rod Library.   
+        </p>
+        <p><strong>Gregory Colati</strong> is Archivist and Digital Librarian at the University of Connecticut, and Director of the Digital Preservation Repository Program (CTDA).   
+        </p>
+        <p><strong>Leisl Carr Childers </strong> is an Associate Professor of History at Colorado State University. She is an original co-founder of Fortepan.us   
+        </p>
+        <p><strong>John Davis</strong> is a software engineer at John Hopkins University. He is an original co-founder of Fortepan.us   
+        </p>
+        <p><strong>Lindsay Mattock</strong> is an Associate Professor of Library Science at East Carolina Universityins University.    
+        </p>
+        <br>
         
-       <img src="{% static "assets/images/hamburger/fortepan.png" %}" alt="Fortepan film">
+       
+       
         
-        <p>Contact <a href="mailto:fortepan@uni.edu" target="_blank" rel="noreferrer">fortepan@uni.edu</a></p>
-        <p style="font-size:10px;margin-top:40px">FI0002410, 1953, Waterloo, IA, donated by Beverly Cook; FI0001375, 1939, IA, donated by Erik Walker; FI0001965, 1900, IA, donated by Alfred Becker. All images licensed CC-BY-SA 4.0. </p>
+        <p>Contact <a href="mailto:fortepan@uni.edu">fortepan@uni.edu</a></p>
+        <p style="font-size:10px; margin-top: 40px;">FI0002410, 1953, Waterloo, IA, donated by Beverly Cook; FI0001375, 1939, IA, donated by Erik Walker; FI0001965, 1900, IA, donated by Alfred Becker. All images licensed CC-BY-SA 4.0. </p>
 
       </section>
  
       
         
        <h6>
-        This document was created by Bettina Fabos and is licensed under a <a href="https://www.google.com/url?q=http://creativecommons.org/licenses/by/4.0/&amp;source=gmail-html&amp;ust=1668616490778000&amp;usg=AOvVaw0SrR9JUef28mk39bl-d9HQ" target="_blank" rel="noreferrer">Creative Commons Attribution 4.0 International License</a>.
+        This document was created by Bettina Fabos and is licensed under a <a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
       </h6>
-   
-
- </main>
-    
-
+    </main>
 {% endblock %}

@@ -605,6 +605,12 @@ const ready = fn => {
 }
 ready(init)
 
+
+
+
+
+
+
 //----------changes colors of icons and --fp-main-blue css variable on page load----------
 
 
