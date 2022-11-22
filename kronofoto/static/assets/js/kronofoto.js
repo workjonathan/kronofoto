@@ -147,10 +147,14 @@ class FortepanBase {
                 ]).then(scrollAction(this.backward, this, 'backward', 0, this.root)) : undefined)
             enableMarkerDnD(this)
         }
-        this.root.querySelector('#fi-timeline-a').setAttribute('href', initialState.timeline_url)
-        this.root.querySelector('#fi-timeline-a').setAttribute('data-json-href', initialState.timeline_json_url)
-        this.root.querySelector('#grid-a').setAttribute('href', initialState.grid_url)
-        this.root.querySelector('#grid-a').setAttribute('data-json-href', initialState.grid_json_url)
+        for (const elem of this.root.querySelectorAll('.fi-timeline-a')) {
+            elem.setAttribute('href', initialState.timeline_url)
+            elem.setAttribute('data-json-href', initialState.timeline_json_url)
+        }
+        for (const elem of this.root.querySelectorAll('.grid-a')) {
+            elem.setAttribute('href', initialState.grid_url)
+            elem.setAttribute('data-json-href', initialState.grid_json_url)
+        }
         applyTheme(initialState.static_url, this.randomTheme, {root: this.root})
     }
     loadstate(data) {
@@ -169,8 +173,10 @@ class FortepanBase {
             this.forward.setAttribute('data-json-href', data.forward ? data.forward.json_url : "#")
             this.backward.setAttribute('href', data.backward && data.backward.url ? data.backward.url : "#")
             this.backward.setAttribute('data-json-href', data.backward && data.backward.json_url ? data.backward.json_url : "#")
-            this.root.querySelector('#grid-a').setAttribute('href', data.grid_url)
-            this.root.querySelector('#grid-a').setAttribute('data-json-href', data.grid_json_url)
+            for (const elem of this.root.querySelectorAll('.grid-a')) {
+                elem.setAttribute('href', data.grid_url)
+                elem.setAttribute('data-json-href', data.grid_json_url)
+            }
             this.elem.querySelector('#dl > a').setAttribute('href', data.original)
             for (let a of this.elem.querySelectorAll('#app a.fpi-fpilink')) {
                 a.setAttribute('href', data.url)
@@ -604,6 +610,12 @@ const ready = fn => {
     }
 }
 ready(init)
+
+
+
+
+
+
 
 //----------changes colors of icons and --fp-main-blue css variable on page load----------
 
