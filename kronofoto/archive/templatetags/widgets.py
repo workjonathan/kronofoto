@@ -69,10 +69,6 @@ def photo_details(photo, page, years, timeline, timeline_key, prev_page, next_pa
         next_page=next_page,
     )
 
-@register.simple_tag
-def absolutify(url):
-    return reverse.as_absolute(url)
-
 @register.filter(is_safe=True)
 @stringfilter
 def markdown(text):

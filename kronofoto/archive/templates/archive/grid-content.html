@@ -22,7 +22,7 @@
         <p style="width:50%">
             <strong>Whoops! No photos match your query: {{ query_expr }}</strong>
         </p>
-        <img style="width:50%" src="{% absolutify oops_photo.h700.url %}" alt="{{ tags }}">
+        <img style="width:50%" src="{{ oops_photo.h700.url }}" alt="{{ tags }}">
     </div>
 {% else %}
 <div id="grid-top" class="grid-navigation">

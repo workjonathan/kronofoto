@@ -31,7 +31,7 @@
 
     <article class="fi-image">
         <figure>
-            <img src="{% absolutify photo.h700.url %}" alt="{{ alttext }}">
+            <img src="{{ photo.h700.url }}" alt="{{ alttext }}">
         </figure>
         <a id="fi-arrow-left" class="control previous"
             {% if photo.previous %}
