@@ -4,8 +4,8 @@
 {% load login %}
 {% load searchform %}
 {% load widgets %}
-{% load docnav %}
 {% load gtm_tags %}
+{% load menu_tags %}
 <head>
   {% gtm_head %}
   <meta charset="UTF-8">
@@ -103,9 +103,9 @@
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
               <ul class="navigation-menu" id="navigation-menu">
-                {% include "archive/navigation-menu.html" %}
+                {% show_menu 0 100 100 100 %}
+                <li><a href="https://blog.fortepan.us/">Blog</a></li>
               </ul>
-                
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
               <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
