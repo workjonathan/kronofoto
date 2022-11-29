@@ -12,7 +12,7 @@ from ..models import Photo, CollectionQuery
 class GridBase(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = settings.GRID_DISPLAY_COUNT
-    template_name = 'archive/photo_grid.html'
+    #template_name = 'archive/photo_grid.html'
     _queryset = None
 
     @property
@@ -87,6 +87,10 @@ class GridView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['formatter'] = GridViewFormatter(self.request.GET)
+        if self.request.headers.get('Hx-Request', 'false') == 'true':
+            context['base_template'] = 'archive/grid_partial.html'
+        else:
+            context['base_template'] = 'archive/base.html'
         if self.final_expr and self.final_expr.is_collection() and self.expr:
             context['collection_name'] = str(self.expr.description())
         else:
@@ -96,7 +100,6 @@ class GridView(JSONResponseMixin, GridBase):
             context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         except IndexError:
             pass
-        context['initialstate'] = self.get_data(context)
         return context
 
     def attach_params(self, photos):
@@ -111,6 +114,10 @@ class SearchResultsView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
+        if self.request.headers.get('Hx-Request', 'false') == 'true':
+            context['base_template'] = 'archive/grid_partial.html'
+        else:
+            context['base_template'] = 'archive/base.html'
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
         context['collection_name'] = 'Search Results' if self.final_expr else "All Photos"
         if self.queryset.count() == 0:
@@ -125,7 +132,6 @@ class SearchResultsView(JSONResponseMixin, GridBase):
                 context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
                 context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
                 context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
-        context['initialstate'] = self.get_data(context)
         return context
 
     def attach_params(self, photos):

@@ -1,0 +1,9 @@
+<ul hx-swap-oob="innerHTML:.navigation-menu">
+{% include "archive/navigation-menu.html" %}
+</ul>
+<div hx-swap-oob="innerHTML:.main-nav_center">
+{% block viewbuttons %}
+{% endblock %}
+</div>
+{% block content %}
+{% endblock %}

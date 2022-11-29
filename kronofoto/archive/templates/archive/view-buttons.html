@@ -1,9 +1,10 @@
 {% load static %}
-<div class="timeline-container">
-  <a class="fi-timeline-a" data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+<div class="timeline-container {{timelineclass}}">
+  <a class="fi-timeline-a" href="{{ timeline_url }}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
 </div>
-<div class="grid-icon">
-  <a class="grid-a" data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">
+<div class="grid-icon {{gridclass}}">
+  <a class="grid-a" href="{{ grid_url }}" hx-get="{{ grid_url }}" hx-target="#app" hx-push-url="true">
     <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
   </a>
 </div>
+<div class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>

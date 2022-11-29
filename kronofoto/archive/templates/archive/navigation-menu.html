@@ -1,0 +1,6 @@
+{% load docnav %}
+{% docnav "Archive" %}
+<li><a href="{{ timeline_url }}">Timeline View</a></li>
+<li><a hx-get="{{ grid_url }}" target="#app" hx-push-url="true" href="{{ grid_url }}">Grid View</a></li>
+
+<li><a href="https://blog.fortepan.us/">Blog</a></li>

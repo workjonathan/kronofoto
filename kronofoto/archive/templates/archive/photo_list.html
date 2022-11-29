@@ -1,0 +1,34 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block viewbuttons %}
+{% include "archive/view-buttons.html" with gridclass="current-view" %}
+{% endblock %}
+{% block content %}
+<div hx-target="#app" hx-push-url="true">
+{% if noresults %}
+    <div class="container-center add_tag-container">
+        <p style="width:50%">
+            <strong>Whoops! No photos match your query: {{ query_expr }}</strong>
+        </p>
+        <img style="width:50%" src="{{ oops_photo.h700.url }}" alt="{{ tags }}">
+    </div>
+{% else %}
+<div id="grid-top" class="grid-navigation">
+    <h2>{{ collection_name }}</h2>
+    {% page_links formatter page_obj %}
+</div>
+
+<ul class="photo-grid">
+    {% for photo in page_obj %}
+    <li><a href="{{ photo.get_absolute_url }}"><img data-json-href="{{ photo.get_json_url }}" src="{{ photo.h700.url }}"/></a></li>
+    {% endfor %}
+</ul>
+
+<div id="grid-bottom" class="grid-navigation">
+    {% page_links formatter page_obj "grid-top" %}
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
