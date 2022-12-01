@@ -4,7 +4,7 @@
       <li><img src="{{ p.thumbnail.url }}" width="{{ p.thumbnail.width }}" height="{{ p.thumbnail.height }}"/></li>
 {% endfor %}
 {% for p in page.object_list %}
-          <li {{p.active | yesno:"data-active,"}}><a href="{{ p.get_absolute_url }}" ><img src="{{ p.thumbnail.url }}" data-json-href="{{ p.get_json_url }}" /></a></li>
+          <li {{p.active | yesno:"data-active,"}}><a href="{{ p.get_absolute_url }}" hx-get="{{ p.get_absolute_url }}" ><img src="{{ p.thumbnail.url }}" /></a></li>
 {% endfor %}
 {% for p in next_page.object_list %}
       <li><img src="{{ p.thumbnail.url }}" /></li>

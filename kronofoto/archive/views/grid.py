@@ -88,7 +88,7 @@ class GridView(JSONResponseMixin, GridBase):
         context = super().get_context_data(**kwargs)
         context['formatter'] = GridViewFormatter(self.request.GET)
         if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/grid_partial.html'
+            context['base_template'] = 'archive/base_partial.html'
         else:
             context['base_template'] = 'archive/base.html'
         if self.final_expr and self.final_expr.is_collection() and self.expr:
@@ -115,7 +115,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
         if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/grid_partial.html'
+            context['base_template'] = 'archive/base_partial.html'
         else:
             context['base_template'] = 'archive/base.html'
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)

@@ -1,4 +1,4 @@
-from django.views.generic import TemplateView
+from django.views.generic import DetailView
 from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
@@ -15,10 +15,11 @@ from ..reverse import get_request, set_request, as_absolute
 NO_URLS = dict(url='#', json_url='#')
 
 
-class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
-    template_name = "archive/photo.html"
+class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
     items = 10
+    pk_url_kwarg = 'photo'
     _queryset = None
+    model = Photo
 
     @property
     def queryset(self):
@@ -30,11 +31,23 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
+    def get_object(self, *args, **kwargs):
+        return self.model.objects.get(pk=self.model.accession2id(self.kwargs[self.pk_url_kwarg]))
+
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
+        print(self.request.headers)
+        if self.request.headers.get('Hx-Request', 'false') != 'false':
+            if self.request.headers.get('Timeline', 'false') != 'false':
+                context['base_template'] = 'archive/photo_partial.html'
+            else:
+                context['base_template'] = 'archive/base_partial.html'
+        else:
+            context['base_template'] = 'archive/base.html'
+        #context['base_template'] = 'archive/photo_partial.html'
         photo = self.kwargs['photo']
         if 'page' in self.kwargs:
             page = self.kwargs['page']
@@ -76,7 +89,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
-            context['initialstate'] = self.get_data(context)
+            #context['initialstate'] = self.get_data(context)
         except KeyError:
             pass
         return context

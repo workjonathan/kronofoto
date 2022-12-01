@@ -1,0 +1,14 @@
+<div hx-swap-oob="innerHTML:#fi-thumbnail-carousel-images">
+{% block thumbnails %}
+{% endblock %}
+</div>
+<div hx-swap-oob="innerHTML:#metadata">
+{% block metadata %}
+{% endblock %}
+</div>
+<ul hx-swap-oob="innerHTML:.navigation-menu">
+{% include "archive/navigation-menu.html" %}
+</ul>
+{% block image %}
+{% endblock %}
+<div id="metadata" hx-preserve />

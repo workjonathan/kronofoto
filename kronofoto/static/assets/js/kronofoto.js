@@ -612,6 +612,22 @@ const ready = fn => {
 ready(init)
 
 
+htmx.onLoad(content => {
+    if (content.id == 'expand') {
+        content.addEventListener("click", evt => {
+            for (const metadata of document.querySelectorAll("#metadata")) {
+                toggleElement(metadata)
+            }
+        })
+    }
+    for (const elem of content.querySelectorAll("#expand")) {
+        elem.addEventListener("click", evt => {
+            for (const metadata of content.querySelectorAll("#metadata")) {
+                toggleElement(metadata)
+            }
+        })
+    }
+})
 
 
 

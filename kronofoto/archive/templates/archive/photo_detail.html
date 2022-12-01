@@ -1,3 +1,4 @@
+{% extends base_template %}
 {% load static %}
 {% load timeline %}
 {% load thumbnails %}
@@ -5,6 +6,7 @@
 {% load photometadata %}
 {% load widgets %}
 
+{% comment %}
 {% if embed %}
     <center>
 
@@ -23,26 +25,33 @@
 
     </center>
 {% endif %}
-
-<main>
+{% endcomment %}
+{% block viewbuttons %}
+{% include "archive/view-buttons.html" with timelineclass="current-view" %}
+{% endblock %}
+{% block content %}
+<main hx-target=".fi-image" hx-push-url="true" hx-headers="{&quot;Timeline&quot;: 1}">
 
     <div class="img-left-space"></div>
     <div class="fi-image-background"></div>
 
     <article class="fi-image">
+        {% block image %}
         <figure>
             <img src="{{ photo.h700.url }}" alt="{{ alttext }}">
         </figure>
+        {% block left_arrow %}
         <a id="fi-arrow-left" class="control previous"
             {% if photo.previous %}
                 href="{{ photo.previous.get_absolute_url }}"
-                data-json-href="{{ photo.previous.get_json_url }}"
+                hx-get="{{ photo.previous.get_absolute_url }}"
             {% endif %}>
         </a>
+        {% endblock %}
         <a id="fi-arrow-right" class="control forward"
             {% if photo.next %}
                 href="{{ photo.next.get_absolute_url }}"
-                data-json-href="{{ photo.next.get_json_url }}"
+                hx-get="{{ photo.next.get_absolute_url }}"
             {% endif %}>
         </a>
         <button id="dl">
@@ -53,7 +62,12 @@
         <button id="expand">
             <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
         </button>
-        <div id="metadata" class="hidden"></div>
+        {% endblock %}
+        <div id="metadata" class="hidden">
+        {% block metadata %}
+            {% include "archive/photometadata.html" %}
+        {% endblock %}
+        </div>
 
     </article>
 
@@ -77,7 +91,11 @@
 
             <div class="slide-container">
                 <ul id="fi-preload-zone"></ul>
-                <ul id="fi-thumbnail-carousel-images"></ul>
+                <ul id="fi-thumbnail-carousel-images">
+                    {% block thumbnails %}
+                    {% include "archive/thumbnails.html" %}
+                    {% endblock %}
+                </ul>
             </div>
 
             <div class="forward-arrows">
@@ -128,3 +146,4 @@
     </div>
 
 </main>
+{% endblock %}

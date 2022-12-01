@@ -1,6 +1,6 @@
 {% load static %}
 <div class="timeline-container {{timelineclass}}">
-  <a class="fi-timeline-a" href="{{ timeline_url }}"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+  <a class="fi-timeline-a" href="{{ timeline_url }}" hx-get="{{timeline_url}}" hx-push-url="true" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
 </div>
 <div class="grid-icon {{gridclass}}">
   <a class="grid-a" href="{{ grid_url }}" hx-get="{{ grid_url }}" hx-target="#app" hx-push-url="true">
