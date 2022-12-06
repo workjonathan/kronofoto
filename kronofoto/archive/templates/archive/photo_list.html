@@ -5,7 +5,7 @@
 {% include "archive/view-buttons.html" with gridclass="current-view" %}
 {% endblock %}
 {% block content %}
-<div hx-target="#app" hx-push-url="true">
+<div hx-target="#app" hx-push-url="false">
 {% if noresults %}
     <div class="container-center add_tag-container">
         <p style="width:50%">

@@ -1,9 +1,22 @@
+<div>
+<div id="navigation-menu">
+{% include "archive/navigation-menu.html" %}
+</div>
+{% block viewbuttons %}
+{% endblock %}
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
+{% block content %}
+{% endblock %}
+  </div>
+</div>
+{% comment %}
 <ul hx-swap-oob="innerHTML:.navigation-menu">
 {% include "archive/navigation-menu.html" %}
 </ul>
-<div hx-swap-oob="innerHTML:.main-nav_center">
+<div id="timeline-container" hx-swap-oob="true" hx-select="#timeline-container">
 {% block viewbuttons %}
 {% endblock %}
 </div>
 {% block content %}
 {% endblock %}
+{% endcomment %}

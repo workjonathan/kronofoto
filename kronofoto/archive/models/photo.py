@@ -158,7 +158,7 @@ class Photo(models.Model):
         return url
 
     def create_url(self, viewname, queryset=None, params=None):
-        kwargs = {'photo': self.accession_number}
+        kwargs = {'photo': self.id}
         try:
             kwargs['page'] = self.page_number(queryset=queryset)
         except AttributeError:

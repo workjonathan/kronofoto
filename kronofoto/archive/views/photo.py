@@ -31,15 +31,15 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
         self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
-    def get_object(self, *args, **kwargs):
-        return self.model.objects.get(pk=self.model.accession2id(self.kwargs[self.pk_url_kwarg]))
+    #def get_object(self, *args, **kwargs):
+    #    print("test")
+    #    return self.model.objects.get(pk=self.model.accession2id(self.kwargs[self.pk_url_kwarg]))
 
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
-        print(self.request.headers)
         if self.request.headers.get('Hx-Request', 'false') != 'false':
             if self.request.headers.get('Timeline', 'false') != 'false':
                 context['base_template'] = 'archive/photo_partial.html'
@@ -47,7 +47,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
                 context['base_template'] = 'archive/base_partial.html'
         else:
             context['base_template'] = 'archive/base.html'
-        #context['base_template'] = 'archive/photo_partial.html'
         photo = self.kwargs['photo']
         if 'page' in self.kwargs:
             page = self.kwargs['page']
@@ -65,7 +64,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
         page_selection = paginator.get_pages(page)
 
         try:
-            photo_rec = page_selection.find_accession_number(photo)
+            photo_rec = page_selection.find(self.object.id)
 
             params = self.request.GET.copy()
             if 'constraint' in params:
@@ -121,7 +120,9 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
         }
 
     def render(self, context, **kwargs):
-        return super().render_to_response(context, **kwargs)
+        response = super().render_to_response(context, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     def get_redirect_url(self, photo):
         return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
@@ -129,7 +130,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
     def render_to_response(self, context, **kwargs):
         if 'years' not in context:
             try:
-                photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
+                photo = Photo.objects.get(id=self.kwargs['photo'])
                 return redirect(self.get_redirect_url(photo))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")

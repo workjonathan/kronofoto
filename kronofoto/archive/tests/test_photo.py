@@ -85,7 +85,7 @@ class PhotoTest(TestImageMixin, TestCase):
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
 
     def testShould404WhenPhotoNotFound(self):
-        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 'FI99999'}))
+        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def testShouldHaveUniqueDownloadPage(self):
@@ -195,8 +195,8 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             thispage = photos[:10]
             photos = photos[10:]
             for photo in thispage:
-                resp = self.client.get(reverse('photoview', kwargs={'page': page % 5 + 1, 'photo':photo.accession_number}))
-                self.assertRedirects(resp, reverse('photoview', kwargs={'page': page, 'photo':photo.accession_number}))
+                resp = self.client.get(reverse('photoview', kwargs={'page': page % 5 + 1, 'photo':photo.id}))
+                self.assertRedirects(resp, reverse('photoview', kwargs={'page': page, 'photo':photo.id}))
 
     def testGridViewShouldDisplayAllPhotosInOrder(self):
         photo_ids = {photo.id for photo in self.photos}

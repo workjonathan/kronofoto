@@ -6,36 +6,16 @@
 {% load photometadata %}
 {% load widgets %}
 
-{% comment %}
-{% if embed %}
-    <center>
-
-        <div class="main-nav_center">
-            {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
-            <div>
-                {{ collection_name }}
-            </div>
-            {% if collection_name != "All Photos" %}
-                <a data-json-href="{% url "search-results-json" %}" href="#">Back to All Photos</a>
-            {% endif %}
-            <div>
-                <a class="fpi-fpilink" href="{{ photo.get_absolute_url }}">Fortepan</a>
-            </div>
-        </div>
-
-    </center>
-{% endif %}
-{% endcomment %}
 {% block viewbuttons %}
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
 {% endblock %}
 {% block content %}
-<main hx-target=".fi-image" hx-push-url="true" hx-headers="{&quot;Timeline&quot;: 1}">
+<main hx-target="#fi-image" hx-push-url="true" hx-headers="{&quot;Timeline&quot;: 1}" hx-swap="outerHTML" hx-select="#fi-image" hx-select-oob="timeline-container,grid-icon,navigation-menu,fi-timeline">
 
     <div class="img-left-space"></div>
     <div class="fi-image-background"></div>
 
-    <article class="fi-image">
+    <article class="fi-image" id="fi-image">
         {% block image %}
         <figure>
             <img src="{{ photo.h700.url }}" alt="{{ alttext }}">
@@ -75,14 +55,15 @@
     <div class="car-left-space"></div>
 
 
-    <nav class="fi-timeline">
+    {% block thumbnails %}
+    <nav class="fi-timeline" id="fi-timeline">
 
         <div class="fi-thumbnail-carousel">
 
             <div class="back-arrows">
-                <a id="backward"
+                <a id="backward" hx-select="#fi-image"
                     {% if page.has_previous %}
-                        data-json-href="{{ prev_page.0.get_json_url }}"
+                        hx-get="{{ prev_page.0.get_absolute_url }}"
                         href="{{ prev_page.0.get_absolute_url }}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing back">
@@ -92,17 +73,15 @@
             <div class="slide-container">
                 <ul id="fi-preload-zone"></ul>
                 <ul id="fi-thumbnail-carousel-images">
-                    {% block thumbnails %}
                     {% include "archive/thumbnails.html" %}
-                    {% endblock %}
                 </ul>
             </div>
 
             <div class="forward-arrows">
-                <a id="forward"
+                <a id="forward" hx-select="#fi-image"
                     {% if page.has_next %}
                         href="{{ next_page.0.get_absolute_url }}"
-                        data-json-href="{{ next_page.0.get_json_url }}"
+                        hx-get="{{ next_page.0.get_absolute_url }}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing forward">
                 </a>
@@ -111,6 +90,7 @@
         </div>
 
     </nav>
+    {% endblock %}
 
     <div class="car-right-space"></div>
 

@@ -13,7 +13,6 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link type="text/css" rel="stylesheet" href="{% static "assets/css/index.css" %}">
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-  <script src="https://unpkg.com/htmx.org@1.8.4" integrity="sha384-wg5Y/JwF7VxGk4zLsJEcAojRtlVp1FKKdGy1qN+OMtdq72WRvX/EdRdqg/LOhYeV" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
   <script
 			  src="https://code.jquery.com/jquery-3.5.1.min.js"
@@ -32,12 +31,12 @@
 }
   </style>
 </head>
-<body>
+<body hx-push-url="true">
   {% gtm_body %}
   <div class="overlay" style="display: none;"></div>
   <header>
     <nav aria-label="Main navigation">
-      <div class="main-nav">
+      <div class="main-nav" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
         <div class="main-nav_left">
           <div id="logo">
             <a href="{% url "random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
@@ -68,6 +67,7 @@
           {% block viewbuttons %}
           {% include "archive/view-buttons.html" %}
           {% endblock %}
+          <div id="new-label_container" class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div>
           <!-- end nav center -->
@@ -95,14 +95,14 @@
           </div>
           <div class="hamburger-container">
 
-            <div class="hamburger" onclick="toggleMenu()">
+            <div class="hamburger">
               <img class="hamburger-icon" src="{% static "assets/images/hamburger.svg" %}" alt="menu icon" title="Menu">
             </div>
 
             <div class="hamburger-menu hidden">
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
-              <ul class="navigation-menu">
+              <ul class="navigation-menu" id="navigation-menu">
                 {% include "archive/navigation-menu.html" %}
               </ul>
                 
@@ -119,10 +119,10 @@
       </div>
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <script src="{% static "assets/js/kronofoto.js" %}"></script>
+  <script type="module" src="{% static "assets/js/main.js" %}"></script>
   <script src="{% static "assets/js/drag-drop.js" %}"></script>
   </header>
-  <div id="app">
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
     {% block content %}
     {% endblock %}
   </div>

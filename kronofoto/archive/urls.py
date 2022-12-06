@@ -12,17 +12,27 @@ class NegativeIntConverter:
     def to_url(self, value):
         return "{}".format(value)
 
+class AccessionNumberConverter:
+    regex = r'FI\d+'
+
+    def to_python(self, value):
+        return int(value[2:])
+
+    def to_url(self, value):
+        return "FI" + str(value).zfill(7)
+
 register_converter(NegativeIntConverter, 'negint')
+register_converter(AccessionNumberConverter, 'accession')
 
 urlpatterns = [
     path('', views.FrontPage.as_view(), name='random-image'),
     path('missing-photos/', views.MissingPhotosView.as_view()),
-    path('<str:id>.css', views.EmbedStyleSheet.as_view()),
+    path('<str:id>.css', views.EmbedStyleSheet.as_view(), name="css"),
     path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
     path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
-    path('original/FI<int:pk>/', views.DownloadPageView.as_view(), name='download'),
+    path('original/<int:pk>/', views.DownloadPageView.as_view(), name='download'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
     path('accounts/', include('archive.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
@@ -33,9 +43,9 @@ urlpatterns = [
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view(), name='add-to-list'),
-    path('photo/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
-    path('photo/<int:page>/<str:photo>/', views.PhotoView.as_view(), name="photoview"),
-    path('photo/<int:page>/<str:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
+    path('photo/<accession:photo>/', views.PhotoView.as_view(), name="photoview"),
+    path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view(), name="photoview"),
+    path('photo/<int:page>/<accession:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view(), name="mainstreetview"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('tags/', views.TagSearchView.as_view(), name='tag-search'),

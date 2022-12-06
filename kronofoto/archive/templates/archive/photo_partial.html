@@ -1,14 +1,18 @@
-<div hx-swap-oob="innerHTML:#fi-thumbnail-carousel-images">
-{% block thumbnails %}
-{% endblock %}
+<div id="fdsfklj">
+  <div id="navigation-menu">
+    {% include "archive/navigation-menu.html" %}
+  </div>
+  {% block viewbuttons %}
+  {% endblock %}
+  {% block thumbnails %}
+  {% endblock %}
+  <article class="fi-image" id="fi-image">
+    {% block image %}
+    {% endblock %}
+    <div id="metadata" hx-preserve />
+  </article>
 </div>
 <div hx-swap-oob="innerHTML:#metadata">
-{% block metadata %}
-{% endblock %}
+  {% block metadata %}
+  {% endblock %}
 </div>
-<ul hx-swap-oob="innerHTML:.navigation-menu">
-{% include "archive/navigation-menu.html" %}
-</ul>
-{% block image %}
-{% endblock %}
-<div id="metadata" hx-preserve />

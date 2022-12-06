@@ -25,7 +25,9 @@ class GridBase(BaseTemplateMixin, ListView):
         return self.request.GET.get('display', self.paginate_by)
 
     def render(self, context, **kwargs):
-        return super().render_to_response(context, **kwargs)
+        response = super().render_to_response(context, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     def render_to_response(self, context, **kwargs):
         if hasattr(self, 'redirect'):
@@ -87,10 +89,16 @@ class GridView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['formatter'] = GridViewFormatter(self.request.GET)
-        if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/base_partial.html'
+        if self.request.headers.get('Embedded', 'false') != 'false':
+            if self.request.headers.get('Hx-Request', 'false') == 'true':
+                context['base_template'] = 'archive/base_partial.html'
+            else:
+                context['base_template'] = 'archive/embedded-base.html'
         else:
-            context['base_template'] = 'archive/base.html'
+            if self.request.headers.get('Hx-Request', 'false') == 'true':
+                context['base_template'] = 'archive/base_partial.html'
+            else:
+                context['base_template'] = 'archive/base.html'
         if self.final_expr and self.final_expr.is_collection() and self.expr:
             context['collection_name'] = str(self.expr.description())
         else:
