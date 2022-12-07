@@ -1,7 +1,7 @@
-<svg class="tl" viewBox="{{ viewBox|join:' '}}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg hx-ext="fi-svghack" class="tl" viewBox="{{ viewBox|join:' '}}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     {% for marker in majornotches %}
         <a 
-            xlink:href="{{ marker.target }}"
+            href="{{ marker.target }}"
             hx-get="{{ marker.target }}"
             hx-target="#fi-image"
         >
@@ -26,8 +26,9 @@
         </a>
     {% endfor %}
     {% for marker in minornotches %}
-        <a xlink:href="{{ marker.target }}"
+        <a 
             hx-target="#fi-image"
+            href="{{ marker.target }}"
             hx-get="{{ marker.target }}">
             <rect 
                 x="{{ marker.box.x }}" 

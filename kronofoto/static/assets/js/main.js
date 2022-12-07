@@ -4,7 +4,7 @@ import {toggleMetadata, toggleMenu} from "./lib.js"
 const htmx = HTMX(document)
 
 htmx.onLoad(toggleMetadata(document))
-htmx.logAll()
+//htmx.logAll()
 
 const init = () => {
     document.querySelector('.hamburger').addEventListener("click", toggleMenu)

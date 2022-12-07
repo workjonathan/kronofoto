@@ -3360,5 +3360,12 @@ export default function (document2) {
             }, 0);
         })
 
+        htmx.defineExtension("fi-svghack", {
+            onEvent: function(name, evt) {
+                if (name == 'htmx:confirm' && evt.detail.elt.tagName == 'a' && evt.detail.triggeringEvent.type == 'click') {
+                    evt.detail.triggeringEvent.preventDefault()
+                }
+            }
+        })
         return htmx;
     }
