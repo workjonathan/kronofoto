@@ -40,13 +40,8 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
-        if self.request.headers.get('Hx-Request', 'false') != 'false':
-            if self.request.headers.get('Timeline', 'false') != 'false':
-                context['base_template'] = 'archive/photo_partial.html'
-            else:
-                context['base_template'] = 'archive/base_partial.html'
-        else:
-            context['base_template'] = 'archive/base.html'
+        if self.request.headers.get('Hx-Target', None) == 'fi-image':
+            context['base_template'] = 'archive/photo_partial.html'
         photo = self.kwargs['photo']
         if 'page' in self.kwargs:
             page = self.kwargs['page']
@@ -69,8 +64,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             params = self.request.GET.copy()
             if 'constraint' in params:
                 params.pop('constraint')
-            if 'embed' in params:
-                params.pop('embed')
             for p in page_selection.photos():
                 p.save_params(params)
 
@@ -81,10 +74,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
-            if self.final_expr and self.final_expr.is_collection() and self.expr:
-                context['collection_name'] = str(self.expr.description())
-            else:
-                context['collection_name'] = 'All Photos'
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()

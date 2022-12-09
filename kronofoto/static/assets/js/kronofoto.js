@@ -135,7 +135,9 @@ class FortepanViewer extends HTMLElement {
 }
 `
         body.appendChild(f)
-        const req = new Request(`${host}/grid/`, {mode:'cors', headers: new Headers([['Embedded', '1']])})
+        const mode = 'cors'
+        const headers = new Headers([['Embedded', '1'], ["Constraint", constraint]])
+        const req = new Request(`${host}/grid/`, {mode, headers})
         fetch(req)
             .then(response => response.text())
             .then(response => {

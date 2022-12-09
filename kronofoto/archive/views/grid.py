@@ -7,6 +7,7 @@ from django.conf import settings
 from .basetemplate import BaseTemplateMixin
 from .jsonresponse import JSONResponseMixin
 from ..models import Photo, CollectionQuery
+import json
 
 
 class GridBase(BaseTemplateMixin, ListView):
@@ -89,20 +90,8 @@ class GridView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['formatter'] = GridViewFormatter(self.request.GET)
-        if self.request.headers.get('Embedded', 'false') != 'false':
-            if self.request.headers.get('Hx-Request', 'false') == 'true':
-                context['base_template'] = 'archive/base_partial.html'
-            else:
-                context['base_template'] = 'archive/embedded-base.html'
-        else:
-            if self.request.headers.get('Hx-Request', 'false') == 'true':
-                context['base_template'] = 'archive/base_partial.html'
-            else:
-                context['base_template'] = 'archive/base.html'
-        if self.final_expr and self.final_expr.is_collection() and self.expr:
-            context['collection_name'] = str(self.expr.description())
-        else:
-            context['collection_name'] = 'All Photos'
+        context['constraint'] = json.dumps({"Constraint": self.request.headers.get('Constraint', None)})
+
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
             context['timeline_json_url'] = context['page_obj'][0].get_json_url()
@@ -122,12 +111,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
-        if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/base_partial.html'
-        else:
-            context['base_template'] = 'archive/base.html'
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
-        context['collection_name'] = 'Search Results' if self.final_expr else "All Photos"
         if self.queryset.count() == 0:
             context['noresults'] = True
             photo_rec = Photo.objects.filter(phototag__tag__tag='silly', phototag__accepted=True).order_by('?')[0]
@@ -137,7 +121,6 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         else:
             context['noresults'] = False
             if self.final_expr and self.final_expr.is_collection():
-                context['collection_name'] = str(self.expr.description()) if self.expr else "All Photos"
                 context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
                 context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
         return context

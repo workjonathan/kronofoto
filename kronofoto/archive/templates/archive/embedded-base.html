@@ -16,17 +16,17 @@
     --fp-main-blue: #c2a55e;
 }
 </style>
-<div>
+<div hx-headers="{{ constraint | escape }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
 <center>
-<div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
+<div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
     {% include "archive/view-buttons.html" with gridclass="current-view" %}
-    <div>
+    <div id="collection-name">
     {{ collection_name }}
     </div>
-    <div>
+    <div id="all-photos">
     {% if collection_name != "All Photos" %}
-        <a data-json-href="{% url "search-results-json" %}" href="#">Back to All Photos</a>
+        <a href="{% url "grid" %}">Back to All Photos</a>
     {% endif %}
     </div>
     <div>
@@ -34,7 +34,7 @@
     </div>
 </div>
 </center>
-  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
       {% block content %}
       {% endblock %}
   </div>

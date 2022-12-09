@@ -2,6 +2,7 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.templatetags.static import static
 import random
+import json
 from ..reverse import set_request
 from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
@@ -67,10 +68,10 @@ class BaseTemplateMixin:
                 self.expr = self.form.as_expression()
             except NoExpression:
                 pass
+        self.constraint = self.request.headers.get('Constraint', None)
         self.constraint_expr = None
-        if 'constraint' in self.request.GET:
-            constraint = self.request.GET['constraint']
-            self.constraint_expr = Parser.tokenize(constraint).parse().shakeout()
+        if self.constraint:
+            self.constraint_expr = Parser.tokenize(self.constraint).parse().shakeout()
         self.final_expr = None
         if self.expr and self.constraint_expr:
             self.final_expr = self.expr & self.constraint_expr
@@ -80,6 +81,23 @@ class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         photo_count = cache.get('photo_count:')
+        context['constraint'] = json.dumps({'Constraint': self.constraint})
+        if self.expr:
+            if self.expr.is_collection():
+                context['collection_name'] = str(self.expr.description())
+            else:
+                context['collection_name'] = "Search Results"
+        else:
+            context['collection_name'] = 'All Photos'
+
+        context['push-url'] = True
+        if self.request.headers.get('Hx-Request', 'false') == 'true':
+            context['base_template'] = 'archive/base_partial.html'
+        elif self.request.headers.get('Embedded', 'false') != 'false':
+            context['base_template'] = 'archive/embedded-base.html'
+        else:
+            context['base_template'] = 'archive/base.html'
+
         if not photo_count:
             photo_count = Photo.count()
             cache.set('photo_count:', photo_count)
@@ -89,5 +107,5 @@ class BaseTemplateMixin:
         context['grid_json_url'] = '#'
         context['timeline_json_url'] = '#'
         context['theme'] = random.choice(THEME)
-        context['embed'] = 'embed' in self.request.GET
+        context['constraint'] = json.dumps({"Constraint": self.request.headers.get('Constraint', None)})
         return context
