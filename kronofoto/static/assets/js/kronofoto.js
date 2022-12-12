@@ -1,5 +1,5 @@
 import HTMX from "./htmx.js"
-import {toggleMetadata} from "./lib.js"
+import {toggleMetadata, markerDnD} from "./lib.js"
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -146,6 +146,7 @@ class FortepanViewer extends HTMLElement {
                 this.htmx.process(this.shadowRoot.querySelector("#app"))
                 //this.htmx.logAll()
                 this.htmx.onLoad(toggleMetadata(this.shadowRoot))
+                this.htmx.onLoad(markerDnD(this.shadowRoot))
             })
     }
 }

@@ -10,7 +10,7 @@
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
 {% endblock %}
 {% block content %}
-<main hx-target="#fi-image" hx-swap="outerHTML" hx-select="#fi-image" hx-select-oob="timeline-container,grid-icon,navigation-menu,fi-timeline,collection-name,all-photos">
+<main hx-target="#fi-image" hx-swap="outerHTML" hx-select="#fi-image" hx-select-oob="timeline-container,grid-icon,navigation-menu,fi-timeline,collection-name,all-photos,active-year-marker">
 
     <div class="img-left-space"></div>
     <div class="fi-image-background"></div>
@@ -97,13 +97,15 @@
 
     <div class="year-ticker">
 
-        <div class="active-year-marker" draggable="true">
+        {% block year_marker %}
+        <div id="active-year-marker" class="active-year-marker" draggable="true" hx-trigger="marker-moved">
 
             <div class="marker-image" style="background-image: url('{% static "assets/images/skyblue/toggle.svg" %}');">
-                <span class="marker-year"></span>
+                <span class="marker-year">{{ photo.year }}</span>
             </div>
 
         </div>
+        {% endblock %}
 
         {% comment %}
             <div class="year-min">

@@ -1,9 +1,10 @@
 import HTMX from "./htmx.js"
-import {toggleMetadata, toggleMenu} from "./lib.js"
+import {toggleMetadata, toggleMenu, markerDnD} from "./lib.js"
 
 const htmx = HTMX(document)
 
 htmx.onLoad(toggleMetadata(document))
+htmx.onLoad(markerDnD(document))
 //htmx.logAll()
 
 const init = () => {
