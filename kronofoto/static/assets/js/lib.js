@@ -458,9 +458,11 @@ const moveMarker = (root, marker) => {
 export const markerDnD = root => content => {
     if (content.id == 'active-year-marker') {
         moveMarker(root, content)
+        enableMarkerDnD(root)
     }
     for (const marker of content.querySelectorAll('.active-year-marker')) {
         moveMarker(root, marker)
+        enableMarkerDnD(root)
     }
 }
 

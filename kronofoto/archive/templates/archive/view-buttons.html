@@ -1,12 +1,12 @@
 {% load static %}
 {% block timeline_icon %}
 <div class="timeline-container {{timelineclass}}" id="timeline-container">
-  <a class="fi-timeline-a" href="{{ timeline_url }}" hx-get="{{timeline_url}}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+  <a class="fi-timeline-a" hx-select="#app" href="{{ timeline_url }}" hx-get="{{timeline_url}}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
 </div>
 {% endblock %}
 {% block grid_icon %}
 <div class="grid-icon {{gridclass}}" id="grid-icon">
-  <a class="grid-a" href="{{ grid_url }}" hx-get="{{ grid_url }}" hx-target="#app">
+  <a class="grid-a" href="{{ grid_url }}" hx-select="#app" hx-get="{{ grid_url }}" hx-target="#app">
     <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
   </a>
 </div>
