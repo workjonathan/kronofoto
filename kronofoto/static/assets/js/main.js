@@ -3482,6 +3482,10 @@
         }
     };
 
+    const toggleLogin = evt => {
+        const el = document.querySelector('#login');
+        toggleElement(el);
+    };
     const toggleMenu = evt => {
         const el = document.querySelector('.hamburger-menu');
         toggleElement(el);
@@ -3552,6 +3556,8 @@
         }
     };
     //----------_----------
+
+    window.toggleLogin = toggleLogin;
 
     const htmx = HTMX(document);
 

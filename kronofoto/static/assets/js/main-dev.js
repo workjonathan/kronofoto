@@ -1,5 +1,6 @@
 import HTMX from "./htmx.js"
-import {toggleMetadata, toggleMenu, markerDnD} from "./lib.js"
+import {toggleMetadata, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
+window.toggleLogin = toggleLogin
 
 const htmx = HTMX(document)
 

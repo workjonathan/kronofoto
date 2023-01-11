@@ -410,7 +410,7 @@ const initialize_fortepan = (element, {constraint=undefined, host="https://forte
 }
 
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
-const toggleLogin = evt => {
+export const toggleLogin = evt => {
     const el = document.querySelector('#login');
     toggleElement(el);
 }
