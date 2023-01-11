@@ -8,7 +8,7 @@ class FortepanViewer extends HTMLElement {
     }
     connectedCallback() {
         const constraint = this.getAttribute("constraint")
-        const host = this.getAttribute("host") || "https://fortepan.us"
+        const host = this.getAttribute("src") || "https://fortepan.us"
         const template = document.createElement("template")
         const body = document.querySelector("body")
         const f = document.createElement("style")
@@ -137,13 +137,13 @@ class FortepanViewer extends HTMLElement {
         body.appendChild(f)
         const mode = 'cors'
         const headers = new Headers([['Embedded', '1'], ["Constraint", constraint]])
-        const req = new Request(`${host}/grid/`, {mode, headers})
+        const req = new Request(host, {mode, headers})
         fetch(req)
             .then(response => response.text())
             .then(response => {
                 this.shadowRoot.innerHTML = response
                 this.htmx = HTMX(this.shadowRoot)
-                this.htmx.process(this.shadowRoot.querySelector("#app"))
+                this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
                 //this.htmx.logAll()
                 this.htmx.onLoad(toggleMetadata(this.shadowRoot))
                 this.htmx.onLoad(markerDnD(this.shadowRoot))

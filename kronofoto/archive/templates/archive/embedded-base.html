@@ -16,11 +16,12 @@
     --fp-main-blue: #c2a55e;
 }
 </style>
-<div hx-headers="{{ constraint | escape }}">
+<div id="kfroot" hx-headers="{{ constraint | escape }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
 <center>
 <div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
-    {% include "archive/view-buttons.html" with gridclass="current-view" %}
+          {% block viewbuttons %}
+          {% endblock %}
     <div id="collection-name">
     {{ collection_name }}
     </div>

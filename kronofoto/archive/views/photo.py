@@ -70,6 +70,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context['grid_json_url'] = photo_rec.get_grid_json_url()
+            context['timeline_url'] = photo_rec.get_absolute_url()
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
