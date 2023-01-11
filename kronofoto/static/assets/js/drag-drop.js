@@ -51,9 +51,9 @@ export const enableMarkerDnD = document => {
     let currentTickX;
 
     // Make invisible drag feedback image
-    const dragImgEl = document.createElement('span');
+    const dragImgEl = window.document.createElement('span');
     dragImgEl.setAttribute('style', 'position: absolute; display: block; top: 0; left: 0; width: 0; height: 0;' );
-    document.body.appendChild(dragImgEl);
+    document.appendChild(dragImgEl);
 
     // ==============================================
     // Necessary to prevent mirror image from showing
