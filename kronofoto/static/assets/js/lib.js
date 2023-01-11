@@ -1,3 +1,4 @@
+import {enableMarkerDnD} from "./drag-drop.js"
 const themes = [
     { 
         color: "#6c84bd",

@@ -6,6 +6,7 @@ let currentTick
 let root
 window.addEventListener("dragover", e => {
     currentX = e.clientX
+    let closestTick
     for (const el of root.querySelectorAll('.tl a')) {
       const rect = el.getBoundingClientRect()
       if (rect.left <= currentX && currentX <= rect.right) {
@@ -14,7 +15,7 @@ window.addEventListener("dragover", e => {
     }
     currentTick = closestTick
 })
-const enableMarkerDnD = document => {
+export const enableMarkerDnD = document => {
     root = document
     const now = Date.now()
     const marker = document.querySelector('.active-year-marker');
