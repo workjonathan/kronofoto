@@ -109,3 +109,8 @@ class BaseTemplateMixin:
         context['theme'] = random.choice(THEME)
         context['constraint'] = json.dumps({"Constraint": self.request.headers.get('Constraint', None)})
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
