@@ -107,10 +107,14 @@ class BaseTemplateMixin:
         context['grid_json_url'] = '#'
         context['timeline_json_url'] = '#'
         context['theme'] = random.choice(THEME)
-        context['constraint'] = json.dumps({"Constraint": self.request.headers.get('Constraint', None)})
+        hxheaders = dict()
+        hxheaders['Constraint'] = self.request.headers.get('Constraint', None)
+        hxheaders['Embedded'] = self.request.headers.get('Embedded', 'false')
+        context['hxheaders'] = json.dumps(hxheaders)
         return context
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
         response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
         return response

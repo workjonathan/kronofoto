@@ -16,7 +16,7 @@
     --fp-main-blue: #c2a55e;
 }
 </style>
-<div id="kfroot" hx-headers="{{ constraint | escape }}">
+<div id="kfroot" hx-headers="{{ hxheaders | escape }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
 <center>
 <div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
@@ -27,7 +27,7 @@
     </div>
     <div id="all-photos">
     {% if collection_name != "All Photos" %}
-        <a href="{% url "grid" %}">Back to All Photos</a>
+        <a href="{% url "random-image" %}">Back to All Photos</a>
     {% endif %}
     </div>
     <div>
