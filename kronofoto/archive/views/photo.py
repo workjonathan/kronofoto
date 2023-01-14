@@ -3,6 +3,7 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
 from django.conf import settings
+from django.views.generic.base import RedirectView
 from django.template.loader import render_to_string
 from .jsonresponse import JSONResponseMixin
 from .basetemplate import BaseTemplateMixin
@@ -13,7 +14,6 @@ from ..reverse import get_request, set_request, as_absolute
 
 
 NO_URLS = dict(url='#', json_url='#')
-
 
 class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
     items = 10
@@ -49,11 +49,11 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             page = 1
         queryset = self.queryset
         cache_info = self.collection.cache_encoding()
-        index_key = 'year_links:' + cache_info
-        index = cache.get(index_key)
-        if not index:
-            index = queryset.year_links(params=self.request.GET)
-            cache.set(index_key, index)
+        #index_key = 'year_links:' + cache_info
+        #index = cache.get(index_key)
+        #if not index:
+        #    index = queryset.year_links(params=self.request.GET)
+        #    cache.set(index_key, index)
 
         paginator = self.get_paginator()
         page_selection = paginator.get_pages(page)
@@ -74,7 +74,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
-            context["years"] = index
+            #context["years"] = index
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
@@ -118,7 +118,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
         return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
 
     def render_to_response(self, context, **kwargs):
-        if 'years' not in context:
+        if 'timeline_key' not in context:
             try:
                 photo = Photo.objects.get(id=self.kwargs['photo'])
                 return redirect(self.get_redirect_url(photo))

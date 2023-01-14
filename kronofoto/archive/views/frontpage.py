@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.generic.base import RedirectView
+from django.views.generic.list import MultipleObjectMixin
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
@@ -7,9 +8,19 @@ from ..forms import SearchForm
 from ..search.parser import NoExpression
 
 
-class FrontPage(BaseTemplateMixin, RedirectView):
+class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
     permanent = False
     pattern_name = 'photoview'
+    model = Photo
+
+    def get_object(self):
+        qs = self.get_queryset().order_by(self.get_ordering())
+        return qs[0]
+
+    def get_queryset(self):
+        return self.model.objects.filter_photos(
+            CollectionQuery(self.final_expr, self.request.user)
+        )
 
     def options(self, request, *args, **kwargs):
         if 'embedded' in request.headers.get('Access-Control-Request-Headers', '').split(','):
@@ -19,9 +30,15 @@ class FrontPage(BaseTemplateMixin, RedirectView):
             return super().options(request, *args, **kwargs)
 
     def get_redirect_url(self, *args, **kwargs):
-        photos = Photo.objects.filter_photos(
-            CollectionQuery(self.final_expr, self.request.user)
-        )
-        return photos.order_by('?')[0].get_absolute_url(queryset=photos)
+        return self.get_object().get_absolute_url(queryset=self.get_queryset(), params=self.request.GET)
 
 
+class RandomRedirect(PhotoRedirectView):
+    ordering = "?"
+
+
+class YearRedirect(PhotoRedirectView):
+    ordering = 'id'
+    def get_object(self):
+        qs = self.get_queryset().filter(year__gte=self.kwargs['year'])
+        return qs[0]

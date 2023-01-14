@@ -113,9 +113,8 @@
                 {{ first_year }}
             </div>
         {% endcomment %}
-
         {% cache 300 timeline timeline_key %}
-            {% make_timeline years %}
+            {% make_timeline start=1850 end=2000 request=request %}
         {% endcache %}
 
         {% comment %}

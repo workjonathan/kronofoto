@@ -2,6 +2,7 @@ from django.urls import path, include, register_converter
 from . import views
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
+from archive.views.frontpage import RandomRedirect, YearRedirect
 
 class NegativeIntConverter:
     regex = '-?\d+'
@@ -25,7 +26,7 @@ register_converter(NegativeIntConverter, 'negint')
 register_converter(AccessionNumberConverter, 'accession')
 
 urlpatterns = [
-    path('', views.FrontPage.as_view(), name='random-image'),
+    path('', views.RandomRedirect.as_view(), name='random-image'),
     path('missing-photos/', views.MissingPhotosView.as_view()),
     path('<str:id>.css', views.EmbedStyleSheet.as_view(), name="css"),
     path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
@@ -46,6 +47,7 @@ urlpatterns = [
     path('photo/<accession:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>.json', views.JSONPhotoView.as_view(), name="photoview-json"),
+    path('photo/year:<int:year>/', YearRedirect.as_view(), name="year-redirect"),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view(), name="mainstreetview"),
     path('tag/<str:photo>/', views.AddTagView.as_view(), name='addtag'),
     path('tags/', views.TagSearchView.as_view(), name='tag-search'),
