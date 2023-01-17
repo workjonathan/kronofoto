@@ -60,6 +60,9 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
 
         paginator = self.get_paginator()
         page_selection = paginator.get_pages(page)
+        year_range = queryset.year_range()
+        start = year_range['start']
+        end = year_range['end']
 
         try:
             photo_rec = page_selection.find(self.object.id)
@@ -79,7 +82,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             #context["years"] = index
             context['timeline_key'] = cache_info
-            context['timelinesvg_url'] = "{}?{}".format(reverse('timelinesvg', kwargs=dict(start=1850, end=2000)), self.request.GET.urlencode())
+            context['timelinesvg_url'] = "{}?{}".format(reverse('timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
             #context['initialstate'] = self.get_data(context)

@@ -3562,7 +3562,7 @@
     const htmx = HTMX(document);
 
     htmx.onLoad(toggleMetadata(document));
-    htmx.onLoad(markerDnD(document));
+    window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
     //htmx.logAll()
 
     const init = () => {
