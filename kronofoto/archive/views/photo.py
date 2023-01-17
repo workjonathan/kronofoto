@@ -186,11 +186,16 @@ class TimelineSvg(TemplateView):
             else:
                 context['minornotches'].append(marker)
         return context
-    @cache_control(max_age=60*60)
+
+    def options(self, *args, **kwargs):
+        response = super().options(*args, **kwargs)
+        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
+        return response
+
+    @cache_control(max_age=60*60, public=True)
     def dispatch(self, *args, **kwargs):
-        response = super().get(*args, **kwargs)
+        response = super().dispatch(*args, **kwargs)
         response['Vary'] = 'Constraint'
         response['Content-Type'] = 'image/svg+xml'
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
         return response
