@@ -38,7 +38,7 @@ class RandomRedirect(PhotoRedirectView):
 
 
 class YearRedirect(PhotoRedirectView):
-    ordering = 'id'
+    ordering = ('year', 'id')
     def get_object(self):
-        qs = self.get_queryset().filter(year__gte=self.kwargs['year'])
+        qs = self.get_queryset().filter(year__gte=self.kwargs['year']).order_by(*self.ordering)
         return qs[0]
