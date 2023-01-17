@@ -22,7 +22,7 @@
         <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-select="#app">
           <ul>
             <li><span class="field-name">Category Terms:</span>
-            {% if photo.terms.all %}
+            {% if photo.terms.exist %}
                 {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
 		<a hx-get="{{ term.get_absolute_url }}" href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}
             {% else %}
