@@ -81,6 +81,7 @@ class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         photo_count = cache.get('photo_count:')
+        context['search-form'] = self.form
         context['constraint'] = json.dumps({'Constraint': self.constraint})
         if self.expr:
             if self.expr.is_collection():
