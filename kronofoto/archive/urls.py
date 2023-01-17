@@ -3,6 +3,7 @@ from . import views
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
+from archive.views.photo import TimelineSvg
 
 class NegativeIntConverter:
     regex = '-?\d+'
@@ -30,6 +31,7 @@ urlpatterns = [
     path('missing-photos/', views.MissingPhotosView.as_view()),
     path('<str:id>.css', views.EmbedStyleSheet.as_view(), name="css"),
     path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
+    path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
