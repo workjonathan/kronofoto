@@ -4,6 +4,7 @@ from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
+from django.conf import settings
 
 class NegativeIntConverter:
     regex = '-?\d+'
@@ -30,11 +31,7 @@ urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('missing-photos/', views.MissingPhotosView.as_view()),
     path('<str:id>.css', views.EmbedStyleSheet.as_view(), name="css"),
-    path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
-    path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
-    path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
-    path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('original/<int:pk>/', views.DownloadPageView.as_view(), name='download'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
     path('accounts/', include('archive.auth.urls')),
@@ -68,3 +65,10 @@ urlpatterns = [
     path('review/<int:pk>/approve/yes', views.ApprovePhoto.as_view(approve=True), name='photo-approve'),
     path('review/<int:pk>/approve/no', views.ApprovePhoto.as_view(approve=False), name='photo-reject'),
 ]
+if True:
+    urlpatterns += [
+        path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
+        path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
+        path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
+        path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
+    ]

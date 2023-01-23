@@ -43,16 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.sites',
     'gtm',
-    'cms',
-    'menus',
-    'treebeard',
-    'sekizai',
-    'filer',
-    'djangocms_picture',
-    'djangocms_file',
-    'djangocms_text_ckeditor',
-    'djangocms_link',
-    'easy_thumbnails',
 ]
 
 MIDDLEWARE = [
@@ -64,10 +54,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-	'cms.middleware.user.CurrentUserMiddleware',
-    'cms.middleware.page.CurrentPageMiddleware',
-    'cms.middleware.toolbar.ToolbarMiddleware',
-    'cms.middleware.language.LanguageCookieMiddleware',
 ]
 
 ROOT_URLCONF = 'kronofoto.urls'
@@ -83,7 +69,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'sekizai.context_processors.sekizai',
+                'archive.context_processors.feature_flags',
             ],
             #'builtins': ['archive.builtins'],
         },
@@ -120,10 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]
-
-CMS_TEMPLATES = [
-    ('archive/doc-base.html', 'Default'),
 ]
 
 # Internationalization

@@ -5,7 +5,9 @@
 {% load searchform %}
 {% load widgets %}
 {% load gtm_tags %}
+{% if KF_DJANGOCMS_NAVIGATION %}
 {% load menu_tags %}
+{% endif %}
 <head>
   {% gtm_head %}
   <meta charset="UTF-8">
@@ -103,8 +105,12 @@
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
               <ul class="navigation-menu" id="navigation-menu">
+                {% if KF_DJANGOCMS_NAVIGATION %}
                 {% show_menu 0 100 100 100 %}
                 <li><a href="https://blog.fortepan.us/">Blog</a></li>
+                {% else %}
+                {% include "archive/navigation-menu.html"%}
+                {% endif %}
               </ul>
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
