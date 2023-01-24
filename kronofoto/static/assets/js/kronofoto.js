@@ -7,7 +7,8 @@ const themes = [
         downloadSvg: "assets/images/skyblue/download.svg",
         searchSvg: "assets/images/skyblue/search.svg",
         carrotSvg: "assets/images/skyblue/carrot.svg",
-        timelineSvg: 'assets/images/skyblue/toggle.svg'
+        timelineSvg: 'assets/images/skyblue/toggle.svg',
+        autoPlay: 'assets/images/skyblue/auto-play.svg'
     },
     {
         color: "#c28800",
@@ -17,7 +18,8 @@ const themes = [
         downloadSvg: "assets/images/golden/download.svg",
         searchSvg: "assets/images/golden/search.svg",
         carrotSvg: "assets/images/golden/carrot.svg",
-        timelineSvg: 'assets/images/golden/toggle.svg'
+        timelineSvg: 'assets/images/golden/toggle.svg',
+        autoPlay: 'assets/images/golden/auto-play.svg'
     },
     {
         color: "#c2a55e",
@@ -27,7 +29,8 @@ const themes = [
         downloadSvg: "assets/images/haybail/download.svg",
         searchSvg: "assets/images/haybail/search.svg",
         carrotSvg: "assets/images/haybail/carrot.svg",
-        timelineSvg: 'assets/images/haybail/toggle.svg'
+        timelineSvg: 'assets/images/haybail/toggle.svg',
+        autoPlay: 'assets/images/haybail/auto-play.svg'
     },
     {
         color: "#445170",
@@ -37,7 +40,8 @@ const themes = [
         downloadSvg: "assets/images/navy/download.svg",
         searchSvg: "assets/images/navy/search.svg",
         carrotSvg: "assets/images/navy/carrot.svg",
-        timelineSvg: 'assets/images/navy/toggle.svg'
+        timelineSvg: 'assets/images/navy/toggle.svg',
+        autoPlay: 'assets/images/navy/auto-play.svg'
     }
 ]
 class FortepanBase {
@@ -638,6 +642,11 @@ const applyTheme = (static_url, theme, {root=document}={}) => {
     for (const carrot of root.querySelectorAll('.carrot')) {
         carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
     }
+    
+    for (const autoPlay of root.querySelectorAll('.auto-play')) {
+        autoPlay.src = _static(static_url, theme.autoPlay)
+    }
+    
     for (const timelineMarker of root.querySelectorAll('.marker-image')) {
         timelineMarker.style.backgroundImage = `url('${_static(static_url, theme.timelineSvg)}')`
     }

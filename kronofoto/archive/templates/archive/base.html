@@ -46,7 +46,7 @@
             </div>
           </div>
 
-          <div class="header-text">{{photo_count}} images</div>
+          <div class="header-text">{{photo_count}}<br>images</div>
 
           <div id="search-box-container">
             <div class="search-box-content">
@@ -101,10 +101,14 @@
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
               <ul class="navigation-menu">
+                 
                 {% docnav "Archive" %}
+                  
+                  <div class="mobile-visible">
                 <li><a class="fi-timeline-a" data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}">Timeline View</a></li>
                 <li><a class="grid-a" data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">Grid View</a></li>
-
+                  </div>
+                  
                 <li><a href="https://blog.fortepan.us/">Blog</a></li>
               </ul>
                 

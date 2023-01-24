@@ -2,7 +2,7 @@
 <a href="{% url "user-page" user.username %}"><i class="fas fa-user-circle fa-2x" title="Account"></i></a>
 {% else %}
 <button id="login-btn" onclick="toggleLogin()">
-    <i class="fas fa-lock"></i> Login
+    <i class="fas fa-lock"></i> <div style="float:right; margin-left:.5em" class="mobile-hidden">Login</div>
 </button>
 <div id="login" class="hidden">
     <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">

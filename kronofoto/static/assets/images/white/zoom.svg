@@ -3,16 +3,16 @@
   <defs>
     <style>
       .cls-1 {
-        fill: #6e86bc;
+        fill: #fff;
       }
     </style>
   </defs>
   <g id="Layer_2" data-name="Layer 2">
     <g id="timeline_view" data-name="timeline view">
       <g id="timeline_view-2" data-name="timeline view-2">
-        <polygon class="cls-1" points="34.59 16.21 28.61 16.21 28.61 7 19.39 7 19.39 16.21 13.42 16.21 24.01 30.29 34.59 16.21"/>
-        <rect class="cls-1" x="9.79" y="37.29" width="28.43" height="3.71"/>
+        <rect class="cls-1" x="30.8" y="25.73" width="4" height="13.89" transform="translate(-13.5 32.76) rotate(-45)"/>
       </g>
+      <path class="cls-1" d="M20.79,9c-6.58,0-11.91,5.33-11.91,11.91s5.33,11.91,11.91,11.91,11.91-5.33,11.91-11.91-5.33-11.91-11.91-11.91Zm7.52,13.83h-5.6v5.6h-3.85v-5.6h-5.59v-3.85h5.59v-5.59h3.85v5.59h5.6v3.85Z"/>
     </g>
   </g>
 </svg>

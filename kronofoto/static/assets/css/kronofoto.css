@@ -133,12 +133,15 @@
  ******************/
 
 @media (max-width: 1140px) {
-    .mobile-hidden .* {
+    .mobile-hidden * {
         display: none;
     }
     
-    .mobile-visible .* {
+    .mobile-visible * {
         display: flex;
+    }
+    .mobile-hidden {
+        display: none;
     }
 }
 
@@ -146,10 +149,18 @@
     display: flex;
 }
 
-.mobile-visible .* {
-    display: none;
-}
+@media (min-width: 1140px) {
+    
 
+    .mobile-visible {
+        display: none;
+    }
+
+
+    .mobile-visible * {
+        display: none;
+    }
+}
 
 .main-nav {
   display: flex;
@@ -160,11 +171,11 @@
 }
 
 .main-nav_left {
-  width: 66%;
+  width: 70%;
 }
 
 .main-nav_right {
-  width: 16.5%;
+  /*width: 16.5%;*/
 }
 
 .main-nav_left, .main-nav_right {
@@ -174,7 +185,7 @@
 }
 
 .main-nav_center {
-  width: 16.5%;
+  width: 14%;
   display: flex;
   justify-content: space-evenly;
   align-items: center;
@@ -188,7 +199,8 @@
 }
 
 .header-text {
-    font-size: 14px;
+    font-size: 10px;
+    text-align: center;
     color: #777;
 }
 
@@ -198,8 +210,9 @@
 }
 
 #search-box-container {
+   
   flex-grow: 1;
-  max-width: 650px;
+  max-width: 550px;
   background-color: var(--fp-light-grey);
   z-index: 99;
 }
@@ -280,12 +293,13 @@ input#search-box::placeholder {
 
 .search-options {
   align-self: center;
+    padding-right: 5px;
 }
 
 .search-box-content {
   display: flex;
   justify-content: space-between;
-  padding: 0 15px;
+  /*padding: 0 15px;*/
 }
 
 
@@ -534,9 +548,9 @@ button#login-btn:hover {
 main article.fi-image {
   grid-area: current-image;
 
-  display: grid;
+  /*display: grid;
   grid-template-rows: 30% auto 30%;
-  grid-template-columns: 30px 3% 1fr 1fr 3% 30px;
+  grid-template-columns: 30px 3% 1fr 1fr 3% 30px;*/
 
   position: relative;
   margin: auto;
@@ -553,56 +567,114 @@ main .img-right-space{
 }
 
 main .fi-image-background{
-  grid-area: current-image;
+  /*grid-area: current-image;*/
+  position: absolute;
+    width: 100%;
+    height: calc(100vh - 210px);
   background: #c7c8ca;
 }
 .fi-image figure {
+/*
   grid-row-start: 1;
   grid-row-end: span 4;
   grid-column-start: 1;
-  grid-column-end: span 6;
+  grid-column-end: span 6;*/
   display: flex;
-  justify-content: center;
-  margin-left: 50%;
-  transform: translateX(-50%);
+
+    justify-content: center;
+   
+
+   
+    position: relative;
+
+    width: 100vw;
+    height: 100%;
 }
 
 .fi-image figure img {
-  margin: auto;
+    position: absolute;
+     top: 50vh;
+     left: 50vw;
+    
+  transform: translate(-50%, calc(-50% - 130px));
+  max-height: calc(100vh - 295px);
+    min-height: 100px;
+    max-width: calc(100vw - 20px);
+}
+
+@media (max-width: 1140px) {
+    .fi-image figure img {
+   
+        max-height: calc(100vh - 195px);
+        transform: translate(-50%, calc(-50% - 80px));
+    
+    } 
+    main .fi-image-background{
+  
+    height: calc(100vh - 100px);
+  
+    }
 }
 
 .fi-image .control {
   position: absolute;
   height: 100%;
-  width: 100%;
+  /*width: 100%;*/
 }
 
 .fi-image .control.previous {
-  grid-column: 1 / 4;
+  /*grid-column: 1 / 4;*/
+    position: absolute;
+height:calc(100vh - 300px);
+    top:0px;
   cursor: url('../images/arrow-cursor-back.png'), auto;
-  width: 100vw;
-  transform: translateX(-50%);
+  width: 50vw;
+    
+  /*transform: translateX(-50%);*/
 }
 
 .fi-image .control.forward {
-  grid-column-start: 4;
+  /*grid-column-start: 4;*/
+    position:absolute;
+    top:0px;
+    height:calc(100vh - 300px);
   cursor: url('../images/arrow-cursor.png'), auto;
-  width: 100vw;
+  width: 50vw;
+    right:0px;
 }
 
-@media only screen and (max-width: 900px) {
+/*(@media only screen and (max-width: 900px) {
   .fi-image .control.previous {
     transform: translateX(-20%);
-  }
+  
+}*/
+.button-container {
+    position:relative;
+    display: flex;
+    width: 380px;
+    top:calc(100vh - 260px);
+    left: calc(50% - 190px);
+    justify-content: space-between;
 }
-
+.button-line {
+    width: 1px;
+    background-color: black;
+    margin: 0 10px;
+}
+@media (max-width:1140px) {
+    .button-container {
+        top:calc(100vh - 160px)
+    }
+}
 .fi-image #expand, .fi-image #dl {
+/*
   grid-row-start: 4;
   grid-column-start: 6;
   grid-column-end: span 1;
   justify-self: end;
   align-self: end;
   z-index:1000;
+*/
 
   height: 40px;
   width: 40px;
@@ -613,18 +685,19 @@ main .fi-image-background{
   font-size: 30px;
 }
 
-.fi-image #dl {
-  grid-column-start: 5;
-  margin-right: 10px;
-}
+
+
 
 #expand img {
-  width: 20px;
+  width: 30px;
+    margin:5px;
 }
 
 #dl img {
-  width: 17px;
+  width: 30px;
+    margin: 5px;
 }
+
 
 .add-tag {
   font-size: 20px;
@@ -759,11 +832,14 @@ main .fi-image-background{
  }
 
 .fi-timeline {
-  grid-area: timeline;
+  /*grid-area: timeline;*/
+    position: absolute;
+    bottom: 40px;
+    left: calc((100vw - 1140px)/2);
   flex-direction: column;
   justify-self: center;
   width: 1140px;
-  min-height: 150px;
+  /*min-height: 150px;*/
   align-self: center;
 
   background: #e6e7e8;
@@ -776,7 +852,7 @@ main .fi-image-background{
 }
 
 .fi-thumbnail-carousel {
-  height: 130px;
+  height: 110px;
   display: flex;
   flex-direction: row;
   flex-grow: 1;
@@ -814,7 +890,7 @@ main .fi-image-background{
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: 100%;
+/*  height: 100%;*/
   width: 100%;
 }
 
@@ -835,8 +911,9 @@ main .fi-image-background{
 
 #fi-thumbnail-carousel-images li {
   --carousel-image-padding: 10px;
-  padding: var(--carousel-image-padding);
-  margin: 20px 0;
+  padding: 0 var(--carousel-image-padding);
+ 
+  margin:  0 0 5px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -845,6 +922,10 @@ main .fi-image-background{
 
 #fi-thumbnail-carousel-images li img {
     width: auto;
+    transform: translateY(5px);
+    z-index: 2;
+    
+    
 }
 
 #fi-thumbnail-carousel-images li[data-active]:before {
@@ -852,9 +933,10 @@ main .fi-image-background{
   margin: 0 10px;
   position: absolute;
   top: 0;
-  height: 5px;
-  width: calc(100% - var(--carousel-image-padding));
+  height: 85px;
+  width: calc(100% - (2 * var(--carousel-image-padding)));
   background-color: var(--fp-main-blue);
+    z-index: 0;
 }
 
 #fi-thumbnail-carousel-images li[data-active]:after {
@@ -907,6 +989,55 @@ main .fi-image-background{
     background: var(--fp-main-blue);
 }
 
+
+
+/*==============================*/
+/*       HTML SLIDER (new)      */
+/*                              */
+/*==============================*/
+
+.timeline-slider {
+    position: absolute;
+    bottom: 10px;
+  width: 100%;
+    max-width: 1140px;
+    margin:auto;
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 5px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #04AA6D; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #04AA6D; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
 
 
 
@@ -1016,13 +1147,26 @@ main .fi-image-background{
  **********************/
 
 #metadata {
-  grid-row: 3 / span 2;
+/*
+  grid-row: 3 / span 3;
   grid-column: 1 / span 6;
+*/
   background-color: rgb(230,231,232);
   padding: 20px;
   position: relative;
+    height: calc(100vh - 285px);
+    width: 300px;
   z-index: 10;
-  bottom: 0;
+  bottom: calc(100vh - 230px);
+    transform: translateX(-130px);
+}
+
+@media (max-width: 1140px) {
+    #metadata {
+        height: calc(100vh - 185px);
+        bottom: calc(100vh - 130px);
+        transform: none;
+    }
 }
 
 #metadata ul {

@@ -9,16 +9,16 @@
 
 
 img {
-  max-height: calc(100vh - 278px);
+  /*max-height: calc(100vh - 278px);*/
 }
 
 
 body {
-  display: grid;
+  /*display: grid;
   height: 100vh;
   grid-template: "header" 8vh
                  "main" 92vh
-                 / 1fr;
+                 / 1fr;*/
   margin: 0 auto;
   overflow-x: hidden;
 }
@@ -38,9 +38,11 @@ a {
  ******************/
 
 header {
-  max-height: 200px;
+  /*max-height: 200px;
   grid-row: 1 / span 1;
-  padding: 1.6vh;
+  padding: 1.6vh;*/
+    height: 60px;
+    padding: 10px;
 }
 
 nav {
@@ -101,12 +103,12 @@ select {
 }
 
 main {
-  grid-area: main;
+  /*grid-area: main;
 
   display: grid;
   grid-template: "img-left-space current-image img-right-space" /*minmax(auto, calc(100vh - 278px)) /*700px is the max height for an FI image*/
                  "car-left-space timeline car-right-space" auto
                  "year-ticker year-ticker year-ticker" auto
-                 / 1fr 10fr 1fr;
+                 / 1fr 10fr 1fr;*/
   flex-direction: column;
 }
