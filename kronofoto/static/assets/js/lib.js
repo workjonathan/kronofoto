@@ -1,3 +1,4 @@
+import {enableMarkerDnD} from "./drag-drop.js"
 const themes = [
     { 
         color: "#6c84bd",
@@ -7,8 +8,7 @@ const themes = [
         downloadSvg: "assets/images/skyblue/download.svg",
         searchSvg: "assets/images/skyblue/search.svg",
         carrotSvg: "assets/images/skyblue/carrot.svg",
-        timelineSvg: 'assets/images/skyblue/toggle.svg',
-        autoPlay: 'assets/images/skyblue/auto-play.svg'
+        timelineSvg: 'assets/images/skyblue/toggle.svg'
     },
     {
         color: "#c28800",
@@ -18,8 +18,7 @@ const themes = [
         downloadSvg: "assets/images/golden/download.svg",
         searchSvg: "assets/images/golden/search.svg",
         carrotSvg: "assets/images/golden/carrot.svg",
-        timelineSvg: 'assets/images/golden/toggle.svg',
-        autoPlay: 'assets/images/golden/auto-play.svg'
+        timelineSvg: 'assets/images/golden/toggle.svg'
     },
     {
         color: "#c2a55e",
@@ -29,8 +28,7 @@ const themes = [
         downloadSvg: "assets/images/haybail/download.svg",
         searchSvg: "assets/images/haybail/search.svg",
         carrotSvg: "assets/images/haybail/carrot.svg",
-        timelineSvg: 'assets/images/haybail/toggle.svg',
-        autoPlay: 'assets/images/haybail/auto-play.svg'
+        timelineSvg: 'assets/images/haybail/toggle.svg'
     },
     {
         color: "#445170",
@@ -40,8 +38,7 @@ const themes = [
         downloadSvg: "assets/images/navy/download.svg",
         searchSvg: "assets/images/navy/search.svg",
         carrotSvg: "assets/images/navy/carrot.svg",
-        timelineSvg: 'assets/images/navy/toggle.svg',
-        autoPlay: 'assets/images/navy/auto-play.svg'
+        timelineSvg: 'assets/images/navy/toggle.svg'
     }
 ]
 class FortepanBase {
@@ -378,7 +375,6 @@ class FortepanViewer extends HTMLElement {
         initialize_fortepan(this.shadowRoot.querySelector("#app"), {host, constraint, root: this.shadowRoot})
     }
 }
-customElements.define("fortepan-viewer", FortepanViewer)
 
 class URLUpdater {
     constructor(constraints) {
@@ -414,11 +410,11 @@ const initialize_fortepan = (element, {constraint=undefined, host="https://forte
 }
 
 const scrollSpeed = 4 // seconds to scroll through one set of 10 images
-const toggleLogin = evt => {
+export const toggleLogin = evt => {
     const el = document.querySelector('#login');
     toggleElement(el);
 }
-const toggleMenu = evt => {
+export const toggleMenu = evt => {
     const el = document.querySelector('.hamburger-menu')
     toggleElement(el)
     toggleHover()
@@ -426,6 +422,65 @@ const toggleMenu = evt => {
 const toggleElement = el => {
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
+    }
+}
+const toggleHover = () => {
+    if($('.hamburger-menu').hasClass('gridden')) {
+        $('.overlay').css('display', 'block')
+        /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
+        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
+        /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
+    } else {
+        $('.overlay').css('display', 'none')
+        /* $('.hamburger-container').css('background-color', '')
+        $('.hamburger-container div img').css('filter', '') */
+        /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
+    }
+}
+const moveMarker = (root, marker) => {
+    const markerYearElement = marker.querySelector('.marker-year');
+
+    // Update year text
+    const year = markerYearElement.textContent
+
+    // Show Marker (might not be necessary to do this display stuff)
+    marker.style.display = 'block';
+
+    // move marker to position of tick
+    let embedmargin = root.querySelector('.year-ticker').getBoundingClientRect().left;
+    let tick = root.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
+    let bounds = tick.getBoundingClientRect();
+    let markerStyle = window.getComputedStyle(marker);
+    let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
+    let offset = (bounds.x - (markerWidth / 2) - embedmargin); // calculate marker width offset for centering on tick
+    marker.style.transform = `translateX(${offset}px)`;
+}
+
+export const markerDnD = root => content => {
+    if (content.id == 'active-year-marker') {
+        moveMarker(root, content)
+        enableMarkerDnD(root)
+    }
+    for (const marker of content.querySelectorAll('.active-year-marker')) {
+        moveMarker(root, marker)
+        enableMarkerDnD(root)
+    }
+}
+
+export const toggleMetadata = root => content => {
+    if (content.id == 'expand') {
+        content.addEventListener("click", evt => {
+            for (const metadata of root.querySelectorAll("#metadata")) {
+                toggleElement(metadata)
+            }
+        })
+    }
+    for (const elem of content.querySelectorAll("#expand")) {
+        elem.addEventListener("click", evt => {
+            for (const metadata of content.querySelectorAll("#metadata")) {
+                toggleElement(metadata)
+            }
+        })
     }
 }
 
@@ -509,112 +564,6 @@ const scrollAction = (element, app, direction, target, root) => evt => {
 
 */
 
-const init = () => {
-    $(document).click(function(event)
-    {
-        //~TESTING LINE
-        //console.log(event.target.className)
-
-        var classOfThingClickedOn = event.target.className
-
-        //~TESTING LINE
-        //console.log($('.search-form').find('*'))
-
-        //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
-        var $descendantsOfSearchForm = $('.search-form').find('*')
-
-        //---creates an array of all components of the search menu dropdown---
-        //adds the search menu itself to the array
-        var componentsOfSearchMenuArray = ['search-form']
-
-        //adds the class of all the components of the search menu to the array
-        $descendantsOfSearchForm.each(function(index)
-        {
-            //checks to make sure the class isn't already in the array
-            if($.inArray(this.className, componentsOfSearchMenuArray) == -1)
-            {
-                //adds the class to the array
-                componentsOfSearchMenuArray.push(this.className)
-            }
-        })
-
-        //~TESTING LINES
-        //console.log(componentsOfSearchMenuArray)
-        //console.log('Class:'+'"'+classOfThingClickedOn+'"')
-        //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
-
-        //if the search menu is open and the user clicks on something outside of the menu, close the menu
-        if($('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
-        {
-            $('.search-form').toggle()
-        }
-        //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
-        else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')
-        {
-            $('.search-form').toggle()
-        }
-    })
-
-
-    $('#tag-search').autocomplete({
-        source: '/tags/',
-        minLength: 2,
-    })
-
-    $('.overlay, .close-btn').click(() => {
-        $('.gridden').removeClass('gridden').addClass('hidden')
-        $('.overlay').css('display', 'none')
-    })
-
-
-    const toggleHover = () => {
-        if($('.hamburger-menu').hasClass('gridden')) {
-            $('.overlay').css('display', 'block')
-            /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
-            $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
-            /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
-        } else {
-            $('.overlay').css('display', 'none')
-            /* $('.hamburger-container').css('background-color', '')
-            $('.hamburger-container div img').css('filter', '') */
-            /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
-        }
-    }
-
-    $('#login-btn').click(() => {
-        if($('#login').hasClass('gridden')) {
-            $('.overlay').css('display', 'block')
-        } else {
-            $('.overlay').css('display', 'none')
-        }
-    })
-
-
-    $('#search-box').focus(function() {
-        $('#search-box-container').css('background','var(--fp-main-blue)')
-        $('.search-icon').css('filter', 'brightness(0) invert(1)')
-        $('.carrot').css('filter', 'brightness(0) invert(1)')
-        $('#search-box').addClass('placeholder-light').css('color', 'white')
-
-    }).blur(function() {
-        $('#search-box-container').css('background','var(--fp-light-grey)')
-        $('.search-icon').css('filter', 'none')
-        $('.carrot').css('filter', 'none')
-        $('#search-box').removeClass('placeholder-light').css('color', '#333')
-        //('#search-box').css('color', 'var(--fp-light-grey)')
-    });
-
-}
-
-const ready = fn => {
-    if (document.readyState !== "loading") {
-        fn()
-    } else {
-        document.addEventListener("DOMContentLoaded", fn)
-    }
-}
-ready(init)
-
 
 
 
@@ -642,11 +591,6 @@ const applyTheme = (static_url, theme, {root=document}={}) => {
     for (const carrot of root.querySelectorAll('.carrot')) {
         carrot.setAttribute("src", _static(static_url, theme.carrotSvg))
     }
-    
-    for (const autoPlay of root.querySelectorAll('.auto-play')) {
-        autoPlay.src = _static(static_url, theme.autoPlay)
-    }
-    
     for (const timelineMarker of root.querySelectorAll('.marker-image')) {
         timelineMarker.style.backgroundImage = `url('${_static(static_url, theme.timelineSvg)}')`
     }

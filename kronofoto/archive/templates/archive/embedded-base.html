@@ -1,0 +1,42 @@
+{% load static %}
+{% load login %}
+{% load searchform %}
+{% load widgets %}
+{% load docnav %}
+{% load gtm_tags %}
+<style>
+            @import "{% url "css" id="app" %}";
+* {
+    --fp-main-font: 'Montserrat', sans-serif;
+    --fp-secondary-ticker-color: #9d9d9c;
+    --fp-main-grey: #d6d6da;
+    --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
+    --fp-light-grey: #efeff1;
+    --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
+    --fp-main-blue: #c2a55e;
+}
+</style>
+<div id="kfroot" hx-headers="{{ constraint | escape }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+<center>
+<div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+          {% block viewbuttons %}
+          {% endblock %}
+    <div id="collection-name">
+    {{ collection_name }}
+    </div>
+    <div id="all-photos">
+    {% if collection_name != "All Photos" %}
+        <a href="{% url "grid" %}">Back to All Photos</a>
+    {% endif %}
+    </div>
+    <div>
+    <a class="fpi-fpilink" href="{{ timeline_url }}">Fortepan</a>
+    </div>
+</div>
+</center>
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+      {% block content %}
+      {% endblock %}
+  </div>
+</div>

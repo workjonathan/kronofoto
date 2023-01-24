@@ -1,4 +1,4 @@
-from django.views.generic import TemplateView
+from django.views.generic import DetailView
 from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
@@ -15,10 +15,11 @@ from ..reverse import get_request, set_request, as_absolute
 NO_URLS = dict(url='#', json_url='#')
 
 
-class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
-    template_name = "archive/photo.html"
+class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
     items = 10
+    pk_url_kwarg = 'photo'
     _queryset = None
+    model = Photo
 
     @property
     def queryset(self):
@@ -30,11 +31,17 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
+    #def get_object(self, *args, **kwargs):
+    #    print("test")
+    #    return self.model.objects.get(pk=self.model.accession2id(self.kwargs[self.pk_url_kwarg]))
+
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id'), self.items)
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
+        if self.request.headers.get('Hx-Target', None) == 'fi-image':
+            context['base_template'] = 'archive/photo_partial.html'
         photo = self.kwargs['photo']
         if 'page' in self.kwargs:
             page = self.kwargs['page']
@@ -52,31 +59,26 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         page_selection = paginator.get_pages(page)
 
         try:
-            photo_rec = page_selection.find_accession_number(photo)
+            photo_rec = page_selection.find(self.object.id)
 
             params = self.request.GET.copy()
             if 'constraint' in params:
                 params.pop('constraint')
-            if 'embed' in params:
-                params.pop('embed')
             for p in page_selection.photos():
                 p.save_params(params)
 
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
             context['grid_json_url'] = photo_rec.get_grid_json_url()
+            context['timeline_url'] = photo_rec.get_absolute_url()
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             context["years"] = index
-            if self.final_expr and self.final_expr.is_collection() and self.expr:
-                context['collection_name'] = str(self.expr.description())
-            else:
-                context['collection_name'] = 'All Photos'
             context['timeline_key'] = cache_info
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
-            context['initialstate'] = self.get_data(context)
+            #context['initialstate'] = self.get_data(context)
         except KeyError:
             pass
         return context
@@ -108,7 +110,9 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
         }
 
     def render(self, context, **kwargs):
-        return super().render_to_response(context, **kwargs)
+        response = super().render_to_response(context, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     def get_redirect_url(self, photo):
         return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
@@ -116,7 +120,7 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, TemplateView):
     def render_to_response(self, context, **kwargs):
         if 'years' not in context:
             try:
-                photo = Photo.objects.get(id=Photo.accession2id(self.kwargs['photo']))
+                photo = Photo.objects.get(id=self.kwargs['photo'])
                 return redirect(self.get_redirect_url(photo))
             except Photo.DoesNotExist:
                 raise Http404("Photo either does not exist or is not in that set of photos")

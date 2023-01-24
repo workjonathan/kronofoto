@@ -1,7 +1,23 @@
 // =======================================================================================================
 // This file contains the functionality to enable the dragging and dropping of the timeline marker to work
 // =======================================================================================================
-const enableMarkerDnD = app => {
+let currentX
+let currentTick
+let root
+window.addEventListener("dragover", e => {
+    currentX = e.clientX
+    let closestTick
+    for (const el of root.querySelectorAll('.tl a')) {
+      const rect = el.getBoundingClientRect()
+      if (rect.left <= currentX && currentX <= rect.right) {
+          closestTick = el
+      }
+    }
+    currentTick = closestTick
+})
+export const enableMarkerDnD = document => {
+    root = document
+    const now = Date.now()
     const marker = document.querySelector('.active-year-marker');
     const dropzones = document.querySelectorAll('.tl a');
     const dzXCoords = Array.from(dropzones).map((dropzone) => dropzone.getBoundingClientRect().x);
@@ -29,17 +45,15 @@ const enableMarkerDnD = app => {
       dropzone.addEventListener('drop', dragDrop);
     });
 
-    let currentX;
     let initialX;
     let xOffset = 0;
     let markerWidth = (marker.getBoundingClientRect().width / 2);
-    let currentTick;
     let currentTickX;
 
     // Make invisible drag feedback image
-    const dragImgEl = document.createElement('span');
+    const dragImgEl = window.document.createElement('span');
     dragImgEl.setAttribute('style', 'position: absolute; display: block; top: 0; left: 0; width: 0; height: 0;' );
-    document.body.appendChild(dragImgEl);
+    (document.body ? document.body : document).appendChild(dragImgEl);
 
     // ==============================================
     // Necessary to prevent mirror image from showing
@@ -85,22 +99,8 @@ const enableMarkerDnD = app => {
         e.target.style.transform = `translateX(${currentX - markerWidth}px)`;
       }
 
-      const jsonhref = currentTick.getAttribute('data-json-href') || currentTick.parentElement.getAttribute('data-json-href');
-      request('GET', jsonhref).then(data => {
-        app.loadstate(data)
-        app.pushWindowState(data)
-      });
+      currentTick.dispatchEvent(new Event("click"))
     }
-    window.addEventListener("dragover", e => {
-        currentX = e.clientX
-        for (const el of document.querySelectorAll('.tl a')) {
-          const rect = el.getBoundingClientRect()
-          if (rect.left <= currentX && currentX <= rect.right) {
-              closestTick = el
-          }
-        }
-        currentTick = closestTick.children[0]
-    })
 
     function dragOver(e) {
       e.preventDefault();

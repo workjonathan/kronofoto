@@ -1,0 +1,19 @@
+<div>
+<div id="navigation-menu">
+{% include "archive/navigation-menu.html" %}
+</div>
+<div id="collection-name">
+    {{ collection_name }}
+</div>
+<div id="all-photos">
+{% if collection_name != "All Photos" %}
+    <a href="{% url "gridview" %}" hx-get="{% url "gridview" %}" hx-target="#app">Back to All Photos</a>
+{% endif %}
+</div>
+{% block viewbuttons %}
+{% endblock %}
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+{% block content %}
+{% endblock %}
+  </div>
+</div>

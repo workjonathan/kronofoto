@@ -31,12 +31,12 @@
 }
   </style>
 </head>
-<body>
+<body hx-push-url="true">
   {% gtm_body %}
   <div class="overlay" style="display: none;"></div>
   <header>
     <nav aria-label="Main navigation">
-      <div class="main-nav">
+      <div class="main-nav" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
         <div class="main-nav_left">
           <div id="logo">
             <a href="{% url "random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
@@ -64,8 +64,10 @@
 
         </div> <!-- end nav left -->
         <div class="main-nav_center mobile-hidden">
-          {% view_buttons timeline_url timeline_json_url grid_url grid_json_url %}
-          <div class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
+          {% block viewbuttons %}
+          {% include "archive/view-buttons.html" %}
+          {% endblock %}
+          <div id="new-label_container" class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div>
           <!-- end nav center -->
@@ -93,16 +95,16 @@
           </div>
           <div class="hamburger-container">
 
-            <div class="hamburger" onclick="toggleMenu()">
+            <div class="hamburger">
               <img class="hamburger-icon" src="{% static "assets/images/hamburger.svg" %}" alt="menu icon" title="Menu">
             </div>
 
             <div class="hamburger-menu hidden">
               <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
               <i class="fas fa-times fa-2x close-btn"></i>
-              <ul class="navigation-menu">
-                 
-                {% docnav "Archive" %}
+
+              <ul class="navigation-menu" id="navigation-menu">
+                {% include "archive/navigation-menu.html" %}
                   
                   <div class="mobile-visible">
                 <li><a class="fi-timeline-a" data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}">Timeline View</a></li>
@@ -110,6 +112,7 @@
                   </div>
                   
                 <li><a href="https://blog.fortepan.us/">Blog</a></li>
+
               </ul>
                 
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
@@ -125,10 +128,13 @@
       </div>
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <script src="{% static "assets/js/kronofoto.js" %}"></script>
-  <script src="{% static "assets/js/drag-drop.js" %}"></script>
+  {% if debug %}
+  <script type="module" src="{% static "assets/js/main-dev.js" %}"></script>
+  {% else %}
+  <script src="{% static "assets/js/main.js" %}"></script>
+  {% endif %}
   </header>
-  <div id="app">
+  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
     {% block content %}
     {% endblock %}
   </div>

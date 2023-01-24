@@ -13,25 +13,25 @@ class FakeTimelinePage:
 
     object_list = [FAKE_PHOTO] * 10
 
-    def find_accession_number(self, accession_number):
-        raise KeyError(accession_number)
+    def find(self, pk):
+        raise KeyError(pk)
 
 class TimelinePage(Page):
-    def find_accession_number(self, accession_number):
+    def find(self, pk):
         for i, p in enumerate(self):
-            if p.accession_number == accession_number:
+            if p.id == pk:
                 p.active = True
                 p.row_number = self.start_index() + i - 1
                 return p
-        raise KeyError(accession_number)
+        raise KeyError(pk)
 
 
 class PageSelection:
     def __init__(self, pages):
         self.pages = pages
 
-    def find_accession_number(self, accession_number):
-        return self.main_page().find_accession_number(accession_number)
+    def find(self, pk):
+        return self.main_page().find(pk)
 
     def main_page(self):
         return self.pages[len(self.pages)//2]
