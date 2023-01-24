@@ -1,20 +1,21 @@
 from django import template
+from django.urls import reverse
 
 register = template.Library()
 
 @register.inclusion_tag('archive/timeline.svg')
-def make_timeline(years, width=400):
+def make_timeline(start, end, request, width=400):
     context = {
         'minornotches': [],
         'majornotches': [],
         'viewBox': [0, 0, width, 10],
     }
-    for (i, (year, href, json_href)) in enumerate(years):
-        xpos = i*width/len(years)
-        boxwidth = width/len(years)
+    years = end-start+1
+    for i, year in enumerate(range(start, end+1)):
+        xpos = i*width/years
+        boxwidth = width/years
         marker = {
-            'target': href,
-            'json_target': json_href,
+            'target': "{}?{}".format(reverse('year-redirect', kwargs=dict(year=year)), request.GET.urlencode()),
             'data_year': str(year),
             'box': {
                 'x': xpos,

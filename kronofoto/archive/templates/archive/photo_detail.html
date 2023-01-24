@@ -162,11 +162,17 @@
                 <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing back">
                 {{ first_year }}
             </div>
+<<<<<<< HEAD
        
 
         {% cache 300 timeline timeline_key %}
             {% make_timeline years %}
         {% endcache %}
+=======
+        {% endcomment %}
+        <div hx-get="{{ timelinesvg_url }}" hx-trigger="load" hx-swap="outerHTML" hx-target="this" hx-select="svg" hx-select-oob="" hx-push-url="false">
+        </div>
+>>>>>>> 1d95d5fbd3d72bca55b6bcbecc337115b211dd27
 
         
             <div class="year-max">

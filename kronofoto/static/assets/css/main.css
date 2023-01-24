@@ -131,7 +131,7 @@ nav {
   color: white;
 }
 
-.navigation-menu li.active > a {
+.navigation-menu li.selected > a {
   background: var(--fp-main-blue);
   color: white;
 }

@@ -7,7 +7,7 @@
 </div>
 <div id="all-photos">
 {% if collection_name != "All Photos" %}
-    <a href="{% url "gridview" %}" hx-get="{% url "gridview" %}" hx-target="#app">Back to All Photos</a>
+    <a href="{% url "random-image" %}" hx-get="{% url "random-image" %}" hx-target="#app">Back to All Photos</a>
 {% endif %}
 </div>
 {% block viewbuttons %}

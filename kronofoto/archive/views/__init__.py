@@ -1,4 +1,4 @@
-from .frontpage import FrontPage
+from .frontpage import RandomRedirect
 from .basetemplate import BaseTemplateMixin
 from .addtag import AddTagView
 from .keyframes import Keyframes

@@ -4,6 +4,7 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned
 from .basetemplate import BaseTemplateMixin
 from .jsonresponse import JSONResponseMixin
 from ..models import Photo, CollectionQuery
@@ -112,7 +113,7 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
         context['formatter'] = SearchResultsViewFormatter(self.request.GET)
-        if self.queryset.count() == 0:
+        if not self.object_list.exists():
             context['noresults'] = True
             photo_rec = Photo.objects.filter(phototag__tag__tag='silly', phototag__accepted=True).order_by('?')[0]
             context['oops_photo'] = photo_rec
@@ -121,8 +122,8 @@ class SearchResultsView(JSONResponseMixin, GridBase):
         else:
             context['noresults'] = False
             if self.final_expr and self.final_expr.is_collection():
-                context['timeline_url'] = context['page_obj'][0].get_absolute_url() if self.queryset.count() else "#"
-                context['timeline_json_url'] = context['page_obj'][0].get_json_url() if self.queryset.count() else "#"
+                context['timeline_url'] = context['page_obj'][0].get_absolute_url()
+                context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         return context
 
     def attach_params(self, photos):
@@ -158,8 +159,10 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
         else:
             qs = expr.as_search(self.model.objects, self.request.user)
-        if qs.count() == 1:
-            self.redirect = redirect(qs[0].get_absolute_url())
+        try:
+            self.redirect = redirect(qs.get().get_absolute_url())
+        except (MultipleObjectsReturned, self.model.DoesNotExist):
+            pass
         return qs
 
 class JSONGridView(GridView):

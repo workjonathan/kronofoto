@@ -6,8 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [('archive', '0035_photo_local_context_id'), ('archive', '0036_alter_photo_local_context_id'), ('archive', '0037_alter_photo_local_context_id')]
-
     dependencies = [
         ('archive', '0034_alter_tag_tag'),
     ]

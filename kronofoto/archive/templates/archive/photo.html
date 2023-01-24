@@ -2,6 +2,7 @@
 {% load widgets %}
 
 {% block content %}
+  <a href="/directory/">test link</a>
   {{ initialstate | json_script:"initial-state" }}
   <script>
     let current_state = JSON.parse(document.querySelector('#initial-state').textContent)
