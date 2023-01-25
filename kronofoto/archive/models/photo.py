@@ -34,7 +34,7 @@ class PhotoQuerySet(models.QuerySet):
         year_range = Photo.objects.filter(year__isnull=False, is_published=True).year_range()
         allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
         return [
-            (year, photo.get_absolute_url(params=params), photo.get_json_url(params=params))
+            (year, photo.get_absolute_url(params=params))
             for (year, photo) in allyears
         ]
 
@@ -178,28 +178,10 @@ class Photo(models.Model):
             url=reverse('download', kwargs=dict(pk=self.id)), params=params
         )
 
-    def get_json_url(self, queryset=None, params=None):
-        return self.create_url('photoview-json', queryset=queryset, params=params)
-
-    def get_embedded_json_url(self, queryset=None, params=None):
-        return self.create_url('embedded-photoview-json', queryset=queryset, params=params)
-
     def get_urls(self, embed=False):
         return {
             'url': self.get_embedded_url() if embed else self.get_absolute_url(),
-            'json_url': self.get_embedded_json_url() if embed else self.get_json_url(),
         }
-
-    def get_grid_json_url(self, params=None):
-        page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
-        params = params or hasattr(self, 'params') and self.params or None
-        if params:
-            url = reverse('search-results-json')
-            params = params.copy()
-            params['page'] = page
-        else:
-            url = reverse('gridview-json', kwargs=dict(page=page))
-        return self.add_params(url=url, params=params)
 
     def get_grid_url(self, params=None):
         page = self.row_number//settings.GRID_DISPLAY_COUNT + 1

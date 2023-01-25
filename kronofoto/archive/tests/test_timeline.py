@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase, tag
-from archive.templatetags import timeline
 
 
 @tag("fast")
