@@ -1153,19 +1153,22 @@ height:calc(100vh - 300px);
 */
   background-color: rgb(230,231,232);
   padding: 20px;
-  position: relative;
+  position: absolute;
     height: calc(100vh - 285px);
     width: 300px;
   z-index: 10;
-  bottom: calc(100vh - 230px);
-    transform: translateX(-130px);
+  top: 60px;
+    left: calc(50% - 180px);
+    opacity: 85%;
 }
 
 @media (max-width: 1140px) {
     #metadata {
-        height: calc(100vh - 185px);
-        bottom: calc(100vh - 130px);
-        transform: none;
+        width:90vw;
+        height: calc(50vh - 90px);
+        top: 50%;
+        left: calc(50% - 45vw);
+        
     }
 }
 

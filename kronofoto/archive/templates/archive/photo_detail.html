@@ -37,20 +37,11 @@
         </a>
 
         <div class="button-container">
-<!--
-             <button id="expand">
-                <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
-                 <div id="metadata" class="hidden"></div>
-            </button>
--->
+
             <!--Info Button-->
             <button id="expand">
                 <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
-                <div id="metadata" class="hidden">
-                    {% block metadata %}
-                        {% include "archive/photometadata.html" %}
-                    {% endblock %}
-                </div>
+                
                 
             </button>
             
@@ -99,7 +90,11 @@
         
 {% endblock %}
     </article>
-
+                <div id="metadata" class="hidden">
+                    {% block metadata %}
+                        {% include "archive/photometadata.html" %}
+                 {% endblock %}
+                </div>
     
     <div class="car-left-space"></div>
 
