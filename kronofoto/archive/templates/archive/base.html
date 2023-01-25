@@ -104,7 +104,7 @@
               <i class="fas fa-times fa-2x close-btn"></i>
 
               <ul class="navigation-menu" id="navigation-menu">
-<<<<<<< HEAD
+
                 {% include "archive/navigation-menu.html" %}
                   
                   <div class="mobile-visible">
@@ -112,16 +112,13 @@
                 <li><a class="grid-a" data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">Grid View</a></li>
                   </div>
                   
-                <li><a href="https://blog.fortepan.us/">Blog</a></li>
-
-=======
+               
                 {% if KF_DJANGOCMS_NAVIGATION %}
                 {% show_menu 0 100 100 100 %}
                 <li><a href="https://blog.fortepan.us/">Blog</a></li>
                 {% else %}
                 {% include "archive/navigation-menu.html"%}
                 {% endif %}
->>>>>>> 1d95d5fbd3d72bca55b6bcbecc337115b211dd27
               </ul>
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
