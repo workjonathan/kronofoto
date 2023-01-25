@@ -4,7 +4,6 @@ from ..models.photosphere import PhotoSphere, PhotoSpherePair
 
 class PhotoSphereView(BaseTemplateMixin, DetailView):
     model = PhotoSphere
-    template_name = "archive/photosphere.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

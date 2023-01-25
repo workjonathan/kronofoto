@@ -14,7 +14,6 @@ import json
 class GridBase(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = settings.GRID_DISPLAY_COUNT
-    #template_name = 'archive/photo_grid.html'
     _queryset = None
 
     @property

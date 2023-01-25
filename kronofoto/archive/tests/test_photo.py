@@ -65,10 +65,10 @@ class PhotoTest(TestImageMixin, TestCase):
         self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
 
     def testShouldNotAllowGuestsToTagPhotos(self):
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.accession_number}))
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.id}))
         self.assertEqual(resp.status_code, 302)
 
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.accession_number}), {'tag': 'test tag'})
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.id}), {'tag': 'test tag'})
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(len(self.photo.get_proposed_tags()), 0)
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
@@ -76,10 +76,10 @@ class PhotoTest(TestImageMixin, TestCase):
     def testShouldBeAbleToTagPhotos(self):
         User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         self.client.login(username='testuser', password='testpassword')
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.accession_number}))
+        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.id}))
         self.assertEqual(resp.status_code, 200)
 
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.accession_number}), { 'tag': 'test tag'})
+        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.id}), { 'tag': 'test tag'})
         self.assertEqual(len(self.photo.get_proposed_tags()), 1)
         self.assertEqual(self.photo.get_proposed_tags()[0].tag, 'test tag')
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
