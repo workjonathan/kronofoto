@@ -11,8 +11,9 @@
   <article class="fi-image" id="fi-image">
     {% block image %}
     {% endblock %}
+      <div id="metadata" hx-preserve />
   </article>
-<div id="metadata" hx-preserve />
+
 </div>
 <div hx-swap-oob="innerHTML:#metadata">
   {% block metadata %}
