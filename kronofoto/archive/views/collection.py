@@ -12,7 +12,6 @@ from ..forms import AddToListForm
 
 class Profile(BaseTemplateMixin, ListView):
     model = Collection
-    template_name = 'archive/user_page.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -30,7 +29,6 @@ class Profile(BaseTemplateMixin, ListView):
 class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
     model = Collection
     fields = ['name', 'visibility']
-    template_name = 'archive/collection_create.html'
 
     def get_success_url(self):
         return reverse('user-page', args=[self.request.user.get_username()])
@@ -42,7 +40,6 @@ class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
 
 class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
     model = Collection
-    template_name = 'archive/collection_delete.html'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
