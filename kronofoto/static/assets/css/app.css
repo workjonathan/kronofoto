@@ -1,7 +1,7 @@
-{% load static %}
-@import "{% static "assets/css/kronofoto.css" %}";
+
+@import "kronofoto.css";
 /*Only need a few things from index for embeds, so should add them to kronofoto.css and remove index import later*/
-@import "{% static "assets/css/index.css" %}";
+@import "index.css";
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css");
 
 :root {
@@ -14,7 +14,7 @@
     --fp-main-blue: #c2a55e;
 }
 
-#{{ id }} {
+#app {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -27,7 +27,7 @@
   overflow-x: hidden;
 }
 
-#{{ id }} a {
+#app a {
   color: var(--fp-main-blue);
   text-decoration: none;
 }
@@ -36,18 +36,18 @@
  ** HEADER / NAV **
  ******************/
 
-#{{ id }} header {
+#app header {
   max-height: 200px;
   grid-row: 1 / span 1;
   padding: 15px;
 }
 
-#{{ id }} nav {
+#app nav {
   display: flex;
 }
 
 
-#{{ id }} nav ul {
+#app nav ul {
   display: flex;
   display: -webkit-flex;
   align-self: center;
@@ -56,28 +56,28 @@
   align-items: center;
 }
 
-#{{ id }} nav ul li {
+#app nav ul li {
   list-style: none;
   text-transform: uppercase;
 }
 
-#{{ id }} header nav div img {
+#app header nav div img {
   width: 30px;
 }
 
-#{{ id }} input[type="submit"] {
+#app input[type="submit"] {
   background-color: var(--fp-main-blue);
   color: white;
 }
-#{{ id }} input[type="email"], 
-#{{ id }} input[type="number"], 
-#{{ id }} input[type="search"], 
-#{{ id }} input[type="text"], 
-#{{ id }} input[type="tel"], 
-#{{ id }} input[type="url"], 
-#{{ id }} input[type="password"], 
-#{{ id }} textarea, 
-#{{ id }} select {
+#app input[type="email"], 
+#app input[type="number"], 
+#app input[type="search"], 
+#app input[type="text"], 
+#app input[type="tel"], 
+#app input[type="url"], 
+#app input[type="password"], 
+#app textarea, 
+#app select {
   -moz-appearance:none; /* Firefox */
   -webkit-appearance:none; /* Safari and Chrome */
   appearance:none;
@@ -92,30 +92,30 @@
   width: 100%;
 }
 
-#{{ id }} input[type=number]::-webkit-inner-spin-button, 
-#{{ id }} input[type=number]::-webkit-outer-spin-button { 
+#app input[type=number]::-webkit-inner-spin-button, 
+#app input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none; 
   margin: 0; 
 }
 
-#{{ id }} select::-ms-expand {
+#app select::-ms-expand {
   display: none;
 }
 
-#{{ id }} select {
+#app select {
   background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important; /* !important used for overriding all other customisations */
 }
-#{{ id }} main {
+#app main {
   grid-row: 2 / span 1;
   display: grid;
   /* grid-template-rows: minmax(500px, 1fr) minmax(min-content, 190px); */
   grid-template-rows: 1fr auto auto;
   flex-direction: column;
 }
-#{{ id }} main article {
+#app main article {
   grid-row: 1 / span 1;
 }
-#{{ id }} main nav {
+#app main nav {
   grid-row: 2 / span 1;
   height: 100%;
 }
