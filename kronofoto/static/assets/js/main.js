@@ -3496,6 +3496,7 @@
             el.classList.replace('gridden', 'hidden');
         }
     };
+
     const toggleHover = () => {
         if($('.hamburger-menu').hasClass('gridden')) {
             $('.overlay').css('display', 'block');
@@ -3509,6 +3510,7 @@
             /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
         }
     };
+
     const moveMarker = (root, marker) => {
         const markerYearElement = marker.querySelector('.marker-year');
 
@@ -3538,7 +3540,7 @@
             enableMarkerDnD(root);
         }
     };
-
+     
     const toggleMetadata = root => content => {
         if (content.id == 'expand') {
             content.addEventListener("click", evt => {
@@ -3555,14 +3557,13 @@
             });
         }
     };
-    //----------_----------
 
     window.toggleLogin = toggleLogin;
 
     const htmx = HTMX(document);
 
     htmx.onLoad(toggleMetadata(document));
-    window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
+    window.setTimeout(() => { htmx.onLoad(markerDnD(document)); }, 100);
     //htmx.logAll()
 
     const init = () => {

@@ -3417,7 +3417,7 @@
         // Make invisible drag feedback image
         const dragImgEl = window.document.createElement('span');
         dragImgEl.setAttribute('style', 'position: absolute; display: block; top: 0; left: 0; width: 0; height: 0;' );
-        document.appendChild(dragImgEl);
+        (document.body ? document.body : document).appendChild(dragImgEl);
 
         // ==============================================
         // Necessary to prevent mirror image from showing
@@ -3487,6 +3487,7 @@
             el.classList.replace('gridden', 'hidden');
         }
     };
+
     const moveMarker = (root, marker) => {
         const markerYearElement = marker.querySelector('.marker-year');
 
@@ -3516,7 +3517,7 @@
             enableMarkerDnD(root);
         }
     };
-
+     
     const toggleMetadata = root => content => {
         if (content.id == 'expand') {
             content.addEventListener("click", evt => {
@@ -3533,7 +3534,6 @@
             });
         }
     };
-    //----------_----------
 
     class FortepanViewer extends HTMLElement {
         constructor() {
