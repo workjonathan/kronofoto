@@ -257,7 +257,7 @@ qchunk_unmatched = (
 @parsy.generate
 def quoted2():
     yield parsy.string('"')
-    s = yield qchunk.many()
+    s = yield qchunk.at_least(1)
     yield parsy.string('"')
     parts, errors = zip(*s)
     return ''.join(parts), [a for b in errors for a in b]
@@ -336,6 +336,14 @@ class TypedSearchTerm:
         return parse
 
 @dataclass
+class EmptyQuotedString:
+    def __str__(self):
+        return '""'
+    @classmethod
+    def parser(cls):
+        return parsy.whitespace.many() >> parsy.string('""').mark().map(lambda s: (cls(), ['Quoted sequence with nothing in it at index {}'.format(s[0][1]+1)]))
+
+@dataclass
 class MissingField:
     def __str__(self):
         return ":"
@@ -355,7 +363,7 @@ class Lexer:
     def parse(self, s):
         @parsy.generate
         def parser():
-            s = yield (OpenParen.parser() | CloseParen.parser() | NegateSign.parser() | BinaryKeyword.parser() | TypedSearchTerm.parser() | SearchTerm.parser() | MissingField.parser() | LoneBackslash.parser() | UnmatchedSearchTermQuote.parser()).many()
+            s = yield (OpenParen.parser() | CloseParen.parser() | NegateSign.parser() | BinaryKeyword.parser() | TypedSearchTerm.parser() | SearchTerm.parser() | MissingField.parser() | LoneBackslash.parser() | EmptyQuotedString.parser() | UnmatchedSearchTermQuote.parser()).many()
             yield parsy.whitespace.many()
             try:
                 tokens, errors = zip(*s)

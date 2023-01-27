@@ -6,7 +6,6 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
-from .jsonresponse import JSONResponseMixin
 from .basetemplate import BaseTemplateMixin
 from .timelinepaginator import TimelinePaginator
 from ..models.photo import Photo
@@ -18,7 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 NO_URLS = dict(url='#', json_url='#')
 
-class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
+class PhotoView(BaseTemplateMixin, DetailView):
     items = 10
     pk_url_kwarg = 'photo'
     _queryset = None
@@ -75,7 +74,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
 
             context['prev_page'], context["page"], context['next_page'] = page_selection.pages
             context['grid_url'] = photo_rec.get_grid_url()
-            context['grid_json_url'] = photo_rec.get_grid_json_url()
             context['timeline_url'] = photo_rec.get_absolute_url()
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
@@ -85,36 +83,9 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
             context['timelinesvg_url'] = "{}?{}".format(reverse('timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
-            #context['initialstate'] = self.get_data(context)
         except KeyError:
             pass
         return context
-
-    def get_data(self, context):
-        if 'photo' not in context or not context['photo']:
-            return {}
-        photo = context['photo']
-        return {
-            'type': 'TIMELINE',
-            'static_url': settings.STATIC_URL,
-            'url': as_absolute(photo.get_absolute_url()),
-            'h700': as_absolute(photo.h700.url),
-            'alttext': str(context['alttext']),
-            'tags': str(context['tags']),
-            'original': photo.get_download_page_url(),
-            'grid_json_url': photo.get_grid_json_url(),
-            'timeline_json_url': context['timeline_json_url'],
-            'grid_url': photo.get_grid_url(),
-            'timeline_url': context['timeline_url'],
-            'frame': render_to_string('archive/photo-details.html', context, self.request),
-            'metadata': render_to_string('archive/photometadata.html', context, self.request),
-            'thumbnails': render_to_string('archive/thumbnails.html', context, self.request),
-            'backward': context['prev_page'][0].get_urls() if context['page'].has_previous() else NO_URLS,
-            'forward': context['next_page'][0].get_urls() if context['page'].has_next() else NO_URLS,
-            'previous': photo.previous.get_urls() if hasattr(photo, 'previous') else NO_URLS,
-            'next': photo.next.get_urls() if hasattr(photo, 'next') else NO_URLS,
-            'year': photo.year,
-        }
 
     def render(self, context, **kwargs):
         response = super().render_to_response(context, **kwargs)
@@ -133,14 +104,6 @@ class PhotoView(JSONResponseMixin, BaseTemplateMixin, DetailView):
                 raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
 
-
-class JSONPhotoView(PhotoView):
-    def get_data(self, context):
-        return super().get_data(context)
-    def render(self, context, **kwargs):
-        return self.render_to_json_response(context, **kwargs)
-    def get_redirect_url(self, photo):
-        return photo.get_json_url(queryset=self.queryset, params=self.request.GET)
 
 class TimelineSvg(TemplateView):
     template_name = "archive/timeline.svg"

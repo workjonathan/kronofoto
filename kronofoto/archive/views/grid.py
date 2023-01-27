@@ -6,7 +6,6 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from .basetemplate import BaseTemplateMixin
-from .jsonresponse import JSONResponseMixin
 from ..models import Photo, CollectionQuery
 import json
 
@@ -14,7 +13,6 @@ import json
 class GridBase(BaseTemplateMixin, ListView):
     model = Photo
     paginate_by = settings.GRID_DISPLAY_COUNT
-    #template_name = 'archive/photo_grid.html'
     _queryset = None
 
     @property
@@ -57,12 +55,12 @@ class SearchResultsViewFormatter:
     def page_url(self, num, json=False):
         params = self.parameters.copy()
         params['page'] = num
-        view = 'search-results-json' if json else 'search-results'
+        view = 'search-results'
         return "{}?{}".format(reverse(view), params.urlencode())
     def render(self, context, **kwargs):
         return super().render_to_response(context, **kwargs)
 
-class GridView(JSONResponseMixin, GridBase):
+class GridView(GridBase):
     def get_queryset(self):
         expr = self.final_expr
         self.collection = CollectionQuery(expr, self.request.user)
@@ -76,18 +74,6 @@ class GridView(JSONResponseMixin, GridBase):
             self.redirect = redirect(qs[0].get_absolute_url())
         return qs
 
-    def get_data(self, context):
-        return dict(
-            type="GRID",
-            static_url=settings.STATIC_URL,
-            frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=context['page_obj'][0].get_grid_url(params=self.request.GET) if self.queryset.count() else "#",
-            grid_json_url=context['grid_json_url'],
-            timeline_json_url=context['timeline_json_url'],
-            grid_url=context['grid_url'],
-            timeline_url=context['timeline_url'],
-        )
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['formatter'] = GridViewFormatter(self.request.GET)
@@ -95,7 +81,6 @@ class GridView(JSONResponseMixin, GridBase):
 
         try:
             context['timeline_url'] = context['page_obj'][0].get_absolute_url()
-            context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         except IndexError:
             pass
         return context
@@ -108,7 +93,7 @@ class GridView(JSONResponseMixin, GridBase):
             photo.save_params(params=params)
 
 
-class SearchResultsView(JSONResponseMixin, GridBase):
+class SearchResultsView(GridBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search-form'] = self.form
@@ -123,7 +108,6 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             context['noresults'] = False
             if self.final_expr and self.final_expr.is_collection():
                 context['timeline_url'] = context['page_obj'][0].get_absolute_url()
-                context['timeline_json_url'] = context['page_obj'][0].get_json_url()
         return context
 
     def attach_params(self, photos):
@@ -132,18 +116,6 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             params.pop('display')
         for photo in photos:
             photo.save_params(params=params)
-
-    def get_data(self, context):
-        return dict(
-            type="GRID",
-            static_url=settings.STATIC_URL,
-            frame=render_to_string('archive/grid-content.html', context, self.request),
-            url=context['page_obj'][0].get_grid_url(params=self.request.GET) if self.queryset.count() else "#",
-            grid_url=context['grid_url'],
-            grid_json_url=context['grid_json_url'],
-            timeline_url=context['timeline_url'],
-            timeline_json_url=context['timeline_json_url'],
-        )
 
     def dispatch(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -165,10 +137,3 @@ class SearchResultsView(JSONResponseMixin, GridBase):
             pass
         return qs
 
-class JSONGridView(GridView):
-    def render(self, context, **kwargs):
-        return self.render_to_json_response(context, **kwargs)
-
-class JSONSearchResultsView(SearchResultsView):
-    def render(self, context, **kwargs):
-        return self.render_to_json_response(context, **kwargs)

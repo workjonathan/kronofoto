@@ -5,7 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from hypothesis.extra.django import TestCase
 from hypothesis import given, strategies
 from archive.search import expression, evaluate, parser
-from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField
+from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
 from archive.search.expression import (
     And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly
 )
@@ -39,6 +39,7 @@ class AutocompleteParserTest(TestCase):
         self.assertEqual(tuple(lexer.parse('tag:test')), ([TypedSearchTerm('tag', 'test')], []))
         self.assertEqual(tuple(lexer.parse('"')), ([UnmatchedSearchTermQuote('')], ["Unmatched quote at index 1"]))
         self.assertEqual(tuple(lexer.parse(':')), ([MissingField()], ["Colon (:) with no field preceding it at index 1"]))
+        self.assertEqual(tuple(lexer.parse('""')), ([EmptyQuotedString()], ['Quoted sequence with nothing in it at index 1']))
     @given(strategies.text(min_size=1))
     def testParseEveryInput(self, input):
         "Lexer should be able to convert any string to a list of tokens and a list of tokens to a string."

@@ -25,11 +25,11 @@
             {% else %}
             None
             {% endif %}
-            <!-- <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a> -->
-            </li>
+            <!-- </li>
             <li>add a new tag:<br>
                 <input /><br>
-                <button id="add-tag-button-in-metadata-popup">add</button>
+                <button id="add-tag-button-in-metadata-popup">add</button> -->
+            <a class="add-tag" href="{% url "addtag" photo.id %}">＋</a>
             </li>
 
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>

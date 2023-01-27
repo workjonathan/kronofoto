@@ -18,8 +18,8 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
         return context
 
     def dispatch(self, request, photo):
-        self.photo = Photo.objects.get(id=Photo.accession2id(photo))
-        self.success_url = reverse('addtag', kwargs={'photo': self.photo.accession_number})
+        self.photo = Photo.objects.get(id=photo)
+        self.success_url = reverse('addtag', kwargs={'photo': self.photo.id})
         return super().dispatch(request)
 
     def form_valid(self, form):
