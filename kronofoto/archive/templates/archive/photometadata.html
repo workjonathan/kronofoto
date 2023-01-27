@@ -27,6 +27,11 @@
             {% endif %}
             <!-- <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a> -->
             </li>
+            <li>add a new tag:<br>
+                <input /><br>
+                <button id="add-tag-button-in-metadata-popup">add</button>
+            </li>
+
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
             <!-- <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li> -->
             {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>

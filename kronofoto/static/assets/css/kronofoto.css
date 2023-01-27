@@ -1211,6 +1211,24 @@ height:calc(100vh - 275px);
   list-style-type: none;
 }
 
+#add-tag-button-in-metadata-popup {
+  background-color: var(--fp-main-blue);
+  color: white;
+  font: bold;
+  border: none;
+  width: 60px;
+  padding:  4px;
+  margin: 4px 0 0 200px;
+  align-content: right;
+}
+
+#metadata input {
+  width: 260px;
+  padding: 6px;
+  margin: 2px 0;
+  border: none;
+}
+
 #metadata ul li {
   padding: 5px 0;
   font-size: 12px;
