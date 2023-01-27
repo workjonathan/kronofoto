@@ -7,6 +7,36 @@
 	    <li>Contributed by <a hx-get="{{ photo.donor.get_absolute_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
           </ul>
         </div>
+        
+        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-select="#app">
+          <ul>
+            <li><span class="field-name">Category Terms:</span><br>
+            {% if photo.terms.exists %}
+                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
+		<a hx-get="{{ term.get_absolute_url }}" href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}
+            {% else %}
+            None
+            {% endif %}
+            </li>
+            <li><span class="field-name">Tags:</span><br>
+            {% if tags %}
+                {% for tag in tags %}{% if not forloop.first %},{% endif %} 
+		<a href="{{ tag.get_absolute_url }}" hx-get="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}
+            {% else %}
+            None
+            {% endif %}
+            <!-- <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a> -->
+            </li>
+            <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
+            <!-- <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li> -->
+            {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>
+            {% for notice in photo.notices %}
+                <img style="width: 4rem;" src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
+            {% endfor %}
+            {% endif%}
+          </ul>
+        </div>
+
         <div class="metadata-2a" hx-target="#app" hx-headers="{}" hx-select="#app">
           <ul style="color: #777;">
             {% if photo.photographer %}
@@ -17,33 +47,5 @@
             <li>Digitized by {{ photo.scanner.display_format }}</li>
             {% endif %}
             <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
-          </ul>
-        </div>
-        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-select="#app">
-          <ul>
-            <li><span class="field-name">Category Terms:</span>
-            {% if photo.terms.exists %}
-                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-		<a hx-get="{{ term.get_absolute_url }}" href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            </li>
-            <li><span class="field-name">Tags:</span>
-            {% if tags %}
-                {% for tag in tags %}{% if not forloop.first %},{% endif %} 
-		<a href="{{ tag.get_absolute_url }}" hx-get="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            <a class="add-tag" href="{% url "addtag" photo.accession_number %}">＋</a>
-            </li>
-            <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
-            <li><a href="{% url "add-to-list" photo.accession_number %}">Add to list</a></li>
-            {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>
-            {% for notice in photo.notices %}
-                <img style="width: 4rem;" src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
-            {% endfor %}
-            {% endif%}
           </ul>
         </div>
