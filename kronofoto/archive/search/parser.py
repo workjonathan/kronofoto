@@ -353,11 +353,12 @@ class MissingField:
 
 @dataclass
 class LoneBackslash:
+    value: list
     def __str__(self):
-        return "\\"
+        return "\\" + ''.join(self.value)
     @classmethod
     def parser(cls):
-        return parsy.whitespace.many() >> parsy.string("\\").mark().map(lambda s: (cls(), [r'Unescaped \ at index {}'.format(s[0][1]+1)]))
+        return parsy.whitespace.many() >> (parsy.string("\\") >> parsy.any_char.at_most(1)).mark().map(lambda s: (cls(s[1]), [r'Unescaped \ at index {}'.format(s[0][1]+1)]))
 
 class Lexer:
     def parse(self, s):
