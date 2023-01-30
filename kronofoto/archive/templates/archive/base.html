@@ -5,7 +5,6 @@
 {% load searchform %}
 {% load widgets %}
 {% load gtm_tags %}
-{% load menu_tags %}
 <head>
   {% gtm_head %}
   <meta charset="UTF-8">
@@ -104,21 +103,7 @@
               <i class="fas fa-times fa-2x close-btn"></i>
 
               <ul class="navigation-menu" id="navigation-menu">
-
-                {% include "archive/navigation-menu.html" %}
-                  
-                  <div class="mobile-visible">
-                <li><a class="fi-timeline-a" data-json-href="{{ timeline_json_url }}" href="{{ timeline_url }}">Timeline View</a></li>
-                <li><a class="grid-a" data-json-href="{{ grid_json_url }}" href="{{ grid_url }}">Grid View</a></li>
-                  </div>
-                  
-               
-                {% if KF_DJANGOCMS_NAVIGATION %}
-                {% show_menu 0 100 100 100 %}
-                <li><a href="https://blog.fortepan.us/">Blog</a></li>
-                {% else %}
                 {% include "archive/navigation-menu.html"%}
-                {% endif %}
               </ul>
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
               <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>

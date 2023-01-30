@@ -1,6 +1,14 @@
 {% load docnav %}
+{% load menu_tags %}
+{% if KF_DJANGOCMS_NAVIGATION %}
+{% show_menu 0 100 100 100 %}
+{% else %}
 {% docnav "Archive" %}
+{% endif %}
+{# I think only li is valid within ul #}
+<div class="mobile-visible">
 <li><a href="{{ timeline_url }}">Timeline View</a></li>
 <li><a href="{{ grid_url }}">Grid View</a></li>
+</div>
 
 <li><a href="https://blog.fortepan.us/">Blog</a></li>
