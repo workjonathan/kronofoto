@@ -42,7 +42,7 @@ class PhotoView(BaseTemplateMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
-        if self.request.headers.get('Hx-Target', None) == 'fi-image':
+        if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
             context['base_template'] = 'archive/photo_partial.html'
         photo = self.kwargs['photo']
         if 'page' in self.kwargs:

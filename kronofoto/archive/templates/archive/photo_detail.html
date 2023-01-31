@@ -7,15 +7,16 @@
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
 {% endblock %}
 {% block content %}
-<main hx-target="#fi-image" hx-swap="outerHTML" hx-select="#fi-image" hx-select-oob="timeline-container,grid-icon,navigation-menu,fi-timeline,collection-name,all-photos,active-year-marker">
+<main hx-target="#fi-image-tag" hx-swap="outerHTML">
 
     <div class="img-left-space"></div>
     <div class="fi-image-background"></div>
 
     <article class="fi-image" id="fi-image">
-        {% block image %}
         <figure>
-            <img src="{{ photo.h700.url }}" alt="{{ alttext }}">
+        {% block image %}
+            <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ alttext }}" />
+        {% endblock image %}
         </figure>
         {% block left_arrow %}
         <a id="fi-arrow-left" class="control previous"
@@ -25,21 +26,24 @@
             {% endif %}>
         </a>
         {% endblock %}
+        {% block right_arrow %}
         <a id="fi-arrow-right" class="control forward"
             {% if photo.next %}
                 href="{{ photo.next.get_absolute_url }}"
                 hx-get="{{ photo.next.get_absolute_url }}"
             {% endif %}>
         </a>
+        {% endblock %}
         <button id="dl">
+        {% block download %}
             <a href="{{ photo.get_download_page_url }}">
                 <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
             </a>
+        {% endblock %}
         </button>
         <button id="expand">
             <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
         </button>
-        {% endblock %}
         <div id="metadata" class="hidden">
         {% block metadata %}
             {% include "archive/photometadata.html" %}
@@ -52,13 +56,13 @@
     <div class="car-left-space"></div>
 
 
-    {% block thumbnails %}
     <nav class="fi-timeline" id="fi-timeline">
+    {% block thumbnails %}
 
         <div class="fi-thumbnail-carousel">
 
             <div class="back-arrows">
-                <a id="backward" hx-select="#fi-image"
+                <a id="backward"
                     {% if page.has_previous %}
                         hx-get="{{ prev_page.0.get_absolute_url }}"
                         href="{{ prev_page.0.get_absolute_url }}"
@@ -75,7 +79,7 @@
             </div>
 
             <div class="forward-arrows">
-                <a id="forward" hx-select="#fi-image"
+                <a id="forward"
                     {% if page.has_next %}
                         href="{{ next_page.0.get_absolute_url }}"
                         hx-get="{{ next_page.0.get_absolute_url }}"
@@ -86,23 +90,22 @@
 
         </div>
 
+    {% endblock thumbnails %}
     </nav>
-    {% endblock %}
 
     <div class="car-right-space"></div>
 
 
     <div class="year-ticker">
 
-        {% block year_marker %}
         <div id="active-year-marker" class="active-year-marker" draggable="true" hx-trigger="marker-moved">
+        {% block year_marker %}
 
             <div class="marker-image" style="background-image: url('{% static "assets/images/skyblue/toggle.svg" %}');">
                 <span class="marker-year">{{ photo.year }}</span>
             </div>
-
-        </div>
         {% endblock %}
+        </div>
 
         {% comment %}
             <div class="year-min">
@@ -110,7 +113,7 @@
                 {{ first_year }}
             </div>
         {% endcomment %}
-        <div hx-get="{{ timelinesvg_url }}" hx-trigger="load" hx-swap="outerHTML" hx-target="this" hx-select="svg" hx-select-oob="" hx-push-url="false">
+        <div hx-get="{{ timelinesvg_url }}" hx-trigger="load" hx-swap="outerHTML" hx-target="this" hx-push-url="false">
         </div>
 
         {% comment %}
