@@ -7,15 +7,16 @@
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
 {% endblock %}
 {% block content %}
-<main hx-target="#fi-image" hx-swap="outerHTML" hx-select="#fi-image" hx-select-oob="timeline-container,grid-icon,navigation-menu,fi-timeline,collection-name,all-photos,active-year-marker">
+<main hx-target="#fi-image-tag" hx-swap="outerHTML">
 
     
     <div class="fi-image-background"></div>
 
     <article class="fi-image" id="fi-image">
-        {% block image %}
         <figure>
-            <img src="{{ photo.h700.url }}" alt="{{ alttext }}">
+        {% block image %}
+            <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ alttext }}" />
+        {% endblock image %}
         </figure>
         
         {% block left_arrow %}
@@ -26,14 +27,17 @@
             {% endif %}>
         </a>
         {% endblock %}
+        {% block right_arrow %}
         <a id="fi-arrow-right" class="control forward"
             {% if photo.next %}
                 href="{{ photo.next.get_absolute_url }}"
                 hx-get="{{ photo.next.get_absolute_url }}"
             {% endif %}>
         </a>
+        {% endblock right_arrow %}
 
-        <div class="image-control-button-container">
+        <div id="image-control-button-container" class="image-control-button-container">
+        {% block image_control_buttons %}
 
             <!--Info Button-->
             <button id="expand" class="image-control-button">
@@ -42,8 +46,6 @@
             <button id="metadata-popup-cancel-button" class="image-cancel-button hidden">
                 <img class="meta-info-icon" src="{% static "assets/images/close.png" %}">
             </button>
-            
-            
                         
             <!--Add to List Button-->
             <button id="add-to-list-image-control-button" class="image-control-button">
@@ -99,9 +101,9 @@
             <button id="auto-play-cancel-button" class="image-cancel-button hidden">
                 <img class="meta-info-icon" src="{% static "assets/images/close.png" %}">
             </button>
+        {% endblock image_control_buttons %}
         </div>
         
-{% endblock %}
         <div id="metadata" class="hidden">
             {% block metadata %}
                 {% include "archive/photometadata.html" %}
@@ -179,13 +181,13 @@
     <div class="car-left-space"></div>
 
 
-    {% block thumbnails %}
     <nav class="fi-timeline" id="fi-timeline">
+    {% block thumbnails %}
 
         <div class="fi-thumbnail-carousel">
 
             <div class="back-arrows">
-                <a id="backward" hx-select="#fi-image"
+                <a id="backward"
                     {% if page.has_previous %}
                         hx-get="{{ prev_page.0.get_absolute_url }}"
                         href="{{ prev_page.0.get_absolute_url }}"
@@ -202,7 +204,7 @@
             </div>
 
             <div class="forward-arrows">
-                <a id="forward" hx-select="#fi-image"
+                <a id="forward"
                     {% if page.has_next %}
                         href="{{ next_page.0.get_absolute_url }}"
                         hx-get="{{ next_page.0.get_absolute_url }}"
@@ -213,8 +215,8 @@
 
         </div>
 
+    {% endblock thumbnails %}
     </nav>
-    {% endblock %}
 
     
     
@@ -225,47 +227,5 @@
     
     <div class="car-right-space"></div>
     
-    
-    
-    {% comment %}
-    <div class="year-ticker">
-
-        {% block year_marker %}
-        <div id="active-year-marker" class="active-year-marker" draggable="true" hx-trigger="marker-moved">
-
-            <div class="marker-image" style="background-image: url('{% static "assets/images/skyblue/toggle.svg" %}');">
-                <span class="marker-year">{{ photo.year }}</span>
-            </div>
-
-        </div>
-        {% endblock %}
-
-            
-
-            <div class="year-min">
-                <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing back">
-                {{ first_year }}
-            </div>
-        
-       
-
-        {% cache 300 timeline timeline_key %}
-            {% make_timeline years %}
-        {% endcache %}
-
-        
-        <div hx-get="{{ timelinesvg_url }}" hx-trigger="load" hx-swap="outerHTML" hx-target="this" hx-select="svg" hx-select-oob="" hx-push-url="false">
-        </div>
-
-
-        
-            <div class="year-max">
-                {{ last_year }}
-                <img src="{% static "assets/images/single-back-arrow-black.png" %}" alt="arrow pointing forward">
-            </div>
-       
-
-    </div>
-     {% endcomment %}
 </main>
 {% endblock %}

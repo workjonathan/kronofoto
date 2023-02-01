@@ -1,21 +1,37 @@
-<div id="fdsfklj">
-  <div id="navigation-menu">
-    {% include "archive/navigation-menu.html" %}
-  </div>
-  {% block viewbuttons %}
-  {% endblock %}
-  {% block year_marker %}
-  {% endblock %}
-  {% block thumbnails %}
-  {% endblock %}
-  <article class="fi-image" id="fi-image">
-    {% block image %}
-    {% endblock %}
-      <div id="metadata" hx-preserve />
-  </article>
-
+<div hx-swap-oob="innerHTML:#navigation-menu">
+  {% include "archive/navigation-menu.html" %}
+</div>
+<div hx-swap-oob="delete:#timeline-container"></div>
+<div hx-swap-oob="delete:#grid-icon"></div>
+<div hx-swap-oob="afterbegin:.main-nav_center">
+{% block viewbuttons %}
+{% endblock %}
+</div>
+<div hx-swap-oob="innerHTML:#active-year-marker">
+{% block year_marker %}
+{% endblock %}
+</div>
+<div hx-swap-oob="innerHTML:#fi-timeline">
+{% block thumbnails %}
+{% endblock %}
 </div>
 <div hx-swap-oob="innerHTML:#metadata">
   {% block metadata %}
   {% endblock %}
 </div>
+<div hx-swap-oob="delete:#fi-arrow-left"></div>
+<div hx-swap-oob="delete:#fi-arrow-right"></div>
+<div hx-swap-oob="afterend:#fi-image figure">
+{% block left_arrow %}
+{% endblock %}
+</div>
+<div hx-swap-oob="afterend:#fi-arrow-left">
+{% block right_arrow %}
+{% endblock %}
+</div>
+<div hx-swap-oob="innerHTML:#image-control-button-container">
+{% block image_control_buttons %}
+{% endblock %}
+</div>
+{% block image %}
+{% endblock %}

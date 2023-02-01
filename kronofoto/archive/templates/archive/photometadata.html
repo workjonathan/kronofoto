@@ -1,14 +1,13 @@
 {% load static %}
 {% load widgets %}
-        <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-select="#app">
+        <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
           <ul>
             <li>{{ photo.year }}{% if photo.circa %}c{% endif %}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
             <li>ID#: {{photo.accession_number}}</li>
 	    <li>Contributed by <a hx-get="{{ photo.donor.get_absolute_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
           </ul>
         </div>
-        
-        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-select="#app">
+        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-select="innerHTML">
           <ul>
             <li><span class="field-name">Category Terms:</span><br>
             {% if photo.terms.exists %}

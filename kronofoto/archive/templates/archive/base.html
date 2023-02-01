@@ -35,7 +35,7 @@
   <div class="overlay" style="display: none;"></div>
   <header>
     <nav aria-label="Main navigation">
-      <div class="main-nav" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
+      <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
             <a href="{% url "random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
@@ -124,7 +124,7 @@
   <script src="{% static "assets/js/main.js" %}"></script>
   {% endif %}
   </header>
-  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu">
+  <div id="app">
     {% block content %}
     {% endblock %}
   </div>

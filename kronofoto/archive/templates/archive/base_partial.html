@@ -1,19 +1,19 @@
-<div>
-<div id="navigation-menu">
+<div hx-swap-oob="innerHTML:#navigation-menu">
 {% include "archive/navigation-menu.html" %}
 </div>
-<div id="collection-name">
+<div id="collection-name" hx-swap-oob="true">
     {{ collection_name }}
 </div>
-<div id="all-photos">
+<div hx-swap-oob="innerHTML:#all-photos">
 {% if collection_name != "All Photos" %}
     <a href="{% url "random-image" %}" hx-get="{% url "random-image" %}" hx-target="#app">Back to All Photos</a>
 {% endif %}
 </div>
+<div hx-swap-oob="delete:#timeline-container"></div>
+<div hx-swap-oob="delete:#grid-icon"></div>
+<div hx-swap-oob="afterbegin:.main-nav_center">
 {% block viewbuttons %}
 {% endblock %}
-  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+</div>
 {% block content %}
 {% endblock %}
-  </div>
-</div>
