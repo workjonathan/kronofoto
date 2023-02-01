@@ -3,7 +3,7 @@
         <a 
             href="{{ marker.target }}"
             hx-get="{{ marker.target }}"
-            hx-target="#fi-image"
+            hx-target="#fi-image-tag"
         >
             <rect 
                 x="{{ marker.box.x }}" 
@@ -27,7 +27,7 @@
     {% endfor %}
     {% for marker in minornotches %}
         <a 
-            hx-target="#fi-image"
+            hx-target="#fi-image-tag"
             href="{{ marker.target }}"
             hx-get="{{ marker.target }}">
             <rect 
