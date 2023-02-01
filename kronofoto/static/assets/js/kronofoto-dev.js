@@ -147,10 +147,10 @@ class FortepanViewer extends HTMLElement {
                 //this.htmx.logAll()
                 this.htmx.onLoad(toggleMetadata(this.shadowRoot))
                 toggleMetadata(this.shadowRoot)(this.shadowRoot.querySelector("#app"))
-                this.htmx.onLoad(markerDnD(this.shadowRoot))
-                window.setTimeout(() => {
-                    markerDnD(this.shadowRoot)(this.shadowRoot.querySelector('#active-year-marker'))
-                }, 500)
+                //this.htmx.onLoad(markerDnD(this.shadowRoot))
+                //window.setTimeout(() => {
+                //    markerDnD(this.shadowRoot)(this.shadowRoot.querySelector('#active-year-marker'))
+                //}, 500)
             })
     }
 }
