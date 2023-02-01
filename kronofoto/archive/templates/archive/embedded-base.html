@@ -19,7 +19,7 @@
 <div id="kfroot" hx-headers="{{ hxheaders | escape }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
 <center>
-<div class="main-nav_center" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+<div class="main-nav_center">
           {% block viewbuttons %}
           {% endblock %}
     <div id="collection-name">
@@ -35,7 +35,7 @@
     </div>
 </div>
 </center>
-  <div id="app" hx-swap="outerHTML" hx-select="#app" hx-select-oob="timeline-container,grid-icon,navigation-menu,collection-name,all-photos">
+  <div id="app">
       {% block content %}
       {% endblock %}
   </div>
