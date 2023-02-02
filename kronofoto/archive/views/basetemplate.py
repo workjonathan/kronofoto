@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.urls import reverse
+from django.conf import settings
 from django.templatetags.static import static
 import random
 import json
@@ -102,11 +103,11 @@ class BaseTemplateMixin:
         if not photo_count:
             photo_count = Photo.count()
             cache.set('photo_count:', photo_count)
+        context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
+        context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
         context['photo_count'] = photo_count
         context['grid_url'] = reverse('gridview')
         context['timeline_url'] = '#'
-        context['grid_json_url'] = '#'
-        context['timeline_json_url'] = '#'
         context['theme'] = random.choice(THEME)
         hxheaders = dict()
         hxheaders['Constraint'] = self.request.headers.get('Constraint', None)

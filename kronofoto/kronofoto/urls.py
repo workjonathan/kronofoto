@@ -13,7 +13,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if settings.KF_DJANGOCMS_NAVIGATION:
+if settings.KF_DJANGOCMS_SUPPORT:
     urlpatterns += [
         path('docs/', include("cms.urls")),
     ]
