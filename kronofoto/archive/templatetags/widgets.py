@@ -1,6 +1,7 @@
 from django import template
 from .. import reverse
 import markdown as md
+from .urlify import URLifyExtension
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -30,4 +31,4 @@ def page_links(formatter, page_obj, target=None):
 @register.filter(is_safe=True)
 @stringfilter
 def markdown(text):
-    return mark_safe(md.markdown(escape(text)))
+    return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
