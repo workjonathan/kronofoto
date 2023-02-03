@@ -74,9 +74,12 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        self.photo = get_object_or_404(
-            Photo, id=Photo.accession2id(self.kwargs['photo'])
-        )
+        if isinstance(self.kwargs['photo'], int):
+            self.photo = get_object_or_404(Photo, id=self.kwargs['photo'])
+        else:
+            self.photo = get_object_or_404(
+                Photo, id=Photo.accession2id(self.kwargs['photo'])
+            )
         if form.cleaned_data['collection']:
             collection = get_object_or_404(
                 Collection, id=form.cleaned_data['collection']

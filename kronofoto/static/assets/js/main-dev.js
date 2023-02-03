@@ -57,7 +57,7 @@ const init = () => {
 
 
     $('#tag-search').autocomplete({
-        source: '/tags/',
+        source: '/tags',
         minLength: 2,
     })
 
