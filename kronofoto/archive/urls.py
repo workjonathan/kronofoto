@@ -27,6 +27,7 @@ class AccessionNumberConverter:
 register_converter(NegativeIntConverter, 'negint')
 register_converter(AccessionNumberConverter, 'accession')
 
+app_name = 'kronofoto'
 urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('missing-photos/', views.MissingPhotosView.as_view()),

@@ -31,7 +31,7 @@ class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
     fields = ['name', 'visibility']
 
     def get_success_url(self):
-        return reverse('user-page', args=[self.request.user.get_username()])
+        return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -48,7 +48,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
         return context
 
     def get_success_url(self):
-        return reverse('user-page', args=[self.request.user.get_username()])
+        return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
 
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()

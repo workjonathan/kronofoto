@@ -40,7 +40,7 @@ class TagTest(TestImageMixin, TestCase):
         for x in range(11):
             tag = models.Tag.objects.create(tag="test tag {}".format(x))
             models.PhotoTag.objects.create(tag=tag, photo=photo, accepted=True)
-        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+        obj = self.client.get(reverse('kronofoto:tag-search'), dict(term='tag')).json()
         self.assertEqual(len(obj), 10)
 
     def testSubstringSearchShouldOnlyReturnMatchingTags(self):
@@ -55,7 +55,7 @@ class TagTest(TestImageMixin, TestCase):
         tag4 = models.Tag.objects.create(tag="dog")
         models.PhotoTag.objects.create(tag=tag4, photo=photo, accepted=True)
 
-        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+        obj = self.client.get(reverse('kronofoto:tag-search'), dict(term='tag')).json()
 
         self.assertEqual(len(obj), 3)
 
@@ -68,7 +68,7 @@ class TagTest(TestImageMixin, TestCase):
         tag3 = models.Tag.objects.create(tag="a tag 2")
         tag4 = models.Tag.objects.create(tag="dog")
 
-        obj = self.client.get(reverse('tag-search'), dict(term='tag')).json()
+        obj = self.client.get(reverse('kronofoto:tag-search'), dict(term='tag')).json()
 
         self.assertEqual(len(obj), 1)
 
@@ -86,7 +86,7 @@ class TagTest(TestImageMixin, TestCase):
     @tag("fast")
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
-        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('search-results'), urlencode({'tag': tag.tag})))
+        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('kronofoto:search-results'), urlencode({'tag': tag.tag})))
 
     @tag("fast")
     def testShouldEnforceLowerCase(self):

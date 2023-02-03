@@ -38,10 +38,10 @@
       <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
-            <a href="{% url "random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
+            <a href="{% url "kronofoto:random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
 
             <div class="collection-name">
-              <a href="{% url "random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
+              <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
             </div>
           </div>
 
@@ -66,7 +66,7 @@
           {% block viewbuttons %}
           {% include "archive/view-buttons.html" %}
           {% endblock %}
-          <div id="new-label_container" class="new-label_container"><a href="{% url "search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
+          <div id="new-label_container" class="new-label_container"><a href="{% url "kronofoto:search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div>
           <!-- end nav center -->

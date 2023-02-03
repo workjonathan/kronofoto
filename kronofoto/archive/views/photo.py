@@ -80,7 +80,7 @@ class PhotoView(BaseTemplateMixin, DetailView):
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             #context["years"] = index
             context['timeline_key'] = cache_info
-            context['timelinesvg_url'] = "{}?{}".format(reverse('timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
+            context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
@@ -119,7 +119,7 @@ class TimelineSvg(TemplateView):
             xpos = i*width/years
             boxwidth = width/years
             marker = {
-                'target': "{}?{}".format(reverse('year-redirect', kwargs=dict(year=year)), self.request.GET.urlencode()),
+                'target': "{}?{}".format(reverse('kronofoto:year-redirect', kwargs=dict(year=year)), self.request.GET.urlencode()),
                 'data_year': str(year),
                 'box': {
                     'x': xpos,

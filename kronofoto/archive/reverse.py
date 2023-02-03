@@ -17,4 +17,4 @@ def as_absolute(uri):
 def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     from django.contrib.sites.models import Site
     uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)
-    return "https://{domain}{uri}".format(domain=Site.objects.get_current().domain, uri=uri)
+    return "//{domain}{uri}".format(domain=Site.objects.get_current().domain, uri=uri)
