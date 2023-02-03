@@ -175,7 +175,7 @@ class Photo(models.Model):
     def get_download_page_url(self, params=None):
         params = params or hasattr(self, 'params') and self.params or None
         return self.add_params(
-            url=reverse('download', kwargs=dict(pk=self.id)), params=params
+            url=reverse('kronofoto:download', kwargs=dict(pk=self.id)), params=params
         )
 
     def get_urls(self, embed=False):
@@ -187,19 +187,16 @@ class Photo(models.Model):
         page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
         params = params or hasattr(self, 'params') and self.params or None
         if params:
-            url = reverse('search-results')
+            url = reverse('kronofoto:search-results')
             params = params.copy()
             params['page'] = page
         else:
-            url = reverse('gridview', kwargs=dict(page=page))
+            url = reverse('kronofoto:gridview', kwargs=dict(page=page))
         return self.add_params(url=url, params=params)
 
 
-    def get_embedded_url(self, queryset=None, params=None):
-        return self.create_url('embedded-photoview', queryset=queryset, params=params)
-
     def get_absolute_url(self, queryset=None, params=None):
-        return self.create_url('photoview', queryset=queryset, params=params)
+        return self.create_url('kronofoto:photoview', queryset=queryset, params=params)
 
     def get_edit_url(self):
         return reverse('admin:archive_photo_change', args=(self.id,))
@@ -207,7 +204,7 @@ class Photo(models.Model):
     @staticmethod
     def format_url(**kwargs):
         return "{}?{}".format(
-            reverse('gridview'), urlencode(kwargs)
+            reverse('kronofoto:gridview'), urlencode(kwargs)
         )
 
     def get_county_url(self):

@@ -6,7 +6,7 @@
 </div>
 <div hx-swap-oob="innerHTML:#all-photos">
 {% if collection_name != "All Photos" %}
-    <a href="{% url "random-image" %}" hx-get="{% url "random-image" %}" hx-target="#app">Back to All Photos</a>
+    <a href="{% url "kronofoto:random-image" %}" hx-get="{% url "kronofoto:random-image" %}" hx-target="#app">Back to All Photos</a>
 {% endif %}
 </div>
 <div hx-swap-oob="delete:#timeline-container"></div>

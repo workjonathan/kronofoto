@@ -46,7 +46,7 @@ class GridViewFormatter:
     def __init__(self, parameters):
         self.parameters = parameters
     def page_url(self, num, json=False):
-        view = 'gridview-json' if json else 'gridview'
+        view = 'gridview-json' if json else 'kronofoto:gridview'
         return "{}?{}".format(reverse(view, args=(num,)), self.parameters.urlencode())
 
 class SearchResultsViewFormatter:
@@ -55,7 +55,7 @@ class SearchResultsViewFormatter:
     def page_url(self, num, json=False):
         params = self.parameters.copy()
         params['page'] = num
-        view = 'search-results'
+        view = 'kronofoto:search-results'
         return "{}?{}".format(reverse(view), params.urlencode())
     def render(self, context, **kwargs):
         return super().render_to_response(context, **kwargs)

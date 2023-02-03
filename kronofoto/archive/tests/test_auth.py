@@ -1,13 +1,13 @@
-from django.test import SimpleTestCase, RequestFactory, tag
+from django.test import TestCase, RequestFactory, tag
 from django.urls import reverse
 from ..auth.views import RegisterAccount
 from django.contrib.auth.models import AnonymousUser
 
 
 @tag("fast")
-class RegisterAccountTest(SimpleTestCase):
+class RegisterAccountTest(TestCase):
     def testUserIsHumanShouldReturnFalse(self):
-        req = RequestFactory().post(reverse('register-account'), data={'g-recaptcha-response': ''})
+        req = RequestFactory().post(reverse('kronofoto:register-account'), data={'g-recaptcha-response': ''})
         req.user = AnonymousUser()
         v = RegisterAccount()
         v.request = req

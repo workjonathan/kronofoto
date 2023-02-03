@@ -106,7 +106,7 @@ class BaseTemplateMixin:
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
         context['photo_count'] = photo_count
-        context['grid_url'] = reverse('gridview')
+        context['grid_url'] = reverse('kronofoto:gridview')
         context['timeline_url'] = '#'
         context['theme'] = random.choice(THEME)
         hxheaders = dict()

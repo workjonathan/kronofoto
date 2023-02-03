@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.utils.http import urlencode
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from os.path import join
 from ..models import Photo, Term, Tag, CollectionQuery, Donor, Collection
 from .util import TestImageMixin
@@ -57,18 +58,18 @@ class PhotoTest(TestImageMixin, TestCase):
     @tag("fast")
     def testCityURL(self):
         photo = Photo(city='CityName', state='StateName')
-        self.assertEqual(photo.get_city_url(), '{}?{}'.format(reverse('gridview'), urlencode({'city': photo.city, 'state': photo.state})))
+        self.assertEqual(photo.get_city_url(), '{}?{}'.format(reverse('kronofoto:gridview'), urlencode({'city': photo.city, 'state': photo.state})))
 
     @tag("fast")
     def testCountyURL(self):
         photo = Photo(county='CountyName', state='StateName')
-        self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('gridview'), urlencode({'county': photo.county, 'state': photo.state})))
+        self.assertEqual(photo.get_county_url(), '{}?{}'.format(reverse('kronofoto:gridview'), urlencode({'county': photo.county, 'state': photo.state})))
 
     def testShouldNotAllowGuestsToTagPhotos(self):
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.id}))
+        resp = self.client.get(reverse('kronofoto:addtag', kwargs={'photo': self.photo.id}))
         self.assertEqual(resp.status_code, 302)
 
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.id}), {'tag': 'test tag'})
+        resp = self.client.post(reverse('kronofoto:addtag', kwargs={'photo': self.photo.id}), {'tag': 'test tag'})
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(len(self.photo.get_proposed_tags()), 0)
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
@@ -76,21 +77,21 @@ class PhotoTest(TestImageMixin, TestCase):
     def testShouldBeAbleToTagPhotos(self):
         User.objects.create_user('testuser', 'user@email.com', 'testpassword')
         self.client.login(username='testuser', password='testpassword')
-        resp = self.client.get(reverse('addtag', kwargs={'photo': self.photo.id}))
+        resp = self.client.get(reverse('kronofoto:addtag', kwargs={'photo': self.photo.id}))
         self.assertEqual(resp.status_code, 200)
 
-        resp = self.client.post(reverse('addtag', kwargs={'photo': self.photo.id}), { 'tag': 'test tag'})
+        resp = self.client.post(reverse('kronofoto:addtag', kwargs={'photo': self.photo.id}), { 'tag': 'test tag'})
         self.assertEqual(len(self.photo.get_proposed_tags()), 1)
         self.assertEqual(self.photo.get_proposed_tags()[0].tag, 'test tag')
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
 
     def testShould404WhenPhotoNotFound(self):
-        resp = self.client.get(reverse('photoview', kwargs={'page': 1, 'photo': 99999}))
+        resp = self.client.get(reverse('kronofoto:photoview', kwargs={'page': 1, 'photo': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def testShouldHaveUniqueDownloadPage(self):
-        self.assertEqual(self.photo.get_download_page_url(), reverse('download', kwargs={'pk': self.photo.id}))
-        resp = self.client.get(reverse('download', kwargs={'pk': self.photo.id}))
+        self.assertEqual(self.photo.get_download_page_url(), reverse('kronofoto:download', kwargs={'pk': self.photo.id}))
+        resp = self.client.get(reverse('kronofoto:download', kwargs={'pk': self.photo.id}))
         self.assertEqual(resp.status_code, 200)
         templates = {template.name for template in resp.templates}
         self.assertIn('archive/download-page.html', templates)
@@ -98,12 +99,14 @@ class PhotoTest(TestImageMixin, TestCase):
         self.assertEqual(resp.context['host_uri'], settings.HOST_URI)
 
     def testShouldHaveSearchFiltersOnDownloadUrl(self):
-        self.assertEqual(self.photo.get_download_page_url(params=QueryDict('a=1')), reverse('download', kwargs={'pk': self.photo.id}) + '?a=1')
+        self.assertEqual(self.photo.get_download_page_url(params=QueryDict('a=1')), reverse('kronofoto:download', kwargs={'pk': self.photo.id}) + '?a=1')
 
 
 class WhenHave50Photos(TestImageMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
+        Site.objects.update(domain='127.0.0.1:8000')
+        Site.objects.clear_cache()
         cls.donor = donor = Donor.objects.create(
             last_name='last',
             first_name='first',
@@ -195,15 +198,15 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             thispage = photos[:10]
             photos = photos[10:]
             for photo in thispage:
-                resp = self.client.get(reverse('photoview', kwargs={'page': page % 5 + 1, 'photo':photo.id}))
-                self.assertRedirects(resp, reverse('photoview', kwargs={'page': page, 'photo':photo.id}))
+                resp = self.client.get(reverse('kronofoto:photoview', kwargs={'page': page % 5 + 1, 'photo':photo.id}))
+                self.assertRedirects(resp, reverse('kronofoto:photoview', kwargs={'page': page, 'photo':photo.id}))
 
     def testGridViewShouldDisplayAllPhotosInOrder(self):
         photo_ids = {photo.id for photo in self.photos}
         currentpage = 1
         last = None
         while True:
-            resp = self.client.get(reverse('gridview', kwargs={'page': currentpage}), {'display': 16})
+            resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': currentpage}), {'display': 16})
             for photo in resp.context['page_obj']:
                 self.assertIn(photo.id, photo_ids)
                 if last:
@@ -228,7 +231,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(our_ids, got_ids)
 
     def testGridShouldHandleNonexistantTags(self):
-        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': "lakdsjflkasdf"})
+        resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'tag': "lakdsjflkasdf"})
         self.assertEqual(len(resp.context['page_obj']), 0)
 
     def testGridShouldRespectTagFilters(self):
@@ -247,12 +250,12 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         photos = [self.photos[2], self.photos[1], self.photos[4]]
         for photo in photos:
             Photo.tags.through.objects.create(tag=tag, photo=photo, accepted=False)
-        resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'tag': tag.slug})
+        resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'tag': tag.slug})
         self.assertEqual(len(resp.context['page_obj']), 0)
 
     def testGridViewShouldHonorDisplayParameter(self):
         for disp in range(2, 5):
-            resp = self.client.get(reverse('gridview', kwargs={'page': 1}), {'display': disp})
+            resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'display': disp})
             self.assertEqual(len(resp.context['page_obj']), disp)
 
     def testUserProfile(self):
@@ -273,16 +276,16 @@ class WhenHave50Photos(TestImageMixin, TestCase):
                 collections.append(coll)
                 i += 4
         self.client.login(username='testuser', password='testpassword')
-        resp = self.client.get(reverse('user-page', args=['testuser']))
+        resp = self.client.get(reverse('kronofoto:user-page', args=['testuser']))
         self.assertEqual(len(resp.context['object_list']), 3)
         for collection in resp.context['object_list']:
             self.assertEqual(collection.owner.get_username(), 'testuser')
 
-        resp = self.client.get(reverse('user-page', args=['testuser2']))
+        resp = self.client.get(reverse('kronofoto:user-page', args=['testuser2']))
         self.assertEqual(len(resp.context['object_list']), 1)
         for collection in resp.context['object_list']:
             self.assertEqual(collection.owner.get_username(), 'testuser2')
 
     def testUserProfileShould404IfUserDoesNotExist(self):
-        resp = self.client.get(reverse('user-page', args=['notarealuser']))
+        resp = self.client.get(reverse('kronofoto:user-page', args=['notarealuser']))
         self.assertEqual(resp.status_code, 404)

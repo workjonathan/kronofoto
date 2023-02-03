@@ -3,7 +3,7 @@ from django.urls import reverse
 
 class Collectible:
     def get_absolute_url(self, params=None):
-        return self.format_url(viewname='search-results', params=params)
+        return self.format_url(viewname='kronofoto:search-results', params=params)
 
     def format_url(self, viewname, params=None):
         if not params:
