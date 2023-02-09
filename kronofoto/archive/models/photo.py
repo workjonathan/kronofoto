@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.http import QueryDict
 from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
@@ -62,6 +63,16 @@ class PhotoQuerySet(models.QuerySet):
 
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
+
+    def photos_before(self, *, photo, count):
+        photos = list((self.filter(year__lt=photo.year) | self.filter(year=photo.year, id__lt=photo.id)).order_by('-year', '-id')[:count])
+        photos.reverse()
+        return photos
+
+    def photos_after(self, *, photo, count):
+        return (
+            self.filter(year__gt=photo.year) | self.filter(year=photo.year, id__gt=photo.id)
+        ).order_by('year', 'id')[:count]
 
     def exclude_geocoded(self):
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
@@ -159,11 +170,6 @@ class Photo(models.Model):
 
     def create_url(self, viewname, queryset=None, params=None):
         kwargs = {'photo': self.id}
-        try:
-            kwargs['page'] = self.page_number(queryset=queryset)
-        except AttributeError:
-            pass
-
         url = reverse(
             viewname,
             kwargs=kwargs,
@@ -184,14 +190,14 @@ class Photo(models.Model):
         }
 
     def get_grid_url(self, params=None):
-        page = self.row_number//settings.GRID_DISPLAY_COUNT + 1
+        url = reverse('kronofoto:gridview')
         params = params or hasattr(self, 'params') and self.params or None
         if params:
-            url = reverse('kronofoto:search-results')
             params = params.copy()
-            params['page'] = page
         else:
-            url = reverse('kronofoto:gridview', kwargs=dict(page=page))
+            params = QueryDict(mutable=True)
+        params['year:gte'] = self.year
+        params['id:gt'] = self.id - 1
         return self.add_params(url=url, params=params)
 
 

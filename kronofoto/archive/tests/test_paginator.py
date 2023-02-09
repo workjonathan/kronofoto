@@ -1,5 +1,38 @@
 from django.test import TestCase, SimpleTestCase, tag
 from ..views import EMPTY_PNG, FAKE_PHOTO, FakeTimelinePage, TimelinePaginator
+from ..views.paginator import KeysetPaginator
+from ..models.photo import Photo
+from hypothesis.extra.django import TestCase as HypoTestCase
+from hypothesis import given, settings as hyposettings, HealthCheck
+from hypothesis import strategies as st
+from .util import photos, donors
+
+class PaginatorTest(HypoTestCase):
+    @given(
+        st.integers(min_value=1, max_value=3),
+        st.lists(
+            photos(
+                year=st.integers(min_value=1850, max_value=1990),
+                is_published=st.just(True),
+                donor=donors(),
+            ),
+            min_size=1,
+            max_size=6,
+        ).flatmap(lambda photos: st.sampled_from(photos)),
+    )
+    def testPaginator(self, page_size, photo):
+        paginator = KeysetPaginator(Photo.objects.all().order_by('year', 'id'), per_page=page_size)
+        page = paginator.get_page(dict(year=photo.year, id=photo.id-1, reverse=False))
+        if page.has_next() and page.has_previous():
+            self.assertEqual(len(page), page_size)
+        if page.has_previous():
+            page2 = paginator.get_page(paginator.get_page(page.previous_page_number()).next_page_number())
+            for (p1, p2) in zip(page, page2):
+                self.assertEqual(p1.id, p2.id)
+        if page.has_next():
+            page2 = paginator.get_page(paginator.get_page(page.next_page_number()).previous_page_number())
+            for (p1, p2) in zip(page, page2):
+                self.assertEqual(p1.id, p2.id)
 
 @tag("fast")
 class FakeImageTest(SimpleTestCase):
