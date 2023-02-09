@@ -20,17 +20,19 @@
         </figure>
         {% block left_arrow %}
         <a id="fi-arrow-left" class="control previous"
-            {% if photo.previous %}
-                href="{{ photo.previous.get_absolute_url }}"
-                hx-get="{{ photo.previous.get_absolute_url }}"
+            {% if prev_photo %}
+                hx-headers='{ "us.fortepan.position": {{ prev_photo.position }} }'
+                href="{{ prev_photo.get_absolute_url }}"
+                hx-get="{{ prev_photo.get_absolute_url }}"
             {% endif %}>
         </a>
         {% endblock %}
         {% block right_arrow %}
         <a id="fi-arrow-right" class="control forward"
-            {% if photo.next %}
-                href="{{ photo.next.get_absolute_url }}"
-                hx-get="{{ photo.next.get_absolute_url }}"
+            {% if next_photo %}
+                hx-headers='{ "us.fortepan.position": {{ next_photo.position }} }'
+                href="{{ next_photo.get_absolute_url }}"
+                hx-get="{{ next_photo.get_absolute_url }}"
             {% endif %}>
         </a>
         {% endblock %}
@@ -63,9 +65,10 @@
 
             <div class="back-arrows">
                 <a id="backward"
-                    {% if page.has_previous %}
-                        hx-get="{{ prev_page.0.get_absolute_url }}"
-                        href="{{ prev_page.0.get_absolute_url }}"
+                    {% if carousel_has_prev %}
+                        hx-headers='{ "us.fortepan.position": 0 }'
+                        hx-get="{{ object_list.0.get_absolute_url }}"
+                        href="{{ object_list.0.get_absolute_url }}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing back">
                 </a>
@@ -80,9 +83,10 @@
 
             <div class="forward-arrows">
                 <a id="forward"
-                    {% if page.has_next %}
-                        href="{{ next_page.0.get_absolute_url }}"
-                        hx-get="{{ next_page.0.get_absolute_url }}"
+                    {% if carousel_has_next %}
+                        hx-headers='{ "us.fortepan.position": 0 }'
+                        href="{{ object_list.20.get_absolute_url }}"
+                        hx-get="{{ object_list.20.get_absolute_url }}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing forward">
                 </a>

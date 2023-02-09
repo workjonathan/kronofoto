@@ -1,4 +1,4 @@
-from django.test import TestCase, tag
+from django.test import TestCase, tag, RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from django.http import QueryDict
@@ -8,8 +8,9 @@ from django.utils.http import urlencode
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from os.path import join
+from ..views.paginator import KeysetPaginator
 from ..models import Photo, Term, Tag, CollectionQuery, Donor, Collection
-from .util import TestImageMixin
+from .util import TestImageMixin, photos, donors
 from archive.search.expression import TagExactly
 
 @tag("fast")
@@ -192,21 +193,12 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             self.assertEqual(photo.page_number(), i//10 + 1)
 
 
-    def testShouldRedirectToCorrectPageForPhoto(self):
-        photos = self.photos
-        for page in range(1, 6):
-            thispage = photos[:10]
-            photos = photos[10:]
-            for photo in thispage:
-                resp = self.client.get(reverse('kronofoto:photoview', kwargs={'page': page % 5 + 1, 'photo':photo.id}))
-                self.assertRedirects(resp, reverse('kronofoto:photoview', kwargs={'page': page, 'photo':photo.id}))
-
     def testGridViewShouldDisplayAllPhotosInOrder(self):
         photo_ids = {photo.id for photo in self.photos}
         currentpage = 1
+        resp = self.client.get(reverse('kronofoto:gridview'))
         last = None
         while True:
-            resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': currentpage}), {'display': 16})
             for photo in resp.context['page_obj']:
                 self.assertIn(photo.id, photo_ids)
                 if last:
@@ -214,9 +206,10 @@ class WhenHave50Photos(TestImageMixin, TestCase):
                 last = photo
 
                 photo_ids.remove(photo.id)
-            currentpage += 1
             if not resp.context['page_obj'].has_next():
                 break
+            else:
+                resp = self.client.get(reverse('kronofoto:gridview'), resp.context.next_page_number())
         self.assertEqual(len(photo_ids), 0)
 
     def testGridShouldRespectTermFilters(self):
@@ -231,7 +224,11 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(our_ids, got_ids)
 
     def testGridShouldHandleNonexistantTags(self):
-        resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'tag': "lakdsjflkasdf"})
+        tag = Tag.objects.create(tag="silly")
+        photos = [self.photos[2], self.photos[0], self.photos[3]]
+        for photo in photos:
+            Photo.tags.through.objects.create(tag=tag, photo=photo, accepted=True)
+        resp = self.client.get(reverse('kronofoto:gridview'), {'tag': "lakdsjflkasdf"})
         self.assertEqual(len(resp.context['page_obj']), 0)
 
     def testGridShouldRespectTagFilters(self):
@@ -246,17 +243,16 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         self.assertEqual(our_ids, got_ids)
 
     def testFilteringShouldNotShowUnapprovedTags(self):
+        tag = Tag.objects.create(tag="silly")
+        photos = [self.photos[0]]
+        for photo in photos:
+            Photo.tags.through.objects.create(tag=tag, photo=photo, accepted=True)
         tag = Tag.objects.create(tag="test tag")
         photos = [self.photos[2], self.photos[1], self.photos[4]]
         for photo in photos:
             Photo.tags.through.objects.create(tag=tag, photo=photo, accepted=False)
-        resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'tag': tag.slug})
+        resp = self.client.get(reverse('kronofoto:gridview'), {'tag': tag.slug})
         self.assertEqual(len(resp.context['page_obj']), 0)
-
-    def testGridViewShouldHonorDisplayParameter(self):
-        for disp in range(2, 5):
-            resp = self.client.get(reverse('kronofoto:gridview', kwargs={'page': 1}), {'display': disp})
-            self.assertEqual(len(resp.context['page_obj']), disp)
 
     def testUserProfile(self):
         users = [

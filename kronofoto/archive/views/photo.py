@@ -7,7 +7,7 @@ from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
 from .basetemplate import BaseTemplateMixin
-from .timelinepaginator import TimelinePaginator
+from .paginator import TimelinePaginator, FAKE_PHOTO
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 from ..reverse import get_request, set_request, as_absolute
@@ -33,53 +33,56 @@ class PhotoView(BaseTemplateMixin, DetailView):
         self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
 
-    #def get_object(self, *args, **kwargs):
-    #    print("test")
-    #    return self.model.objects.get(pk=self.model.accession2id(self.kwargs[self.pk_url_kwarg]))
-
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id').select_related('donor', 'scanner'), self.items)
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
+        self.params = self.request.GET.copy()
         if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
             context['base_template'] = 'archive/photo_partial.html'
-        photo = self.kwargs['photo']
-        if 'page' in self.kwargs:
-            page = self.kwargs['page']
-        else:
-            page = 1
+        position = int(self.request.headers.get('us.fortepan.position', 3))
         queryset = self.queryset
-        cache_info = self.collection.cache_encoding()
-        #index_key = 'year_links:' + cache_info
-        #index = cache.get(index_key)
-        #if not index:
-        #    index = queryset.year_links(params=self.request.GET)
-        #    cache.set(index_key, index)
-
-        paginator = self.get_paginator()
-        page_selection = paginator.get_pages(page)
         year_range = queryset.year_range()
         start = year_range['start']
         end = year_range['end']
+        photo_rec = self.object
+        photo_rec.position = position
+        photo_rec.save_params(self.params)
+        photo_rec.active = True
+        before = queryset.photos_before(photo=photo_rec, count=position+10)
+        if before:
+            context['prev_photo'] = before[-1]
+        for (i, photo) in enumerate(reversed(before)):
+            photo.save_params(self.params)
+            photo.position = (position - i - 1) % 10
+        position = len(before) % 10
+        has_next = has_prev = True
+        if len(before) < 10:
+            has_prev = False
+            before = [FAKE_PHOTO for _ in range(10)] + before
+        after = list(queryset.photos_after(photo=photo_rec, count=20-position-1))
+        if after:
+            context['next_photo'] = after[0]
+        for (i, photo) in enumerate(after):
+            photo.save_params(self.params)
+            photo.position = (position + i + 1) % 10
+        carousel = before + [photo_rec] + after
+        if len(after) < 10 - position:
+            has_next = False
+        while len(carousel) < 30:
+            carousel.append(FAKE_PHOTO)
 
         try:
-            photo_rec = page_selection.find(self.object.id)
-
-            params = self.request.GET.copy()
-            if 'constraint' in params:
-                params.pop('constraint')
-            for p in page_selection.photos():
-                p.save_params(params)
-
-            context['prev_page'], context["page"], context['next_page'] = page_selection.pages
+            context['object_list'] = carousel
+            context['carousel_has_next'] = has_next
+            context['carousel_has_prev'] = has_prev
             context['grid_url'] = photo_rec.get_grid_url()
             context['timeline_url'] = photo_rec.get_absolute_url()
             context["photo"] = photo_rec
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             #context["years"] = index
-            context['timeline_key'] = cache_info
             context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
@@ -96,7 +99,7 @@ class PhotoView(BaseTemplateMixin, DetailView):
         return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
 
     def render_to_response(self, context, **kwargs):
-        if 'timeline_key' not in context:
+        if 'timelinesvg_url' not in context:
             try:
                 photo = Photo.objects.get(id=self.kwargs['photo'])
                 return redirect(self.get_redirect_url(photo))

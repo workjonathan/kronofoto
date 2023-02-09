@@ -32,13 +32,13 @@ urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('original/<int:pk>/', views.DownloadPageView.as_view(), name='download'),
-    path('photos/<accession:pk>/originals', views.DownloadPageView.as_view(), name='download'),
+    path('photos/<accession:pk>/original', views.DownloadPageView.as_view(), name='download'),
     path('accounts/', include('archive.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view(), name='user-page'),
     path('users/<str:username>', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
-    path('search/', views.SearchResultsView.as_view(), name='search-results'),
-    path('search', views.SearchResultsView.as_view(), name='search-results'),
+    path('search/', views.GridView.as_view(), name='search-results'),
+    path('search', views.GridView.as_view(), name='search-results'),
     path('collection/', views.CollectionCreate.as_view(), name='collection-create'),
     path('collections', views.CollectionCreate.as_view(), name='collection-create'),
     path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
@@ -58,8 +58,6 @@ urlpatterns = [
     path('photos', views.GridView.as_view(), name='gridview'),
     path('grid/<int:page>/', views.GridView.as_view(), name='gridview'),
     path('photos/<int:page>', views.GridView.as_view(), name='gridview'),
-    path('publish/', views.PrePublishPhotoList.as_view(), name='prepublishlist'),
-    path('upload/', views.UploadScannedImage.as_view(), name="upload"),
 ]
 if True:
     urlpatterns += [

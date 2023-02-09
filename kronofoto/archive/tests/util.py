@@ -1,12 +1,36 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from ..models import Photo, Donor
+from django.core.files.uploadedfile import SimpleUploadedFile
+from hypothesis.extra.django import from_model
+from hypothesis import strategies as st
 
+small_gif = (
+    b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
+    b'\x01\x0a\x00\x01\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
+    b'\x02\x4c\x01\x00\x3b'
+)
+
+donors = lambda: from_model(Donor)
+
+def photos(**kwargs):
+    return from_model(
+        Photo,
+        original=st.builds(
+            lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
+        ),
+        h700=st.builds(
+            lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
+        ),
+        thumbnail=st.builds(
+            lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
+        ),
+        **kwargs,
+    )
 
 class TestImageMixin:
     @classmethod
     def setUpClass(cls):
-        with open('testdata/test.jpg', 'rb') as f:
-            cls.test_img = f.read()
+        cls.test_img = small_gif
         super().setUpClass()
 
     @classmethod
