@@ -8,11 +8,11 @@ def docnav(context, active_item=None):
     # These are pairs of display text and view names.
     pages = (
         #('Archive', 'random-image'),
-        ('About', 'about'),
-        ('Use', 'use'),
-        ('Contribute', 'contribute'),
-        ('Volunteer', 'volunteer'),
-        ('Give', 'give'),
+        ('About', 'kronofoto:about'),
+        ('Use', 'kronofoto:use'),
+        ('Contribute', 'kronofoto:contribute'),
+        ('Volunteer', 'kronofoto:volunteer'),
+        ('Give', 'kronofoto:give'),
     )
     context['pages'] = [
         {
