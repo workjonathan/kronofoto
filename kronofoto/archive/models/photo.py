@@ -104,7 +104,7 @@ class Photo(models.Model):
     h700 = models.ImageField(null=True, editable=False)
     thumbnail = models.ImageField(null=True, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    tags = models.ManyToManyField(Tag, blank=True, through="PhotoTag")
+    tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.TextField(blank=True)
     location_from_google = models.BooleanField(editable=False, default=False)
@@ -357,6 +357,14 @@ class PhotoTag(models.Model):
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
     creator = models.ManyToManyField(User, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['tag', 'photo'], name='unique_tag_photo'),
+        ]
+        indexes = [
+            models.Index(fields=['tag', 'photo']),
+        ]
 
     def __str__(self):
         return str(self.tag)
