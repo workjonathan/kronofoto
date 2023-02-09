@@ -1,6 +1,6 @@
 {% load static %}
 {% load cache %}
-<form action="/search/" method="get">
+<form action="{% url "kronofoto:gridview" %}" method="get">
   <label for="search-box">
     <img class="search-icon" src="{{ theme.searchSvg }}" alt="Magnifying glass">
     {{ form.basic }}

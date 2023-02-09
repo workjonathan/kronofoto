@@ -87,7 +87,7 @@ class PhotoTest(TestImageMixin, TestCase):
         self.assertEqual(len(self.photo.get_accepted_tags()), 0)
 
     def testShould404WhenPhotoNotFound(self):
-        resp = self.client.get(reverse('kronofoto:photoview', kwargs={'page': 1, 'photo': 99999}))
+        resp = self.client.get(reverse('kronofoto:photoview', kwargs={'photo': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def testShouldHaveUniqueDownloadPage(self):
@@ -283,5 +283,5 @@ class WhenHave50Photos(TestImageMixin, TestCase):
             self.assertEqual(collection.owner.get_username(), 'testuser2')
 
     def testUserProfileShould404IfUserDoesNotExist(self):
-        resp = self.client.get(reverse('kronofoto:user-page', args=['notarealuser']))
+        resp = self.client.get(reverse('kronofoto:user-page', kwargs=dict(username='notarealuser')))
         self.assertEqual(resp.status_code, 404)
