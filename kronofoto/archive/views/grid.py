@@ -106,8 +106,9 @@ class GridView(BaseTemplateMixin, ListView):
         params = self.params.copy()
         if 'display' in params:
             params.pop('display')
-        for photo in photos:
-            photo.save_params(params=params)
+        if not self.final_expr or self.final_expr.is_collection():
+            for photo in photos:
+                photo.save_params(params=params)
 
 
 class KeysetViewFormatter:

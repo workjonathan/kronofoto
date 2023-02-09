@@ -1,5 +1,6 @@
 from django.views.generic import DetailView
 from django.http import Http404
+from django.core.exceptions import SuspiciousOperation
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.cache import cache
@@ -32,6 +33,17 @@ class PhotoView(BaseTemplateMixin, DetailView):
     def get_queryset(self):
         self.collection = CollectionQuery(self.final_expr, self.request.user)
         return Photo.objects.filter_photos(self.collection)
+
+    def get_object(self, queryset=None):
+        if self.form.is_valid():
+            if not queryset:
+                queryset = self.queryset
+            try:
+                return queryset.get(id=self.kwargs['photo'])
+            except Photo.DoesNotExist:
+                raise Http404("No photo with this accession number is in this collection.")
+        else:
+            raise SuspiciousOperation('invalid search request')
 
     def get_paginator(self):
         return TimelinePaginator(self.queryset.order_by('year', 'id').select_related('donor', 'scanner'), self.items)
