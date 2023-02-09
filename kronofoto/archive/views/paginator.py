@@ -31,7 +31,9 @@ class KeysetPaginator(Paginator):
                 page_objs.reverse()
         except KeyError:
             page_objs = list(self.object_list[:self.per_page+1])
-            has_next = len(page_objs) > self.per_page
+            if len(page_objs) > self.per_page:
+                page_objs.pop()
+                has_next = True
         page = KeysetPage(page_objs, number, self, has_prev=has_prev, has_next=has_next, queryset=self.object_list)
         return page
     @property
