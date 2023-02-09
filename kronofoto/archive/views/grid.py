@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.views.generic import ListView
+from django.http import HttpResponseBadRequest
 from django.core.cache import cache
 from django.core.paginator import Paginator, Page
 from .paginator import KeysetPaginator
