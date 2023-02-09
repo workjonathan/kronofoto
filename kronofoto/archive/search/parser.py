@@ -241,7 +241,7 @@ escaped = (
 
 schunk = (
       escaped
-    | parsy.regex(r'[^\\\s\(\)":]+').map(lambda s: (s, []))
+    | parsy.regex(r'[^\\\s\(\)":|]+').map(lambda s: (s, []))
 )
 
 qchunk = (
@@ -293,11 +293,11 @@ trans = str.maketrans({
 class BinaryKeyword:
     value: str
     def __str__(self):
-        return self.value
+        return " {} ".format(self.value)
 
     @classmethod
     def parser(cls):
-        return parsy.whitespace.many() >> (parsy.string("AND") | parsy.string("OR") | parsy.string("|")).map(lambda s: (cls(s), [])) << parsy.peek(parsy.whitespace)
+        return parsy.whitespace.many() >> (((parsy.string("AND") | parsy.string("OR")).map(lambda s: (cls(s), [])) << parsy.peek(parsy.whitespace)) | parsy.string("|").map(lambda s: (cls(s), [])))
 
 @dataclass
 class SearchTerm:
