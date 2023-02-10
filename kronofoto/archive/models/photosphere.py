@@ -61,7 +61,7 @@ class PhotoSphere(models.Model):
                 raise IncompleteGPSInfo from error
 
     def get_absolute_url(self):
-        return reverse('mainstreetview', kwargs=dict(pk=self.pk))
+        return reverse('kronofoto:mainstreetview', kwargs=dict(pk=self.pk))
 
     def __str__(self):
         return self.title
