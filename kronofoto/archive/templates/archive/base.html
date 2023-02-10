@@ -66,7 +66,7 @@
           {% block viewbuttons %}
           {% include "archive/view-buttons.html" %}
           {% endblock %}
-          <div id="new-label_container" class="new-label_container"><a href="{% url "kronofoto:search-results" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
+          <div id="new-label_container" class="new-label_container"><a href="{% url "kronofoto:gridview" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div>
           <!-- end nav center -->

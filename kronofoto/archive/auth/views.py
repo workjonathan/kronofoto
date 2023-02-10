@@ -79,9 +79,9 @@ class RegisterAccount(BaseTemplateMixin, FormView):
     def form_valid(self, form):
         if self.user_is_human():
             form.create_user()
-            self.success_url = reverse('email-sent')
+            self.success_url = reverse('kronofoto:email-sent')
         else:
-            self.success_url = reverse('register-account')
+            self.success_url = reverse('kronofoto:register-account')
         return super().form_valid(form)
 
 class EmailSentView(BaseTemplateMixin, TemplateView):

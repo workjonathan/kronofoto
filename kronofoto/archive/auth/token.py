@@ -23,7 +23,7 @@ class UserEmailVerifier:
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = self.token_gen.make_token(user)
 
-        url = reverse('activate', kwargs={'uid': uid, 'token': token})
+        url = reverse('kronofoto:activate', kwargs={'uid': uid, 'token': token})
         message = """Hi,
         Thank you for making an account with Fortepan Iowa.
         Please click on the link below to confirm your email address.

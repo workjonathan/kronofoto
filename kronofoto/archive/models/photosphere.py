@@ -61,7 +61,7 @@ class PhotoSphere(models.Model):
                 raise IncompleteGPSInfo from error
 
     def get_absolute_url(self):
-        return reverse('mainstreetview', kwargs=dict(pk=self.pk))
+        return reverse('kronofoto:mainstreetview', kwargs=dict(pk=self.pk))
 
     def __str__(self):
         return self.title
@@ -76,6 +76,12 @@ class PhotoSpherePair(models.Model):
 
     class Meta:
         verbose_name = 'Photo position'
+        constraints = [
+            models.UniqueConstraint(fields=['photo', 'photosphere'], name='unique_photosphere_photo'),
+        ]
+        indexes = [
+            models.Index(fields=['photo', 'photosphere']),
+        ]
 
     def __str__(self):
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)
