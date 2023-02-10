@@ -36,7 +36,7 @@
             {% else %}
             None
             {% endif %}
-            <a class="add-tag" href="{% url "kronofoto:addtag" photo.id %}">＋</a>
+            <a class="add-tag" href="{% url "kronofoto:addtag" photo.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">＋</a>
             </li>
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
             <li><a href="{% url "kronofoto:add-to-list" photo.id %}">Add to list</a></li>
