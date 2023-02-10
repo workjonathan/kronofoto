@@ -76,6 +76,12 @@ class PhotoSpherePair(models.Model):
 
     class Meta:
         verbose_name = 'Photo position'
+        constraints = [
+            models.UniqueConstraint(fields=['photo', 'photosphere'], name='unique_photosphere_photo'),
+        ]
+        indexes = [
+            models.Index(fields=['photo', 'photosphere']),
+        ]
 
     def __str__(self):
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)
