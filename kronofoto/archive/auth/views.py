@@ -3,7 +3,7 @@ from django.views.generic.base import RedirectView
 from django.views.generic.edit import FormView
 from django.views.generic import TemplateView
 from django.contrib.auth import login
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 import urllib
 import urllib.request
