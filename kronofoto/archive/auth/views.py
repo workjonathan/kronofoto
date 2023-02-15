@@ -19,7 +19,7 @@ class LogoutView(BaseTemplateMixin, django_views.LogoutView):
     pass
 
 class PasswordResetView(BaseTemplateMixin, django_views.PasswordResetView):
-    pass
+    email_template_name = 'registration/password_reset_email2.html'
 
 class PasswordResetDoneView(BaseTemplateMixin, django_views.PasswordResetDoneView):
     pass
