@@ -28,10 +28,10 @@ class UserEmailVerifier:
         Thank you for making an account with Fortepan Iowa.
         Please click on the link below to confirm your email address.
 
-        {urlbase}{path}
+        https:{path}
 
         If you don't know what this is about, please ignore this email.""".format(
-            urlbase=settings.HOST_URI, path=url
+            urlbase=path=url
         )
         subject = 'Account Activation'
 
