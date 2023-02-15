@@ -41,7 +41,7 @@ class PasswordChangeDoneView(BaseTemplateMixin, django_views.PasswordChangeDoneV
 
 class VerifyToken(RedirectView):
     permanent = False
-    pattern_name = 'random-image'
+    pattern_name = 'kronofoto:random-image'
     verifier = UserEmailVerifier()
 
     def get_redirect_url(self, *args, **kwargs):
