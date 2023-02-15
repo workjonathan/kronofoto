@@ -31,7 +31,7 @@ class UserEmailVerifier:
         https:{path}
 
         If you don't know what this is about, please ignore this email.""".format(
-            urlbase=path=url
+            path=url
         )
         subject = 'Account Activation'
 
