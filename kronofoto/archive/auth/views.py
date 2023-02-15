@@ -20,6 +20,7 @@ class LogoutView(BaseTemplateMixin, django_views.LogoutView):
 
 class PasswordResetView(BaseTemplateMixin, django_views.PasswordResetView):
     email_template_name = 'registration/password_reset_email2.html'
+    success_url = reverse_lazy('kronofoto:password_reset_done')
 
 class PasswordResetDoneView(BaseTemplateMixin, django_views.PasswordResetDoneView):
     pass
