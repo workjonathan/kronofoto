@@ -27,7 +27,7 @@ class PasswordResetDoneView(BaseTemplateMixin, django_views.PasswordResetDoneVie
 
 
 class PasswordResetConfirmView(BaseTemplateMixin, django_views.PasswordResetConfirmView):
-    pass
+    success_url = reverse_lazy('kronofoto:password_reset_complete')
 
 class PasswordResetCompleteView(BaseTemplateMixin, django_views.PasswordResetCompleteView):
     pass
