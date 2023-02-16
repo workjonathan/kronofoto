@@ -59,7 +59,7 @@ urlpatterns = [
     path('photos/<int:page>', views.GridView.as_view()),
 ]
 
-urlpatterns = urlpatterns + [path("<str:short_name>/", include(urlpatterns))]
+urlpatterns = urlpatterns + [path("<slug:short_name>/", include(urlpatterns))]
 if True:
     urlpatterns += [
         path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
