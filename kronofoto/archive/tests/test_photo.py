@@ -12,6 +12,7 @@ from ..views.paginator import KeysetPaginator
 from ..models import Photo, Term, Tag, CollectionQuery, Donor, Collection
 from .util import TestImageMixin, photos, donors
 from archive.search.expression import TagExactly
+from ..models.archive import Archive
 
 @tag("fast")
 class PhotoTest(TestImageMixin, TestCase):
@@ -111,6 +112,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         cls.donor = donor = Donor.objects.create(
             last_name='last',
             first_name='first',
+            archive=Archive.objects.all()[0],
         )
         cls.photos = []
         for y in range(1900, 1905):

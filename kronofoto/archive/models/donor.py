@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Count
 from .collectible import Collectible
+from .archive import Archive
 
 class DonorQuerySet(models.QuerySet):
     def annotate_scannedcount(self):
@@ -15,6 +16,7 @@ class DonorQuerySet(models.QuerySet):
 class Donor(Collectible, models.Model):
     last_name = models.CharField(max_length=256, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
+    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     home_phone = models.CharField(max_length=256, blank=True)
     street1 = models.CharField(max_length=256, blank=True)
     street2 = models.CharField(max_length=256, blank=True)

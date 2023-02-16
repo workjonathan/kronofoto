@@ -6,6 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
+from .models.archive import Archive
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count
 from django.db import IntegrityError
@@ -18,6 +19,10 @@ from django.forms import ModelForm, Textarea
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
+
+@admin.register(Archive)
+class ArchiveAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):

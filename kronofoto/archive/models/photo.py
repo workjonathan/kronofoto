@@ -20,6 +20,7 @@ from ..storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag
 from .term import Term
+from .archive import Archive
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
@@ -99,6 +100,7 @@ def get_original_path(instance, filename):
 
 
 class Photo(models.Model):
+    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
     h700 = models.ImageField(null=True, editable=False)

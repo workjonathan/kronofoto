@@ -1,5 +1,7 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.models.signals import post_migrate
+from .management import create_default_archive
 
 
 class ArchiveConfig(AppConfig):
@@ -10,3 +12,5 @@ class ArchiveConfig(AppConfig):
         for name in dir(app_defaults):
             if name.isupper() and not hasattr(settings, name):
                 setattr(settings, name, getattr(app_defaults, name))
+
+        post_migrate.connect(create_default_archive, sender=self)

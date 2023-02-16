@@ -5,17 +5,19 @@ from ..models.photo import Photo
 from hypothesis.extra.django import TestCase as HypoTestCase
 from hypothesis import given, settings as hyposettings, HealthCheck
 from hypothesis import strategies as st
-from .util import photos, donors
+from .util import photos, donors, archives
 
 class PaginatorTest(HypoTestCase):
     @given(
         st.integers(min_value=1, max_value=3),
         st.lists(
-            photos(
-                year=st.integers(min_value=1850, max_value=1990),
-                is_published=st.just(True),
-                donor=donors(),
-            ),
+            archives().flatmap(lambda archive: donors(archive=st.just(archive)).flatmap((lambda donor:
+                photos(
+                    year=st.integers(min_value=1850, max_value=1990),
+                    is_published=st.just(True),
+                    donor=st.just(donor),
+                    archive=st.just(archive),
+                )))),
             min_size=1,
             max_size=6,
         ).flatmap(lambda photos: st.sampled_from(photos)),

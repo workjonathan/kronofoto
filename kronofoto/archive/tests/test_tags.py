@@ -86,7 +86,7 @@ class TagTest(TestImageMixin, TestCase):
     @tag("fast")
     def testURL(self):
         tag = models.Tag.objects.create(tag="test tag")
-        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('kronofoto:search-results'), urlencode({'tag': tag.tag})))
+        self.assertEqual(tag.get_absolute_url(), "{}?{}".format(reverse('kronofoto:gridview'), urlencode({'tag': tag.tag})))
 
     @tag("fast")
     def testShouldEnforceLowerCase(self):

@@ -38,16 +38,16 @@ urlpatterns = [
     path('users/<str:username>', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('search/', views.GridView.as_view()),
-    path('photos', views.GridView.as_view(), name='search-results'),
+    path('photos', views.GridView.as_view()),
     path('collection/', views.CollectionCreate.as_view()),
     path('collections', views.CollectionCreate.as_view(), name='collection-create'),
-    path('collection/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+    path('collections/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view()),
     path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),
-    path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
+    path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view()),
     path('photo/year:<int:year>/', YearRedirect.as_view()),
     path('photos/year:<int:year>', YearRedirect.as_view(), name="year-redirect"),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view()),
@@ -58,6 +58,8 @@ urlpatterns = [
     path('grid/<int:page>/', views.GridView.as_view()),
     path('photos/<int:page>', views.GridView.as_view()),
 ]
+
+urlpatterns = urlpatterns + [path("<str:short_name>/", include(urlpatterns))]
 if True:
     urlpatterns += [
         path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
