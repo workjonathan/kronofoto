@@ -1,10 +1,11 @@
 {% extends "archive/base.html" %}
+{% load krono_urls %}
 
 {% block content %}
 <div class="container-center add_tag-container">
  
     <form method="post">{% csrf_token %}
-        <span class="back-btn"><a href="{{ photo.get_absolute_url }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"><i class="fas fa-long-arrow-alt-left"></i> Back to archive</a></span>
+        <span class="back-btn"><a href="{% object_url photo url_kwargs=url_kwargs %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"><i class="fas fa-long-arrow-alt-left"></i> Back to archive</a></span>
         {{ form.as_p }}
         <input type="submit" value="Add">
         

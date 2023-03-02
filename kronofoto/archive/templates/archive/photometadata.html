@@ -30,7 +30,7 @@
             <li>add a new tag:<br>
                 <input /><br>
                 <button id="add-tag-button-in-metadata-popup">add</button>
-{% comment %}             <a class="add-tag" href="{% url "kronofoto:addtag" photo.id %}">＋</a>
+{% comment %}             <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
 {% endcomment %}            </li>
 
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>

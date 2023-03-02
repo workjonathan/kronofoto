@@ -71,7 +71,7 @@ class GenericFilterReporter:
     def __init__(self, verb):
         self.verb = verb
     def describe(self, exprs):
-        words = [str(expr.value) for expr in exprs]
+        words = [str(expr.str if hasattr(expr, "str") else expr.value) for expr in exprs]
         if len(words) == 1:
             clauses = words[0]
         else:

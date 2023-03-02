@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
-from django.urls import reverse
+from ..reverse import reverse
 from ..forms import TagForm
 from .basetemplate import BaseTemplateMixin
 from ..models import Photo
@@ -19,7 +19,7 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
 
     def dispatch(self, request, photo, **kwargs):
         self.photo = Photo.objects.get(id=photo)
-        self.success_url = reverse('kronofoto:addtag', kwargs={'photo': self.photo.id})
+        self.success_url = reverse('kronofoto:addtag', kwargs=dict(**self.url_kwargs, **{'photo': self.photo.id}))
         if request.GET:
             self.success_url += '?' + request.GET.urlencode()
         return super().dispatch(request, **kwargs)

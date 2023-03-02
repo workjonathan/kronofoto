@@ -1,5 +1,4 @@
 from django.core.cache import cache
-from django.urls import reverse
 from django.conf import settings
 from django.templatetags.static import static
 import random

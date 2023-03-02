@@ -1,5 +1,5 @@
 from django.db import models
-from django.urls import reverse
+from ..reverse import reverse
 from django.utils.http import urlencode
 from django.contrib.auth.models import User
 import uuid
