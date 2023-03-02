@@ -1,7 +1,7 @@
 from django.views.generic import DetailView
 from django.http import Http404
 from django.core.exceptions import SuspiciousOperation
-from django.urls import reverse
+from ..reverse import reverse
 from django.shortcuts import redirect
 from django.core.cache import cache
 from django.conf import settings
@@ -91,7 +91,7 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
             context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
             context["tags"] = photo_rec.get_accepted_tags(self.request.user)
             #context["years"] = index
-            context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(start=start, end=end)), self.request.GET.urlencode())
+            context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(**self.url_kwargs, **dict(start=start, end=end))), self.request.GET.urlencode())
             if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
                 context['edit_url'] = photo_rec.get_edit_url()
         except KeyError:
@@ -118,7 +118,10 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
 
 class TimelineSvg(TemplateView):
     template_name = "archive/timeline.svg"
-    def get_context_data(self, start, end, width=400):
+    def get_context_data(self, start, end, short_name=None, width=400):
+        url_kwargs = {}
+        if short_name:
+            url_kwargs['short_name'] = short_name
         context = {
             'minornotches': [],
             'majornotches': [],
@@ -130,7 +133,7 @@ class TimelineSvg(TemplateView):
             xpos = i*width/years
             boxwidth = width/years
             marker = {
-                'target': "{}?{}".format(reverse('kronofoto:year-redirect', kwargs=dict(year=year)), self.request.GET.urlencode()),
+                'target': "{}?{}".format(reverse('kronofoto:year-redirect', kwargs=dict(**url_kwargs, **dict(year=year))), self.request.GET.urlencode()),
                 'data_year': str(year),
                 'box': {
                     'x': xpos,

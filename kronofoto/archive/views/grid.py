@@ -4,7 +4,7 @@ from django.http import HttpResponseBadRequest
 from django.core.cache import cache
 from django.core.paginator import Paginator, Page
 from .paginator import KeysetPaginator
-from django.urls import reverse
+from ..reverse import reverse
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned

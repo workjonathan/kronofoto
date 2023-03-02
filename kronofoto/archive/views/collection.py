@@ -1,6 +1,6 @@
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
-from django.urls import reverse
+from ..reverse import reverse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin

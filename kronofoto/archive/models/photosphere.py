@@ -3,7 +3,7 @@ from django.contrib.gis.db import models
 import uuid
 from os import path
 from ..storage import OverwriteStorage
-from django.urls import reverse
+from ..reverse import reverse
 from io import BytesIO
 from PIL import Image
 from PIL.Image import Exif

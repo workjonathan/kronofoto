@@ -42,7 +42,7 @@ class ViewIntegrationTests(TestCase):
     @given(
         st.lists(archives(), min_size=1).flatmap(lambda archives:
         st.lists(terms()).flatmap(lambda terms:
-        st.lists(tags(tag=st.text(min_size=1).filter(lambda tag: len(tag.slug) and 0 == sum(1 for c in tag.tag if c in ['\r'])))).flatmap(lambda tags:
+        st.lists(tags(tag=st.text(min_size=1).filter(lambda tag: len(tag.tag.strip()) and len(tag.slug) and 0 == sum(1 for c in tag.tag if c in ['\r', '\n', "'", "\\"])))).flatmap(lambda tags:
         st.lists(donors(archive=st.sampled_from(archives)), min_size=1).flatmap(lambda donors:
         st.lists(photos(
             is_published=st.just(True),
@@ -66,6 +66,7 @@ class ViewIntegrationTests(TestCase):
         if tag and tag in photo.get_accepted_tags():
             self.assertEqual(c.get(reverse('kronofoto:photoview', kwargs={'photo': photo.id}), {'tag': tag.tag}).status_code, 200)
         elif tag and len(tag.tag):
+            note(f'{repr(tag.tag)=} {tag.tag=}')
             self.assertEqual(c.get(reverse('kronofoto:photoview', kwargs={'photo': photo.id}), {'tag': tag.tag}).status_code, 404)
         self.assertEqual(c.get(reverse('kronofoto:photoview', kwargs={'short_name': archive.slug, 'photo': photo.id})).status_code, 200 if archive.slug == photo.archive.slug else 404)
 

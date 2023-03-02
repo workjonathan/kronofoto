@@ -18,9 +18,12 @@ class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
         return qs[0]
 
     def get_queryset(self):
-        return self.model.objects.filter_photos(
+        qs = self.model.objects.filter_photos(
             CollectionQuery(self.final_expr, self.request.user)
         )
+        if 'short_name' in self.kwargs:
+            qs = qs.filter(archive__slug=self.kwargs['short_name'])
+        return qs
 
     def options(self, request, *args, **kwargs):
         if 'embedded' in request.headers.get('Access-Control-Request-Headers', '').split(','):
@@ -30,7 +33,7 @@ class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
             return super().options(request, *args, **kwargs)
 
     def get_redirect_url(self, *args, **kwargs):
-        return self.get_object().get_absolute_url(params=self.request.GET)
+        return self.get_object().get_absolute_url(kwargs=self.url_kwargs, params=self.request.GET)
 
 
 class RandomRedirect(PhotoRedirectView):
