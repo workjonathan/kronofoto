@@ -1,6 +1,6 @@
 from django.shortcuts import redirect
 from django.views.generic import ListView
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, QueryDict
 from django.core.cache import cache
 from django.core.paginator import Paginator, Page
 from .paginator import KeysetPaginator
@@ -77,6 +77,8 @@ class GridView(BasePhotoTemplateMixin, ListView):
         page_obj = context['page_obj']
         object_list = context['object_list']
         context['formatter'] = KeysetViewFormatter(self.url_kwargs, self.params)
+        if self.final_expr and not self.final_expr.is_collection():
+            context['get_params'] = QueryDict()
         if not object_list.exists():
             context['noresults'] = True
             context['query_expr'] = str(self.final_expr)
