@@ -1,6 +1,7 @@
 {% load static %}
+{% load krono_urls %}
 {% load cache %}
-<form action="{% url "kronofoto:gridview" %}" method="get">
+<form action="{% krono_url "kronofoto:gridview" url_kwargs %}" method="get">
   <label for="search-box">
     <img class="search-icon" src="{{ theme.searchSvg }}" alt="Magnifying glass">
     {{ form.basic }}

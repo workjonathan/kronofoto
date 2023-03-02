@@ -239,13 +239,18 @@ escaped = (
     | parsy.string(r'\:').map(const((':', [])))
 )
 
+qescaped = (
+      parsy.string(r'\\').map(const(('\\', [])))
+    | parsy.string(r'\"').map(const(('"', [])))
+)
+
 schunk = (
       escaped
     | parsy.regex(r'[^\\\s\(\)":|]+').map(lambda s: (s, []))
 )
 
 qchunk = (
-      escaped
+      qescaped
     | parsy.regex(r'[^\\"]+').map(lambda s: (s, []))
 )
 
@@ -257,7 +262,9 @@ qchunk_unmatched = (
 @parsy.generate
 def quoted2():
     yield parsy.string('"')
+    yield parsy.whitespace.optional()
     s = yield qchunk.at_least(1)
+    yield parsy.whitespace.optional()
     yield parsy.string('"')
     parts, errors = zip(*s)
     return ''.join(parts), [a for b in errors for a in b]
@@ -281,7 +288,7 @@ trans = str.maketrans({
     " ": r"\ ",
     "\\": r"\\",
     "\t": r"\t",
-    "\r": r"\r",
+    "\r": r"  ",
     "\n": r"\n",
     "\"": r"\"",
     "(": r"\(",

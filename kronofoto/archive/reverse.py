@@ -9,10 +9,8 @@ requests = local()
 
 @dataclass
 class ResolveResults:
-    site: Site
+    domain: str
     match: ResolverMatch
-
-
 
 def get_request():
     return getattr(requests, 'current_request', None)
@@ -24,13 +22,12 @@ def as_absolute(uri):
     req = get_request()
     return req.build_absolute_uri(uri) if req else uri
 
-def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None, site=None):
-    site = site or Site.objects.get_current()
+def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None, domain=None):
+    domain = domain or Site.objects.get_current().domain
     uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)
-    return "//{domain}{uri}".format(domain=site.domain, uri=uri)
+    return "//{domain}{uri}".format(domain=domain, uri=uri)
 
 def resolve(path, urlconf=None):
     parseResults = urlparse(path)
     match = django_resolve(parseResults.path)
-    site = Site.objects.get(domain=parseResults.netloc)
-    return ResolveResults(site, match)
+    return ResolveResults(parseResults.netloc, match)

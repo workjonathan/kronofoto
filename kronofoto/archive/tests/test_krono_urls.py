@@ -1,32 +1,52 @@
-from django.test import tag
-#from ..templatetags.krono_url import krono_url
+from django.test import tag, SimpleTestCase, RequestFactory
 from ..reverse import reverse, resolve
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import given, note
+from hypothesis import strategies as st, settings
 from hypothesis.extra.django import TestCase, from_model
+#from unittest import TestCase
 from hypothesis.provisional import domains
-from django.contrib.sites.models import Site
-from .util import archives
-from urllib.parse import quote
+from django.utils.text import slugify
+from ..templatetags.krono_urls import krono_url, krono_params
 
-@tag('fast2')
+@tag('newtests')
 class TestUrls(TestCase):
-    @given(from_model(Site, domain=domains()))
-    def testRandomImage(self, site):
-        namespace = 'kronofoto'
-        viewname = 'random-image'
-        resolveMatch = resolve(reverse(f'{namespace}:{viewname}', site=site))
-        self.assertEqual(site.id, resolveMatch.site.id)
-        self.assertEqual(resolveMatch.match.url_name, viewname)
-        self.assertEqual(resolveMatch.match.namespace, namespace)
 
-    @given(from_model(Site, domain=domains()), archives().filter(lambda a: len(a.slug) > 0))
-    def testRandomImage(self, site, archive):
+    @settings(max_examples=10)
+    @given(domains(), st.text(min_size=1).map(slugify).filter(lambda a: len(a) > 0))
+    def testGridViewFromArchive(self, domain, archive):
         namespace = 'kronofoto'
-        viewname = 'random-image'
-        kwargs = {'short_name': archive.slug}
-        resolveMatch = resolve(reverse(f'{namespace}:{viewname}', kwargs=kwargs, site=site))
-        self.assertEqual(site.id, resolveMatch.site.id)
+        viewname = 'gridview'
+        kwargs = {'short_name': archive}
+        resolveMatch = resolve(reverse(f'{namespace}:{viewname}', kwargs=kwargs, domain=domain))
+        self.assertEqual(domain, resolveMatch.domain)
         self.assertEqual(resolveMatch.match.url_name, viewname)
         self.assertEqual(resolveMatch.match.namespace, namespace)
         self.assertEqual(resolveMatch.match.kwargs['short_name'], kwargs['short_name'])
+
+    @settings(max_examples=10)
+    @given(st.text(min_size=1).map(slugify).filter(lambda a: len(a) > 0))
+    def testKronoUrl(self, archive):
+        namespace = 'kronofoto'
+        viewname = 'gridview'
+        kwargs = {'short_name': archive}
+        resolveMatch = resolve(krono_url(f'{namespace}:{viewname}', kwargs))
+        self.assertEqual(resolveMatch.match.url_name, viewname)
+        self.assertEqual(resolveMatch.match.namespace, namespace)
+        self.assertEqual(resolveMatch.match.kwargs['short_name'], kwargs['short_name'])
+        resolveMatch = resolve(krono_url(f'{namespace}:{viewname}', short_name=kwargs['short_name']))
+        self.assertEqual(resolveMatch.match.url_name, viewname)
+        self.assertEqual(resolveMatch.match.namespace, namespace)
+        self.assertEqual(resolveMatch.match.kwargs['short_name'], kwargs['short_name'])
+
+    @given(st.dictionaries(keys=st.text(min_size=1), values=st.text(min_size=1)))
+    def testKronoParams(self, params):
+        request = RequestFactory().get('/photos' + krono_params(params))
+        for param in params:
+            self.assertIn(param, request.GET)
+            self.assertEqual(params[param], request.GET[param])
+
+        request = RequestFactory().get('/photos' + krono_params(**params))
+        for param in params:
+            self.assertIn(param, request.GET)
+            self.assertEqual(params[param], request.GET[param])
+

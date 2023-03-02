@@ -30,7 +30,7 @@ class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
             return super().options(request, *args, **kwargs)
 
     def get_redirect_url(self, *args, **kwargs):
-        return self.get_object().get_absolute_url(queryset=self.get_queryset(), params=self.request.GET)
+        return self.get_object().get_absolute_url(params=self.request.GET)
 
 
 class RandomRedirect(PhotoRedirectView):

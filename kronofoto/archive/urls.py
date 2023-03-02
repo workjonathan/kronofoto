@@ -33,12 +33,9 @@ urlpatterns = [
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('original/<int:pk>/', views.DownloadPageView.as_view()),
     path('photos/<accession:pk>/original', views.DownloadPageView.as_view(), name='download'),
-    path('accounts/', include('archive.auth.urls')),
     path('user/<str:username>/', views.Profile.as_view()),
-    path('users/<str:username>', views.Profile.as_view(), name='user-page'),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('search/', views.GridView.as_view()),
-    path('photos', views.GridView.as_view()),
     path('collection/', views.CollectionCreate.as_view()),
     path('collections', views.CollectionCreate.as_view(), name='collection-create'),
     path('collections/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
@@ -59,7 +56,10 @@ urlpatterns = [
     path('photos/<int:page>', views.GridView.as_view()),
 ]
 
-urlpatterns = urlpatterns + [path("<slug:short_name>/", include(urlpatterns))]
+urlpatterns = urlpatterns + [
+    path("<slug:short_name>/", include(urlpatterns)),
+    path('users/<str:username>', views.Profile.as_view(), name='user-page'),
+]
 if True:
     urlpatterns += [
         path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),

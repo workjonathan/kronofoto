@@ -8,6 +8,7 @@ class ArchiveConfig(AppConfig):
 
     def ready(self):
         from . import settings as app_defaults
+        from . import signals
         for name in dir(app_defaults):
             if name.isupper() and not hasattr(settings, name):
                 setattr(settings, name, getattr(app_defaults, name))

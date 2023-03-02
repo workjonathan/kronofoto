@@ -1,5 +1,6 @@
 {% load static %}
 {% load widgets %}
+{% load krono_urls %}
 {% for p in object_list %}
-          <li {{p.active | yesno:"data-active,"}}><a hx-headers='{ "us.fortepan.position": {{ p.position }} }' href="{{ p.get_absolute_url }}" hx-get="{{ p.get_absolute_url }}"><img src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" /></a></li>
+          <li {{p.active | yesno:"data-active,"}}><a hx-headers='{ "us.fortepan.position": {{ p.position }} }' href="{% object_url p url_kwargs get_params %}" hx-get="{% object_url p url_kwargs get_params %}"><img src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" /></a></li>
 {% endfor %}

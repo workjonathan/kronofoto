@@ -4,13 +4,8 @@ from django.core.validators import MinLengthValidator
 
 class Archive(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False)
-    short_name = models.CharField(max_length=16, null=False, blank=False, unique=True)
     cms_root = models.CharField(max_length=16, null=False, blank=False)
-    slug = models.SlugField(unique=True, editable=False)
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.short_name)
-        super().save(*args, **kwargs)
+    slug = models.SlugField(unique=True, blank=False)
 
     def __str__(self):
         return self.name

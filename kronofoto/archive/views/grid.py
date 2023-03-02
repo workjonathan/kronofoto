@@ -8,12 +8,12 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
-from .basetemplate import BaseTemplateMixin
+from .basetemplate import BasePhotoTemplateMixin
 from ..models import Photo, CollectionQuery
 import json
 
 
-class GridView(BaseTemplateMixin, ListView):
+class GridView(BasePhotoTemplateMixin, ListView):
     model = Photo
     paginate_by = settings.GRID_DISPLAY_COUNT
     _queryset = None
@@ -30,12 +30,15 @@ class GridView(BaseTemplateMixin, ListView):
             self._queryset = self.get_queryset()
         return self._queryset
 
+    def setup(self, request, *args, **kwargs):
+        self.params = request.GET.copy()
+        super().setup(request, *args, **kwargs)
+
     def render(self, context, **kwargs):
         response = super().render_to_response(context, **kwargs)
         return response
 
     def paginate_queryset(self, queryset, page_size):
-        self.params = self.request.GET.copy()
         if self.final_expr and not self.final_expr.is_collection():
             return super().paginate_queryset(queryset, page_size)
         else:
@@ -72,34 +75,29 @@ class GridView(BaseTemplateMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         page_obj = context['page_obj']
-        context['search-form'] = self.form
-        context['constraint'] = json.dumps({"Constraint": self.request.headers.get('Constraint', None)})
-        context['formatter'] = KeysetViewFormatter(self.params)
-        if not self.object_list.exists():
+        object_list = context['object_list']
+        context['formatter'] = KeysetViewFormatter(self.url_kwargs, self.params)
+        if not object_list.exists():
             context['noresults'] = True
-            photo_rec = Photo.objects.filter(phototag__tag__tag='silly', phototag__accepted=True).order_by('?')[0]
-            context['oops_photo'] = photo_rec
             context['query_expr'] = str(self.final_expr)
-            context["tags"] = photo_rec.get_accepted_tags(self.request.user)
+            try:
+                photo_rec = Photo.objects.filter(phototag__tag__tag='silly', phototag__accepted=True).order_by('?')[0]
+                context['oops_photo'] = photo_rec
+                context["tags"] = photo_rec.get_accepted_tags(self.request.user)
+            except IndexError:
+                context["tags"] = []
+
         else:
             context['noresults'] = False
-            if not self.final_expr or self.final_expr.is_collection():
-                context['timeline_url'] = page_obj[0].get_absolute_url()
-        self.attach_params(page_obj)
         return context
 
     def get_queryset(self):
-        expr = self.final_expr
-
-        if expr is None or expr.is_collection():
-            self.collection = CollectionQuery(expr, self.request.user)
-            qs = self.model.objects.filter_photos(self.collection).order_by('year', 'id')
-        else:
-            qs = expr.as_search(self.model.objects, self.request.user)
+        qs = super().get_queryset()
         try:
             self.redirect = redirect(qs.get().get_absolute_url())
         except (MultipleObjectsReturned, self.model.DoesNotExist):
             pass
+
         return qs
 
     def attach_params(self, photos):
@@ -112,10 +110,11 @@ class GridView(BaseTemplateMixin, ListView):
 
 
 class KeysetViewFormatter:
-    def __init__(self, parameters):
+    def __init__(self, kwargs, parameters):
         if 'page' in parameters:
             parameters.pop('page')
         self.parameters = parameters
+        self.kwargs = kwargs
 
     def page_url(self, num):
         params = self.parameters.copy()
@@ -129,5 +128,5 @@ class KeysetViewFormatter:
             params['year:gte'] = num['year']
             params['id:gt'] = num['id']
 
-        return "{}?{}".format(reverse('kronofoto:gridview'), params.urlencode())
+        return "{}?{}".format(reverse('kronofoto:gridview', kwargs=self.kwargs), params.urlencode())
 

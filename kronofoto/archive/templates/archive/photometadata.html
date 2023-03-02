@@ -1,10 +1,12 @@
 {% load static %}
 {% load widgets %}
+{% load krono_urls %}
+
         <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
           <ul>
             <li>{{ photo.year }}{% if photo.circa %}c{% endif %}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
             <li>ID#: {{photo.accession_number}}</li>
-	    <li>Contributed by <a hx-get="{{ photo.donor.get_absolute_url }}" href="{{ photo.donor.get_absolute_url }}">{{ photo.donor.display_format }}</a></li>
+	    <li>Contributed by <a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></li>
           </ul>
         </div>
         <div class="metadata-2a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
@@ -24,7 +26,7 @@
             <li><span class="field-name">Category Terms:</span>
             {% if photo.terms.exists %}
                 {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-		<a hx-get="{{ term.get_absolute_url }}" href="{{ term.get_absolute_url }}">{{ term }}</a>{% endfor %}
+		<a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a>{% endfor %}
             {% else %}
             None
             {% endif %}
@@ -32,14 +34,14 @@
             <li><span class="field-name">Tags:</span>
             {% if tags %}
                 {% for tag in tags %}{% if not forloop.first %},{% endif %} 
-		<a href="{{ tag.get_absolute_url }}" hx-get="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}
+		<a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a>{% endfor %}
             {% else %}
             None
             {% endif %}
             <a class="add-tag" href="{% url "kronofoto:addtag" photo.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">＋</a>
             </li>
             <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
-            <li><a href="{% url "kronofoto:add-to-list" photo.id %}">Add to list</a></li>
+            <li><a href="{% krono_url "kronofoto:add-to-list" url_kwargs photo=photo.id %}">Add to list</a></li>
             {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>
             {% for notice in photo.notices %}
                 <img style="width: 8rem;" src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">

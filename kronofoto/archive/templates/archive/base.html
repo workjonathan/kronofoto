@@ -5,6 +5,7 @@
 {% load searchform %}
 {% load widgets %}
 {% load gtm_tags %}
+{% load krono_urls %}
 <head>
   {% gtm_head %}
   <meta charset="UTF-8">
@@ -66,7 +67,7 @@
           {% block viewbuttons %}
           {% include "archive/view-buttons.html" %}
           {% endblock %}
-          <div id="new-label_container" class="new-label_container"><a href="{% url "kronofoto:gridview" %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
+          <div id="new-label_container" class="new-label_container"><a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=is_new%3Atrue"><img class="new-label" src="{% static "assets/images/new.svg" %}"></a></div>
 
         </div>
           <!-- end nav center -->

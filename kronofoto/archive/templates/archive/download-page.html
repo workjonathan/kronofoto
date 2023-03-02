@@ -1,12 +1,13 @@
 {% extends "archive/base.html" %}
 {% load widgets %}
+{% load krono_urls %}
 
 {% block content %}
     <div id="download-container">
         <p>
         
             <span class="back-btn">
-                <a href="{{ object.get_absolute_url }}" >
+                <a href="{% object_url photo url_kwargs get_params %}" >
                     <i class="fas fa-long-arrow-alt-left"></i>
                     Go back
                 </a>

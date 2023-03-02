@@ -1,13 +1,24 @@
 {% load static %}
+{% load krono_urls %}
 {% block timeline_icon %}
 <div class="timeline-container {{timelineclass}}" id="timeline-container">
-  <a class="fi-timeline-a" href="{{ timeline_url }}" hx-get="{{timeline_url}}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+  {% if photo %}
+  <a class="fi-timeline-a" href="{% object_url photo url_kwargs get_params %}" hx-get="{% object_url photo url_kwargs get_params %}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+  {% else %}
+  <a class="fi-timeline-a" href="#" hx-get="#" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+  {% endif %}
 </div>
 {% endblock %}
 {% block grid_icon %}
 <div class="grid-icon {{gridclass}}" id="grid-icon">
-  <a class="grid-a" href="{{ grid_url }}" hx-get="{{ grid_url }}" hx-target="#app">
+  {% if photo %}
+  <a class="grid-a" href="{% grid_url photo url_kwargs get_params %}" hx-get="{% grid_url photo url_kwargs get_params %}" hx-target="#app">
     <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
   </a>
+  {% else %}
+  <a class="grid-a" href="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-target="#app">
+    <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
+  </a>
+  {% endif %}
 </div>
 {% endblock %}

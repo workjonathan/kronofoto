@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
-from .basetemplate import BaseTemplateMixin
+from .basetemplate import BasePhotoTemplateMixin
 from .paginator import TimelinePaginator, FAKE_PHOTO
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
@@ -18,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 NO_URLS = dict(url='#', json_url='#')
 
-class PhotoView(BaseTemplateMixin, DetailView):
+class PhotoView(BasePhotoTemplateMixin, DetailView):
     items = 10
     pk_url_kwarg = 'photo'
     _queryset = None
@@ -31,8 +31,7 @@ class PhotoView(BaseTemplateMixin, DetailView):
         return self._queryset
 
     def get_queryset(self):
-        self.collection = CollectionQuery(self.final_expr, self.request.user)
-        return Photo.objects.filter_photos(self.collection)
+        return super().get_queryset()
 
     def get_object(self, queryset=None):
         if self.form.is_valid():
@@ -60,24 +59,21 @@ class PhotoView(BaseTemplateMixin, DetailView):
         end = year_range['end']
         photo_rec = self.object
         photo_rec.position = position
-        photo_rec.save_params(self.params)
         photo_rec.active = True
-        before = queryset.photos_before(photo=photo_rec, count=position+10)
+        before = list(reversed(queryset.photos_before(year=photo_rec.year, id=photo_rec.year)[:position+10]))
         if before:
             context['prev_photo'] = before[-1]
         for (i, photo) in enumerate(reversed(before)):
-            photo.save_params(self.params)
             photo.position = (position - i - 1) % 10
         position = len(before) % 10
         has_next = has_prev = True
         if len(before) < 10:
             has_prev = False
             before = [FAKE_PHOTO for _ in range(10)] + before
-        after = list(queryset.photos_after(photo=photo_rec, count=20-position-1))
+        after = list(queryset.photos_after(year=photo_rec.year, id=photo_rec.id)[:20-position-1])
         if after:
             context['next_photo'] = after[0]
         for (i, photo) in enumerate(after):
-            photo.save_params(self.params)
             photo.position = (position + i + 1) % 10
         carousel = before + [photo_rec] + after
         if len(after) < 10 - position:

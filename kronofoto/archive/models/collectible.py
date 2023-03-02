@@ -1,11 +1,11 @@
 from django.http import QueryDict
-from django.urls import reverse
+from ..reverse import reverse
 
 class Collectible:
-    def get_absolute_url(self, params=None):
-        return self.format_url(viewname='kronofoto:gridview', params=params)
+    def get_absolute_url(self, kwargs=None, params=None):
+        return self.format_url(viewname='kronofoto:gridview', kwargs=kwargs, params=params)
 
-    def format_url(self, viewname, params=None):
+    def format_url(self, viewname, kwargs=None, params=None):
         if not params:
             params = QueryDict(mutable=True)
-        return '{}?{}'.format(reverse(viewname), self.encode_params(params))
+        return '{}?{}'.format(reverse(viewname, kwargs=kwargs), self.encode_params(params))

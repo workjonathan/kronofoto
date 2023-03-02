@@ -17,13 +17,13 @@ class KeysetPaginator(Paginator):
         has_prev = None
         try:
             if not number['reverse']:
-                page_objs = list((self.object_list.filter(year__gt=number['year']) | self.object_list.filter(year=number['year'], id__gt=number['id']))[:self.per_page+1])
+                page_objs = list(self.object_list.photos_after(year=number['year'], id=number['id'])[:self.per_page+1])
                 has_next = False
                 if len(page_objs) > self.per_page:
                     page_objs.pop()
                     has_next = True
             else:
-                page_objs = list((self.object_list.filter(year__lt=number['year']) | self.object_list.filter(year=number['year'], id__lt=number['id'])).order_by('-year', '-id')[:self.per_page+1])
+                page_objs = list(self.object_list.photos_before(year=number['year'], id=number['id'])[:self.per_page+1])
                 has_prev = False
                 if len(page_objs) > self.per_page:
                     page_objs.pop()
@@ -48,15 +48,15 @@ class KeysetPage(Page):
         self.queryset = queryset
 
     def has_previous(self):
-        if self._has_prev == None:
+        if self.object_list and self._has_prev == None:
             object = self.object_list[0]
-            self._has_prev = (self.queryset.filter(year__lt=object.year) | self.queryset.filter(year=object.year, id__lt=object.id)).exists()
+            self._has_prev = self.queryset.photos_before(year=object.year, id=object.id).exists()
         return self._has_prev
 
     def has_next(self):
-        if self._has_next == None:
+        if self.object_list and self._has_next == None:
             object = self.object_list[-1]
-            self._has_next = self.queryset.photos_after(photo=object, count=1).exists()
+            self._has_next = self.queryset.photos_after(year=object.year, id=object.id).exists()
         return self._has_next
 
     def previous_page_number(self):

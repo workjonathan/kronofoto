@@ -62,7 +62,7 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     form_class = AddToListForm
 
     def get_success_url(self):
-        return self.photo.get_absolute_url()
+        return self.photo.get_absolute_url(kwargs=self.url_kwargs, params=self.get_params)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -72,6 +72,11 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
         ]
         kwargs['collections'].append((None, 'New List'))
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['photo'] = get_object_or_404(Photo, id=self.kwargs['photo'])
+        return context
 
     def form_valid(self, form):
         if isinstance(self.kwargs['photo'], int):

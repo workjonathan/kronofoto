@@ -2,6 +2,7 @@
 {% load static %}
 {% load cache %}
 {% load widgets %}
+{% load krono_urls %}
 
 {% block viewbuttons %}
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
@@ -22,8 +23,8 @@
         <a id="fi-arrow-left" class="control previous"
             {% if prev_photo %}
                 hx-headers='{ "us.fortepan.position": {{ prev_photo.position }} }'
-                href="{{ prev_photo.get_absolute_url }}"
-                hx-get="{{ prev_photo.get_absolute_url }}"
+                href="{% object_url prev_photo url_kwargs get_params %}"
+                hx-get="{% object_url prev_photo url_kwargs get_params %}"
             {% endif %}>
         </a>
         {% endblock %}
@@ -31,14 +32,14 @@
         <a id="fi-arrow-right" class="control forward"
             {% if next_photo %}
                 hx-headers='{ "us.fortepan.position": {{ next_photo.position }} }'
-                href="{{ next_photo.get_absolute_url }}"
-                hx-get="{{ next_photo.get_absolute_url }}"
+                href="{% object_url next_photo url_kwargs get_params %}"
+                hx-get="{% object_url next_photo url_kwargs get_params %}"
             {% endif %}>
         </a>
         {% endblock %}
         <button id="dl">
         {% block download %}
-            <a href="{{ photo.get_download_page_url }}">
+            <a href="{% download_page_url photo url_kwargs get_params %}">
                 <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
             </a>
         {% endblock %}
@@ -67,8 +68,8 @@
                 <a id="backward"
                     {% if carousel_has_prev %}
                         hx-headers='{ "us.fortepan.position": 0 }'
-                        hx-get="{{ object_list.0.get_absolute_url }}"
-                        href="{{ object_list.0.get_absolute_url }}"
+                        hx-get="{% object_url object_list.0 url_kwargs get_params %}"
+                        href="{% object_url object_list.0 url_kwargs get_params %}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing back">
                 </a>
@@ -85,8 +86,8 @@
                 <a id="forward"
                     {% if carousel_has_next %}
                         hx-headers='{ "us.fortepan.position": 0 }'
-                        href="{{ object_list.20.get_absolute_url }}"
-                        hx-get="{{ object_list.20.get_absolute_url }}"
+                        hx-get="{% object_url object_list.20 url_kwargs get_params %}"
+                        href="{% object_url object_list.20 url_kwargs get_params %}"
                     {% endif %}>
                     <img src="{% static "assets/images/double-back-arrow-black.png" %}" alt="arrows pointing forward">
                 </a>
