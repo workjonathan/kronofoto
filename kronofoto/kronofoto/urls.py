@@ -8,7 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('archive.auth.urls')),
     path('', include('archive.urls', namespace="kronofoto")),
-    path('__debug__/', include('debug_toolbar.urls')),
+    #path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 if settings.DEBUG:
