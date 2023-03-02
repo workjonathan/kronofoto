@@ -1,8 +1,9 @@
 {% extends base_template %}
 {% load widgets %}
+{% load krono_urls %}
 
 {% block viewbuttons %}
-{% include "archive/view-buttons.html" with gridclass="current-view" %}
+{% include "archive/view-buttons.html" with gridclass="current-view" photo=page_obj.0 %}
 {% endblock %}
 {% block content %}
 <div hx-target="#app">
@@ -21,7 +22,7 @@
 
 <ul class="photo-grid">
     {% for photo in page_obj %}
-    <li><a href="{{ photo.get_absolute_url }}" hx-get="{{ photo.get_absolute_url }}"><img src="{{ photo.h700.url }}"/></a></li>
+    <li><a href="{% object_url photo url_kwargs get_params %}" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{{ photo.h700.url }}"/></a></li>
     {% endfor %}
 </ul>
 

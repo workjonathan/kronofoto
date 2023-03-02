@@ -61,8 +61,16 @@ class BaseTemplateMixin:
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.set_request(request)
+        self.params = self.request.GET.copy()
+        get_params = self.params.copy()
+        for key in ('id:lt', 'id:gt', 'page', 'year:gte', 'year:lte'):
+            try:
+                get_params.pop(key)
+            except KeyError:
+                pass
+        self.get_params = get_params
         self.form = SearchForm(self.request.GET)
+        self.url_kwargs = {'short_name': self.kwargs['short_name']} if 'short_name' in self.kwargs else {}
         self.expr = None
         if self.form.is_valid():
             try:
@@ -82,8 +90,10 @@ class BaseTemplateMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         photo_count = cache.get('photo_count:')
+        context['get_params'] = self.get_params
         context['search-form'] = self.form
         context['constraint'] = json.dumps({'Constraint': self.constraint})
+        context['url_kwargs'] = self.url_kwargs
         if self.expr:
             if self.expr.is_collection():
                 context['collection_name'] = str(self.expr.description())
@@ -101,12 +111,11 @@ class BaseTemplateMixin:
             context['base_template'] = 'archive/base.html'
 
         if not photo_count:
-            photo_count = Photo.count()
+            photo_count = Photo.objects.filter(is_published=True).count()
             cache.set('photo_count:', photo_count)
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
         context['photo_count'] = photo_count
-        context['grid_url'] = reverse('kronofoto:gridview')
         context['timeline_url'] = '#'
         context['theme'] = random.choice(THEME)
         hxheaders = dict()
@@ -120,3 +129,18 @@ class BaseTemplateMixin:
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
         return response
+
+class BasePhotoTemplateMixin(BaseTemplateMixin):
+    def get_queryset(self):
+        expr = self.final_expr
+        qs = self.model.objects.filter(is_published=True, year__isnull=False)
+        if 'short_name' in self.kwargs:
+            qs = qs.filter(archive__slug=self.kwargs['short_name'])
+        if expr is None:
+            return qs.order_by('year', 'id')
+
+        if expr.is_collection():
+            qs = expr.as_collection(qs, self.request.user)
+        else:
+            qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
+        return qs

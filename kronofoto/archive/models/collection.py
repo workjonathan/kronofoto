@@ -18,7 +18,7 @@ class Collection(models.Model):
     photos = models.ManyToManyField('Photo', blank=True)
 
     def get_absolute_url(self):
-        return '{}?{}'.format(reverse('kronofoto:search-results'), urlencode({'query': 'collection:{}'.format(self.uuid)}))
+        return '{}?{}'.format(reverse('kronofoto:gridview'), urlencode({'query': 'collection:{}'.format(self.uuid)}))
 
     def __str__(self):
         return self.name

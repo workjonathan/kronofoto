@@ -15,7 +15,5 @@ class DownloadPageView(BaseTemplateMixin, DetailView):
         photo = context['object']
         collection = CollectionQuery(self.final_expr, self.request.user)
         context['citation_url'] = photo.get_absolute_url(params=None)
-        photo.save_params(self.request.GET)
-        photo.row_number = self.model.objects.filter_photos(collection).photo_position(photo)
         context['grid_url'] = photo.get_grid_url()
         return context

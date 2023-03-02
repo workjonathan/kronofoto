@@ -1,10 +1,12 @@
-from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField
+from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField, Value
 from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
 from .. import models
 
 from functools import reduce
 import operator
 import re
+
+SPLITTER = re.compile(' |`|\'|"')
 
 STOPWORDS = {
     'yourselves', "shan't", "we'll", 'ourselves', 'out', 'who', 'not', 'off',
@@ -474,23 +476,37 @@ class BasicTag(MultiWordTag):
 
 class TagExactly(Expression):
     def __init__(self, value):
-        self.value = value
-        self.field = 'TAE_' + '_'.join(self.value.split())
+        self.str = value
+        try:
+            self.value = models.Tag.objects.get(tag__iexact=value)
+            self.field = 'TAE_{}'.format(self.value.id)
+        except (ValueError, models.Tag.DoesNotExist):
+            self.value = None
+            self.field = 'TAE_None'
 
     def __str__(self):
-        return 'tag_exact:"{}"'.format(self.value)
+        return 'tag_exact:"{}"'.format(self.str)
 
     def filter2(self, user):
-        return Q(phototag__tag__tag__iexact=self.value)
+        if self.value:
+            return Q(phototag__tag__id=self.value.id) & Q(phototag__accepted=True)
+        else:
+            # nothing should match
+            return Q(phototag__accepted=True) & Q(phototag__accepted=False)
 
     def annotations1(self):
-        return {
-            self.field: Case(
-                When(phototag__tag__tag__iexact=self.value, then=1),
-                default=0,
-                output_field=FloatField(),
-            )
-        }
+        if self.value:
+            return {
+                self.field: Case(
+                    When(phototag__tag__id=self.value.id, then=1),
+                    default=0,
+                    output_field=FloatField(),
+                )
+            }
+        else:
+            return {
+                "TAE_None": Value(0)
+            }
 
     def scoreF(self, negated):
         if negated:

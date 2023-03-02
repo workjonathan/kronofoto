@@ -5,8 +5,10 @@ from django.conf.urls.static import static
 
 
 urlpatterns = [
-    path('', include('archive.urls')),
     path('admin/', admin.site.urls),
+    path('accounts/', include('archive.auth.urls')),
+    path('', include('archive.urls', namespace="kronofoto")),
+    path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 if settings.DEBUG:

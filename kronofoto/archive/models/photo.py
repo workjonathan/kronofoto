@@ -5,7 +5,7 @@ from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
-from django.urls import reverse
+from ..reverse import reverse
 from django.utils.http import urlencode
 from datetime import datetime
 import uuid
@@ -20,6 +20,7 @@ from ..storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag
 from .term import Term
+from .archive import Archive
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
@@ -29,32 +30,6 @@ bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 
 class PhotoQuerySet(models.QuerySet):
-    def year_links(self, params=None):
-        year_index = self.year_index()
-        years = [p.year for p in year_index]
-        year_range = Photo.objects.filter(year__isnull=False, is_published=True).year_range()
-        allyears = [(year, year_index[bisect(years, year)]) for year in range(year_range['start'], year_range['end']+1)]
-        return [
-            (year, photo.get_absolute_url(params=params))
-            for (year, photo) in allyears
-        ]
-
-    def year_index(self):
-        set = Photo.objects.filter(id__in=Subquery(self.values('id')))
-        yearid = set.values('year').annotate(min_id=Min('id'))
-        yearcount = set.filter(year=OuterRef('year')).values('year').annotate(count=Count('id'))
-
-        return set.filter(
-            id__in=Subquery(yearid.values('min_id'))
-        ).annotate(
-            row_number=Window(
-                expression=Sum(
-                    Subquery(yearcount.values('count'), output_field=models.IntegerField())
-                ),
-                order_by=[F('year')],
-            ) - Subquery(yearcount.values('count'), output_field=models.IntegerField())
-        ).order_by('year')
-
     def year_range(self):
         return self.aggregate(end=Max('year'), start=Min('year'))
 
@@ -64,15 +39,14 @@ class PhotoQuerySet(models.QuerySet):
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
-    def photos_before(self, *, photo, count):
-        photos = list((self.filter(year__lt=photo.year) | self.filter(year=photo.year, id__lt=photo.id)).order_by('-year', '-id')[:count])
-        photos.reverse()
+    def photos_before(self, *, year, id):
+        photos = (self.filter(year__lt=year) | self.filter(year=year, id__lt=id)).order_by('-year', '-id')
         return photos
 
-    def photos_after(self, *, photo, count):
+    def photos_after(self, *, year, id):
         return (
-            self.filter(year__gt=photo.year) | self.filter(year=photo.year, id__gt=photo.id)
-        ).order_by('year', 'id')[:count]
+            self.filter(year__gt=year) | self.filter(year=year, id__gt=id)
+        ).order_by('year', 'id')
 
     def exclude_geocoded(self):
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
@@ -99,6 +73,7 @@ def get_original_path(instance, filename):
 
 
 class Photo(models.Model):
+    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
     h700 = models.ImageField(null=True, editable=False)
@@ -138,30 +113,17 @@ class Photo(models.Model):
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
 
-    @classmethod
-    def count(cls):
-        return cls.objects.filter(is_published=True).count()
+    def page_number(self):
+        return {'year:gte': self.year, 'id:gt': self.id-1}
 
     def get_accepted_tags(self, user=None):
-        filter_args = Q(phototag__accepted=True)
+        tags = self.tags.filter(phototag__accepted=True)
         if user:
-            filter_args |= Q(phototag__creator__pk=user.pk)
-        return self.tags.filter(filter_args).distinct()
-
-    def save_params(self, params):
-        self.params = params
+            tags |= self.tags.filter(phototag__creator__pk=user.pk)
+        return tags.distinct()
 
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
-
-    def page_number(self, queryset=None):
-        if hasattr(self, 'page'):
-            return self.page.number
-        if queryset:
-            self.row_number = queryset.photo_position(self)
-        if hasattr(self, 'row_number'):
-            return self.row_number // 10 + 1
-        raise AttributeError
 
     def add_params(self, url, params):
         if params:
@@ -174,24 +136,25 @@ class Photo(models.Model):
             viewname,
             kwargs=kwargs,
         )
-        return self.add_params(
-            url=url, params=params or hasattr(self, 'params') and self.params or None
-        )
+        return self.add_params(url=url, params=params)
 
-    def get_download_page_url(self, params=None):
-        params = params or hasattr(self, 'params') and self.params or None
-        return self.add_params(
-            url=reverse('kronofoto:download', kwargs=dict(pk=self.id)), params=params
-        )
+    def get_download_page_url(self, kwargs=None, params=None):
+        kwargs = kwargs or {}
+        url = reverse('kronofoto:download', kwargs=dict(**kwargs, **{'pk': self.id}))
+        if params:
+            params = params.copy()
+        else:
+            params = QueryDict(mutable=True)
+        return self.add_params(url=url, params=params)
 
     def get_urls(self, embed=False):
         return {
             'url': self.get_embedded_url() if embed else self.get_absolute_url(),
         }
 
-    def get_grid_url(self, params=None):
-        url = reverse('kronofoto:gridview')
-        params = params or hasattr(self, 'params') and self.params or None
+    def get_grid_url(self, kwargs=None, params=None):
+        kwargs = kwargs or {}
+        url = reverse('kronofoto:gridview', kwargs=kwargs)
         if params:
             params = params.copy()
         else:
@@ -201,8 +164,14 @@ class Photo(models.Model):
         return self.add_params(url=url, params=params)
 
 
-    def get_absolute_url(self, queryset=None, params=None):
-        return self.create_url('kronofoto:photoview', queryset=queryset, params=params)
+    def get_absolute_url(self, kwargs=None, params=None):
+        kwargs = kwargs or {}
+        kwargs = dict(**kwargs)
+        kwargs['photo'] = self.id
+        url = reverse('kronofoto:photoview', kwargs=kwargs)
+        if params:
+            return '{}?{}'.format(url, params.urlencode())
+        return url
 
     def get_edit_url(self):
         return reverse('admin:archive_photo_change', args=(self.id,))

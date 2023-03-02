@@ -1,5 +1,8 @@
 {% extends "archive/base.html" %}
 
+{% block viewbuttons %}
+{% include "archive/view-buttons.html" with timelineclass="current-view" %}
+{% endblock %}
 {% block content %}
 <div class="container-center collection_create-container">
     <form method="post">{% csrf_token %}

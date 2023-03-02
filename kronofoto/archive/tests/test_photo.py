@@ -12,6 +12,63 @@ from ..views.paginator import KeysetPaginator
 from ..models import Photo, Term, Tag, CollectionQuery, Donor, Collection
 from .util import TestImageMixin, photos, donors
 from archive.search.expression import TagExactly
+from ..models.archive import Archive
+from .util import photos, archives, tags, donors
+from hypothesis.extra.django import from_model, TestCase as HypoTestCase
+from hypothesis import given, strategies as st, settings as hyposettings, note
+
+@tag("newtests")
+class PhotoQuerySetTest(HypoTestCase):
+    @hyposettings(max_examples=10, deadline=2000)
+    @given(
+        photos(
+            archive=archives(),
+            year=st.integers(min_value=1850, max_value=2000),
+        ),
+        photos(
+            archive=archives(),
+            year=st.integers(min_value=1850, max_value=2000),
+        ),
+    )
+    def testSomething(self, photo, other):
+        note("{} ({}) vs {} ({})".format(photo, photo.year, other, other.year))
+        self.assertEqual(photo, Photo.objects.photos_before(year=photo.year, id=photo.id+1)[0])
+        for p in Photo.objects.photos_before(year=photo.year+1, id=Photo.objects.order_by('id')[0].id):
+            if p.id == photo.id:
+                break
+            self.assertEqual(photo.year, p.year)
+            self.assertLess(photo.id, p.id)
+        self.assertEqual(photo.id, p.id)
+        self.assertEqual(photo, Photo.objects.photos_after(year=photo.year, id=photo.id-1)[0])
+        for p in Photo.objects.photos_after(year=photo.year-1, id=Photo.objects.order_by('-id')[0].id):
+            if p.id == photo.id:
+                break
+            self.assertEqual(photo.year, p.year)
+            self.assertGreater(photo.id, p.id)
+        self.assertEqual(photo.id, p.id)
+
+
+@tag("newtests")
+class PhotoTagTest(HypoTestCase):
+    @hyposettings(max_examples=10)
+    @given(from_model(Photo.tags.through, tag=tags(), photo=photos(archive=archives())), from_model(User), from_model(User))
+    def testAcceptedTags(self, phototag, creator, creator2):
+        photo = phototag.photo
+        self.assertEqual(photo.get_proposed_tags().exists(), not phototag.accepted)
+        self.assertEqual(photo.get_accepted_tags().exists(), phototag.accepted)
+        self.assertEqual(photo.get_accepted_tags(user=creator).exists(), phototag.accepted)
+        phototag.creator.add(creator)
+        self.assertTrue(photo.get_accepted_tags(user=creator).exists())
+        phototag.creator.add(creator2)
+        self.assertEqual(photo.get_accepted_tags().count(), 1 if phototag.accepted else 0)
+        self.assertEqual(photo.get_proposed_tags().count(), 1 if not phototag.accepted else 0)
+
+    @hyposettings(max_examples=10)
+    @given(tag=tags(), photo=photos(archive=archives()))
+    def testTagIsNotAcceptedOrProposedJustByExisting(self, tag, photo):
+        self.assertEqual(photo.get_proposed_tags().count(), 0)
+        self.assertEqual(photo.get_accepted_tags().count(), 0)
+
 
 @tag("fast")
 class PhotoTest(TestImageMixin, TestCase):
@@ -111,6 +168,7 @@ class WhenHave50Photos(TestImageMixin, TestCase):
         cls.donor = donor = Donor.objects.create(
             last_name='last',
             first_name='first',
+            archive=Archive.objects.all()[0],
         )
         cls.photos = []
         for y in range(1900, 1905):

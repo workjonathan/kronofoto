@@ -3,7 +3,7 @@ from django.db.models import Q
 from archive import models
 from django.contrib.auth.models import AnonymousUser
 from hypothesis.extra.django import TestCase
-from hypothesis import given, strategies
+from hypothesis import given, strategies, note
 from archive.search import expression, evaluate, parser
 from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
 from archive.search.expression import (
@@ -29,6 +29,7 @@ def tokens(draw):
     if type == 6:
         return '{}:"{}"'.format(draw(strategies.text(alphabet=alphabet, min_size=1)), draw(strategies.text(alphabet=alphabet + ' ')))
 
+@tag("newtests")
 class AutocompleteParserTest(TestCase):
     def testBasics(self):
         lexer = Lexer()
@@ -47,7 +48,9 @@ class AutocompleteParserTest(TestCase):
         "However, string -> ([tokens], [errors]) -> string -> ([tokens], [errors]) should produce identical tokens."
         lexer = Lexer()
         tokens, errors = lexer.parse(input)
-        tokens2, errors2 = lexer.parse(lexer.format(tokens))
+        s2 = lexer.format(tokens)
+        note(s2)
+        tokens2, errors2 = lexer.parse(s2)
         self.assertEqual(tokens, tokens2)
     #@given(strategies.lists(tokens()))
     #def testFail(self, t):

@@ -11,4 +11,4 @@ def make_search_form(context):
         params = context['request'].GET
     else:
         form = SearchForm()
-    return { 'form': form, 'vary_on': params, 'theme': context['theme']}
+    return { 'form': form, 'vary_on': params, 'theme': context['theme'], 'url_kwargs': context['url_kwargs'], 'get_params': context['get_params']}

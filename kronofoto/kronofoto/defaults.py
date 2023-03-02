@@ -22,10 +22,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = False
 
 ALLOWED_HOSTS = ['fortepan.us']
-import django.urls
-from archive.reverse import reverse as krono_reverse
+#import django.urls
+#from archive.reverse import reverse as krono_reverse
 
-django.urls.reverse = krono_reverse
+#django.urls.reverse = krono_reverse
 
 
 SITE_ID = 1
