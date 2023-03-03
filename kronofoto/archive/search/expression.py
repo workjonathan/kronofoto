@@ -568,6 +568,7 @@ class SingleWordTag(Expression):
         return "tag"
 
 Tag = lambda s: MultiWordTag(s) if len(s.split()) > 1 else SingleWordTag(s)
+CollectionTag = lambda s: BasicTag(s) if len(s.split()) > 1 else SingleWordTag(s)
 
 
 class MultiWordTerm(Expression):
@@ -1062,7 +1063,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(BasicTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
+    expr = Maximum(CollectionTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:
