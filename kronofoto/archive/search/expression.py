@@ -99,7 +99,7 @@ class MaxReporter:
         if isinstance(expr, Maximum):
             return self.describe_(expr.left)
         else:
-            return expr.value
+            return expr.str if hasattr(expr, 'str') else expr.value
 
 class CollectionReporter:
     def describe(self, exprs):
@@ -482,7 +482,7 @@ class TagExactly(Expression):
             self.field = 'TAE_{}'.format(self.value.id)
         except (ValueError, models.Tag.DoesNotExist):
             self.value = None
-            self.field = 'TAE_None'
+            self.field = 'TAE_{}'.format(hash(value))
 
     def __str__(self):
         return 'tag_exact:"{}"'.format(self.str)
@@ -505,7 +505,7 @@ class TagExactly(Expression):
             }
         else:
             return {
-                "TAE_None": Value(0)
+                self.field: Value(0)
             }
 
     def scoreF(self, negated):
@@ -1062,7 +1062,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(Tag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
+    expr = Maximum(BasicTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:
