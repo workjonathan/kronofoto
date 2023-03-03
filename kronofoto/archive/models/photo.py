@@ -40,13 +40,11 @@ class PhotoQuerySet(models.QuerySet):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
     def photos_before(self, *, year, id):
-        photos = (self.filter(year__lt=year) | self.filter(year=year, id__lt=id)).order_by('-year', '-id')
+        photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by('-year', '-id')
         return photos
 
     def photos_after(self, *, year, id):
-        return (
-            self.filter(year__gt=year) | self.filter(year=year, id__gt=id)
-        ).order_by('year', 'id')
+        return self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by('year', 'id')
 
     def exclude_geocoded(self):
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
