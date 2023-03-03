@@ -60,7 +60,7 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         photo_rec = self.object
         photo_rec.position = position
         photo_rec.active = True
-        before = list(reversed(queryset.photos_before(year=photo_rec.year, id=photo_rec.year)[:position+10]))
+        before = list(reversed(queryset.photos_before(year=photo_rec.year, id=photo_rec.id)[:position+10]))
         if before:
             context['prev_photo'] = before[-1]
         for (i, photo) in enumerate(reversed(before)):
