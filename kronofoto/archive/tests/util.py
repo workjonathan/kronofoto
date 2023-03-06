@@ -8,6 +8,7 @@ from ..models.archive import Archive
 from ..models.tag import Tag, LowerCaseCharField
 from ..models.term import Term
 from typing import NamedTuple, List
+from ..search import expression as expr
 
 small_gif = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
@@ -35,8 +36,28 @@ class MockQuerySet(list):
 
 register_field_strategy(LowerCaseCharField, st.text().map(lambda s: s.lower()))
 
-terms = lambda slug=None, **kwargs: from_model(Term)
-tags = lambda slug=None, **kwargs: from_model(Tag)
+searchTerms = st.deferred(lambda:
+      st.builds(expr.IsNew, st.booleans())
+    | st.builds(expr.AccessionNumber, st.integers(min_value=0))
+    | st.builds(expr.YearLTE, st.integers(min_value=0))
+    | st.builds(expr.YearGTE, st.integers(min_value=0))
+    | st.builds(expr.YearEquals, st.integers(min_value=0))
+    | st.builds(expr.UserCollection, st.uuids())
+    | st.builds(expr.TagExactly, st.text())
+    | st.builds(expr.State, st.text())
+    | st.builds(expr.City, st.text())
+    | st.builds(expr.County, st.text())
+    | st.builds(expr.Country, st.text())
+    | st.builds(expr.TermExactly, st.integers(min_value=0) | st.text())
+    | st.builds(expr.DonorExactly, st.integers(min_value=0) | st.text())
+    | st.builds(expr.Not, searchTerms)
+    | st.builds(expr.Or, searchTerms, searchTerms)
+    | st.builds(expr.Maximum, searchTerms, searchTerms)
+    | st.builds(expr.And, searchTerms, searchTerms)
+)
+
+terms = lambda **kwargs: from_model(Term, **kwargs)
+tags = lambda **kwargs: from_model(Tag, **kwargs)
 donors = lambda **kwargs: from_model(Donor, **kwargs)
 archives = lambda slug=None, **kwargs: from_model(Archive)
 
