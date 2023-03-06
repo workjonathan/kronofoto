@@ -9,7 +9,7 @@ from ..reverse import reverse
 from django.utils.http import urlencode
 from datetime import datetime
 import uuid
-from PIL import Image, ExifTags, ImageOps
+from PIL import Image, ExifTags, ImageOps, UnidentifiedImageError
 from io import BytesIO
 import os
 from os import path
@@ -24,32 +24,43 @@ from .archive import Archive
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
-
+import deal
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
-
 class PhotoQuerySet(models.QuerySet):
+    @deal.pure
     def year_range(self):
         return self.aggregate(end=Max('year'), start=Min('year'))
 
+    @deal.pure
     def photo_position(self, photo):
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
+    @deal.pure
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
-    def photos_before(self, *, year, id):
+    @deal.pure
+    @deal.post(lambda result: result[:2].count() < 2 or result[0].id != result[1].id)
+    def photos_before(self, *, year: int, id: int):
         photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by('-year', '-id')
         return photos
 
-    def photos_after(self, *, year, id):
-        return self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by('year', 'id')
 
+    @deal.pure
+    @deal.pre(lambda qs, *, year, id: 1800 <= year <= 2023 and id >= 0)
+    @deal.post(lambda result: result[:2].count() < 2 or result[0].id != result[1].id)
+    def photos_after(self, *, year: int, id: int) -> "PhotoQuerySet":
+        photos = self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by('year', 'id')
+        return photos
+
+    @deal.pure
     def exclude_geocoded(self):
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
 
 
+@deal.pure
 def format_location(force_country=False, **kwargs):
     parts = []
     if kwargs.get('address', None):
@@ -66,6 +77,7 @@ def format_location(force_country=False, **kwargs):
     return s or 'Location: n/a'
 
 
+@deal.pure
 def get_original_path(instance, filename):
     return path.join('original', '{}.jpg'.format(instance.uuid))
 
@@ -111,23 +123,28 @@ class Photo(models.Model):
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
 
+    @deal.pure
     def page_number(self):
         return {'year:gte': self.year, 'id:gt': self.id-1}
 
+    @deal.pure
     def get_accepted_tags(self, user=None):
         tags = self.tags.filter(phototag__accepted=True)
         if user:
             tags |= self.tags.filter(phototag__creator__pk=user.pk)
         return tags.distinct()
 
+    @deal.pure
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)
 
+    @deal.pure
     def add_params(self, url, params):
         if params:
             url = '{}?{}'.format(url, params.urlencode())
         return url
 
+    @deal.pure
     def create_url(self, viewname, queryset=None, params=None):
         kwargs = {'photo': self.id}
         url = reverse(
@@ -136,6 +153,7 @@ class Photo(models.Model):
         )
         return self.add_params(url=url, params=params)
 
+    @deal.pure
     def get_download_page_url(self, kwargs=None, params=None):
         kwargs = kwargs or {}
         url = reverse('kronofoto:download', kwargs=dict(**kwargs, **{'pk': self.id}))
@@ -145,11 +163,13 @@ class Photo(models.Model):
             params = QueryDict(mutable=True)
         return self.add_params(url=url, params=params)
 
+    @deal.pure
     def get_urls(self, embed=False):
         return {
             'url': self.get_embedded_url() if embed else self.get_absolute_url(),
         }
 
+    @deal.pure
     def get_grid_url(self, kwargs=None, params=None):
         kwargs = kwargs or {}
         url = reverse('kronofoto:gridview', kwargs=kwargs)
@@ -162,6 +182,7 @@ class Photo(models.Model):
         return self.add_params(url=url, params=params)
 
 
+    @deal.pure
     def get_absolute_url(self, kwargs=None, params=None):
         kwargs = kwargs or {}
         kwargs = dict(**kwargs)
@@ -171,18 +192,23 @@ class Photo(models.Model):
             return '{}?{}'.format(url, params.urlencode())
         return url
 
+    @deal.pure
     def get_edit_url(self):
         return reverse('admin:archive_photo_change', args=(self.id,))
 
+    @deal.has()
+    @deal.raises(TypeError)
     @staticmethod
     def format_url(**kwargs):
         return "{}?{}".format(
             reverse('kronofoto:gridview'), urlencode(kwargs)
         )
 
+    @deal.pure
     def get_county_url(self):
         return Photo.format_url(county=self.county, state=self.state)
 
+    @deal.pure
     def get_city_url(self):
         return Photo.format_url(city=self.city, state=self.state)
 
@@ -194,6 +220,8 @@ class Photo(models.Model):
         def index(self):
             return Photo.county_index()
 
+    @deal.has()
+    @deal.raises(TypeError)
     @staticmethod
     def index_by_fields(*fields):
         return [
@@ -209,18 +237,23 @@ class Photo(models.Model):
             ).values(*fields).annotate(count=Count('id')).order_by(*fields)
         ]
 
+    @deal.pure
     @staticmethod
     def county_index():
         return Photo.index_by_fields('county', 'state')
 
+    @deal.pure
     @staticmethod
     def city_index():
         return Photo.index_by_fields('city', 'state')
 
 
+    @deal.pure
     def __str__(self):
         return self.accession_number
 
+    @deal.has()
+    @deal.raises(ValueError)
     @staticmethod
     def accession2id(accession):
         if not accession.startswith('FI'):
@@ -228,10 +261,13 @@ class Photo(models.Model):
         return int(accession[2:])
 
 
-    @property
+    @property  # type: ignore[misc]  # type: ignore[misc]
+    @deal.pure
     def accession_number(self):
         return 'FI' + str(self.id).zfill(7)
 
+    @deal.has()
+    @deal.raises(TypeError, UnidentifiedImageError, ValueError, ZeroDivisionError)
     def save(self, *args, **kwargs):
         if not self.thumbnail:
             Image.MAX_IMAGE_PIXELS = 195670000
@@ -272,6 +308,7 @@ class Photo(models.Model):
                 self.h700.name = fname
         super().save(*args, **kwargs)
 
+    @deal.pure
     def location(self, with_address=False, force_country=False):
         kwargs = dict(
             city=self.city, state=self.state, county=self.county, country=self.country
@@ -282,6 +319,7 @@ class Photo(models.Model):
             del kwargs['county']
         return format_location(force_country=force_country, **kwargs)
 
+    @deal.pure
     def describe(self, user=None):
         terms = {str(t) for t in self.terms.all()}
         tags = {str(t) for t in self.get_accepted_tags(user)}
@@ -289,6 +327,8 @@ class Photo(models.Model):
         location = {location} if location != "Location: n/a" else set()
         return terms | tags | location | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
 
+    @deal.has('stdout')
+    @deal.safe
     def notices(self):
         if not self.local_context_id:
             return []
@@ -333,19 +373,28 @@ class PhotoTag(models.Model):
             models.Index(fields=['tag', 'photo']),
         ]
 
+    @deal.pure
     def __str__(self):
         return str(self.tag)
 
+@deal.has('io')
+@deal.safe
 def remove_deadtags(sender, instance, **kwargs):
     if instance.tag.phototag_set.count() == 0:
         instance.tag.delete()
 
+@deal.has('io')
+@deal.safe
 def disconnect_deadtags(sender, instance, **kwargs):
     post_delete.disconnect(remove_deadtags, sender=Photo.tags.through)
 
+@deal.has('io')
+@deal.safe
 def connect_deadtags(sender, instance, **kwargs):
     post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 
 post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 pre_delete.connect(disconnect_deadtags, sender=Tag)
 post_delete.connect(connect_deadtags, sender=Tag)
+
+

@@ -5,3 +5,4 @@ django-google-tag-manager==0.0.5
 markdown==3.3.*
 hypothesis>=6.50.1,<6.51.0
 requests==2.28.*
+deal==4.24.*
