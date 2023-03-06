@@ -30,9 +30,6 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
             self._queryset = self.get_queryset()
         return self._queryset
 
-    def get_queryset(self):
-        return super().get_queryset()
-
     def get_object(self, queryset=None):
         if self.form.is_valid():
             if not queryset:
@@ -42,10 +39,8 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
             except Photo.DoesNotExist:
                 raise Http404("No photo with this accession number is in this collection.")
         else:
+            print(self.request.GET)
             raise SuspiciousOperation('invalid search request')
-
-    def get_paginator(self):
-        return TimelinePaginator(self.queryset.order_by('year', 'id').select_related('donor', 'scanner'), self.items)
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
@@ -81,21 +76,18 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         while len(carousel) < 30:
             carousel.append(FAKE_PHOTO)
 
-        try:
-            context['object_list'] = carousel
-            context['carousel_has_next'] = has_next
-            context['carousel_has_prev'] = has_prev
-            context['grid_url'] = photo_rec.get_grid_url()
-            context['timeline_url'] = photo_rec.get_absolute_url()
-            context["photo"] = photo_rec
-            context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
-            context["tags"] = photo_rec.get_accepted_tags(self.request.user)
-            #context["years"] = index
-            context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(**self.url_kwargs, **dict(start=start, end=end))), self.request.GET.urlencode())
-            if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
-                context['edit_url'] = photo_rec.get_edit_url()
-        except KeyError:
-            pass
+        context['object_list'] = carousel
+        context['carousel_has_next'] = has_next
+        context['carousel_has_prev'] = has_prev
+        context['grid_url'] = photo_rec.get_grid_url()
+        context['timeline_url'] = photo_rec.get_absolute_url()
+        context["photo"] = photo_rec
+        context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
+        context["tags"] = photo_rec.get_accepted_tags(self.request.user)
+        #context["years"] = index
+        context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(**self.url_kwargs, **dict(start=start, end=end))), self.request.GET.urlencode())
+        if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
+            context['edit_url'] = photo_rec.get_edit_url()
         return context
 
     def render(self, context, **kwargs):
@@ -103,16 +95,7 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         response['Access-Control-Allow-Origin'] = '*'
         return response
 
-    def get_redirect_url(self, photo):
-        return photo.get_absolute_url(queryset=self.queryset, params=self.request.GET)
-
     def render_to_response(self, context, **kwargs):
-        if 'timelinesvg_url' not in context:
-            try:
-                photo = Photo.objects.get(id=self.kwargs['photo'])
-                return redirect(self.get_redirect_url(photo))
-            except Photo.DoesNotExist:
-                raise Http404("Photo either does not exist or is not in that set of photos")
         return self.render(context, **kwargs)
 
 

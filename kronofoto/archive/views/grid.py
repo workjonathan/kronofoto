@@ -57,10 +57,10 @@ class GridView(BasePhotoTemplateMixin, ListView):
             paginator = KeysetPaginator(queryset, page_size)
             try:
                 # probably should handle no id
-                page = paginator.get_page(dict(year=self.params.pop('year:gte')[0], id=self.params.pop('id:gt')[0], reverse=False))
+                page = paginator.get_page(dict(year=int(self.params.pop('year:gte')[0]), id=int(self.params.pop('id:gt')[0]), reverse=False))
             except KeyError:
                 try:
-                    page = paginator.get_page(dict(year=self.params.pop('year:lte')[0], id=self.params.pop('id:lt')[0], reverse=True))
+                    page = paginator.get_page(dict(year=int(self.params.pop('year:lte')[0]), id=int(self.params.pop('id:lt')[0]), reverse=True))
                     if len(page) < page_size:
                         page = paginator.get_page(dict(year=page[0].year, id=page[0].id-1, reverse=False))
                 except KeyError:

@@ -99,7 +99,7 @@ class MaxReporter:
         if isinstance(expr, Maximum):
             return self.describe_(expr.left)
         else:
-            return expr.str if hasattr(expr, 'str') else expr.value
+            return expr.str if hasattr(expr, 'str') else str(expr.value)
 
 class CollectionReporter:
     def describe(self, exprs):
@@ -179,7 +179,7 @@ class Expression:
     def filter2(self, user):
         return None
 
-    def annotations1(self):
+    def annotations1(self, prefix=''):
         "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
         return {}
 
@@ -435,7 +435,6 @@ class AccessionNumber(Expression):
 class MultiWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
-        self.field = 'TA_' + '_'.join(self.value.split())
 
     def __str__(self):
         return 'tag:"{}"'.format(self.value)
@@ -444,7 +443,8 @@ class MultiWordTag(Expression):
         return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
 
 
-    def annotations1(self):
+    def annotations1(self, prefix=''):
+        self.field = prefix + "TA_{}".format(hash(self.value))
         tag_minusval = Cast(
             Length(Replace(Lower(F('phototag__tag__tag')), Value(self.value))), FloatField()
         )
@@ -476,29 +476,28 @@ class BasicTag(MultiWordTag):
 
 class TagExactly(Expression):
     def __init__(self, value):
-        self.str = value
+        self.value = value
         try:
-            self.value = models.Tag.objects.get(tag__iexact=value)
-            self.field = 'TAE_{}'.format(self.value.id)
+            self.object = models.Tag.objects.get(tag__iexact=value)
         except (ValueError, models.Tag.DoesNotExist):
-            self.value = None
-            self.field = 'TAE_{}'.format(hash(value))
+            self.object = None
 
     def __str__(self):
-        return 'tag_exact:"{}"'.format(self.str)
+        return 'tag_exact:"{}"'.format(self.value)
 
     def filter2(self, user):
-        if self.value:
-            return Q(phototag__tag__id=self.value.id) & Q(phototag__accepted=True)
+        if self.object:
+            return Q(phototag__tag__id=self.object.id) & Q(phototag__accepted=True)
         else:
             # nothing should match
             return Q(phototag__accepted=True) & Q(phototag__accepted=False)
 
-    def annotations1(self):
-        if self.value:
+    def annotations1(self, prefix=''):
+        self.field = prefix + 'TAE_{}'.format(hash(self.object))
+        if self.object:
             return {
                 self.field: Case(
-                    When(phototag__tag__id=self.value.id, then=1),
+                    When(phototag__tag__id=self.object.id, then=1),
                     default=0,
                     output_field=FloatField(),
                 )
@@ -521,7 +520,7 @@ class TagExactly(Expression):
         return Description([self])
 
     def short_label(self):
-        return "Tag: {}".format(self.value.lower())
+        return "Tag: {}".format(self.object.lower())
 
     def group(self):
         return "tag"
@@ -537,14 +536,15 @@ class SingleWordTag(Expression):
     def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TA')
 
-    def annotations1(self):
-        return {'TA_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+    def annotations1(self, prefix=''):
+        self.field = prefix + 'TA_{}'.format(hash(self.value))
+        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
     def scoreF(self, negated):
         if negated:
-            return 1 - F('TA_' + self.value)
+            return 1 - F(self.field)
         else:
-            return F('TA_' + self.value)
+            return F(self.field)
 
     def score(self, photo, negated):
         scores = []
@@ -574,7 +574,6 @@ CollectionTag = lambda s: BasicTag(s) if len(s.split()) > 1 else SingleWordTag(s
 class MultiWordTerm(Expression):
     def __init__(self, value):
         self.value = value.lower()
-        self.field = 'TE_' + '_'.join(self.value.split())
 
     def __str__(self):
         return 'term:"{}"'.format(self.value)
@@ -582,7 +581,8 @@ class MultiWordTerm(Expression):
     def filter1(self, user):
         return Q(terms__term__icontains=self.value)
 
-    def annotations1(self):
+    def annotations1(self, prefix=''):
+        self.field = prefix + 'TE_{}'.format(hash(self.value))
         term_minusval = Cast(
             Length(Replace(Lower(F('terms__term')), Value(self.value))), FloatField()
         )
@@ -618,14 +618,15 @@ class SingleWordTerm(Expression):
     def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
 
-    def annotations1(self):
-        return {'TE_' + self.value: Case(When(wordcount__word__icontains=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+    def annotations1(self, prefix=''):
+        self.field = prefix + 'TE_{}'.format(hash(self.value))
+        return {self.field: Case(When(wordcount__word__icontains=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
     def scoreF(self, negated):
         if negated:
-            return 1 - F('TE_' + self.value)
+            return 1 - F(self.field)
         else:
-            return F('TE_' + self.value)
+            return F(self.field)
 
     def score(self, photo, negated):
         scores = []
@@ -684,14 +685,15 @@ class SingleWordCaption(Expression):
     def filter2(self, user):
         return Q(wordcount__word=self.value, wordcount__field='CA')
 
-    def annotations1(self):
-        return {'CA_' + self.value: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+    def annotations1(self, prefix=''):
+        self.field = prefix + "CA_{}".format(hash(self.value))
+        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
     def scoreF(self, negated):
         if negated:
-            return 1 - F('CA_' + self.value)
+            return 1 - F(self.field)
         else:
-            return F('CA_' + self.value)
+            return F(self.field)
 
 
     def score(self, photo, negated):
@@ -919,8 +921,8 @@ class Not(Expression):
         v = self.value.filter2(user)
         return ~v if v else v
 
-    def annotations1(self):
-        return self.value.annotations1()
+    def annotations1(self, prefix=''):
+        return self.value.annotations1(prefix=prefix+"NOT_")
 
     def scoreF(self, negated):
         return self.value.scoreF(not negated)
@@ -953,8 +955,8 @@ class BinaryOperator(Expression):
             return l | r
         return l if l else r
 
-    def annotations1(self):
-        return dict(**self.left.annotations1(), **self.right.annotations1())
+    def annotations1(self, prefix=''):
+        return dict(**self.left.annotations1(prefix=prefix+"L_"), **self.right.annotations1(prefix+"R_"))
 
     def shakeout(self):
         left = self.left.shakeout()
