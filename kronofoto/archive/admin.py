@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
 from .models.archive import Archive
+from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count
 from django.db import IntegrityError
@@ -20,6 +21,37 @@ from django.forms import ModelForm, Textarea
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
+
+@admin.register(ConnecticutRecord)
+class ConnecticutRecordAdmin(admin.ModelAdmin):
+    search_fields = (
+        'title',
+        'year',
+        'contributor',
+        'description',
+        'location',
+    )
+    list_display = (
+        'file_id1',
+        'file_id2',
+        'title',
+        'year',
+        'contributor',
+        'description',
+        'location',
+    )
+    @deal.pure
+    def has_add_permission(self, request):
+        return False
+
+    @deal.pure
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    @deal.pure
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(photo__isnull=True)
 
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
@@ -427,3 +459,5 @@ class LogEntryAdmin(base_admin.ModelAdmin):
     @deal.pure
     def has_view_permission(self, request, *args, **kwargs):
         return request.user.is_superuser
+
+
