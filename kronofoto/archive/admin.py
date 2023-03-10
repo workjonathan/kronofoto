@@ -22,31 +22,84 @@ admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
 
+class HasPhotoFilter(base_admin.SimpleListFilter):
+    title = "has photo"
+    parameter_name = "photo__isnull"
+
+    @deal.pure
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    @deal.pure
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(year__isnull=False)
+        elif self.value() == 'No':
+            return queryset.filter(year__isnull=True)
+
+    @deal.pure
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(photo__isnull=False)
+        elif self.value() == 'No':
+            return queryset.filter(photo__isnull=True)
+
+class HasYearFilter(base_admin.SimpleListFilter):
+    title = "has year"
+    parameter_name = "cleaned_year__isnull"
+
+    @deal.pure
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    @deal.pure
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(cleaned_year__isnull=False)
+        elif self.value() == 'No':
+            return queryset.filter(cleaned_year__isnull=True)
+
+
 @admin.register(ConnecticutRecord)
 class ConnecticutRecordAdmin(admin.ModelAdmin):
+    raw_id_fields = ['photo']
     search_fields = (
         'title',
         'year',
+        'cleaned_year',
         'contributor',
         'description',
         'location',
     )
     list_display = (
+        'thumbnail',
         'file_id1',
         'file_id2',
         'title',
         'year',
+        'cleaned_year',
         'contributor',
         'description',
         'location',
     )
+    list_filter = (HasPhotoFilter, HasYearFilter)
+    @deal.pure
+    def thumbnail(self, obj):
+        return mark_safe('<img src="https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG" width="200" />'.format(str(obj)))
+
     @deal.pure
     def has_add_permission(self, request):
         return False
 
-    @deal.pure
-    def has_change_permission(self, request, obj=None):
-        return False
+    #@deal.pure
+    #def has_change_permission(self, request, obj=None):
+    #    return False
 
     @deal.pure
     def get_queryset(self, request):

@@ -11,6 +11,7 @@ class ConnecticutRecord(models.Model):
     contributor = models.TextField(null=False)
     description = models.TextField(null=False)
     location = models.TextField(null=False)
+    cleaned_year = models.IntegerField(null=True)
 
     photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True, unique=True, blank=True)
 
