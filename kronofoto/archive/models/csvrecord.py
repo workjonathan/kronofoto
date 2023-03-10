@@ -1,5 +1,34 @@
 from django.db import models
 
+class ConnecticutRecordQuerySet(models.QuerySet):
+    pass
+
+class ConnecticutRecord(models.Model):
+    file_id1 = models.IntegerField(null=False)
+    file_id2 = models.IntegerField(null=False)
+    title = models.TextField(null=False)
+    year = models.TextField(null=False)
+    contributor = models.TextField(null=False)
+    description = models.TextField(null=False)
+    location = models.TextField(null=False)
+    cleaned_year = models.IntegerField(null=True)
+
+    photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True, unique=True, blank=True)
+
+    objects = ConnecticutRecordQuerySet.as_manager()
+    def __str__(self):
+        return '{}:{}'.format(self.file_id1, self.file_id2)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['file_id1', 'file_id2']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['file_id1', 'file_id2'], name='unique_id_combo'),
+        ]
+
+
+
 
 class CSVRecordQuerySet(models.QuerySet):
     def bulk_clean(self):
