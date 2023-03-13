@@ -433,7 +433,10 @@ class PhotoAdmin(admin.OSMGeoAdmin):
 
     @deal.pure
     def h700_image(self, obj):
-        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
+        if obj.h700:
+            return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
+        else:
+            return "-"
 
     @deal.pure
     def save_form(self, request, form, change):
