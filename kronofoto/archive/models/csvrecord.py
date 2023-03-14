@@ -1,4 +1,9 @@
 from django.db import models
+from io import BytesIO
+import requests
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from .photo import Photo
 
 class ConnecticutRecordQuerySet(models.QuerySet):
     pass
@@ -12,10 +17,25 @@ class ConnecticutRecord(models.Model):
     description = models.TextField(null=False)
     location = models.TextField(null=False)
     cleaned_year = models.IntegerField(null=True)
+    publishable = models.BooleanField(null=False, default=False)
 
     photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True, unique=True, blank=True)
 
     objects = ConnecticutRecordQuerySet.as_manager()
+
+    def hq_jpeg(self):
+        resp = requests.get(self.tiff_url())
+        resp.raise_for_status()
+        img = Image.open(BytesIO(resp.content))
+        jpgData = BytesIO()
+        Image.save(jpgData, "jpeg", optimize=True, quality=95)
+        return jpgData
+
+    def photo_record(self):
+        pass # need to figure out how to interpret locations
+    def tiff_url(self):
+        return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(str(self))
+
     def __str__(self):
         return '{}:{}'.format(self.file_id1, self.file_id2)
 

@@ -65,10 +65,28 @@ class HasYearFilter(base_admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(cleaned_year__isnull=True)
 
+class IsPublishableFilter(base_admin.SimpleListFilter):
+    title = "is publishable"
+    parameter_name = "publishable"
+
+    @deal.pure
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    @deal.pure
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.filter(publishable=True)
+        elif self.value() == 'No':
+            return queryset.filter(publishable=False)
 
 @admin.register(ConnecticutRecord)
 class ConnecticutRecordAdmin(admin.ModelAdmin):
     raw_id_fields = ['photo']
+    list_editable = ['publishable']
     search_fields = (
         'title',
         'year',
@@ -84,11 +102,12 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
         'title',
         'year',
         'cleaned_year',
+        'publishable',
         'contributor',
         'description',
         'location',
     )
-    list_filter = (HasPhotoFilter, HasYearFilter)
+    list_filter = (HasPhotoFilter, HasYearFilter, IsPublishableFilter)
     @deal.pure
     def thumbnail(self, obj):
         return mark_safe('<img src="https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG" width="200" />'.format(str(obj)))
