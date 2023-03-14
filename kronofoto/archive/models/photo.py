@@ -334,7 +334,6 @@ class Photo(models.Model):
             return []
         def _():
             url = '{base}projects/{id}/'.format(base=settings.LOCAL_CONTEXTS, id=self.local_context_id)
-            print(url)
             resp = requests.get(url)
             if resp.status_code == 200:
                 return [
