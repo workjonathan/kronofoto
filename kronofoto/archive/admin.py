@@ -96,9 +96,9 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
         'location',
     )
     list_display = (
-        'thumbnail',
         'file_id1',
         'file_id2',
+        'thumbnail',
         'title',
         'year',
         'cleaned_year',
@@ -110,7 +110,8 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
     list_filter = (HasPhotoFilter, HasYearFilter, IsPublishableFilter)
     @deal.pure
     def thumbnail(self, obj):
-        return mark_safe('<img src="https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG" width="200" />'.format(str(obj)))
+        src = 'https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG'.format(str(obj))
+        return mark_safe('<a href="{src}" target="_blank"><img src="{src}" width="200" /></a>'.format(src=src))
 
     @deal.pure
     def has_add_permission(self, request):
