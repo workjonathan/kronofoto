@@ -1,10 +1,10 @@
 import HTMX from "./htmx.js"
-import {toggleMetadata, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
+import {installButtons, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
 window.toggleLogin = toggleLogin
 
 const htmx = HTMX(document)
 
-htmx.onLoad(toggleMetadata(document))
+htmx.onLoad(installButtons(document))
 window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
 //htmx.logAll()
 

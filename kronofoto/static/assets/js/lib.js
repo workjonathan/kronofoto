@@ -59,19 +59,30 @@ export const markerDnD = root => content => {
     }
 }
  
-export const toggleMetadata = root => content => {
-    if (content.id == 'expand') {
-        content.addEventListener("click", evt => {
-            for (const metadata of root.querySelectorAll("#metadata")) {
-                toggleElement(metadata)
-            }
-        })
+export const installButtons = root => content => {
+    const elems = Array.from(content.querySelectorAll('[data-popup-target]'))
+    if (content.hasAttribute('data-popup-target')) {
+        elems.push(content)
     }
-    for (const elem of content.querySelectorAll("#expand")) {
+
+    for (const elem of elems) {
+        const datatarget = elem.getAttribute('data-popup-target')
         elem.addEventListener("click", evt => {
-            for (const metadata of content.querySelectorAll("#metadata")) {
-                toggleElement(metadata)
+            for (const target of root.querySelectorAll('[data-popup]')) {
+                if (target.hasAttribute(datatarget)) {
+                    target.classList.remove("hidden")
+                } else {
+                    target.classList.add('hidden')
+                }
             }
+            for (const target of root.querySelectorAll('[data-popup-button]')) {
+                if (target.hasAttribute(datatarget)) {
+                    target.classList.add("hidden")
+                } else {
+                    target.classList.remove('hidden')
+                }
+            }
+            elem.dispatchEvent(new Event(datatarget, {bubbles:true}))
         })
     }
 }

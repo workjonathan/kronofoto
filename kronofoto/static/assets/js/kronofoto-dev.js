@@ -1,5 +1,5 @@
 import HTMX from "./htmx.js"
-import {toggleMetadata, markerDnD} from "./lib.js"
+import {installButtons, markerDnD} from "./lib.js"
 
 class FortepanViewer extends HTMLElement {
     constructor() {
