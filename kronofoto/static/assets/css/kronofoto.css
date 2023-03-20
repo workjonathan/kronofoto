@@ -192,6 +192,29 @@
   padding: 0 35px;
 }
 
+.embed-nav {
+  height:50px;
+  justify-content: center;
+}
+.embed-nav .grid-icon {
+  position:absolute;
+  right:40px;
+}
+.embed-nav .timeline-container {
+    position:absolute;
+    right:120px;
+
+}
+.embed-nav .fpi-fpilink img {
+  position:absolute;
+  left:80px;
+  width: 70px;
+  overflow: none;
+  margin:0;
+  padding: 0;
+  transform: translateY(-20px);
+}
+
 @media (max-width: 1140px) {
     .header-text {
       display: none;
@@ -557,21 +580,31 @@ main article.fi-image {
 }
 
 main .img-left-space{
-  grid-area: img-left-space;
+  position:absolute;
+  left:0px;
   background: #dcddde;
+  height: calc(100vh - 210px);
+  width: calc(50% - 570px);
 }
 
 main .img-right-space{
-  grid-area: img-right-space;
+  position:absolute;
+  right:0px;
   background: #dcddde;
+  height: calc(100vh - 210px);
+    width: calc(50% - 570px);
+
 }
 
 main .fi-image-background{
   /*grid-area: current-image;*/
   position: absolute;
+  /*transform: translateX(calc(50vw - 570px));*/
+  z-index: -1;
     width: 100%;
-    height: calc(100vh - 210px);
+    height: calc(100% - 210px);
   background: #c7c8ca;
+  margin:auto;
 }
 .fi-image figure {
 /*
@@ -841,8 +874,8 @@ height:calc(100vh - 275px);
 
 .fi-timeline {
   /*grid-area: timeline;*/
-    position: absolute;
-    bottom: 40px;
+    position: relative;
+    top: calc(100vh - 250px);
     left: 0px;
   flex-direction: column;
   justify-self: center;
@@ -1005,11 +1038,21 @@ height:calc(100vh - 275px);
 /*==============================*/
 
 .timeline-slider {
-    position: absolute;
-    bottom: 10px;
-  width: 100%;
+    position: relative;
+    top: calc(100vh - 240px);
+    width: 100%;
     max-width: 1140px;
     margin:auto;
+}
+@media (max-width: 1140px) {
+  .timeline-slider {
+    position: relative;
+    top: calc(100vh - 130px);
+    width: 100%;
+    max-width: 1140px;
+    margin:auto;
+  }
+
 }
 
 /* The slider itself */
@@ -1046,6 +1089,8 @@ height:calc(100vh - 275px);
   background: #04AA6D; /* Green background */
   cursor: pointer; /* Cursor on hover */
 }
+
+
 
 
 
