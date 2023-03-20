@@ -56,6 +56,9 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
+class ListMembers(ListView):
+    pass
+
 
 class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/collection_create.html'

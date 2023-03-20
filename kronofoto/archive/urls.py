@@ -1,5 +1,6 @@
 from django.urls import path, include, register_converter
 from . import views
+from .views import collection
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
@@ -41,6 +42,7 @@ urlpatterns = [
     path('collections/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view()),
     path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
+    path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),
