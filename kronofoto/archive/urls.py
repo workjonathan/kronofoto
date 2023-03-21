@@ -43,6 +43,7 @@ urlpatterns = [
     path('list/<str:photo>/', views.AddToList.as_view()),
     path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
     path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
+    path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),

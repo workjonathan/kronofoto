@@ -2,11 +2,23 @@ from django import forms
 from .models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
 from .search import expression
 from .search.parser import Parser, NoExpression, BasicParser
+from .reverse import reverse
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
 from .widgets import HeadingWidget, PositioningWidget
 from .models.photosphere import IncompleteGPSInfo
+
+class ListForm(forms.Form):
+    name = forms.CharField(label="create new list")
+
+class ListMemberForm(forms.Form):
+    membership = forms.BooleanField(required=False)
+    collection = forms.IntegerField(widget=forms.HiddenInput())
+    def __init__(self, *args, initial, **kwargs):
+        super().__init__(*args, initial=initial, **kwargs)
+        self.fields['membership'].label = initial['name']
+
 
 class LocationChoiceField(forms.ChoiceField):
     def __init__(self, field, *args, **kwargs):

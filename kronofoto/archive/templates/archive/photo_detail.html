@@ -109,7 +109,7 @@
                 {% include "archive/photometadata.html" %}
             {% endblock %}
         </div>
-        <div id="add-to-list-popup" class="photo-menu-popup hidden" data-popup-add-to-list data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+        <div id="add-to-list-popup" class="photo-menu-popup hidden" data-popup-add-to-list data-popup hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
         </div>
         <div id="share-popup" class="photo-menu-popup hidden" data-popup-share data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
         </div>

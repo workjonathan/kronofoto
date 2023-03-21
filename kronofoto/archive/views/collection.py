@@ -1,13 +1,18 @@
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
 from ..reverse import reverse
+from django.http import QueryDict, HttpResponse
+from django.forms import formset_factory
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
 from ..models.collection import Collection
-from ..forms import AddToListForm
+from ..forms import AddToListForm, ListMemberForm, ListForm
+import deal
+from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
+from django.views.decorators.csrf import csrf_exempt
 
 
 class Profile(BaseTemplateMixin, ListView):
@@ -56,8 +61,73 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
-class ListMembers(ListView):
-    pass
+class NewList(FormView):
+    form_class = ListForm
+
+    def get_success_url(self):
+        return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+
+    def form_valid(self, form):
+        collection = Collection.objects.create(
+            name=form.cleaned_data['name'],
+            owner=self.request.user,
+            visibility='PR',
+        )
+        collection.photos.add(self.kwargs['photo'])
+        return super().form_valid(form)
+
+@deal.inv(lambda self: not hasattr(self, 'request') or self.request.user)
+class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, FormView):
+    template_name = 'archive/popup_collection_list.html'
+    form_class = formset_factory(ListMemberForm, extra=0)
+
+    def get_success_url(self):
+        return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+
+    @deal.ensure(lambda self, result:
+        all(
+            (collection.owner == self.request.user) and hasattr(collection, 'membership')
+            for collection in result
+        ) if self.request.user.is_authenticated else len(result) == 0
+    )
+    def get_queryset(self):
+        return Collection.objects.filter(
+            owner=self.request.user
+        ).count_photo_instances(
+            photo=self.kwargs['photo']
+        ) if not self.request.user.is_anonymous else []
+
+    def get_initial(self):
+        return [
+            {
+                'membership': bool(o.membership),
+                'collection': o.id,
+                'name': o.name,
+                'photo': self.kwargs['photo'],
+            }
+            for o in self.get_queryset()
+        ]
+
+    def form_valid(self, form):
+        for data in form.cleaned_data:
+            try:
+                collection = Collection.objects.get(id=data['collection'], owner=self.request.user)
+                if data['membership']:
+                    collection.photos.add(self.kwargs['photo'])
+                else:
+                    collection.photos.remove(self.kwargs['photo'])
+            except Collection.DoesNotExist:
+                pass
+        return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['new_list_form'] = ListForm()
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().get(request, *args, **kwargs)
 
 
 class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):

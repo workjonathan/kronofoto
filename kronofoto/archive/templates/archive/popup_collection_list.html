@@ -1,0 +1,15 @@
+Add to List
+
+<form method="post" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
+    {% csrf_token %}
+    {{ new_list_form.as_p }}
+    <input type="submit" value="add">
+</form>
+
+<form method="post" hx-post="{% url "kronofoto:popup-add-to-list" photo=view.kwargs.photo %}">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="save">
+</form>

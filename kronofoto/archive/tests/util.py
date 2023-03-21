@@ -58,10 +58,10 @@ searchTerms = st.deferred(lambda:
 
 terms = lambda **kwargs: from_model(Term, **kwargs)
 tags = lambda **kwargs: from_model(Tag, **kwargs)
-donors = lambda **kwargs: from_model(Donor, **kwargs)
+donors = lambda archive=None, **kwargs: from_model(Donor, archive=archive if archive is not None else archives(), **kwargs)
 archives = lambda slug=None, **kwargs: from_model(Archive)
 
-def photos(*, archive=None, **kwargs):
+def photos(*, archive=None, donor=None, **kwargs):
     return from_model(
         Photo,
         original=st.builds(
@@ -74,6 +74,7 @@ def photos(*, archive=None, **kwargs):
             lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
         ),
         archive=archive if archive is not None else archives(),
+        donor=donor if donor is not None else donors(),
         **kwargs,
     )
 
