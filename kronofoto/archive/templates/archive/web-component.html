@@ -7,5 +7,5 @@ Embed
     {{ field }}
 {% endfor %}
 </form>
-<textarea>{% filter force_escape %}<script src="https://{{site}}{% static 'assets/js/kronofoto.js' %}"></script>
+<textarea>{% filter force_escape %}<script src="{% static 'assets/js/kronofoto.js' %}"></script>
 <fortepan-viewer{% if expression %} constraint="{{ expression }}"{% endif %} src="{{ src }}"></fortepan-viewer>{% endfilter %}</textarea>
