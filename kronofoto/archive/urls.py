@@ -1,6 +1,6 @@
 from django.urls import path, include, register_converter
 from . import views
-from .views import collection
+from .views import collection, webcomponent
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
@@ -44,6 +44,7 @@ urlpatterns = [
     path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
     path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
     path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
+    path('photos/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),

@@ -113,7 +113,7 @@
         </div>
         <div id="share-popup" class="photo-menu-popup hidden" data-popup-share data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
         </div>
-        <div id="embed-popup" class="photo-menu-popup hidden" data-popup-embed data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+        <div id="embed-popup" class="photo-menu-popup hidden" data-popup-embed data-popup hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="intersect">
         </div>
         <div id="download-popup" class="photo-menu-popup hidden" data-popup-download data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
         </div>

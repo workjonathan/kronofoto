@@ -9,6 +9,18 @@ from django.core.cache import cache
 from .widgets import HeadingWidget, PositioningWidget
 from .models.photosphere import IncompleteGPSInfo
 
+class WebComponentForm(forms.Form):
+    page = forms.ChoiceField(
+        widget=forms.RadioSelect(),
+        initial="image",
+        choices=[
+            ('image', "this image"),
+            ('results', "search results"),
+            ('random', "any image"),
+        ],
+    )
+
+
 class ListForm(forms.Form):
     name = forms.CharField(label="create new list")
 
