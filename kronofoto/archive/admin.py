@@ -83,6 +83,24 @@ class IsPublishableFilter(base_admin.SimpleListFilter):
         elif self.value() == 'No':
             return queryset.filter(publishable=False)
 
+class LocationEnteredFilter(base_admin.SimpleListFilter):
+    title = "location entered"
+    parameter_name = "location"
+
+    @deal.pure
+    def lookups(self, request, model_admin):
+        return (
+            ("Yes", "Yes"),
+            ("No", "No"),
+        )
+
+    @deal.pure
+    def queryset(self, request, queryset):
+        if self.value() == 'Yes':
+            return queryset.exclude(cleaned_city='', cleaned_county='', cleaned_state='', cleaned_country='')
+        elif self.value() == 'No':
+            return queryset.filter(cleaned_city='', cleaned_county='', cleaned_state='', cleaned_country='')
+
 @admin.register(ConnecticutRecord)
 class ConnecticutRecordAdmin(admin.ModelAdmin):
     raw_id_fields = ['photo']
@@ -94,6 +112,10 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
         'contributor',
         'description',
         'location',
+        'cleaned_city',
+        'cleaned_county',
+        'cleaned_state',
+        'cleaned_country',
     )
     list_display = (
         'file_id1',
@@ -106,8 +128,12 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
         'contributor',
         'description',
         'location',
+        'cleaned_city',
+        'cleaned_county',
+        'cleaned_state',
+        'cleaned_country',
     )
-    list_filter = (HasPhotoFilter, HasYearFilter, IsPublishableFilter)
+    list_filter = (HasPhotoFilter, HasYearFilter, IsPublishableFilter, LocationEnteredFilter)
     @deal.pure
     def thumbnail(self, obj):
         src = 'https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG'.format(str(obj))
