@@ -1,6 +1,6 @@
 from django.urls import path, include, register_converter
 from . import views
-from .views import collection, webcomponent
+from .views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
@@ -32,8 +32,8 @@ app_name = 'kronofoto'
 urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
-    path('original/<int:pk>/', views.DownloadPageView.as_view()),
-    path('photos/<accession:pk>/original', views.DownloadPageView.as_view(), name='download'),
+    path('original/<int:photo>/', views.DownloadPageView.as_view()),
+    path('photos/<accession:photo>/original', views.DownloadPageView.as_view(), name='download'),
     path('user/<str:username>/', views.Profile.as_view()),
     path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
     path('search/', views.GridView.as_view()),
@@ -45,6 +45,7 @@ urlpatterns = [
     path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
     path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
     path('photos/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
+    path('photos/<accession:photo>/download', downloadpage.DownloadPopupView.as_view(), name='popup-download'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),

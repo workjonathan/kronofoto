@@ -5,15 +5,21 @@ from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 
 
-class DownloadPageView(BaseTemplateMixin, DetailView):
+class BaseDownloadView(DetailView):
     model = Photo
-    template_name = "archive/download-page.html"
+    pk_url_kwarg = 'photo'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['host_uri'] = settings.HOST_URI
         photo = context['object']
-        collection = CollectionQuery(self.final_expr, self.request.user)
         context['citation_url'] = photo.get_absolute_url(params=None)
         context['grid_url'] = photo.get_grid_url()
         return context
+
+
+class DownloadPageView(BaseTemplateMixin, BaseDownloadView):
+    template_name = "archive/download-page.html"
+
+
+class DownloadPopupView(BaseDownloadView):
+    template_name = "archive/popup-download.html"
