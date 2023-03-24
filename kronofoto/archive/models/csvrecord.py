@@ -17,6 +17,10 @@ class ConnecticutRecord(models.Model):
     description = models.TextField(null=False)
     location = models.TextField(null=False)
     cleaned_year = models.IntegerField(null=True)
+    cleaned_city = models.CharField(max_length=128, null=False, default="", blank=True)
+    cleaned_county = models.CharField(max_length=128, null=False, default="", blank=True)
+    cleaned_state = models.CharField(max_length=128, null=False, default="", blank=True)
+    cleaned_country = models.CharField(max_length=128, null=False, default="", blank=True)
     publishable = models.BooleanField(null=False, default=False)
 
     photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True, unique=True, blank=True)
