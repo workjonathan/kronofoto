@@ -24,7 +24,7 @@ admin.site.index_title = 'Fortepan Administration Index'
 
 class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"
-    parameter_name = "photo__isnull"
+    parameter_name = "photo"
 
     @deal.pure
     def lookups(self, request, model_admin):
@@ -36,14 +36,7 @@ class HasPhotoFilter(base_admin.SimpleListFilter):
     @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
-            return queryset.filter(year__isnull=False)
-        elif self.value() == 'No':
-            return queryset.filter(year__isnull=True)
-
-    @deal.pure
-    def queryset(self, request, queryset):
-        if self.value() == 'Yes':
-            return queryset.filter(photo__isnull=False)
+            return queryset.exclude(photo__isnull=True)
         elif self.value() == 'No':
             return queryset.filter(photo__isnull=True)
 
@@ -147,10 +140,6 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
     #def has_change_permission(self, request, obj=None):
     #    return False
 
-    @deal.pure
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.filter(photo__isnull=True)
 
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):

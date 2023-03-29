@@ -1,9 +1,11 @@
 from django.db import models
 from io import BytesIO
 import requests
-from PIL import Image
-from django.core.files.uploadedfile import InMemoryUploadedFile
+import deal
+from PIL import Image, UnidentifiedImageError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from .photo import Photo
+from .donor import Donor
 
 class ConnecticutRecordQuerySet(models.QuerySet):
     pass
@@ -27,19 +29,57 @@ class ConnecticutRecord(models.Model):
 
     objects = ConnecticutRecordQuerySet.as_manager()
 
+    @deal.raises(TypeError, UnidentifiedImageError, ValueError)
+    @deal.has('network', "stdout")
+    @deal.post(lambda result: result[:10] == b'\xff\xd8\xff\xe0\x00\x10JFIF')
     def hq_jpeg(self):
         resp = requests.get(self.tiff_url())
         resp.raise_for_status()
         img = Image.open(BytesIO(resp.content))
         jpgData = BytesIO()
-        Image.save(jpgData, "jpeg", optimize=True, quality=95)
-        return jpgData
+        img.save(jpgData, "jpeg", optimize=True, quality=95)
+        return jpgData.getvalue()
 
-    def photo_record(self):
-        pass # need to figure out how to interpret locations
+    @deal.has('network', "stdout")
+    @deal.pre(lambda self, archive: self.cleaned_year != None)
+    @deal.pre(lambda self, archive: self.photo == None)
+    @deal.pre(lambda self, archive: not (self.cleaned_city == self.cleaned_county == self.cleaned_state == self.cleaned_country == ''))
+    @deal.pre(lambda self, archive: self.contributor == self.contributor.strip())
+    @deal.ensure(lambda self, archive, result: Donor.objects.filter(last_name=self.contributor).exists())
+    @deal.ensure(lambda self, archive, result: self.title in result.caption)
+    @deal.ensure(lambda self, archive, result: self.description in result.caption)
+    @deal.ensure(lambda self, archive, result: self.cleaned_city == result.city)
+    @deal.ensure(lambda self, archive, result: self.cleaned_county == result.county)
+    @deal.ensure(lambda self, archive, result: self.cleaned_state == result.state)
+    @deal.ensure(lambda self, archive, result: self.cleaned_country == result.country)
+    @deal.ensure(lambda self, archive, result: self.cleaned_year == result.year)
+    @deal.post(lambda result: result.original.name.startswith("original"))
+    @deal.ensure(lambda self, archive, result: self.publishable == result.is_published)
+    @deal.ensure(lambda self, archive, result: self.photo == result)
+    def photo_record(self, *, archive):
+        photo = Photo(
+            archive=archive,
+            donor=Donor.objects.get_or_create(last_name=self.contributor, archive=archive)[0],
+            city=self.cleaned_city,
+            county=self.cleaned_county,
+            state=self.cleaned_state,
+            country=self.cleaned_country,
+            year=self.cleaned_year,
+            caption="{}\n\n{}".format(self.title, self.description),
+            is_published=self.publishable,
+            is_featured=True,
+        )
+        photo.original = SimpleUploadedFile('original/{}.jpg'.format(photo.uuid), self.hq_jpeg(), content_type="image/jpeg")
+        photo.save()
+        self.photo = photo
+        self.save()
+        return photo
+
+    @deal.pure
     def tiff_url(self):
         return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(str(self))
 
+    @deal.pure
     def __str__(self):
         return '{}:{}'.format(self.file_id1, self.file_id2)
 
@@ -55,6 +95,7 @@ class ConnecticutRecord(models.Model):
 
 
 class CSVRecordQuerySet(models.QuerySet):
+    @deal.pure
     def bulk_clean(self):
         records = list(self.all())
         for record in records:
@@ -75,6 +116,7 @@ class CSVRecordQuerySet(models.QuerySet):
             ],
         )
 
+    @deal.pure
     def exclude_geocoded(self):
         return self.filter(photo__isnull=False, photo__location_point__isnull=True)
 
@@ -101,6 +143,7 @@ class CSVRecord(models.Model):
 
     objects = CSVRecordQuerySet.as_manager()
 
+    @deal.pure
     def location(self):
         components = []
         if self.country:
@@ -116,6 +159,7 @@ class CSVRecord(models.Model):
         return ' '.join(reversed(components))
 
 
+    @deal.pure
     def clean_whitespace(self):
         self.donorFirstName = self.donorFirstName.strip()
         self.donorLastName = self.donorLastName.strip()
