@@ -26,14 +26,12 @@ class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"
     parameter_name = "photo"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.exclude(photo__isnull=True)
@@ -44,14 +42,12 @@ class HasYearFilter(base_admin.SimpleListFilter):
     title = "has year"
     parameter_name = "cleaned_year__isnull"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(cleaned_year__isnull=False)
@@ -62,14 +58,12 @@ class IsPublishableFilter(base_admin.SimpleListFilter):
     title = "is publishable"
     parameter_name = "publishable"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(publishable=True)
@@ -80,14 +74,12 @@ class LocationEnteredFilter(base_admin.SimpleListFilter):
     title = "location entered"
     parameter_name = "location"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.exclude(cleaned_city='', cleaned_county='', cleaned_state='', cleaned_country='')
@@ -127,16 +119,14 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
         'cleaned_country',
     )
     list_filter = (HasPhotoFilter, HasYearFilter, IsPublishableFilter, LocationEnteredFilter)
-    @deal.pure
+
     def thumbnail(self, obj):
         src = 'https://ctdigitalarchive.org/islandora/object/{}/datastream/JPG'.format(str(obj))
         return mark_safe('<a href="{src}" target="_blank"><img src="{src}" width="200" /></a>'.format(src=src))
 
-    @deal.pure
     def has_add_permission(self, request):
         return False
 
-    #@deal.pure
     #def has_change_permission(self, request, obj=None):
     #    return False
 
@@ -149,7 +139,6 @@ class ArchiveAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
 
-    @deal.pure
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
         if obj:
@@ -169,15 +158,12 @@ class DonorAdmin(admin.ModelAdmin):
 
     list_display = ('__str__', 'donated', 'scanned')
 
-    @deal.pure
     def scanned(self, obj):
         return '{} photos'.format(obj.scanned_count)
 
-    @deal.pure
     def donated(self, obj):
         return '{} photos'.format(obj.donated_count)
 
-    @deal.pure
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate_scannedcount().annotate_donatedcount()
@@ -198,7 +184,6 @@ class TagInline(admin.TabularInline):
     raw_id_fields = ['tag']
     readonly_fields = ['submitter']
 
-    @deal.pure
     @deal.pre(lambda self, instance: bool(instance.tag))
     def submitter(self, instance):
         creators = ', '.join(
@@ -215,7 +200,6 @@ class TermFilter(base_admin.SimpleListFilter):
     title = "term count"
     parameter_name = "terms__count"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("0", "0"),
@@ -225,7 +209,6 @@ class TermFilter(base_admin.SimpleListFilter):
             ("4+", "4+"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value():
             queryset = queryset.annotate(Count("terms"))
@@ -239,14 +222,12 @@ class TagFilter(base_admin.SimpleListFilter):
     title = "tag status"
     parameter_name = "phototag__accepted"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("needs approval", "needs approval"),
             ("approved", "approved"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'approved':
             return queryset.filter(phototag__accepted=True)
@@ -258,14 +239,12 @@ class YearIsSetFilter(base_admin.SimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(year__isnull=False)
@@ -277,14 +256,12 @@ class IsPublishedFilter(base_admin.SimpleListFilter):
     title = "photo is published"
     parameter_name = "is published"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Yes"),
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(is_published=True)
@@ -295,7 +272,6 @@ class HasLocationFilter(base_admin.SimpleListFilter):
     title = "photo has city or county"
     parameter_name = "is located"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("City", "City"),
@@ -305,7 +281,6 @@ class HasLocationFilter(base_admin.SimpleListFilter):
             ("No location", "No location"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'County':
             return queryset.exclude(county="")
@@ -323,7 +298,6 @@ class HasGeoLocationFilter(base_admin.SimpleListFilter):
     title = "photo is geolocated"
     parameter_name = "is geolocated"
 
-    @deal.pure
     def lookups(self, request, model_admin):
         return (
             ("Yes", "Point and Polygon"),
@@ -333,7 +307,6 @@ class HasGeoLocationFilter(base_admin.SimpleListFilter):
             ("No", "No"),
         )
 
-    @deal.pure
     def queryset(self, request, queryset):
         if self.value() == 'Yes':
             return queryset.filter(location_point__isnull=False) & queryset.filter(location_bounds__isnull=False)
@@ -347,8 +320,6 @@ class HasGeoLocationFilter(base_admin.SimpleListFilter):
             return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=True)
 
 
-@deal.has('io')
-@deal.safe
 def publish_photos(modeladmin, request, queryset):
     try:
         queryset.update(is_published=True)
@@ -357,8 +328,6 @@ def publish_photos(modeladmin, request, queryset):
 
 publish_photos.short_description = 'Publish photos'
 
-@deal.has('io')
-@deal.safe
 def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
@@ -379,7 +348,7 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
-    @deal.pure
+
     def get_form(self, request, obj=None, **kwargs):
         defaults = {}
         if obj is None:
@@ -387,7 +356,6 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
         defaults.update(kwargs)
         return super().get_form(request, obj, **defaults)
 
-    @deal.pure
     def get_fieldsets(self, request, obj=None):
         if obj is None:
             fieldsets = (
@@ -431,15 +399,13 @@ class CSVRecordAdmin(admin.ModelAdmin):
         'comments',
         'added_to_archive',
     )
-    @deal.pure
+
     def has_add_permission(self, request):
         return False
 
-    @deal.pure
     def has_change_permission(self, request, obj=None):
         return False
 
-    @deal.pure
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
@@ -462,18 +428,15 @@ class PhotoAdmin(admin.OSMGeoAdmin):
         'year',
     ]
 
-    @deal.pure
     def thumb_image(self, obj):
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
 
-    @deal.pure
     def h700_image(self, obj):
         if obj.h700:
             return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
         else:
             return "-"
 
-    @deal.pure
     def save_form(self, request, form, change):
         photo = super().save_form(request, form, change)
         if len(request.FILES):
@@ -487,7 +450,6 @@ class UserTagInline(admin.TabularInline):
     fields = ['thumb_image', 'tag', 'accepted']
     readonly_fields = ['thumb_image', 'tag', 'accepted']
 
-    @deal.has()
     @deal.raises(NoReverseMatch)
     def thumb_image(self, instance):
         return mark_safe(
@@ -499,11 +461,9 @@ class UserTagInline(admin.TabularInline):
             )
         )
 
-    @deal.pure
     def tag(self, instance):
         return instance.phototag.tag.tag
 
-    @deal.pure
     def accepted(self, instance):
         return 'yes' if instance.phototag.accepted else 'no'
 
@@ -535,19 +495,15 @@ class LogEntryAdmin(base_admin.ModelAdmin):
         'action_flag',
     ]
 
-    @deal.pure
     def has_add_permission(self, *args, **kwargs):
         return False
 
-    @deal.pure
     def has_change_permission(self, *args, **kwargs):
         return False
 
-    @deal.pure
     def has_delete_permission(self, *args, **kwargs):
         return False
 
-    @deal.pure
     def has_view_permission(self, request, *args, **kwargs):
         return request.user.is_superuser
 

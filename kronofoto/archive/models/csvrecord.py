@@ -30,7 +30,6 @@ class ConnecticutRecord(models.Model):
     objects = ConnecticutRecordQuerySet.as_manager()
 
     @deal.raises(TypeError, UnidentifiedImageError, ValueError)
-    @deal.has('network', "stdout")
     @deal.post(lambda result: result[:10] == b'\xff\xd8\xff\xe0\x00\x10JFIF')
     def hq_jpeg(self):
         resp = requests.get(self.tiff_url())
@@ -40,7 +39,6 @@ class ConnecticutRecord(models.Model):
         img.save(jpgData, "jpeg", optimize=True, quality=95)
         return jpgData.getvalue()
 
-    @deal.has('network', "stdout")
     @deal.pre(lambda self, archive: self.cleaned_year != None)
     @deal.pre(lambda self, archive: self.photo == None)
     @deal.pre(lambda self, archive: not (self.cleaned_city == self.cleaned_county == self.cleaned_state == self.cleaned_country == ''))
@@ -75,11 +73,9 @@ class ConnecticutRecord(models.Model):
         self.save()
         return photo
 
-    @deal.pure
     def tiff_url(self):
         return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(str(self))
 
-    @deal.pure
     def __str__(self):
         return '{}:{}'.format(self.file_id1, self.file_id2)
 
@@ -95,7 +91,6 @@ class ConnecticutRecord(models.Model):
 
 
 class CSVRecordQuerySet(models.QuerySet):
-    @deal.pure
     def bulk_clean(self):
         records = list(self.all())
         for record in records:
@@ -116,7 +111,6 @@ class CSVRecordQuerySet(models.QuerySet):
             ],
         )
 
-    @deal.pure
     def exclude_geocoded(self):
         return self.filter(photo__isnull=False, photo__location_point__isnull=True)
 
@@ -143,7 +137,6 @@ class CSVRecord(models.Model):
 
     objects = CSVRecordQuerySet.as_manager()
 
-    @deal.pure
     def location(self):
         components = []
         if self.country:
@@ -159,7 +152,6 @@ class CSVRecord(models.Model):
         return ' '.join(reversed(components))
 
 
-    @deal.pure
     def clean_whitespace(self):
         self.donorFirstName = self.donorFirstName.strip()
         self.donorLastName = self.donorLastName.strip()
