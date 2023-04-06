@@ -6,7 +6,7 @@ from django.forms import formset_factory
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .basetemplate import BaseTemplateMixin
+from .basetemplate import BaseTemplateMixin, BasePermissiveCORSMixin
 from ..models.photo import Photo
 from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm
@@ -77,7 +77,7 @@ class NewList(FormView):
         return super().form_valid(form)
 
 @deal.inv(lambda self: not hasattr(self, 'request') or self.request.user)
-class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, FormView):
+class ListMembers(BasePermissiveCORSMixin, MultipleObjectTemplateResponseMixin, MultipleObjectMixin, FormView):
     template_name = 'archive/popup_collection_list.html'
     form_class = formset_factory(ListMemberForm, extra=0)
 
@@ -120,6 +120,7 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
                 pass
         return super().form_valid(form)
 
+    @deal.post(lambda result: 'new_list_form' in result and isinstance(result['new_list_form'], ListForm))
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['new_list_form'] = ListForm()

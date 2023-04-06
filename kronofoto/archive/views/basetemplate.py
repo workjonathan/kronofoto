@@ -52,8 +52,14 @@ THEME = [
     }
 ]
 
+class BasePermissiveCORSMixin:
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
+        return response
 
-class BaseTemplateMixin:
+class BaseTemplateMixin(BasePermissiveCORSMixin):
     def set_request(self, request):
         # By default, the request should not be globally available.
         set_request(None)
@@ -123,11 +129,6 @@ class BaseTemplateMixin:
         context['hxheaders'] = json.dumps(hxheaders)
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
-        return response
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):
     def get_queryset(self):

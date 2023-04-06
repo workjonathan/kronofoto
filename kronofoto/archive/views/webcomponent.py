@@ -1,10 +1,11 @@
 from django.views.generic import FormView
 from django.contrib.sites.models import Site
 from ..forms import WebComponentForm, SearchForm
+from .basetemplate import BasePermissiveCORSMixin
 from ..reverse import reverse
 from ..search.parser import NoExpression
 
-class WebComponentPopupView(FormView):
+class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
     template_name = 'archive/web-component.html'
     form_class = WebComponentForm
     def get_initial(self):

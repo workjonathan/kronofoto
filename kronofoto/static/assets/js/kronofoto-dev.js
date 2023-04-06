@@ -145,8 +145,8 @@ class FortepanViewer extends HTMLElement {
                 this.htmx = HTMX(this.shadowRoot)
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
                 //this.htmx.logAll()
-                this.htmx.onLoad(toggleMetadata(this.shadowRoot))
-                toggleMetadata(this.shadowRoot)(this.shadowRoot.querySelector("#app"))
+                this.htmx.onLoad(installButtons(this.shadowRoot))
+                installButtons(this.shadowRoot)(this.shadowRoot.querySelector("#app"))
                 //this.htmx.onLoad(markerDnD(this.shadowRoot))
                 //window.setTimeout(() => {
                 //    markerDnD(this.shadowRoot)(this.shadowRoot.querySelector('#active-year-marker'))
