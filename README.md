@@ -22,7 +22,15 @@ Run the migrations:
 Create the cache table:
 
     ./manage.py createcachetable
+    
+Create a superuser account:
+
+    ./manage.py createsuperuser
 
 The test server can then be started up:
 
     ./manage.py runserver 0.0.0.0:8000
+
+You will also need to log into the admin and [change the site domain](http://127.0.0.1:8000/admin/sites/site/) from example.com to 127.0.0.1:8000.
+
+    http://127.0.0.1:8000/admin/sites/site/
