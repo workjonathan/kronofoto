@@ -5,10 +5,10 @@ from .archive import Archive
 
 class DonorQuerySet(models.QuerySet):
     def annotate_scannedcount(self):
-        return self.annotate(scanned_count=Count('photos_scanned'))
+        return self.annotate(scanned_count=Count('photos_scanned', distinct=True))
 
     def annotate_donatedcount(self):
-        return self.annotate(donated_count=Count('photo'))
+        return self.annotate(donated_count=Count('photo', distinct=True))
 
     def filter_donated(self, at_least=1):
         return self.annotate_donatedcount().filter(donated_count__gte=at_least)
