@@ -1,0 +1,30 @@
+{
+  "name": "kronofoto",
+  "version": "1.0.0",
+  "description": "# Install the dependencies:",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "gulp sass",
+    "watch": "gulp sass:watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workjonathan/kronofoto.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/workjonathan/kronofoto/issues"
+  },
+  "homepage": "https://github.com/workjonathan/kronofoto#readme",
+  "devDependencies": {
+    "foundation-sites": "^6.7.5",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^8.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-sass": "^5.1.0",
+    "gulp-sourcemaps": "^3.0.0",
+    "sass": "^1.62.1"
+  }
+}

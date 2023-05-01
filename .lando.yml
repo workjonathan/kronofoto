@@ -1,0 +1,61 @@
+name: fortepan
+proxy:
+  appserver:
+    - fortepan.lndo.site
+services:
+  appserver:
+    type: compose
+    services:
+      build: .
+      command: tail -f /dev/null
+    command: su -c 'python /app/kronofoto/manage.py runserver 0.0.0.0:80' www-data
+    build:
+      - cd /app && pip install --upgrade pip && pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org -r requirements.txt
+#      - export CPLUS_INCLUDE_PATH=/usr/include/gdal
+#      - export C_INCLUDE_PATH=/usr/include/gdal
+#      - pip install GDAL
+#      - apt-get -y install g++ sqlite3 libsqlite3-dev libtiff5-dev curl pkg-config
+#      - wget download.osgeo.org/gdal/3.0.4/gdal304.zip
+#      - unzip -o gdal304.zip
+#      - cd gdal-3.0.4 && ./configure && make clean && sudo make && sudo make install
+#      - export LD_LIBRARY_PATH=/usr/local/lib
+      - gdalinfo --version
+    scanner: true
+    overrides:
+      environment:
+        PYTHONPATH: "/app"
+  db:
+    type: postgres:10
+    portforward: true
+    creds:
+      user: postgres
+      password:
+      database: fortepan
+  node:
+    type: node
+    globals:
+      gulp-cli: latest
+tooling:
+  django-admin:
+    service: appserver
+    cmd: django-admin
+  python:
+    service: appserver
+    cmd: python
+  pip:
+    service: appserver
+    cmd: pip
+  manage:
+    service: appserver
+    dir: /app/kronofoto
+    cmd: python manage.py
+  runserver:
+    service: appserver
+    dir: /app/kronofoto
+    cmd: python manage.py runserver 0.0.0.0:80
+  psql:
+    service: db
+    cmd: psql -U postgres
+  npm:
+    service: node
+    dir: /app
