@@ -1,0 +1,131 @@
+.photo-menu-popup, #metadata {
+
+  //height: calc(100vh - 230px);
+  padding: 40px 0px 0px;
+
+  @include breakpoint(large up) { // TODO: original media query was (max-width: 1140px), what do we do with this?
+    background-color: rgb(255, 255, 255, .95); // TODO: Add to color palette
+    position: absolute;
+    //height: calc(100vh - 330px);
+    width: 300px;
+    z-index: 10;
+    top: 60px;
+    left: calc(50% - 150px);
+    overflow: hidden;
+  }
+
+  &__wrapper {
+    overflow: auto;
+    padding: 0px 20px 40px 20px;
+    height: 100%;
+  }
+
+  &__title {
+    font-weight: bold; // TODO: Add to font-weight palette
+    border-bottom: 2px solid rgba(0, 0, 0, .13); // TODO: Add to color palette
+    margin-bottom: calc($global-margin * 2);
+    padding: calc($global-margin / 2) 0px;
+    font-size: 22px; // TODO: Add to font-size palette
+  }
+
+  &__close-btn {
+    &:after {
+      content: '\f00d';
+      color: inherit;
+      font-weight: 900;
+      font-family: "Font Awesome 5 Free";
+    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    color: var(--fp-secondary-ticker-color);
+    &:hover {
+      color: $white;
+      background-color: var(--fp-secondary-ticker-color);
+    }
+
+  }
+
+  &#metadata {
+    input {
+      width: 260px;
+      padding: 6px;
+      margin: 2px 0;
+      border: none;
+    }
+    ul {
+      list-style-type: none;
+      .field-name {
+        color: var(--fp-main-blue);
+        text-transform: uppercase;
+        padding-right: 4px;
+        font-weight: bold;
+      }
+    }
+    ul li {
+      padding: 5px 0;
+      font-size: 12px;
+    }
+    .metadata-1a ul > li:first-child {
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .metadata-2a {
+      align-self: end;
+    }
+
+    .metadata-3a {
+      font-size: 10px;
+    }
+  }
+
+  // Forms
+  form {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: $global-margin;
+
+    input[type=submit], button, a.button {
+      margin-left: auto;
+    }
+
+    &__title {
+      font-size: 20px;
+      margin-bottom: calc($global-margin / 2);
+    }
+
+  }
+
+  // Labels
+  label {
+    font-weight: 100;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  // Inputs
+  input[type=text], textarea {
+    background-color: transparent;
+    box-shadow: 0px 0px 2px 1px rgba(0, 0, 0, 0.25); // TODO: Add to field-styling palette
+    border-radius: 0px;
+    margin-bottom: 6px; // TODO: Add to spacing palette
+  }
+}
+
+#add-tag-button-in-metadata-popup {
+  background-color: var(--fp-main-blue);
+  color: white;
+  font: bold;
+  border: none;
+  width: 60px;
+  padding:  4px;
+  margin: 4px 0 0 200px;
+  align-content: right;
+}

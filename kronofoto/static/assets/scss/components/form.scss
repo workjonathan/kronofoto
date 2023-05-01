@@ -1,0 +1,6 @@
+.form {
+  &__radios {
+    font-size: 18px;
+    @extend .radios;
+  }
+}

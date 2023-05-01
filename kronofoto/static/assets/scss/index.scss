@@ -1,0 +1,187 @@
+
+///////////// Foundation
+
+// --- Dependencies ---
+//@import 'vendor/normalize';
+//@import '../_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+//@import '../_vendor/sassy-lists/stylesheets/helpers/true';
+//@import '../_vendor/sassy-lists/stylesheets/functions/contain';
+//@import '../_vendor/sassy-lists/stylesheets/functions/purge';
+//@import '../_vendor/sassy-lists/stylesheets/functions/remove';
+//@import '../_vendor/sassy-lists/stylesheets/functions/replace';
+//@import '../_vendor/sassy-lists/stylesheets/functions/to-list';
+//
+
+// --- Settings ---
+// import your own `settings` here or
+// import and modify the default settings through
+// @import 'settings/settings';
+
+// --- Components ---
+
+// Utilities
+@import 'util/util';
+
+// Global styles
+@import 'global';
+@import 'forms/forms';
+@import 'typography/typography';
+
+// Grids
+@import 'grid/grid';
+@import 'xy-grid/xy-grid';
+
+// Helpers
+@import 'components/float';
+@import 'components/flex';
+@import 'components/visibility';
+@import 'prototype/prototype';
+
+@mixin foundation-everything(
+  $flex: true,
+  $prototype: false,
+  $xy-grid: $xy-grid
+) {
+  @if $flex {
+    $global-flexbox: true !global;
+  }
+
+  @if $xy-grid {
+    $xy-grid: true !global;
+  }
+
+  // Global styles
+  @include foundation-global-styles;
+  @include foundation-forms;
+  @include foundation-typography;
+
+  // Grids
+  @if not $flex {
+    @include foundation-grid;
+  }
+  @else {
+    @if $xy-grid {
+      @include foundation-xy-grid-classes;
+    }
+    @else {
+      @include foundation-flex-grid;
+    }
+  }
+
+  // Helpers
+  @include foundation-float-classes;
+  @if $flex { @include foundation-flex-classes; }
+  @include foundation-visibility-classes;
+  @if $prototype { @include foundation-prototype-classes; }
+}
+
+// End Foundation
+
+@import "kronofoto.scss";
+
+// Kronofoto Components
+@import 'components/form';
+@import 'components/radios';
+@import 'components/photo-menu-popup';
+@import 'components/button';
+
+*, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--fp-main-font);
+}
+
+
+img {
+  /*max-height: calc(100vh - 278px);*/
+}
+
+
+body {
+  /*display: grid;
+  height: 100vh;
+  grid-template: "header" 8vh
+                 "main" 92vh
+                 / 1fr;*/
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--fp-main-blue);
+  text-decoration: none;
+}
+
+
+
+
+
+
+/******************
+ ** HEADER / NAV **
+ ******************/
+
+header {
+  /*max-height: 200px;
+  grid-row: 1 / span 1;
+  padding: 1.6vh;*/
+    height: 60px;
+    padding: 10px;
+}
+
+nav {
+  display: flex;
+}
+
+nav ul {
+  display: flex;
+  display: -webkit-flex;
+  align-self: center;
+  flex-grow: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav ul li {
+  list-style: none;
+  text-transform: uppercase;
+}
+
+header nav div img {
+  width: 30px;
+}
+
+input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+  -moz-appearance:none; /* Firefox */
+  -webkit-appearance:none; /* Safari and Chrome */
+  appearance:none;
+  height: 34px;
+  padding: 4px 8px;
+  background-color: var(--fp-light-grey);
+  color: #333;
+  border: none;
+  border-radius: 2px;
+  box-shadow: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+select {
+  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
+  /* !important used for overriding all other customisations */
+}
+
+main {
+
+}
