@@ -2,6 +2,10 @@
 {% load widgets %}
 {% load krono_urls %}
 
+<a href="#" class="photo-menu-popup__close-btn"></a>
+<div class="photo-menu-popup__wrapper">
+        <div class="photo-menu-popup__title">Info</div>
+
         <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
           <ul>
             <li>{{ photo.year }}{% if photo.circa %}c{% endif %}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
@@ -11,20 +15,18 @@
         </div>
         <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
           <ul>
-            <li><span class="field-name">Category Terms:</span><br>
-            {% if photo.terms.exists %}
-                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-		<a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            </li>
             <li><span class="field-name">Tags:</span><br>
             {% if tags %}
-                {% for tag in tags %}{% if not forloop.first %},{% endif %} 
+                {% for tag in tags %}{% if not forloop.first %},{% endif %}
 		<a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a>{% endfor %}
-            {% else %}
-            None
+            {% endif %}
+            {% if photo.terms.exists %}
+            {% if tags %}, {% endif %}
+            {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %}
+                <a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a>{% endfor %}
+            {% endif %}
+            {% if not tags and not photo.terms.exists %}
+                None
             {% endif %}
             </li>
             <li>add a new tag:<br>
@@ -55,3 +57,4 @@
             <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
           </ul>
         </div>
+</div>
