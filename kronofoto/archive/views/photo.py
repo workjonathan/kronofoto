@@ -1,6 +1,5 @@
 from django.views.generic import DetailView
 from django.http import Http404
-from django.core.exceptions import SuspiciousOperation
 from ..reverse import reverse
 from django.shortcuts import redirect
 from django.core.cache import cache
@@ -15,8 +14,10 @@ from ..reverse import get_request, set_request, as_absolute
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
+from typing import final
 
 NO_URLS = dict(url='#', json_url='#')
+
 
 class PhotoView(BasePhotoTemplateMixin, DetailView):
     items = 10
@@ -31,22 +32,28 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         return self._queryset
 
     def get_object(self, queryset=None):
-        if self.form.is_valid():
-            if not queryset:
-                queryset = self.queryset
-            try:
-                return queryset.get(id=self.kwargs['photo'])
-            except Photo.DoesNotExist:
-                raise Http404("No photo with this accession number is in this collection.")
+        if not queryset:
+            queryset = self.queryset
+        try:
+            return queryset.get(id=self.kwargs['photo'])
+        except queryset.model.DoesNotExist:
+            raise Http404("No photo with this accession number is in this collection.")
+
+    def get_hx_context(self):
+        if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
+            return {'base_template': 'archive/photo_partial.html'}
         else:
-            print(self.request.GET)
-            raise SuspiciousOperation('invalid search request')
+            return super().get_hx_context()
+
+    def get_user_context(self, *, user, object):
+        if user.is_staff and (user.has_perm('archive.change_photo') or user.has_perm('archive.view_photo')):
+            return {'edit_url': object.get_edit_url()}
+        else:
+            return {}
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
         self.params = self.request.GET.copy()
-        if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
-            context['base_template'] = 'archive/photo_partial.html'
         position = int(self.request.headers.get('us.fortepan.position', 3))
         queryset = self.queryset
         year_range = queryset.year_range()
@@ -86,8 +93,7 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         context["tags"] = photo_rec.get_accepted_tags(self.request.user)
         #context["years"] = index
         context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(**self.url_kwargs, **dict(start=start, end=end))), self.request.GET.urlencode())
-        if self.request.user.is_staff and self.request.user.has_perm('archive.change_photo'):
-            context['edit_url'] = photo_rec.get_edit_url()
+        context.update(self.get_user_context(user=self.request.user, object=photo_rec))
         return context
 
     def render(self, context, **kwargs):
