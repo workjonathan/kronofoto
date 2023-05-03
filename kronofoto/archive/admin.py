@@ -1,4 +1,3 @@
-import deal
 from django.contrib.gis import admin
 from django.contrib import admin as base_admin
 from django.contrib.auth.models import User
@@ -7,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
-from .models.archive import Archive
+from .models.archive import Archive, ArchiveUserPermission
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count
@@ -149,7 +148,11 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(NewCutoff)
 class NewCutoffAdmin(admin.ModelAdmin):
-    pass
+    def has_add_permission(self, request):
+        if NewCutoff.objects.all().exists():
+            return False
+        else:
+            return super().has_add_permission(request)
 
 
 @admin.register(Donor)
@@ -184,7 +187,6 @@ class TagInline(admin.TabularInline):
     raw_id_fields = ['tag']
     readonly_fields = ['submitter']
 
-    @deal.pre(lambda self, instance: bool(instance.tag))
     def submitter(self, instance):
         creators = ', '.join(
             '<a href="{url}">{username}</a>'.format(
@@ -218,55 +220,46 @@ class TermFilter(base_admin.SimpleListFilter):
             return queryset.filter(terms__count__gte=4)
 
 
-class TagFilter(base_admin.SimpleListFilter):
+class StandardSimpleListFilter(base_admin.SimpleListFilter):
+    def lookups(self, request, model_admin):
+        return [(label, label) for (label, value) in self.filters]
+
+    def queryset(self, request, queryset):
+        for label, value in self.filters:
+            if self.value() == label:
+                return queryset.filter(**{self.field: value}).distinct()
+
+
+class TagFilter(StandardSimpleListFilter):
     title = "tag status"
     parameter_name = "phototag__accepted"
-
-    def lookups(self, request, model_admin):
-        return (
-            ("needs approval", "needs approval"),
-            ("approved", "approved"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'approved':
-            return queryset.filter(phototag__accepted=True)
-        elif self.value() == "needs approval":
-            return queryset.filter(phototag__accepted=False)
+    field = 'phototag__accepted'
+    filters = (
+        ("needs approval", False),
+        ("approved", True),
+    )
 
 
-class YearIsSetFilter(base_admin.SimpleListFilter):
+class YearIsSetFilter(StandardSimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
+    field = 'year__isnull'
 
-    def lookups(self, request, model_admin):
-        return (
-            ("Yes", "Yes"),
-            ("No", "No"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'Yes':
-            return queryset.filter(year__isnull=False)
-        elif self.value() == 'No':
-            return queryset.filter(year__isnull=True)
+    filters = (
+        ("Yes", False),
+        ("No", True),
+    )
 
 
-class IsPublishedFilter(base_admin.SimpleListFilter):
+class IsPublishedFilter(StandardSimpleListFilter):
     title = "photo is published"
     parameter_name = "is published"
+    field = 'is_published'
 
-    def lookups(self, request, model_admin):
-        return (
-            ("Yes", "Yes"),
-            ("No", "No"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'Yes':
-            return queryset.filter(is_published=True)
-        elif self.value() == 'No':
-            return queryset.filter(is_published=False)
+    filters = (
+        ("Yes", True),
+        ("No", False),
+    )
 
 class HasLocationFilter(base_admin.SimpleListFilter):
     title = "photo has city or county"
@@ -320,6 +313,7 @@ class HasGeoLocationFilter(base_admin.SimpleListFilter):
             return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=True)
 
 
+@admin.action(permissions=["change"])
 def publish_photos(modeladmin, request, queryset):
     try:
         queryset.update(is_published=True)
@@ -328,6 +322,7 @@ def publish_photos(modeladmin, request, queryset):
 
 publish_photos.short_description = 'Publish photos'
 
+@admin.action(permissions=["change"])
 def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
@@ -368,7 +363,6 @@ class PhotoSphereAdmin(admin.OSMGeoAdmin):
         else:
             fieldsets = super().get_fieldsets(request, obj)
         return fieldsets
-
 
 
 @admin.register(CSVRecord)
@@ -450,7 +444,6 @@ class UserTagInline(admin.TabularInline):
     fields = ['thumb_image', 'tag', 'accepted']
     readonly_fields = ['thumb_image', 'tag', 'accepted']
 
-    @deal.raises(NoReverseMatch)
     def thumb_image(self, instance):
         return mark_safe(
             '<a href="{edit_url}"><img src="{thumb}" width="{width}" height="{height}" /></a>'.format(
@@ -467,8 +460,10 @@ class UserTagInline(admin.TabularInline):
     def accepted(self, instance):
         return 'yes' if instance.phototag.accepted else 'no'
 
+
 class KronofotoUserAdmin(UserAdmin):
     inlines = (UserTagInline,)
+
 
 admin.site.unregister(User)
 admin.site.register(User, KronofotoUserAdmin)

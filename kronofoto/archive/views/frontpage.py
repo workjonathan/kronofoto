@@ -1,14 +1,14 @@
 from django.http import HttpResponse
 from django.views.generic.base import RedirectView
 from django.views.generic.list import MultipleObjectMixin
-from .basetemplate import BaseTemplateMixin
+from .basetemplate import BasePhotoTemplateMixin
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 from ..forms import SearchForm
 from ..search.parser import NoExpression
 
 
-class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
+class PhotoRedirectView(BasePhotoTemplateMixin, MultipleObjectMixin, RedirectView):
     permanent = False
     pattern_name = 'photoview'
     model = Photo
@@ -16,14 +16,6 @@ class PhotoRedirectView(BaseTemplateMixin, MultipleObjectMixin, RedirectView):
     def get_object(self):
         qs = self.get_queryset().order_by(self.get_ordering())
         return qs[0]
-
-    def get_queryset(self):
-        qs = self.model.objects.filter_photos(
-            CollectionQuery(self.final_expr, self.request.user)
-        )
-        if 'short_name' in self.kwargs:
-            qs = qs.filter(archive__slug=self.kwargs['short_name'])
-        return qs
 
     def options(self, request, *args, **kwargs):
         if 'embedded' in request.headers.get('Access-Control-Request-Headers', '').split(','):

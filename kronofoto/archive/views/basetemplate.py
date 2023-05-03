@@ -1,5 +1,7 @@
 from django.core.cache import cache
+from django.http import QueryDict
 from django.conf import settings
+from django.core.exceptions import SuspiciousOperation
 from django.templatetags.static import static
 import random
 import json
@@ -7,6 +9,8 @@ from ..reverse import set_request
 from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
 from ..models import Photo
+from functools import reduce
+import operator
 
 
 THEME = [
@@ -58,16 +62,18 @@ class BaseTemplateMixin:
         # By default, the request should not be globally available.
         set_request(None)
 
-    def setup(self, request, *args, **kwargs):
-        super().setup(request, *args, **kwargs)
-        self.params = self.request.GET.copy()
-        get_params = self.params.copy()
-        for key in ('id:lt', 'id:gt', 'page', 'year:gte', 'year:lte'):
+    def filter_params(self, params, removals=('id:lt', 'id:gt', 'page', 'year:gte', 'year:lte')):
+        get_params = params.copy()
+        for key in removals:
             try:
                 get_params.pop(key)
             except KeyError:
                 pass
-        self.get_params = get_params
+        return get_params
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.params = self.request.GET.copy()
         self.form = SearchForm(self.request.GET)
         self.url_kwargs = {'short_name': self.kwargs['short_name']} if 'short_name' in self.kwargs else {}
         self.expr = None
@@ -77,14 +83,44 @@ class BaseTemplateMixin:
             except NoExpression:
                 pass
         self.constraint = self.request.headers.get('Constraint', None)
-        self.constraint_expr = None
-        if self.constraint:
-            self.constraint_expr = Parser.tokenize(self.constraint).parse().shakeout()
-        self.final_expr = None
-        if self.expr and self.constraint_expr:
-            self.final_expr = self.expr & self.constraint_expr
+        constraint_expr = self.get_constraint_expr(self.constraint)
+        self.final_expr = self.get_final_expr(self.expr, constraint_expr)
+        self.get_params = self.filter_params(self.params) if not self.final_expr or self.final_expr.is_collection() else QueryDict()
+
+    def get_constraint_expr(self, constraint):
+        if constraint:
+            try:
+                constraint_expr = Parser.tokenize(constraint).parse().shakeout()
+            except:
+                raise SuspiciousOperation("invalid constraint")
+        return None
+
+    def get_final_expr(self, *exprs):
+        exprs = [expr for expr in exprs if expr]
+        if exprs:
+            return reduce(operator.__and__, exprs)
+        return None
+
+    def get_collection_name(self, expr):
+        context = {}
+        if expr:
+            if expr.is_collection():
+                context['collection_name'] = str(expr.description())
+            else:
+                context['collection_name'] = "Search Results"
         else:
-            self.final_expr = self.expr or self.constraint_expr
+            context['collection_name'] = 'All Photos'
+        return context
+
+    def get_hx_context(self):
+        context = {}
+        if self.request.headers.get('Hx-Request', 'false') == 'true':
+            context['base_template'] = 'archive/base_partial.html'
+        elif self.request.headers.get('Embedded', 'false') != 'false':
+            context['base_template'] = 'archive/embedded-base.html'
+        else:
+            context['base_template'] = 'archive/base.html'
+        return context
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -93,21 +129,10 @@ class BaseTemplateMixin:
         context['search-form'] = self.form
         context['constraint'] = json.dumps({'Constraint': self.constraint})
         context['url_kwargs'] = self.url_kwargs
-        if self.expr:
-            if self.expr.is_collection():
-                context['collection_name'] = str(self.expr.description())
-            else:
-                context['collection_name'] = "Search Results"
-        else:
-            context['collection_name'] = 'All Photos'
+        context.update(self.get_collection_name(self.expr))
+        context.update(self.get_hx_context())
 
         context['push-url'] = True
-        if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/base_partial.html'
-        elif self.request.headers.get('Embedded', 'false') != 'false':
-            context['base_template'] = 'archive/embedded-base.html'
-        else:
-            context['base_template'] = 'archive/base.html'
 
         if not photo_count:
             photo_count = Photo.objects.filter(is_published=True).count()
@@ -131,15 +156,18 @@ class BaseTemplateMixin:
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):
     def get_queryset(self):
-        expr = self.final_expr
-        qs = self.model.objects.filter(is_published=True, year__isnull=False)
-        if 'short_name' in self.kwargs:
-            qs = qs.filter(archive__slug=self.kwargs['short_name'])
-        if expr is None:
-            return qs.order_by('year', 'id')
+        if self.form.is_valid():
+            expr = self.final_expr
+            qs = self.model.objects.filter(is_published=True, year__isnull=False)
+            if 'short_name' in self.kwargs:
+                qs = qs.filter(archive__slug=self.kwargs['short_name'])
+            if expr is None:
+                return qs.order_by('year', 'id')
 
-        if expr.is_collection():
-            qs = expr.as_collection(qs, self.request.user)
+            if expr.is_collection():
+                qs = expr.as_collection(qs, self.request.user)
+            else:
+                qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
+            return qs
         else:
-            qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
-        return qs
+            raise SuspiciousOperation('invalid search request')
