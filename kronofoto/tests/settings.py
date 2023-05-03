@@ -3,11 +3,11 @@ import os
 SECRET_KEY = 'fake-key'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-GOOGLE_RECAPTCHA_SECRET_KEY = '6LfrDaYZAAAAAIh-2I4jNHweoV3hsN2l6WLsVKB3'
-GOOGLE_RECAPTCHA_SITE_KEY = '6LfrDaYZAAAAACy95Wcr9vVMp2MmlFogL8ouwl52'
+GOOGLE_RECAPTCHA_SECRET_KEY = 'fake-recaptcha-secret'
+GOOGLE_RECAPTCHA_SITE_KEY = 'fake-recaptcha-key'
 GOOGLE_TAG_ID = 'GTM-P4BQ99S'
 
-GOOGLE_MAPS_KEY = 'AIzaSyCpvd2OrbPbk0_9iE4UEpq6k_Qi1_KaLwQ'
+GOOGLE_MAPS_KEY = 'fake-gmaps-key'
 GRID_DISPLAY_COUNT = 3
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media2', 'media')
