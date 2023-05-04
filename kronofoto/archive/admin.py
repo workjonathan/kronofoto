@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from django.contrib import admin as base_admin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
@@ -9,13 +9,15 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.archive import Archive, ArchiveUserPermission
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db import IntegrityError
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
 from django.contrib import messages
 from django import forms
 from django.forms import ModelForm, Textarea
+from functools import reduce
+import operator
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -460,9 +462,31 @@ class UserTagInline(admin.TabularInline):
     def accepted(self, instance):
         return 'yes' if instance.phototag.accepted else 'no'
 
+class UserArchivePermissionsInline(base_admin.TabularInline):
+    model = Archive.users.through
+    extra = 1
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'permission':
+            models = [
+                'donor',
+                'photo',
+                'photosphere',
+                'photospherepair',
+                'phototag',
+            ]
+            clauses = (
+                Q(content_type__model=model)
+                for model in models
+            )
+            combined = reduce(operator.__or__, clauses)
+            supported_permissions = Q(content_type__app_label='archive') & combined
+            kwargs['queryset'] = Permission.objects.filter(supported_permissions)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
 
 class KronofotoUserAdmin(UserAdmin):
-    inlines = (UserTagInline,)
+    inlines = (UserArchivePermissionsInline, UserTagInline,)
 
 
 admin.site.unregister(User)
@@ -501,5 +525,3 @@ class LogEntryAdmin(base_admin.ModelAdmin):
 
     def has_view_permission(self, request, *args, **kwargs):
         return request.user.is_superuser
-
-

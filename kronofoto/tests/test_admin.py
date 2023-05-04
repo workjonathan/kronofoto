@@ -187,6 +187,13 @@ def test_usertaginline_accepted():
     assert "yes" == ma.accepted(PhotoTag.creator.through(phototag=PhotoTag(accepted=True)))
     assert "no" == ma.accepted(PhotoTag.creator.through(phototag=PhotoTag(accepted=False)))
 
+def test_userarchivepermissionsinline_accepted():
+    # This test has no assertions, but would not execute successfully if the query being executed referenced model
+    # fields which do not exist.
+    ma = UserArchivePermissionsInline(User, admin_site=AdminSite())
+    request = RequestFactory().post('/')
+    formfield = ma.formfield_for_manytomany(Archive.users.through.permission.field, request)
+
 def test_taginline_submitter():
     ma = TagInline(Photo, admin_site=AdminSite())
     mock = Mock(spec=PhotoTag())
