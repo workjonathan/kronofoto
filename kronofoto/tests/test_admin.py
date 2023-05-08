@@ -20,6 +20,7 @@ def test_queryset():
     model._default_manager.get_queryset.return_value = qs
     admin = DonorAdmin(model=model, admin_site=AdminSite())
     request = RequestFactory().get('/')
+    request.user = Mock()
     qs = admin.get_queryset(request)
     qs.annotate_scannedcount.assert_called_once_with()
     qs.annotate_donatedcount.assert_called_once_with()
