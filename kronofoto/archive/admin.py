@@ -3,6 +3,7 @@ from django.contrib import admin as base_admin
 from django.contrib.auth.models import User, Permission
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
@@ -169,12 +170,69 @@ class DonorAdmin(admin.ModelAdmin):
     def donated(self, obj):
         return '{} photos'.format(obj.donated_count)
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate_scannedcount().annotate_donatedcount()
-
     scanned.admin_order_field = 'scanned_count'
     donated.admin_order_field = 'donated_count'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not super().has_view_permission(request) and not super().has_change_permission(request):
+            opts = self.opts
+            codename_view = get_permission_codename('view', opts)
+            codename_change = get_permission_codename('change', opts)
+            qs = qs.filter(Q(
+                archive__archiveuserpermission__user=request.user,
+                archive__archiveuserpermission__permission__content_type__model=opts.model_name,
+            ) & Q(archive__archiveuserpermission__permission__codename=codename_view) | Q(archive__archiveuserpermission__permission__codename=codename_change))
+        return qs.annotate_scannedcount().annotate_donatedcount()
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not super().has_change_permission(request) and not super().has_add_permission(request):
+            opts = self.opts
+            codename_add = get_permission_codename('add', opts)
+            codename_change = get_permission_codename('change', opts)
+            kwargs['queryset'] = Archive.objects.filter(Q(
+                archiveuserpermission__user=request.user,
+                archiveuserpermission__permission__content_type__model=opts.model_name,
+            ) & Q(archiveuserpermission__permission__codename=codename_add) | Q(archiveuserpermission__permission__codename=codename_change)).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def has_add_permission(self, request):
+        codename_add = get_permission_codename('add', self.opts)
+        return (super().has_change_permission(request)
+            or request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_add)))
+
+    def has_change_permission(self, request, obj=None):
+        codename_change = get_permission_codename('change', self.opts)
+        return (super().has_change_permission(request, obj)
+            or (request.user.has_perm("{}.archive.{}.{}".format(self.opts.app_label, obj.archive.slug, codename_change))
+                if obj
+                else request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_change)))
+        )
+
+    def has_view_permission(self, request, obj=None):
+        if super().has_view_permission(request, obj):
+            return True
+        opts = self.opts
+        codename_view = get_permission_codename('view', opts)
+        codename_change = get_permission_codename('change', opts)
+        if obj:
+            return (
+                request.user.has_perm("{}.archive.{}.{}".format(opts.app_label, obj.archive.slug, codename_view)) or
+                request.user.has_perm("{}.archive.{}.{}".format(opts.app_label, obj.archive.slug, codename_change))
+            )
+        else:
+            return (
+                request.user.has_perm("{}.any.{}".format(opts.app_label, codename_view)) or
+                request.user.has_perm("{}.any.{}".format(opts.app_label, codename_change))
+            )
+
+    def has_delete_permission(self, request, obj=None):
+        codename_delete = get_permission_codename('delete', self.opts)
+        return (super().has_delete_permission(request, obj)
+            or (request.user.has_perm("{}.archive.{}.{}".format(self.opts.app_label, obj.archive.slug, codename_delete))
+                if obj
+                else request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_delete))
+            ))
 
 
 @admin.register(Term)
