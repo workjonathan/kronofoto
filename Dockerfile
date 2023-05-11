@@ -11,4 +11,14 @@ RUN wget -O /tmp/dart-sass.tar.gz https://github.com/sass/dart-sass/releases/dow
     mv /usr/local/bin/dart-sass/sass /usr/local/bin/sass && \
     rm -rf /usr/local/bin/dart-sass
 
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install --upgrade pip &&  \
+    pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org -r requirements.txt
+
+COPY package.lock package.lock
+RUN npm install
+
+
 ENTRYPOINT ["tail", "-f", "/dev/null"]

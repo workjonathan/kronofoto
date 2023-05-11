@@ -1,0 +1,17 @@
+$timelineHeight: 110px;
+
+.fi-timeline {
+  display: none;
+  //@include breakpoint(large up) {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100vw;
+    height: $timelineHeight;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-self: center;
+    background: #e6e7e8;
+  //}
+}

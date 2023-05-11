@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <path class="cls-1" d="M20.31,33.7c0-7.22,5.87-13.09,13.09-13.09,2.13,0,4.13,.52,5.91,1.43v-3.65c0-1.87-1.51-3.38-3.38-3.38H7.69c-1.87,0-3.38,1.51-3.38,3.38v17.24c0,1.87,1.51,3.38,3.38,3.38h13.76c-.72-1.62-1.14-3.42-1.14-5.31Z"/>
-  <rect class="cls-1" x="6.31" y="9.01" width="31" height="3" rx=".37" ry=".37"/>
-  <rect class="cls-1" x="11.31" y="4.01" width="21" height="3" rx=".37" ry=".37"/>
-  <path class="cls-1" d="M33.4,23.4c-5.68,0-10.29,4.62-10.29,10.29s4.62,10.3,10.29,10.3,10.3-4.62,10.3-10.3-4.62-10.29-10.3-10.29Zm6.71,12.03h-4.96v4.96h-3.48v-4.96h-4.96v-3.48h4.96v-4.97h3.48v4.97h4.96v3.48Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="add-to-list" transform="translate(-1351 139)">
+        <g id="add-white" transform="translate(1348 -146)">
+            <path id="Path_15" data-name="Path 15" d="M31.03,25.4V38.12l-8.6-4.47-8.61,4.47V17.02h8.94" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+            <g id="Group_9" data-name="Group 9">
+                <line id="Line_5" data-name="Line 5" y2="10.29" transform="translate(31.03 11.88)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+                <line id="Line_6" data-name="Line 6" x1="10.3" transform="translate(25.88 17.02)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            </g>
+        </g>
+        <rect id="Rectangle_37" data-name="Rectangle 37" width="40" height="40" transform="translate(1351 -139)" fill="none"/>
+    </g>
 </svg>

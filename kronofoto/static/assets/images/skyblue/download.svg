@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <g id="Layer_2" data-name="Layer 2">
-    <g id="timeline_view" data-name="timeline view">
-      <g id="timeline_view-2" data-name="timeline view-2">
-        <polygon class="cls-1" points="34.59 16.21 28.61 16.21 28.61 7 19.39 7 19.39 16.21 13.42 16.21 24.01 30.29 34.59 16.21"/>
-        <rect class="cls-1" x="9.79" y="37.29" width="28.43" height="3.71"/>
-      </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="download" transform="translate(-1471 139)">
+        <g id="download-white" transform="translate(1466 -144)">
+            <line id="Line_7" data-name="Line 7" y2="17.93" transform="translate(25 12.95)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <path id="Path_16" data-name="Path 16" d="M31.01,24.88l-6.01,6-6.01-6" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <path id="Path_17" data-name="Path 17" d="M14.13,30.21v6.84H35.87V30.21" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+        </g>
+        <rect id="Rectangle_41" data-name="Rectangle 41" width="40" height="40" transform="translate(1471 -139)" fill="none"/>
     </g>
-  </g>
 </svg>

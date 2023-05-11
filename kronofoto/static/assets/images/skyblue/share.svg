@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <path class="cls-1" d="M35.95,28.95c-2.01,0-3.81,.86-5.09,2.22l-11.94-5.97c.07-.39,.12-.79,.12-1.2s-.05-.81-.12-1.2l11.94-5.97c1.28,1.36,3.08,2.22,5.09,2.22,3.86,0,7-3.14,7-7s-3.14-7-7-7-7,3.14-7,7c0,.41,.05,.81,.12,1.2l-11.94,5.97c-1.28-1.36-3.08-2.22-5.09-2.22-3.86,0-7,3.14-7,7s3.14,7,7,7c2.01,0,3.81-.86,5.09-2.22l11.94,5.97c-.07,.39-.12,.79-.12,1.2,0,3.86,3.14,7,7,7s7-3.14,7-7-3.14-7-7-7Zm0-19.9c1.65,0,3,1.35,3,3s-1.35,3-3,3-3-1.35-3-3,1.35-3,3-3ZM12.05,27c-1.65,0-3-1.35-3-3s1.35-3,3-3,3,1.35,3,3-1.35,3-3,3Zm23.9,11.95c-1.65,0-3-1.35-3-3s1.35-3,3-3,3,1.35,3,3-1.35,3-3,3Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="share" transform="translate(-1391 139)">
+        <g id="share-white" transform="translate(1386 -144)">
+            <circle id="Ellipse_10" data-name="Ellipse 10" cx="3.86" cy="3.86" r="3.86" transform="translate(29.12 12.61)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <circle id="Ellipse_11" data-name="Ellipse 11" cx="3.86" cy="3.86" r="3.86" transform="translate(13.16 21.14)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <circle id="Ellipse_12" data-name="Ellipse 12" cx="3.86" cy="3.86" r="3.86" transform="translate(29.12 29.67)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <line id="Line_14" data-name="Line 14" x1="9.22" y2="4.96" transform="translate(20.4 18.27)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <line id="Line_15" data-name="Line 15" x2="9.19" y2="4.93" transform="translate(20.56 26.87)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+        </g>
+        <rect id="Rectangle_38" data-name="Rectangle 38" width="40" height="40" transform="translate(1391 -139)" fill="none"/>
+        <rect id="Rectangle_39" data-name="Rectangle 39" width="40" height="40" transform="translate(1391 -139)" fill="none"/>
+    </g>
 </svg>

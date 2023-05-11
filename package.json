@@ -1,12 +1,12 @@
 {
   "name": "kronofoto",
   "version": "1.0.0",
-  "description": "# Install the dependencies:",
+  "description": "",
   "main": "gulpfile.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "gulp sass",
-    "watch": "gulp sass:watch"
+    "build": "gulp build:all",
+    "watch": "gulp watch:all"
   },
   "repository": {
     "type": "git",
@@ -19,12 +19,20 @@
   },
   "homepage": "https://github.com/workjonathan/kronofoto#readme",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^23.0.3",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.4.1",
     "foundation-sites": "^6.7.5",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "^8.0.0",
     "gulp-concat": "^2.6.1",
+    "gulp-rollup": "^2.17.0",
     "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^3.0.0",
+    "jquery": "^3.6.1",
+    "jquery-ui": "^1.13.2",
+    "path": "^0.12.7",
+    "rollup": "^2.79.1",
     "sass": "^1.62.1"
   }
 }
