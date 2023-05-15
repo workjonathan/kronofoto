@@ -11,27 +11,23 @@ const sass = require('gulp-sass')(require('sass'));
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
 const concat = require('gulp-concat');
+const exec =  require('child_process').exec;
 
-// export default [
-    // {
-//         input: './kronofoto/static/assets/js/main-dev.js',
-//         output: {
-//             file: './kronofoto/static/assets/js/main.js',
-//             sourcemap: true,
-//             format: 'iife'
-//         },
-//         plugins: [terser(), resolve(), commonjs()]
-//     },
-//     {
-//         input: './kronofoto/static/assets/js/kronofoto-dev.js',
-//         output: {
-//             file: './kronofoto/static/assets/js/kronofoto.js',
-//             sourcemap: true,
-//             format: 'iife'
-//         },
-//         plugins: [terser(), resolve(), commonjs()]
-//     },
-// ]
+let HELPERS = {
+    execute: (command) => {
+        const process = exec(command);
+        process.stdout.on('data', (data) => { console.log(data.toString()); })
+        process.stderr.on('data', (data) => { console.log(data.toString()); })
+        process.on('exit', (code) => {
+            console.log('Process exited with code ' + code.toString());
+        })
+        return process;
+    }
+}
+
+gulp.task('build:js', () => {
+    return HELPERS.execute('rollup -c');
+});
 
 var config = {
     'root': './kronofoto/static/assets'
@@ -48,38 +44,12 @@ gulp.task('build:sass', function () {
         }).on('error', sass.logError))
         .pipe(autoprefixer())
         .pipe(sourcemaps.write())
-        .pipe(gulp.dest(path.join(config.root, './css/')));
-});
-
-gulp.task('build:js', function() {
-    gulp.src(path.join(config.root, 'js/**/*.js'))
-        .pipe(sourcemaps.init())
-        .pipe(rollup({
-            input: path.join(config.root, 'js/main-dev.js'),
-            output: {
-                format: 'iife'
-            },
-            plugins: [terser(), resolve(), commonjs()]
-        }))
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest(path.join(config.root, 'js/main.js')));
-
-    gulp.src(path.join(config.root, 'js/**/*.js'))
-        .pipe(sourcemaps.init())
-        .pipe(rollup({
-            input: path.join(config.root, 'js/kronofoto-dev.js'),
-            output: {
-                format: 'iife'
-            },
-            plugins: [terser(), resolve(), commonjs()]
-        }))
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest(path.join(config.root, 'js/kronofoto.js')));
+        .pipe(gulp.dest(path.join(config.root, './dist/css/')));
 });
 
 gulp.task('watch:all', function () {
     gulp.watch(path.join(config.root, '/scss/**/*.scss'), gulp.series('build:sass'));
-    gulp.watch(path.join(config.root, '/js/*.js'), gulp.series('build:js'));
+    gulp.watch([path.join(config.root, '/js/main-dev.js'), path.join(config.root, '/js/kronofoto-dev.js')], gulp.series('build:js'));
 });
 
 gulp.task('build:all', function() {

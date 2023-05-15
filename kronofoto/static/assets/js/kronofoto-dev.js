@@ -1,6 +1,5 @@
 import HTMX from "./htmx.js"
 import {installButtons, markerDnD} from "./lib.js"
-
 class FortepanViewer extends HTMLElement {
     constructor() {
         super()
@@ -147,6 +146,7 @@ class FortepanViewer extends HTMLElement {
                 //this.htmx.logAll()
                 this.htmx.onLoad(installButtons(this.shadowRoot))
                 installButtons(this.shadowRoot)(this.shadowRoot.querySelector("#app"))
+                $(document).foundation();
                 //this.htmx.onLoad(markerDnD(this.shadowRoot))
                 //window.setTimeout(() => {
                 //    markerDnD(this.shadowRoot)(this.shadowRoot.querySelector('#active-year-marker'))

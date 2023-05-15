@@ -110,7 +110,7 @@
   flex-grow: 1;
   max-width: 550px;
   background-color: var(--fp-light-grey);
-  z-index: 99;
+  z-index: 9999;
 }
 #search-box-container img {
   margin: 7px;
@@ -893,7 +893,7 @@ main article.fi-image {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 25px;
+  margin: 90px 25px 25px;
 }
 
 .tl a:hover > rect {

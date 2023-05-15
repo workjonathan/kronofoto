@@ -134,4 +134,8 @@ $headerHeight: 60px;
     z-index: 150;
   }
 
+  &__popup {
+    @extend .photo-menu-popup;
+  }
+
 }

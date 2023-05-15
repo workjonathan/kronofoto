@@ -67,7 +67,6 @@ const init = () => {
     })
 
 
-
     $('#login-btn').click(() => {
         if($('#login').hasClass('gridden')) {
             $('.overlay').css('display', 'block')
@@ -75,7 +74,6 @@ const init = () => {
             $('.overlay').css('display', 'none')
         }
     })
-
 
     $('#search-box').focus(function() {
         $('#search-box-container').css('background','var(--fp-main-blue)')

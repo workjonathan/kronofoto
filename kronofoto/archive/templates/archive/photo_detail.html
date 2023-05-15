@@ -38,28 +38,25 @@
             </div>
             <div class="gallery__controls-bottom">
                 <!--Info Button-->
-                <button id="expand" class="image-control-button" data-popup-target="data-popup-metadata" data-popup-button data-popup-metadata>
+                <button class="image-control-button" data-toggle="metadata-popup">
                     <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
                 </button>
                 <!--Add to List Button-->
-                <button id="add-to-list-image-control-button" class="image-control-button" data-popup-target="data-popup-add-to-list" data-popup-button data-popup-add-to-list>
+                <button class="image-control-button" data-toggle="add-to-list-popup">
                     <img class="add-to-list-icon" src="{% static "assets/images/skyblue/add-to-list.svg" %}">
                 </button>
                 <!--Share Button-->
-                <button id="share-image-control-button" class="image-control-button" data-popup-target="data-popup-share" data-popup-button data-popup-share>
+                <button class="image-control-button" data-toggle="share-popup">
                     <img class="meta-info-icon" src="{% static "assets/images/skyblue/share.svg" %}">
                 </button>
                 <!--Embed Button-->
-                <button id="embed-image-control-button" class="image-control-button" data-popup-target="data-popup-embed" data-popup-button data-popup-embed>
+                <button class="image-control-button" data-toggle="embed-popup">
                     <img class="meta-info-icon" src="{% static "assets/images/skyblue/embed.svg" %}">
                 </button>
                 <!--Download Button-->
-                <button id="dl" class="image-control-button" data-popup-target="data-popup-download" data-popup-button data-popup-download>
+                <button class="image-control-button" data-toggle="download-popup">
                     <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
                 </button>
-                <!--                    <button id="download-popup-cancel-button" class="image-cancel-button hidden" data-popup-target="data-popup-none" data-popup data-popup-download>-->
-                <!--                        <img class="meta-info-icon" src="{% static "assets/images/close.png" %}">-->
-                <!--                    </button>-->
             </div>
             {% endblock image_control_buttons %}
         </div>
@@ -85,15 +82,26 @@
 
         <div class="gallery__popups">
 
-            <div id="metadata" data-reveal>
-            {% block metadata %}
-                {% include "archive/photometadata.html" %}
+            <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="metadata-popup" data-toggler=".expanded"></a>
+                <div class="photo-menu-popup__wrapper">
+                    {% block metadata %}
+                    {% include "archive/photometadata.html" %}
+                </div>
             {% endblock %}
             </div>
-            <div id="add-to-list-popup" class="photo-menu-popup hidden" data-popup-add-to-list data-popup hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect"></div>
-            <div id="share-popup" class="photo-menu-popup hidden" data-popup-share data-popup hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect"></div>
-            <div id="embed-popup" class="photo-menu-popup hidden" data-popup-embed data-popup hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="intersect"></div>
-            <div id="download-popup" class="photo-menu-popup hidden" data-popup-download data-popup hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect"></div>
+            <div id="add-to-list-popup" class="gallery__popup" data-toggler=".expanded" hx-target="find .photo-menu-popup__wrapper"  hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="add-to-list-popup" data-toggler=".expanded"></a><div class="photo-menu-popup__wrapper"></div>
+            </div>
+            <div id="share-popup" class="gallery__popup" data-toggler=".expanded" hx-target="find .photo-menu-popup__wrapper" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="share-popup" data-toggler=".expanded"></a><div class="photo-menu-popup__wrapper"></div>
+            </div>
+            <div id="embed-popup" class="gallery__popup" data-toggler=".expanded" hx-target="find .photo-menu-popup__wrapper" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="intersect">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="embed-popup" data-toggler=".expanded"></a><div class="photo-menu-popup__wrapper"></div>
+            </div>
+            <div id="download-popup" class="gallery__popup" data-toggler=".expanded" hx-target="find .photo-menu-popup__wrapper" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="download-popup" data-toggler=".expanded"></a><div class="photo-menu-popup__wrapper"></div>
+            </div>
             <div id="zoom-popup" class="follow-zoom-popup hidden" data-popup-zoom data-popup>
                 <div class="follow-zoom-background-overlay"></div>
                 <div style='background: url("{{ object.original.url }}");' id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
