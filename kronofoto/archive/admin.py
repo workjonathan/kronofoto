@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from django.contrib import admin as base_admin
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import User, Permission, Group
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_permission_codename
@@ -10,7 +10,7 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.archive import Archive, ArchiveUserPermission
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Exists, OuterRef
 from django.db import IntegrityError
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
@@ -158,47 +158,10 @@ class NewCutoffAdmin(admin.ModelAdmin):
             return super().has_add_permission(request)
 
 
-@admin.register(Donor)
-class DonorAdmin(admin.ModelAdmin):
-    search_fields = ['last_name', 'first_name']
-
-    list_display = ('__str__', 'donated', 'scanned')
-
-    def scanned(self, obj):
-        return '{} photos'.format(obj.scanned_count)
-
-    def donated(self, obj):
-        return '{} photos'.format(obj.donated_count)
-
-    scanned.admin_order_field = 'scanned_count'
-    donated.admin_order_field = 'donated_count'
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if not super().has_view_permission(request) and not super().has_change_permission(request):
-            opts = self.opts
-            codename_view = get_permission_codename('view', opts)
-            codename_change = get_permission_codename('change', opts)
-            qs = qs.filter(Q(
-                archive__archiveuserpermission__user=request.user,
-                archive__archiveuserpermission__permission__content_type__model=opts.model_name,
-            ) & Q(archive__archiveuserpermission__permission__codename=codename_view) | Q(archive__archiveuserpermission__permission__codename=codename_change))
-        return qs.annotate_scannedcount().annotate_donatedcount()
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not super().has_change_permission(request) and not super().has_add_permission(request):
-            opts = self.opts
-            codename_add = get_permission_codename('add', opts)
-            codename_change = get_permission_codename('change', opts)
-            kwargs['queryset'] = Archive.objects.filter(Q(
-                archiveuserpermission__user=request.user,
-                archiveuserpermission__permission__content_type__model=opts.model_name,
-            ) & Q(archiveuserpermission__permission__codename=codename_add) | Q(archiveuserpermission__permission__codename=codename_change)).distinct()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def has_add_permission(self, request):
+class ArchivePermissionMixin:
+    def has_add_permission(self, request, *args):
         codename_add = get_permission_codename('add', self.opts)
-        return (super().has_change_permission(request)
+        return (super().has_add_permission(request, *args)
             or request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_add)))
 
     def has_change_permission(self, request, obj=None):
@@ -234,13 +197,57 @@ class DonorAdmin(admin.ModelAdmin):
                 else request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_delete))
             ))
 
+class FilteringArchivePermissionMixin(ArchivePermissionMixin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if not super().has_view_permission(request) and not super().has_change_permission(request):
+            opts = self.opts
+            codename_view = get_permission_codename('view', opts)
+            codename_change = get_permission_codename('change', opts)
+            qs = qs.filter(Q(
+                archive__archiveuserpermission__user=request.user,
+                archive__archiveuserpermission__permission__content_type__model=opts.model_name,
+            ) & Q(archive__archiveuserpermission__permission__codename=codename_view) | Q(archive__archiveuserpermission__permission__codename=codename_change))
+        return qs
+
+@admin.register(Donor)
+class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
+    search_fields = ['last_name', 'first_name']
+
+    list_display = ('__str__', 'donated', 'scanned')
+
+    def scanned(self, obj):
+        return '{} photos'.format(obj.scanned_count)
+
+    def donated(self, obj):
+        return '{} photos'.format(obj.donated_count)
+
+    scanned.admin_order_field = 'scanned_count'
+    donated.admin_order_field = 'donated_count'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate_scannedcount().annotate_donatedcount()
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not super().has_change_permission(request) and not super().has_add_permission(request):
+            opts = self.opts
+            codename_add = get_permission_codename('add', opts)
+            codename_change = get_permission_codename('change', opts)
+            kwargs['queryset'] = Archive.objects.filter(Q(
+                archiveuserpermission__user=request.user,
+                archiveuserpermission__permission__content_type__model=opts.model_name,
+            ) & Q(archiveuserpermission__permission__codename=codename_add) | Q(archiveuserpermission__permission__codename=codename_change)).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
     pass
 
 
-class TagInline(admin.TabularInline):
+class TagInline(ArchivePermissionMixin, admin.TabularInline):
     model = PhotoTag
     extra = 1
     fields = ['tag', 'accepted', 'submitter']
@@ -256,6 +263,9 @@ class TagInline(admin.TabularInline):
             for user in instance.creator.all()
         )
         return mark_safe(creators)
+
+    def has_add_permission(self, request, *args):
+        return super().has_add_permission(request, *args)
 
 
 class TermFilter(base_admin.SimpleListFilter):
@@ -466,7 +476,7 @@ class CSVRecordAdmin(admin.ModelAdmin):
 
 
 @admin.register(Photo)
-class PhotoAdmin(admin.OSMGeoAdmin):
+class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
     list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter)
@@ -529,8 +539,8 @@ class UserArchivePermissionsInline(base_admin.TabularInline):
             models = [
                 'donor',
                 'photo',
-                'photosphere',
-                'photospherepair',
+                #'photosphere',
+                #'photospherepair',
                 'phototag',
             ]
             clauses = (
@@ -545,6 +555,43 @@ class UserArchivePermissionsInline(base_admin.TabularInline):
 
 class KronofotoUserAdmin(UserAdmin):
     inlines = (UserArchivePermissionsInline, UserTagInline,)
+
+    def save_related(self, request, form, formsets, change):
+        instance = form.instance
+        old_perms = set(instance.user_permissions.all())
+        old_groups = set(instance.groups.all())
+        changeable_perms = set(self._get_changeable_permissions(request.user))
+        changeable_groups = set(self._get_changeable_groups(request.user))
+        super().save_related(request, form, formsets, change)
+        new_perms = set(instance.user_permissions.all())
+        new_groups = set(instance.groups.all())
+        instance.user_permissions.set((old_perms - changeable_perms) | (changeable_perms & new_perms))
+        instance.groups.set((old_groups - changeable_groups) | (changeable_groups & new_groups))
+
+    def _get_changeable_permissions(self, user):
+        if user.is_superuser:
+            return Permission.objects.all()
+        q = Q(pk=user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
+        return Permission.objects.filter(Exists(User.objects.filter(q)))
+
+    def _get_changeable_groups(self, user):
+        if user.is_superuser:
+            return Group.objects.all()
+        # Exclude groups which have at least one permission this user does not effectively have.
+
+        # Get permissions this user does not have.
+        # Filter them to match any given group.
+        q = Q(pk=user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
+        missing = Exists(Permission.objects.exclude(Exists(User.objects.filter(q))).filter(group=OuterRef('pk')))
+        # Exclude groups which have at least one match.
+        return Group.objects.exclude(missing)
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'groups':
+            kwargs['queryset'] = self._get_changeable_groups(request.user)
+        if db_field.name == 'user_permissions':
+            kwargs['queryset'] = self._get_changeable_permissions(request.user)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
 admin.site.unregister(User)

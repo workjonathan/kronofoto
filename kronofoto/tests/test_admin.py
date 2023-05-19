@@ -1,6 +1,7 @@
 from django.test import Client, RequestFactory, SimpleTestCase
+from django.contrib.auth.models import AnonymousUser, User, Group
 from hypothesis import given, strategies as st, note
-from hypothesis.extra.django import TestCase
+from hypothesis.extra.django import TestCase, from_model
 from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
 from django.contrib.admin.sites import AdminSite
@@ -11,6 +12,27 @@ from archive.models.photo import Photo
 from archive.models.photosphere import PhotoSphere
 from .util import donors, small_gif
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.contenttypes.models import ContentType
+
+def test_permissionmixin_hasadd():
+    class Base:
+        opts = Mock()
+        opts.app_label = 'testlabel'
+        opts.model_name = 'testmodel'
+        permission = True
+        def has_add_permission(self, request):
+            return self.permission
+    class Cls(ArchivePermissionMixin, Base):
+        pass
+    instance = Cls()
+    assert instance.has_add_permission(Mock())
+    instance.permission = False
+    request = Mock()
+    request.user.has_perm.return_value = sentinel.perm
+    assert instance.has_add_permission(request) == sentinel.perm
+    request.user.has_perm.assert_called_once_with('testlabel.any.add_testmodel')
+
+
 
 def test_queryset():
     model = Mock()
@@ -24,6 +46,25 @@ def test_queryset():
     qs = admin.get_queryset(request)
     qs.annotate_scannedcount.assert_called_once_with()
     qs.annotate_donatedcount.assert_called_once_with()
+
+def test_donor_formfield():
+    #model = Mock()
+    #qs = Mock(spec=Donor.objects)
+    #qs.annotate_scannedcount.return_value = qs
+    #qs.annotate_donatedcount.return_value = qs
+    #model._default_manager.get_queryset.return_value = qs
+    admin = DonorAdmin(model=Donor, admin_site=AdminSite())
+    request = RequestFactory().get('/')
+    request.user = MagicMock()
+    request.user.id = 1
+    request.user.has_perm.return_value = False
+    request.user.resolve_expression.return_value = 2
+    db_field = Mock()
+    db_field.name = 'archive'
+    db_field.id = 1
+    qs = admin.formfield_for_foreignkey(db_field, request)
+    assert qs
+
 
 @given(count=st.integers(min_value=0))
 def test_scanned(count):
@@ -194,6 +235,36 @@ def test_userarchivepermissionsinline_accepted():
     ma = UserArchivePermissionsInline(User, admin_site=AdminSite())
     request = RequestFactory().post('/')
     formfield = ma.formfield_for_manytomany(Archive.users.through.permission.field, request)
+
+
+class UserAdminTests(TestCase):
+    @given(st.lists(from_model(Permission, content_type=from_model(ContentType))))
+    def test_changeable_permissions(self, permissions):
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        user1.user_permissions.add(*permissions)
+        group = Group.objects.create(name='groupname')
+        group.permissions.add(*permissions)
+        user2.groups.add(group)
+        ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
+        self.assertQuerysetEqual(ma._get_changeable_permissions(user1), ma._get_changeable_permissions(user2))
+
+    @given(
+        st.lists(from_model(Permission, content_type=from_model(ContentType))),
+        st.lists(from_model(Permission, content_type=from_model(ContentType))),
+    )
+    def test_changeable_groups(self, perms1, perms2):
+        group1 = Group.objects.create(name='group1')
+        group1.permissions.add(*perms1)
+        group2 = Group.objects.create(name='group2')
+        group2.permissions.add(*perms2)
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        user1.groups.add(group1)
+        user2.user_permissions.add(*perms1)
+        ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
+        self.assertQuerysetEqual(ma._get_changeable_groups(user1), ma._get_changeable_groups(user2), ordered=False)
+
 
 def test_taginline_submitter():
     ma = TagInline(Photo, admin_site=AdminSite())
