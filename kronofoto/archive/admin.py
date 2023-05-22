@@ -10,7 +10,7 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.archive import Archive, ArchiveUserPermission
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
-from django.db.models import Count, Q, Exists, OuterRef
+from django.db.models import Count, Q, Exists, OuterRef, F
 from django.db import IntegrityError
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
@@ -19,6 +19,7 @@ from django import forms
 from django.forms import ModelForm, Textarea
 from functools import reduce
 import operator
+from collections import defaultdict
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -558,6 +559,10 @@ class KronofotoUserAdmin(UserAdmin):
 
     def save_related(self, request, form, formsets, change):
         instance = form.instance
+        changeable_archive_permissions = self._get_archive_permissions(request.user)
+        old_archives = set(instance.archiveuserpermission_set.all())
+        old_archive_permissions = self._get_archive_permissions(instance)
+
         old_perms = set(instance.user_permissions.all())
         old_groups = set(instance.groups.all())
         changeable_perms = set(self._get_changeable_permissions(request.user))
@@ -567,6 +572,31 @@ class KronofotoUserAdmin(UserAdmin):
         new_groups = set(instance.groups.all())
         instance.user_permissions.set((old_perms - changeable_perms) | (changeable_perms & new_perms))
         instance.groups.set((old_groups - changeable_groups) | (changeable_groups & new_groups))
+
+        new_archives = set(instance.archiveuserpermission_set.all())
+        new_archive_permissions = self._get_archive_permissions(instance)
+        changed_archive_perms = old_archives | new_archives
+        for related in changed_archive_perms:
+            assign = (old_archive_permissions[related.archive.id] - (changeable_archive_permissions[related.archive.id] | changeable_perms)) | ((changeable_archive_permissions[related.archive.id] | changeable_perms) & new_archive_permissions[related.archive.id])
+            try:
+                obj = instance.archiveuserpermission_set.get(archive__id=related.archive.id)
+                obj.permission.set(assign)
+            except Archive.users.through.DoesNotExist:
+                if assign:
+                    obj = Archive.users.through.objects.create(archive=related.archive, user=instance)
+                    obj.permission.set(assign)
+
+
+
+    def _get_archive_permissions(self, user):
+        sets = defaultdict(set)
+        objects = (Permission.objects
+            .filter(archiveuserpermission__user__id=user.id)
+            .annotate(archive_id=F('archiveuserpermission__archive__id'))
+        )
+        for obj in objects:
+            sets[obj.archive_id].add(obj)
+        return sets
 
     def _get_changeable_permissions(self, user):
         if user.is_superuser:

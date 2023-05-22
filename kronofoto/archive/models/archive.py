@@ -9,11 +9,6 @@ class Archive(models.Model):
     cms_root = models.CharField(max_length=16, null=False, blank=False)
     slug = models.SlugField(unique=True, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="ArchiveUserPermission")
-    # many to many field to user
-    #   through object has many to many to permissions. permissions should be restricted only things which i control
-    #   admin site for. Because I won't be enabling behavior for anything else.
-    #   through object has many to many to custom groups? I think using built in group will result in global
-    #   permissions across archives.
 
     def __str__(self):
         return self.name
