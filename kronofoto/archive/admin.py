@@ -553,42 +553,58 @@ class UserArchivePermissionsInline(base_admin.TabularInline):
             kwargs['queryset'] = Permission.objects.filter(supported_permissions)
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+class block_escalation:
+    def __init__(self, *, editor, user):
+        self.editor = editor
+        self.user = user
+
+
+    def __enter__(self):
+        self.changeable_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.editor)
+        self.old_archives = set(self.user.archiveuserpermission_set.all())
+        self.old_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.user)
+
+        self.old_perms = set(self.user.user_permissions.all())
+        self.old_groups = set(self.user.groups.all())
+        self.changeable_perms = set(KronofotoUserAdmin._get_changeable_permissions(self.editor))
+        self.changeable_groups = set(KronofotoUserAdmin._get_changeable_groups(self.editor))
+
+    def __exit__(self, *args, **kwargs):
+        new_perms = set(self.user.user_permissions.all())
+        new_groups = set(self.user.groups.all())
+        self.user.user_permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
+        self.user.groups.set((self.old_groups - self.changeable_groups) | (self.changeable_groups & new_groups))
+
+        new_archives = set(self.user.archiveuserpermission_set.all())
+        new_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.user)
+        changed_archive_perms = self.old_archives | new_archives
+        for related in changed_archive_perms:
+            assign = (self.old_archive_permissions[related.archive.id] - (self.changeable_archive_permissions[related.archive.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.archive.id] | self.changeable_perms) & new_archive_permissions[related.archive.id])
+            try:
+                obj = self.user.archiveuserpermission_set.get(archive__id=related.archive.id)
+                obj.permission.set(assign)
+            except Archive.users.through.DoesNotExist:
+                if assign:
+                    obj = Archive.users.through.objects.create(archive=related.archive, user=self.user)
+                    obj.permission.set(assign)
 
 class KronofotoUserAdmin(UserAdmin):
     inlines = (UserArchivePermissionsInline, UserTagInline,)
 
     def save_related(self, request, form, formsets, change):
+        # the symmetric difference of before edit and after edit will be a subset of editor's privileges
+        # (a ^ a') <= e
+
+        # a user editing their own account will never have more privileges.
+        # e' <= e
+
         instance = form.instance
-        changeable_archive_permissions = self._get_archive_permissions(request.user)
-        old_archives = set(instance.archiveuserpermission_set.all())
-        old_archive_permissions = self._get_archive_permissions(instance)
-
-        old_perms = set(instance.user_permissions.all())
-        old_groups = set(instance.groups.all())
-        changeable_perms = set(self._get_changeable_permissions(request.user))
-        changeable_groups = set(self._get_changeable_groups(request.user))
-        super().save_related(request, form, formsets, change)
-        new_perms = set(instance.user_permissions.all())
-        new_groups = set(instance.groups.all())
-        instance.user_permissions.set((old_perms - changeable_perms) | (changeable_perms & new_perms))
-        instance.groups.set((old_groups - changeable_groups) | (changeable_groups & new_groups))
-
-        new_archives = set(instance.archiveuserpermission_set.all())
-        new_archive_permissions = self._get_archive_permissions(instance)
-        changed_archive_perms = old_archives | new_archives
-        for related in changed_archive_perms:
-            assign = (old_archive_permissions[related.archive.id] - (changeable_archive_permissions[related.archive.id] | changeable_perms)) | ((changeable_archive_permissions[related.archive.id] | changeable_perms) & new_archive_permissions[related.archive.id])
-            try:
-                obj = instance.archiveuserpermission_set.get(archive__id=related.archive.id)
-                obj.permission.set(assign)
-            except Archive.users.through.DoesNotExist:
-                if assign:
-                    obj = Archive.users.through.objects.create(archive=related.archive, user=instance)
-                    obj.permission.set(assign)
+        with block_escalation(editor=request.user, user=instance):
+            super().save_related(request, form, formsets, change)
 
 
-
-    def _get_archive_permissions(self, user):
+    @classmethod
+    def _get_archive_permissions(cls, user):
         sets = defaultdict(set)
         objects = (Permission.objects
             .filter(archiveuserpermission__user__id=user.id)
@@ -598,13 +614,15 @@ class KronofotoUserAdmin(UserAdmin):
             sets[obj.archive_id].add(obj)
         return sets
 
-    def _get_changeable_permissions(self, user):
+    @classmethod
+    def _get_changeable_permissions(cls, user):
         if user.is_superuser:
             return Permission.objects.all()
         q = Q(pk=user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
         return Permission.objects.filter(Exists(User.objects.filter(q)))
 
-    def _get_changeable_groups(self, user):
+    @classmethod
+    def _get_changeable_groups(cls, user):
         if user.is_superuser:
             return Group.objects.all()
         # Exclude groups which have at least one permission this user does not effectively have.
