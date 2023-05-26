@@ -268,71 +268,61 @@ class UserAdminTests(TestCase):
     @given(
         st.booleans(),
         st.booleans(),
-        st.lists(from_model(Permission, content_type=from_model(ContentType)), min_size=1).flatmap(lambda permissions:
-        st.lists(archives()).flatmap(lambda archives:
-        st.lists(from_model(Group)).flatmap(lambda groups:
-        (st.lists(from_model(Group.permissions.through, permission=st.sampled_from(permissions), group=st.sampled_from(groups))) if groups else st.just([])).flatmap(lambda _:
-        st.tuples(
-            st.sets(st.sampled_from(permissions)),
-            st.sets(st.sampled_from(groups)) if groups else st.nothing(),
-            st.lists(st.tuples(st.sampled_from(archives), st.sets(st.sampled_from(permissions)))) if archives else st.just([]),
-            st.sets(st.sampled_from(permissions)),
-            st.sets(st.sampled_from(groups)) if groups else st.nothing(),
-            st.lists(st.tuples(st.sampled_from(archives), st.sets(st.sampled_from(permissions)))) if archives else st.just([]),
-            st.sets(st.sampled_from(permissions)),
-            st.sets(st.sampled_from(groups)) if groups else st.nothing(),
-            st.lists(st.tuples(st.sampled_from(archives), st.sets(st.sampled_from(permissions)))) if archives else st.just([]),
-        ))))
-    ))
-    def test_users_cannot_change_privileges_they_do_not_have(self, su1, su2, args):
-        (
-            u1_perms,
-            u1_groups,
-            u1_archive_perms,
-            u2_perms,
-            u2_groups,
-            u2_archive_perms,
-            target_perms,
-            target_groups,
-            target_archive_perms,
-        ) = args
+        st.lists(st.builds(Group), unique_by=lambda g: g.name),
+        st.lists(st.builds(Archive), unique_by=lambda a: a.slug),
+        st.data(),
+    )
+    def test_users_cannot_change_privileges_they_do_not_have(self, su1, su2, groups, archives, data):
         u1 = (User.objects.create_superuser if su1 else User.objects.create_user)("test1")
         u2 = (User.objects.create_superuser if su2 else User.objects.create_user)("test2")
-        u1.user_permissions.set(u1_perms)
-        u2.user_permissions.set(u2_perms)
-        u1.groups.set(u1_groups)
-        u2.groups.set(u2_groups)
-        for (archive, perms) in u1_archive_perms:
-            obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u1)
-            if created:
-                obj.permission.add(*perms)
-            else:
-                obj.permission.set(perms)
-        for (archive, perms) in u2_archive_perms:
-            obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
-            if created:
-                obj.permission.add(*perms)
-            else:
-                obj.permission.set(perms)
+        Group.objects.bulk_create(groups)
+        Archive.objects.bulk_create(archives)
+        archives = list(Archive.objects.all())
+        perms = list(Permission.objects.all())
+        groups = list(Group.objects.all())
+        u1.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+        u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+        for group in groups:
+            group.permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+
+        if groups:
+            u1.groups.set(data.draw(st.sets(st.sampled_from(groups))))
+            u2.groups.set(data.draw(st.sets(st.sampled_from(groups))))
+
+        if archives:
+            for archive in data.draw(st.sets(st.sampled_from(archives))):
+                obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u1)
+                userperms = data.draw(st.sets(st.sampled_from(perms)))
+                if created:
+                    obj.permission.add(*userperms)
+                else:
+                    obj.permission.set(userperms)
+            for archive in data.draw(st.sets(st.sampled_from(archives))):
+                obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
+                userperms = data.draw(st.sets(st.sampled_from(perms)))
+                if created:
+                    obj.permission.add(*userperms)
+                else:
+                    obj.permission.set(userperms)
         u1 = User.objects.get(pk=u1.id)
         u1_perm_set = u1.get_all_permissions()
         u2_perm_set_pre = u2.get_all_permissions()
+
         with block_escalation(editor=u1, user=u2):
-            u2.user_permissions.set(target_perms)
-            u2.groups.set(target_groups)
+            u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+            if groups:
+                u2.groups.set(data.draw(st.sets(st.sampled_from(groups))))
             u2.archiveuserpermission_set.all().delete()
-            for (archive, perms) in target_archive_perms:
-                obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
-                if created:
-                    obj.permission.add(*perms)
-                else:
-                    obj.permission.set(perms)
+            if archives:
+                for archive in data.draw(st.sets(st.sampled_from(archives))):
+                    obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
+                    userperms = data.draw(st.sets(st.sampled_from(perms)))
+                    if created:
+                        obj.permission.add(*userperms)
+                    else:
+                        obj.permission.set(userperms)
         u2 = User.objects.get(pk=u2.id)
         u2_perm_set_post = u2.get_all_permissions()
-        for group in Group.objects.all():
-            note(group)
-            for perm in group.permissions.all():
-                note(perm.codename)
         assert u2_perm_set_pre.symmetric_difference(u2_perm_set_post) <= u1_perm_set
 
 
