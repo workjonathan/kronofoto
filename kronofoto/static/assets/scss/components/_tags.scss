@@ -2,6 +2,8 @@
   font-size: 16px;
   line-height: 20px;
   line-spacing: 0.5em;
+  padding-left: 20px;
+  margin-bottom: 20px;
   ul {
     list-style-type: none;
     display: flex;
@@ -24,16 +26,17 @@
     font-size: inherit;
     white-space: nowrap;
   }
+}
 
-  &__tk-labels {
-    margin-top: $global-margin * 1.5;
-    > div {
-      font-size: 0px;
-    }
-    label {
-      font-size: 12px;
-      line-height: 18px;
-      font-weight: $font-weight-regular;
-    }
+.context-labels {
+  margin-top: $global-margin * 1.5;
+  img {
+    width: 3.5rem;
+    margin-right: 16px;
+  }
+  label {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: $font-weight-regular;
   }
 }

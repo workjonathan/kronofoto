@@ -12,6 +12,8 @@ from ..models import Photo
 THEME = [
     {
         'color': "#6c84bd",
+        'colorDarker': "",
+        'colorLighter': "",
         "logo": static("assets/images/skyblue/logo.svg"),
         "menuSvg": static("assets/images/skyblue/menu.svg"),
         "infoSvg": static("assets/images/skyblue/info.svg"),
@@ -22,6 +24,8 @@ THEME = [
     },
     {
         'color': "#c28800",
+        'colorDarker': "",
+        'colorLighter': "",
         'logo': static("assets/images/golden/logo.svg"),
         'menuSvg': static("assets/images/golden/menu.svg"),
         'infoSvg': static("assets/images/golden/info.svg"),
@@ -32,6 +36,8 @@ THEME = [
     },
     {
         'color': "#c2a55e",
+        'colorDarker': "",
+        'colorLighter': "",
         'logo': static("assets/images/haybail/logo.svg"),
         'menuSvg': static("assets/images/haybail/menu.svg"),
         'infoSvg': static("assets/images/haybail/info.svg"),
@@ -39,16 +45,6 @@ THEME = [
         'searchSvg': static("assets/images/haybail/search.svg"),
         'carrotSvg': static("assets/images/haybail/carrot.svg"),
         "timelineSvg": static("assets/images/haybail/toggle.svg"),
-    },
-    {
-        'color': "#445170",
-        'logo': static("assets/images/navy/logo.svg"),
-        'menuSvg': static("assets/images/navy/menu.svg"),
-        'infoSvg': static("assets/images/navy/info.svg"),
-        'downloadSvg': static("assets/images/navy/download.svg"),
-        'searchSvg': static("assets/images/navy/search.svg"),
-        'carrotSvg': static("assets/images/navy/carrot.svg"),
-        "timelineSvg": static("assets/images/navy/toggle.svg"),
     }
 ]
 

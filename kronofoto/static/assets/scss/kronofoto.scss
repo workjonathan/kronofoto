@@ -679,7 +679,7 @@ main article.fi-image {
 }
 
 #fi-thumbnail-carousel-images {
-  background-color: var(--fp-light-grey);
+  background-color: #b2b2b2; // TODO: Add to color palette.
   position: absolute;
   left: -950px;
   height: 100%;
@@ -932,7 +932,6 @@ main article.fi-image {
 .no-point {
   pointer-events: none;
 }
-
 
 
 /*******************************

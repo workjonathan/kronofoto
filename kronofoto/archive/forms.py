@@ -22,7 +22,7 @@ class WebComponentForm(forms.Form):
 
 
 class ListForm(forms.Form):
-    name = forms.CharField(label="create new list")
+    name = forms.CharField(label="create a list")
 
 class ListMemberForm(forms.Form):
     membership = forms.BooleanField(required=False)

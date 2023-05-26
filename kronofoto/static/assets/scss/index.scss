@@ -1,94 +1,57 @@
 
-///////////// Foundation
+// Foundation Dependencies
+@import '../_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+@import '../_vendor/sassy-lists/stylesheets/helpers/true';
+@import '../_vendor/sassy-lists/stylesheets/functions/contain';
+@import '../_vendor/sassy-lists/stylesheets/functions/purge';
+@import '../_vendor/sassy-lists/stylesheets/functions/remove';
+@import '../_vendor/sassy-lists/stylesheets/functions/replace';
+@import '../_vendor/sassy-lists/stylesheets/functions/to-list';
 
-// --- Dependencies ---
-//@import 'vendor/normalize';
-//@import '../_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
-//@import '../_vendor/sassy-lists/stylesheets/helpers/true';
-//@import '../_vendor/sassy-lists/stylesheets/functions/contain';
-//@import '../_vendor/sassy-lists/stylesheets/functions/purge';
-//@import '../_vendor/sassy-lists/stylesheets/functions/remove';
-//@import '../_vendor/sassy-lists/stylesheets/functions/replace';
-//@import '../_vendor/sassy-lists/stylesheets/functions/to-list';
-//
-
-// --- Settings ---
-// import your own `settings` here or
-// import and modify the default settings through
-// @import 'settings/settings';
-
-// --- Components ---
-
-// Utilities
+// Foundation Utilities
 @import 'util/util';
 
-// Global styles
+// Foundation Global styles
 @import 'global';
-@import 'forms/forms';
 @import 'typography/typography';
 
-// Grids
+// Foundation Grids
 @import 'grid/grid';
 @import 'xy-grid/xy-grid';
-
-// Helpers
-@import 'components/float';
-@import 'components/flex';
-@import 'components/visibility';
-@import 'prototype/prototype';
-
-@mixin foundation-everything(
-  $flex: true,
-  $prototype: false,
-  $xy-grid: $xy-grid
-) {
-  @if $flex {
-    $global-flexbox: true !global;
-  }
-
-  @if $xy-grid {
-    $xy-grid: true !global;
-  }
-
-  // Global styles
-  @include foundation-global-styles;
-  @include foundation-forms;
-  @include foundation-typography;
-
-  // Grids
-  @if not $flex {
-    @include foundation-grid;
-  }
-  @else {
-    @if $xy-grid {
-      @include foundation-xy-grid-classes;
-    }
-    @else {
-      @include foundation-flex-grid;
-    }
-  }
-
-  // Helpers
-  @include foundation-float-classes;
-  @if $flex { @include foundation-flex-classes; }
-  @include foundation-visibility-classes;
-  @if $prototype { @include foundation-prototype-classes; }
-}
-
-// End Foundation
 
 @import 'kronofoto';
 @import 'typography';
 
 // Kronofoto Components
+@import 'components/checkboxes';
 @import 'components/form';
-@import 'components/radios';
-@import 'components/photo-menu-popup';
-@import 'components/button';
 @import 'components/gallery';
+@import 'components/header';
+@import 'components/input';
+@import 'components/photo-menu-popup';
 @import 'components/tags';
 @import 'components/timeline';
+@import 'components/button';
 
+
+// Foundation Components
+@import 'components/switch';
+@import 'components/tooltip';
+
+// Foundation Helpers
+@import 'components/float';
+@import 'components/visibility';
+@import 'prototype/prototype';
+@import 'components/flex';
+
+@include foundation-switch;
+@include foundation-tooltip;
+
+// Foundation Components
+@include foundation-visibility-classes;
+@include foundation-xy-grid-classes;
+@include foundation-flex-classes;
+@include foundation-flex-grid;
 
 *, body {
   margin: 0;
@@ -116,40 +79,6 @@ body {
 a {
   color: var(--fp-main-blue);
   text-decoration: none;
-}
-
-/******************
- ** HEADER / NAV **
- ******************/
-
-header {
-  /*max-height: 200px;
-  grid-row: 1 / span 1;
-  padding: 1.6vh;*/
-    height: 60px;
-    padding: 10px;
-}
-
-nav {
-  display: flex;
-}
-
-nav ul {
-  display: flex;
-  display: -webkit-flex;
-  align-self: center;
-  flex-grow: 1;
-  justify-content: space-between;
-  align-items: center;
-}
-
-nav ul li {
-  list-style: none;
-  text-transform: uppercase;
-}
-
-header nav div img {
-  width: 30px;
 }
 
 input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
@@ -182,6 +111,16 @@ select {
   /* !important used for overriding all other customisations */
 }
 
-main {
+.float-right {
+  float: right;
+}
 
+.sticky-parent {
+  position: sticky;
+  bottom: 0px;
+  left: 100%;
+}
+
+.foundation-mq {
+  font-family: "small=0em&medium=40em&large=64em&xlarge=75em&xxlarge=90em";
 }

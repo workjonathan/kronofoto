@@ -1,4 +1,5 @@
 import HTMX from "./htmx.js"
+import timeline from "./timeline.js"
 import {installButtons, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
 window.toggleLogin = toggleLogin
 
@@ -55,6 +56,10 @@ const init = () => {
         }
     })
 
+    $('.photos-timeline').each(function(i,e) {
+       var _timeline = new timeline();
+       _timeline.connect(e);
+    });
 
     $('#tag-search').autocomplete({
         source: '/tags',

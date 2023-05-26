@@ -2,80 +2,83 @@
 {% load widgets %}
 {% load krono_urls %}
 
+<div class="row">
+    <div class="columns large-4">
+        <div>
+            <h1><a href="#">{{ photo.location }}</a></h1>
+        </div>
 
-<div>
-    <h1>{{ photo.year }}{% if photo.circa %}c{% endif %}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</h1>
-</div>
+        <div>
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}
+        </div>
 
-<div>
-    <div>
-        <h2>{{ photo.location }}</h2>
-    </div>
+        <div>
+            <p>ID#: {{photo.accession_number}}</p>
+            <p>Contributed by <strong><a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></strong></p>
+        </div>
 
-    <div>
-        <p>ID#: {{photo.accession_number}}</p>
-        <p>Contributed by <strong><a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></strong></p>
-    </div>
+        <div class="text-small">
+            {% if photo.photographer %}
+            <p>Photographed by {{ photo.photographer }}</p>
+            {% endif %}
 
-    <div class="text-small">
-        {% if photo.photographer %}
-        <p>Photographed by {{ photo.photographer }}</p>
-        {% endif %}
+            {% if photo.scanner %}
+            <p>Digitized by {{ photo.scanner.display_format }}</p>
+            {% endif %}
+            <p>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</p>
+        </div>
 
-        {% if photo.scanner %}
-        <p>Digitized by {{ photo.scanner.display_format }}</p>
-        {% endif %}
-        <p>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</p>
-    </div>
-</div>
-
-<div>
-    <h4>Comments:</h4>
-    <p>
-        Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.
-    </p>
-</div>
-
-<!--    <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML"></div>-->
-
-<div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
-    <h4>Tags:</h4>
-    <div class="tags">
-    {% if tags or photo.terms.exists %}
-        <ul>
-        {% if tags %}
-            {% for tag in tags %}
-                <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a></li>
-            {% endfor %}
-        {% endif %}
-        {% if photo.terms.exists %}
-            {% for term in photo.terms.all %}
-            <li><a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a></li>
-            {% endfor %}
-        {% endif %}
-        </ul>
-    {% endif %}
-        <p>
-            <a class="link--icon" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}"><i class="fa fa-plus-circle"></i>Add new tag</a>
-        </p>
-
-        <div class="tags__tk-labels">
-            <label>TK Labels:</label>
+        {% if photo.notices %}
+        <div class="context-labels">
+            <h3>Local Contexts</h3>
             <div>
-                <a class="tk-label tk-label--1">TK Label</a>
-                <a class="tk-label tk-label--2">TK Label</a>
-                <a class="tk-label tk-label--3">TK Label</a>
+                {% for notice in photo.notices %}
+                <img src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif%}
+
+    </div>
+
+    <div class="columns large-8">
+        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
+            <h3>Tags:</h3>
+            <div class="tags">
+                {% if tags or photo.terms.exists %}
+                <ul>
+                    {% if tags %}
+                    {% for tag in tags %}
+                    <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a></li>
+                    {% endfor %}
+                    {% endif %}
+                    {% if photo.terms.exists %}
+                    {% for term in photo.terms.all %}
+                    <li><a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a></li>
+                    {% endfor %}
+                    {% endif %}
+                </ul>
+                {% endif %}
+                <p>
+                    <a class="link--icon" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}"><i class="fa fa-plus-circle"></i>Add new tag</a>
+                </p>
+            </div>
+
+
+            <div class="form form--add-tag hidden">
+                add a new tag:
+                <input /><br>
+                <button id="add-tag-button-in-metadata-popup">add</button>
+                <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
+            </div>
+
+        </div>
+
+        <div>
+            <h3>Comments:</h3>
+            <div class="indent comments">
+                {{ photo.caption | markdown }}
             </div>
         </div>
     </div>
-
-
-    <div class="form form--add-tag hidden">
-        add a new tag:
-            <input /><br>
-        <button id="add-tag-button-in-metadata-popup">add</button>
-            <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
-    </div>
-
-<!--    <div class="metadata-2a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">-->
 </div>

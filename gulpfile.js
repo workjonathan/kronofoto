@@ -49,7 +49,7 @@ gulp.task('build:sass', function () {
 
 gulp.task('watch:all', function () {
     gulp.watch(path.join(config.root, '/scss/**/*.scss'), gulp.series('build:sass'));
-    gulp.watch([path.join(config.root, '/js/main-dev.js'), path.join(config.root, '/js/kronofoto-dev.js')], gulp.series('build:js'));
+    gulp.watch([path.join(config.root, '/js/**/*.js'), path.join('!' + config.root, '/js/kronofoto.js')], gulp.series('build:js'));
 });
 
 gulp.task('build:all', function() {

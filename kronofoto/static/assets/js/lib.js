@@ -1,17 +1,17 @@
 import {enableMarkerDnD} from "./drag-drop.js"
-
 import $ from 'jquery'
 
-window.jQueryOrig = window.$;
-window.jQuery = window.$ = $;
-
 // Foundation
-import { Foundation } from 'foundation-sites/js/foundation.core.js'
-import { Toggler } from 'foundation-sites/js/foundation.toggler.js'
-Foundation.plugin(Toggler, 'Toggler');
+import { Foundation, Toggler, Tooltip, Box, MediaQuery, Triggers } from 'foundation-sites'
 
-$(document).ready(function() {
-    Foundation.addToJquery($);
+window.jQueryOrig = window.$
+window.jQuery = window.$ = $
+
+Foundation.MediaQuery = MediaQuery;
+Foundation.plugin(Toggler, 'Toggler');
+Foundation.plugin(Tooltip, 'Tooltip');
+
+$(document).ready(function($) {
     $(document).foundation();
 });
 
@@ -19,7 +19,7 @@ $(document).on('on.zf.toggler', function(e) {
     $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
 });
 
-window.jQuery = window.$ = window.jQueryOrig;
+window.jQuery = window.$ = window.jQueryOrig
 
 export const toggleLogin = evt => {
     const el = document.querySelector('#login');

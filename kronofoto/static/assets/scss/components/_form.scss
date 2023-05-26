@@ -1,6 +1,31 @@
+$form-spacing: 16px;
+$switch-background: $medium-gray !default;
+$switch-background-active: var(--fp-main-blue);
+
 .form {
-  &__radios {
-    font-size: 18px;
-    @extend .radios;
+  input[type=text] {
+    margin-bottom: $form-spacing;
+  }
+  .switch-group {
+    display: flex;
+    flex-direction: row;
+    &__left-label {
+      cursor: pointer;
+      line-height: 32px;
+      padding-right: 16px;
+    }
+    &__right-label {
+      cursor: pointer;
+      line-height: 32px;
+      padding-left: 16px;
+    }
+    .switch {
+      .switch-paddle {
+        border-radius: 20px;
+        &:after {
+          border-radius: 20px;
+        }
+      }
+    }
   }
 }

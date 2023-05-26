@@ -1,14 +1,15 @@
 //$timelineHeight: 110px;
 $galleryBg: #4C4C4C;
 $gallerySidesBg: #666666;
-$gallerySidesSize: 570px;
-$timelineHeight: 110px;
-$headerHeight: 60px;
+$gallerySidesSize: 260px;
+$thumbnailsHeight: 120px;
+$timelineHeight: 65px;
+$headerHeight: 80px;
 
 .gallery {
 
   position: relative;
-  height: calc(100vh - ($headerHeight + $timelineHeight));
+  height: calc(100vh - ($headerHeight + $timelineHeight + $thumbnailsHeight));
 
   &__image {
     height: 100%;
@@ -59,29 +60,31 @@ $headerHeight: 60px;
 
   }
 
-  &__left-space {
+  &__left-space, &__right-space {
     position:absolute;
-    left:0px;
     background: $gallerySidesBg;
     height: 100%;
-    width: calc(50% - $gallerySidesSize);
+    width: $gallerySidesSize;
+  }
+
+  &__left-space {
+    left: 0px;
   }
 
   &__right-space {
-    position:absolute;
     right:0px;
-    background: $gallerySidesBg;
-    height: 100%;
-    width: calc(50% - $gallerySidesSize);
   }
 
   &__background{
     position: absolute;
     z-index: -1;
-    width: 100%;
+    width: calc(100% - ($gallerySidesSize*2));
     height: 100%;
     background: $galleryBg;
     margin:auto;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   &__controls {
@@ -92,12 +95,13 @@ $headerHeight: 60px;
     z-index: 100;
     position: absolute;
     top: 0px;
-    left: 0px;
-    width: 100%;
+    left: 50%;
+    width: calc(100% - ($gallerySidesSize*2));
     height: 80px;
     display: flex;
     justify-content: flex-end;
     padding: 20px;
+    transform: translateX(-50%);
     > button {
       background: none;
       border: none;
@@ -126,11 +130,12 @@ $headerHeight: 60px;
   }
 
   &__popups {
-    width: 100%;
+    width: calc(100% - ($gallerySidesSize*2));
     position: absolute;
     bottom: 0px;
-    left: 0px;
-    min-height: 300px;
+    left: 50%;
+    transform: translateX(-50%);
+    //min-height: 300px;
     z-index: 150;
   }
 

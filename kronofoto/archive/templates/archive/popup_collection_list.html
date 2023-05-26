@@ -1,16 +1,32 @@
-<div class="photo-menu-popup__title">Add to List</div>
+<div class="row">
+    <div class="columns large-4 container--scroll">
+        <h1 class="h1">My Lists</h1>
 
-<form method="post" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
-    {% csrf_token %}
-    {{ new_list_form.as_p }}
-    <input type="submit" value="add">
-</form>
-
-<form class="form--radios" method="post" hx-post="{% url "kronofoto:popup-add-to-list" photo=view.kwargs.photo %}">
-    {% csrf_token %}
-    <div class="form__title">My lists</div>
-    <div class="form__radios">
-        {{ form.as_ul }}
+        <form method="post" class="form" hx-target="closest .photo-menu-popup__wrapper" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
+            {% csrf_token %}
+            {{ new_list_form.as_p }}
+            <div class="switch-group">
+                <label class="switch-group__left-label" for="list-private">Public</label>
+                <div class="switch">
+                    <input class="switch-input" id="list-private" type="checkbox" name="list-private">
+                    <label class="switch-paddle" for="list-private">
+                        <span class="show-for-sr">Private List</span>
+                    </label>
+                </div>
+                <label class="switch-group__right-label" for="list-private">Private</label>
+            </div>
+            <input type="submit" value="add" class="sticky-parent">
+        </form>
     </div>
-    <input type="submit" value="save">
-</form>
+    <div class="large-6 large-offset-2 columns container--scroll">
+        <form class="form" method="post" hx-post="{% url "kronofoto:popup-add-to-list" photo=view.kwargs.photo %}">
+            {% csrf_token %}
+            <div class="h4">Save to a list</div>
+            <label class="text-tiny">*private list</label>
+            <ul class="checkboxes">
+                {{ form.as_ul }}
+            </ul>
+            <input type="submit" value="save" class="sticky-parent">
+        </form>
+    </div>
+</div>
