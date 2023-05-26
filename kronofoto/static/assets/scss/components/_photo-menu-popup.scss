@@ -6,7 +6,7 @@
 
 $popupBg: rgba(51, 51, 51, 0.95);
 //$popupMaxHeight: calc(100vh - 170px);
-$popupMaxHeight: 45vh;
+$popupMaxHeight: 40vh;
 
 @mixin hover-scrollbar {
   overflow-y: scroll;

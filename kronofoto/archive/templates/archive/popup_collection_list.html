@@ -6,14 +6,13 @@
             {% csrf_token %}
             {{ new_list_form.as_p }}
             <div class="switch-group">
-                <label class="switch-group__left-label" for="list-private">Public</label>
                 <div class="switch">
                     <input class="switch-input" id="list-private" type="checkbox" name="list-private">
                     <label class="switch-paddle" for="list-private">
                         <span class="show-for-sr">Private List</span>
                     </label>
                 </div>
-                <label class="switch-group__right-label" for="list-private">Private</label>
+                <label class="switch-group__right-label" for="list-private">Make Private</label>
             </div>
             <input type="submit" value="add" class="sticky-parent">
         </form>

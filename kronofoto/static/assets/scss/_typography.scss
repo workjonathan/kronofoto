@@ -103,8 +103,8 @@ label {
 [data-tooltip] {
   width: 16px;
   height: 16px;
-  border: none;
-  position: absolute;
+  border: none !important;
+  position: absolute !important;
   bottom: -8px;
   left: 0px;
   opacity: .75;
