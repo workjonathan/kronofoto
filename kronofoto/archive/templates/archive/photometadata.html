@@ -65,7 +65,7 @@
 
         {% if photo.notices %}
         <div class="context-labels">
-            <h3>Local Contexts</h3>
+            <h3>Local Contexts:</h3>
             <div>
                 {% for notice in photo.notices %}
                 <img src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
