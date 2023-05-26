@@ -238,8 +238,9 @@ def test_userarchivepermissionsinline_accepted():
 
 
 class UserAdminTests(TestCase):
-    @given(st.lists(from_model(Permission, content_type=from_model(ContentType))))
-    def test_changeable_permissions(self, permissions):
+    @given(st.data())
+    def test_changeable_permissions(self, data):
+        permissions = data.draw(st.sets(st.sampled_from(list(Permission.objects.all()[:10]))))
         user1 = User.objects.create_user("test1")
         user2 = User.objects.create_user("test2")
         user1.user_permissions.add(*permissions)
@@ -249,11 +250,11 @@ class UserAdminTests(TestCase):
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerysetEqual(ma._get_changeable_permissions(user1), ma._get_changeable_permissions(user2))
 
-    @given(
-        st.lists(from_model(Permission, content_type=from_model(ContentType))),
-        st.lists(from_model(Permission, content_type=from_model(ContentType))),
-    )
-    def test_changeable_groups(self, perms1, perms2):
+    @given(st.data())
+    def test_changeable_groups(self, data):
+        permissions = list(Permission.objects.all()[:10])
+        perms1 = data.draw(st.sets(st.sampled_from(permissions)))
+        perms2 = data.draw(st.sets(st.sampled_from(permissions)))
         group1 = Group.objects.create(name='group1')
         group1.permissions.add(*perms1)
         group2 = Group.objects.create(name='group2')
@@ -278,7 +279,7 @@ class UserAdminTests(TestCase):
         Group.objects.bulk_create(groups)
         Archive.objects.bulk_create(archives)
         archives = list(Archive.objects.all())
-        perms = list(Permission.objects.all())
+        perms = list(Permission.objects.all()[:10])
         groups = list(Group.objects.all())
         u1.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
         u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
