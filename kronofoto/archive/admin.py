@@ -2,7 +2,7 @@ from django.contrib.gis import admin
 from django.contrib import admin as base_admin
 from django.contrib.auth.models import User, Permission, Group
 from django.contrib.admin.models import LogEntry
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
@@ -553,21 +553,65 @@ class UserArchivePermissionsInline(base_admin.TabularInline):
             kwargs['queryset'] = Permission.objects.filter(supported_permissions)
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-class block_escalation:
-    def __init__(self, *, editor, user):
-        self.editor = editor
+class PermissionAnalyst:
+    def __init__(self, user):
         self.user = user
 
+    def get_archive_permissions(self):
+        sets = defaultdict(set)
+        objects = (Permission.objects
+            .filter(archiveuserpermission__user__id=self.user.id)
+            .annotate(archive_id=F('archiveuserpermission__archive__id'))
+        )
+        for obj in objects:
+            sets[obj.archive_id].add(obj)
+        return sets
+
+    def get_changeable_permissions(self):
+        if self.user.is_superuser:
+            return Permission.objects.all()
+        q = Q(pk=self.user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
+        return Permission.objects.filter(Exists(User.objects.filter(q)))
+
+    def get_changeable_groups(self):
+        if self.user.is_superuser:
+            return Group.objects.all()
+        # Exclude groups which have at least one permission this user does not effectively have.
+
+        # Get permissions this user does not have.
+        # Filter them to match any given group.
+        q = Q(pk=self.user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
+        missing = Exists(Permission.objects.exclude(Exists(User.objects.filter(q))).filter(group=OuterRef('pk')))
+        # Exclude groups which have at least one match.
+        return Group.objects.exclude(missing)
+
+class block_group_escalation:
+    def __init__(self, *, editor, group, PAClass=PermissionAnalyst):
+        self.editor = PAClass(editor)
+        self.group = group
 
     def __enter__(self):
-        self.changeable_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.editor)
+        self.changeable_perms = set(self.editor.get_changeable_permissions())
+        self.old_perms = set(self.group.permissions.all())
+
+    def __exit__(self, *args, **kwargs):
+        new_perms = set(self.group.permissions.all())
+        self.group.permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
+
+class block_escalation:
+    def __init__(self, *, editor, user, PAClass=PermissionAnalyst):
+        self.editor = PAClass(editor)
+        self.user = user
+
+    def __enter__(self):
+        self.changeable_archive_permissions = self.editor.get_archive_permissions()
         self.old_archives = set(self.user.archiveuserpermission_set.all())
-        self.old_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.user)
+        self.old_archive_permissions = self.editor.get_archive_permissions()
 
         self.old_perms = set(self.user.user_permissions.all())
         self.old_groups = set(self.user.groups.all())
-        self.changeable_perms = set(KronofotoUserAdmin._get_changeable_permissions(self.editor))
-        self.changeable_groups = set(KronofotoUserAdmin._get_changeable_groups(self.editor))
+        self.changeable_perms = set(self.editor.get_changeable_permissions())
+        self.changeable_groups = set(self.editor.get_changeable_groups())
 
     def __exit__(self, *args, **kwargs):
         new_perms = set(self.user.user_permissions.all())
@@ -576,7 +620,7 @@ class block_escalation:
         self.user.groups.set((self.old_groups - self.changeable_groups) | (self.changeable_groups & new_groups))
 
         new_archives = set(self.user.archiveuserpermission_set.all())
-        new_archive_permissions = KronofotoUserAdmin._get_archive_permissions(self.user)
+        new_archive_permissions = self.editor.get_archive_permissions()
         changed_archive_perms = self.old_archives | new_archives
         for related in changed_archive_perms:
             assign = (self.old_archive_permissions[related.archive.id] - (self.changeable_archive_permissions[related.archive.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.archive.id] | self.changeable_perms) & new_archive_permissions[related.archive.id])
@@ -587,6 +631,7 @@ class block_escalation:
                 if assign:
                     obj = Archive.users.through.objects.create(archive=related.archive, user=self.user)
                     obj.permission.set(assign)
+
 
 class KronofotoUserAdmin(UserAdmin):
     inlines = (UserArchivePermissionsInline, UserTagInline,)
@@ -602,48 +647,31 @@ class KronofotoUserAdmin(UserAdmin):
         with block_escalation(editor=request.user, user=instance):
             super().save_related(request, form, formsets, change)
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        permission_analyst = PermissionAnalyst(request.user)
+        if db_field.name == 'groups':
+            kwargs['queryset'] = permission_analyst.get_changeable_groups()
+        if db_field.name == 'user_permissions':
+            kwargs['queryset'] = permission_analyst.get_changeable_permissions()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
-    @classmethod
-    def _get_archive_permissions(cls, user):
-        sets = defaultdict(set)
-        objects = (Permission.objects
-            .filter(archiveuserpermission__user__id=user.id)
-            .annotate(archive_id=F('archiveuserpermission__archive__id'))
-        )
-        for obj in objects:
-            sets[obj.archive_id].add(obj)
-        return sets
+class KronofotoGroupAdmin(GroupAdmin):
 
-    @classmethod
-    def _get_changeable_permissions(cls, user):
-        if user.is_superuser:
-            return Permission.objects.all()
-        q = Q(pk=user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
-        return Permission.objects.filter(Exists(User.objects.filter(q)))
-
-    @classmethod
-    def _get_changeable_groups(cls, user):
-        if user.is_superuser:
-            return Group.objects.all()
-        # Exclude groups which have at least one permission this user does not effectively have.
-
-        # Get permissions this user does not have.
-        # Filter them to match any given group.
-        q = Q(pk=user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
-        missing = Exists(Permission.objects.exclude(Exists(User.objects.filter(q))).filter(group=OuterRef('pk')))
-        # Exclude groups which have at least one match.
-        return Group.objects.exclude(missing)
+    def save_related(self, request, form, formsets, change):
+        instance = form.instance
+        with block_group_escalation(editor=request.user, group=instance):
+            super().save_related(request, form, formsets, change)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == 'groups':
-            kwargs['queryset'] = self._get_changeable_groups(request.user)
-        if db_field.name == 'user_permissions':
-            kwargs['queryset'] = self._get_changeable_permissions(request.user)
+        if db_field.name == 'permissions':
+            kwargs['queryset'] = PermissionAnalyst(request.user).get_changeable_permissions()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
 admin.site.unregister(User)
 admin.site.register(User, KronofotoUserAdmin)
+admin.site.unregister(Group)
+admin.site.register(Group, KronofotoGroupAdmin)
 
 @admin.register(LogEntry)
 class LogEntryAdmin(base_admin.ModelAdmin):

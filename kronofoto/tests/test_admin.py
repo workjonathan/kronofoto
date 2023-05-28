@@ -1,6 +1,8 @@
 from django.test import Client, RequestFactory, SimpleTestCase
 from django.contrib.auth.models import AnonymousUser, User, Group
-from hypothesis import given, strategies as st, note
+from django.db import transaction
+from hypothesis import given, strategies as st, note, settings as hsettings
+from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes
 from hypothesis.extra.django import TestCase, from_model
 from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
@@ -13,6 +15,7 @@ from archive.models.photosphere import PhotoSphere
 from .util import donors, small_gif, archives
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.contenttypes.models import ContentType
+import pytest
 
 def test_permissionmixin_hasadd():
     class Base:
@@ -236,6 +239,95 @@ def test_userarchivepermissionsinline_accepted():
     request = RequestFactory().post('/')
     formfield = ma.formfield_for_manytomany(Archive.users.through.permission.field, request)
 
+class UserPrivilegeEscalationTest(RuleBasedStateMachine):
+    permissions = Bundle("permissions")
+    groups = Bundle("groups")
+    some_permissions = Bundle("some_permissions")
+    some_groups = Bundle("some_groups")
+    a_group = Bundle("a_group")
+    a_user = Bundle("a_user")
+    an_editor = Bundle("an_editor")
+    uid = 0
+
+    def __init__(self):
+        super().__init__()
+        self.atomic = transaction.atomic()
+        self.atomic.__enter__()
+
+    def teardown(self):
+        transaction.set_rollback(True)
+        self.atomic.__exit__(None, None, None)
+
+    @initialize(target=permissions)
+    def initialize(self):
+        return list(Permission.objects.all())
+
+    @rule(target=an_editor)
+    def make_a_superuser(self):
+        self.uid = self.uid + 1
+        u = User.objects.create_superuser(str(self.uid))
+        u.get_all_permissions()
+        return u
+
+    @rule(target=a_user)
+    def make_a_user(self):
+        self.uid = self.uid + 1
+        return User.objects.create_user(str(self.uid))
+
+    @rule(editor=an_editor)
+    def no_escalation(self, editor):
+        assert editor.get_all_permissions() >= User.objects.get(id=editor.id).get_all_permissions()
+
+
+    @rule(target=an_editor, _=a_user, data=st.data())
+    def pick_an_editor(self, data, _):
+        u = data.draw(st.sampled_from(list(User.objects.all())))
+        u.get_all_permissions()
+        return u
+
+    @rule(target=a_user, _=a_user, data=st.data())
+    def pick_a_user(self, data, _):
+        return data.draw(st.sampled_from(list(User.objects.all())))
+
+    @rule(target=a_group, group=from_model(Group))
+    def make_a_group(self, group):
+        return group
+
+    @rule(target=a_group, _=a_group, data=st.data())
+    def pick_a_group(self, _, data):
+        return data.draw(st.sampled_from(list(Group.objects.all())))
+
+    @rule(target=some_groups, _=a_group, data=st.data())
+    def pick_some_groups(self, data, _):
+        return data.draw(st.sets(st.sampled_from(list(Group.objects.all()))))
+
+    @rule(target=some_permissions, perms=permissions, data=st.data())
+    def pick_some_permissions(self, perms, data):
+        return data.draw(st.sets(st.sampled_from(perms)))
+
+    @rule(target=groups, group=from_model(Group))
+    def add_group(self, group):
+        return list(Group.objects.all())
+
+    @rule(editor=an_editor, user=a_user, groups=some_groups)
+    def change_user_groups(self, editor, user, groups):
+        with block_escalation(editor=editor, user=user):
+            user.groups.set(groups)
+
+    @rule(editor=an_editor, user=a_user, perms=some_permissions)
+    def change_user_perms(self, editor, user, perms):
+        with block_escalation(editor=editor, user=user):
+            user.user_permissions.set(perms)
+
+    @rule(editor=an_editor, group=a_group, perms=some_permissions)
+    def change_group_perms(self, editor, perms, group):
+        with block_group_escalation(editor=editor, group=group):
+            group.permissions.set(perms)
+
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 100, deadline=None)
+
+class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
+    pass
 
 class UserAdminTests(TestCase):
     @given(st.data())
@@ -247,8 +339,7 @@ class UserAdminTests(TestCase):
         group = Group.objects.create(name='groupname')
         group.permissions.add(*permissions)
         user2.groups.add(group)
-        ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
-        self.assertQuerysetEqual(ma._get_changeable_permissions(user1), ma._get_changeable_permissions(user2))
+        self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
 
     @given(st.data())
     def test_changeable_groups(self, data):
@@ -264,7 +355,7 @@ class UserAdminTests(TestCase):
         user1.groups.add(group1)
         user2.user_permissions.add(*perms1)
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
-        self.assertQuerysetEqual(ma._get_changeable_groups(user1), ma._get_changeable_groups(user2), ordered=False)
+        self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
     @given(
         st.booleans(),
