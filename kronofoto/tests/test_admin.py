@@ -2,7 +2,7 @@ from django.test import Client, RequestFactory, SimpleTestCase
 from django.contrib.auth.models import AnonymousUser, User, Group
 from django.db import transaction
 from hypothesis import given, strategies as st, note, settings as hsettings
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes
+from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from hypothesis.extra.django import TestCase, from_model
 from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
@@ -246,13 +246,14 @@ class UserPrivilegeEscalationTest(RuleBasedStateMachine):
     some_groups = Bundle("some_groups")
     a_group = Bundle("a_group")
     a_user = Bundle("a_user")
-    an_editor = Bundle("an_editor")
+    #an_editor = Bundle("an_editor")
     uid = 0
 
     def __init__(self):
         super().__init__()
         self.atomic = transaction.atomic()
         self.atomic.__enter__()
+        self.editor = None
 
     def teardown(self):
         transaction.set_rollback(True)
@@ -262,28 +263,28 @@ class UserPrivilegeEscalationTest(RuleBasedStateMachine):
     def initialize(self):
         return list(Permission.objects.all())
 
-    @rule(target=an_editor)
+    @rule()
     def make_a_superuser(self):
         self.uid = self.uid + 1
-        u = User.objects.create_superuser(str(self.uid))
-        u.get_all_permissions()
-        return u
+        self.editor = User.objects.create_superuser(str(self.uid))
+        self.editor.get_all_permissions()
+        #return u
 
     @rule(target=a_user)
     def make_a_user(self):
         self.uid = self.uid + 1
         return User.objects.create_user(str(self.uid))
 
-    @rule(editor=an_editor)
-    def no_escalation(self, editor):
-        assert editor.get_all_permissions() >= User.objects.get(id=editor.id).get_all_permissions()
+    @precondition(lambda self: self.editor)
+    @invariant()
+    def no_escalation(self):
+        assert self.editor.get_all_permissions() >= User.objects.get(id=self.editor.id).get_all_permissions()
 
 
-    @rule(target=an_editor, _=a_user, data=st.data())
+    @rule(data=st.data(), _=a_user)
     def pick_an_editor(self, data, _):
-        u = data.draw(st.sampled_from(list(User.objects.all())))
-        u.get_all_permissions()
-        return u
+        self.editor = data.draw(st.sampled_from(list(User.objects.all())))
+        self.editor.get_all_permissions()
 
     @rule(target=a_user, _=a_user, data=st.data())
     def pick_a_user(self, data, _):
@@ -309,19 +310,22 @@ class UserPrivilegeEscalationTest(RuleBasedStateMachine):
     def add_group(self, group):
         return list(Group.objects.all())
 
-    @rule(editor=an_editor, user=a_user, groups=some_groups)
-    def change_user_groups(self, editor, user, groups):
-        with block_escalation(editor=editor, user=user):
+    @precondition(lambda self: self.editor)
+    @rule(user=a_user, groups=some_groups)
+    def change_user_groups(self, user, groups):
+        with block_escalation(editor=self.editor, user=user):
             user.groups.set(groups)
 
-    @rule(editor=an_editor, user=a_user, perms=some_permissions)
-    def change_user_perms(self, editor, user, perms):
-        with block_escalation(editor=editor, user=user):
+    @precondition(lambda self: self.editor)
+    @rule(user=a_user, perms=some_permissions)
+    def change_user_perms(self, user, perms):
+        with block_escalation(editor=self.editor, user=user):
             user.user_permissions.set(perms)
 
-    @rule(editor=an_editor, group=a_group, perms=some_permissions)
-    def change_group_perms(self, editor, perms, group):
-        with block_group_escalation(editor=editor, group=group):
+    @precondition(lambda self: self.editor)
+    @rule(group=a_group, perms=some_permissions)
+    def change_group_perms(self, perms, group):
+        with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
 UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 100, deadline=None)
