@@ -1,0 +1,126 @@
+
+// Foundation Dependencies
+@import '../_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+@import '../_vendor/sassy-lists/stylesheets/helpers/true';
+@import '../_vendor/sassy-lists/stylesheets/functions/contain';
+@import '../_vendor/sassy-lists/stylesheets/functions/purge';
+@import '../_vendor/sassy-lists/stylesheets/functions/remove';
+@import '../_vendor/sassy-lists/stylesheets/functions/replace';
+@import '../_vendor/sassy-lists/stylesheets/functions/to-list';
+
+// Foundation Utilities
+@import 'util/util';
+
+// Foundation Global styles
+@import 'global';
+@import 'typography/typography';
+
+// Foundation Grids
+@import 'grid/grid';
+@import 'xy-grid/xy-grid';
+
+@import 'kronofoto';
+@import 'typography';
+
+// Kronofoto Components
+@import 'components/checkboxes';
+@import 'components/form';
+@import 'components/gallery';
+@import 'components/header';
+@import 'components/input';
+@import 'components/photo-menu-popup';
+@import 'components/tags';
+@import 'components/timeline';
+@import 'components/button';
+
+
+// Foundation Components
+@import 'components/switch';
+@import 'components/tooltip';
+
+// Foundation Helpers
+@import 'components/float';
+@import 'components/visibility';
+@import 'prototype/prototype';
+@import 'components/flex';
+
+@include foundation-switch;
+@include foundation-tooltip;
+
+// Foundation Components
+@include foundation-visibility-classes;
+@include foundation-xy-grid-classes;
+@include foundation-flex-classes;
+@include foundation-flex-grid;
+
+*, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--fp-main-font);
+}
+
+
+img {
+  /*max-height: calc(100vh - 278px);*/
+}
+
+
+body {
+  /*display: grid;
+  height: 100vh;
+  grid-template: "header" 8vh
+                 "main" 92vh
+                 / 1fr;*/
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--fp-main-blue);
+  text-decoration: none;
+}
+
+input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+  -moz-appearance:none; /* Firefox */
+  -webkit-appearance:none; /* Safari and Chrome */
+  appearance:none;
+  height: 34px;
+  padding: 4px 8px;
+  background-color: var(--fp-light-grey);
+  color: #333;
+  border: none;
+  border-radius: 2px;
+  box-shadow: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+select {
+  background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
+  /* !important used for overriding all other customisations */
+}
+
+.float-right {
+  float: right;
+}
+
+.sticky-parent {
+  position: sticky;
+  bottom: 0px;
+  left: 100%;
+}
+
+.foundation-mq {
+  font-family: "small=0em&medium=40em&large=64em&xlarge=75em&xxlarge=90em";
+}

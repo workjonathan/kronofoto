@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <g id="Layer_2" data-name="Layer 2">
-    <g id="timeline_view" data-name="timeline view">
-      <g id="timeline_view-2" data-name="timeline view-2">
-        <rect class="cls-1" x="30.8" y="25.73" width="4" height="13.89" transform="translate(-13.5 32.76) rotate(-45)"/>
-      </g>
-      <path class="cls-1" d="M20.79,9c-6.58,0-11.91,5.33-11.91,11.91s5.33,11.91,11.91,11.91,11.91-5.33,11.91-11.91-5.33-11.91-11.91-11.91Zm7.52,13.83h-5.6v5.6h-3.85v-5.6h-5.59v-3.85h5.59v-5.59h3.85v5.59h5.6v3.85Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="zoom_expand" data-name="zoom/expand" transform="translate(-1551 139)">
+        <g id="zoom-white" transform="translate(1546 -144)">
+            <g id="Group_12" data-name="Group 12">
+                <path id="Path_28" data-name="Path 28" d="M14.6,26.65V35.4h8.75" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+                <path id="Path_29" data-name="Path 29" d="M35.4,23.35V14.6H26.65" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            </g>
+            <path id="Path_30" data-name="Path 30" d="M22.28,27.72l-.68.68-7,7" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+            <line id="Line_16" data-name="Line 16" x1="7" y2="7" transform="translate(28.4 14.6)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="3"/>
+        </g>
+        <rect id="Rectangle_43" data-name="Rectangle 43" width="40" height="40" transform="translate(1551 -139)" fill="none"/>
     </g>
-  </g>
 </svg>

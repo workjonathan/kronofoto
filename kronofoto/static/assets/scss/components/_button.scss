@@ -1,0 +1,234 @@
+@use 'sass:math';
+
+@function rem($value) {
+  $remValue: math.div($value, 16px) * 1rem;
+  @return $remValue;
+}
+
+@mixin button--round {
+    border-radius: 24px;
+    text-transform: uppercase;
+    color: $white;
+    background-color: var(--fp-main-blue);
+    @include font-paragraph2;
+    line-height: 48px;
+    padding: 0px 35px;
+    border: none;
+    cursor: pointer;
+    &:hover {
+      background-color: var(--fp-main-color-darker);
+    }
+}
+
+@mixin button--default {
+  padding: 11px 15px;
+  text-transform: uppercase;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+a.button, button#login-btn, .logout-btn, input[type="submit"] {
+  //@extend .button--default;
+}
+
+a.button, input[type="submit"] {
+  background-color: var(--fp-main-blue);
+  color: white;
+}
+
+button#login-btn, .logout-btn {
+  background-color: white;
+  color: var(--fp-main-blue);
+}
+
+button#login-btn:hover, .logout-btn:hover, input[type="submit"]:hover {
+  background-color: var(--fp-main-blue);
+  color: white;
+}
+button#login-btn:hover {
+  color: var(--fp-light-grey);
+}
+
+.logout-btn {
+  background-color: var(--fp-main-grey);
+  color: var(--fp-main-blue);
+
+  a {
+    color: var(--fp-main-blue);
+    text-decoration: none;
+  }
+
+  &:hover a {
+    color: white;
+  }
+}
+
+.button-circular {
+  display: block;
+  width: rem(48px);
+  height: rem(48px);
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  transition: background-color 0.4s $ease-out-expo, color 0.2s $ease-out-expo;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+
+  svg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  * {
+    pointer-events: none;
+  }
+
+  & + & {
+    margin-left: rem(4px);
+  }
+
+
+  color: $black;
+  background-color: transparent;
+
+  &:not(.button-circular--transparent):hover {
+    background-color: rgba($black, 0.06);
+  }
+
+  &.button-circular--transparent:hover {
+    color: rgba($black, 0.6);
+  }
+
+  .header-nav--transparent:not(.has-shadow) &:hover {
+    background-color: rgba($black, 0.4);
+  }
+
+  &--has-background {
+    background-color: rgba($black, 0.06);
+    backdrop-filter: blur(20px);
+    will-change: opacity, transform;
+  }
+
+  &--has-background:hover {
+    background-color: rgba($black, 0.12);
+  }
+
+  &--disabled {
+    color: rgba($black, 0.4);
+  }
+}
+
+.button-circular--separator-before {
+  .button-circular + & {
+    margin-left: 1rem;
+  }
+
+  &::before {
+    content: "";
+    width: 1px;
+    height: 100%;
+    position: absolute;
+    left: -0.5rem;
+    background-color: rgba($black, 0.06);
+  }
+}
+
+.button-circular--separator-after {
+  &::after {
+    content: "";
+    width: 1px;
+    height: 100%;
+    position: absolute;
+    right: rem(-12px);
+
+    .button-circular + & {
+      margin-left: rem(24px);
+    }
+
+    background-color: rgba($black, 0.06);
+
+  }
+}
+
+.button-circular__icon {
+  path,
+  circle,
+  polyline,
+  line {
+    stroke-width: 2px;
+
+    @media (min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      stroke-width: 1.5px;
+    }
+  }
+}
+
+.button-circular__label {
+  position: absolute;
+  z-index: 9999;
+  left: 50%;
+  top: 100%;
+  font-size: rem(11px);
+  font-weight: 600;
+  padding: rem(2px) rem(8px);
+  border-radius: rem(2px);
+  visibility: hidden;
+  opacity: 0;
+  transform: translate(-50%, rem(4px));
+  transition: transform 0.2s $ease-out-expo, opacity 0.2s $ease-out-expo, visibility 0s linear 0.2s;
+  white-space: nowrap;
+  pointer-events: none;
+
+  &::before {
+    content: "";
+    position: relative;
+    margin: rem(-6px) auto 0 auto;
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: rem(8px) solid transparent;
+    border-right: rem(8px) solid transparent;
+    border-bottom: rem(6px) solid transparent;
+    transition: opacity 0.2s $ease-out-expo;
+    opacity: 0;
+  }
+
+  background-color: $black;
+  color: $white;
+
+  &::before {
+    border-bottom-color: $black;
+  }
+
+}
+
+.button-circular__label {
+  .button-circular:hover & {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, 0px);
+    transition: transform 0.4s $ease-out-expo, opacity 0.4s $ease-out-expo, visibility 0s linear 0s;
+
+    &::before {
+      transition: opacity 0.4s $ease-out-expo;
+      opacity: 1;
+    }
+  }
+
+  .button-circular--no-label & {
+    display: none;
+  }
+}
+
+.button-circular__text {
+  display: block;
+  font-weight: $font-weight-semibold;
+  font-size: rem(18px);
+  text-align: center;
+  line-height: rem(48px);
+}

@@ -1,0 +1,55 @@
+name: fortepan
+proxy:
+  appserver:
+    - fortepan.lndo.site
+excludes:
+  - node_modules
+services:
+  appserver:
+    type: compose
+    services:
+      build: .
+      command: tail -f /dev/null
+    command: su -c 'python /app/kronofoto/manage.py runserver 0.0.0.0:80' www-data
+    build:
+      - cd /app && pip install --upgrade pip && pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org -r requirements.txt
+      - cd /app && npm install
+    scanner: true
+    overrides:
+      environment:
+        PYTHONPATH: "/app"
+  db:
+    type: postgres:10
+    portforward: true
+    creds:
+      user: postgres
+      password:
+      database: fortepan
+  node:
+    type: node
+    globals:
+      gulp-cli: latest
+tooling:
+  django-admin:
+    service: appserver
+    cmd: django-admin
+  python:
+    service: appserver
+    cmd: python
+  pip:
+    service: appserver
+    cmd: pip
+  manage:
+    service: appserver
+    dir: /app/kronofoto
+    cmd: python manage.py
+  runserver:
+    service: appserver
+    dir: /app/kronofoto
+    cmd: python manage.py runserver 0.0.0.0:80
+  psql:
+    service: db
+    cmd: psql -U postgres
+  npm:
+    service: node
+    dir: /app

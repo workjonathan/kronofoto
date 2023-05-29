@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <g id="timeline_view" data-name="timeline view">
-    <path class="cls-1" d="M24,8c-8.84,0-16,7.16-16,16s7.16,16,16,16,16-7.16,16-16-7.16-16-16-16Zm1.65,25.39h-3.31v-11.38h3.31v11.38Zm-1.26-14.86s-.05,0-.07,0v-.07h-.64c-1.08,0-1.96-.88-1.96-1.96s.88-1.96,1.96-1.96h.64c1.08,0,1.96,.88,1.96,1.96,.04,1.08-.8,1.99-1.88,2.03Z"/>
-  </g>
+<svg id="info" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="info-white" transform="translate(-5 -5)">
+        <circle id="Ellipse_4" data-name="Ellipse 4" cx="13.26" cy="13.26" r="13.26" transform="translate(11.74 11.74)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="2.7"/>
+        <g id="Group_10" data-name="Group 10">
+            <path id="Path_21" data-name="Path 21" d="M21.95,24.53h3.52v6.02" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="2.7"/>
+            <line id="Line_9" data-name="Line 9" x2="6.96" transform="translate(21.95 30.55)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="2.7"/>
+            <circle id="Ellipse_5" data-name="Ellipse 5" cx="0.83" cy="0.83" r="0.83" transform="translate(24.26 18.96)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="2.7"/>
+        </g>
+    </g>
+    <rect id="Rectangle_36" data-name="Rectangle 36" width="40" height="40" fill="none"/>
 </svg>

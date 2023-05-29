@@ -1,4 +1,5 @@
 import HTMX from "./htmx.js"
+import timeline from "./timeline.js"
 import {installButtons, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
 window.toggleLogin = toggleLogin
 
@@ -55,6 +56,10 @@ const init = () => {
         }
     })
 
+    $('.photos-timeline').each(function(i,e) {
+       var _timeline = new timeline();
+       _timeline.connect(e);
+    });
 
     $('#tag-search').autocomplete({
         source: '/tags',
@@ -67,7 +72,6 @@ const init = () => {
     })
 
 
-
     $('#login-btn').click(() => {
         if($('#login').hasClass('gridden')) {
             $('.overlay').css('display', 'block')
@@ -75,7 +79,6 @@ const init = () => {
             $('.overlay').css('display', 'none')
         }
     })
-
 
     $('#search-box').focus(function() {
         $('#search-box-container').css('background','var(--fp-main-blue)')

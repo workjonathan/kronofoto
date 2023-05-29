@@ -1,0 +1,42 @@
+.tags {
+  font-size: 16px;
+  line-height: 20px;
+  line-spacing: 0.5em;
+  padding-left: 20px;
+  margin-bottom: 20px;
+  ul {
+    list-style-type: none;
+    display: flex;
+    flex-wrap: wrap;
+    //color: #A8B6D7; // TODO: Add to color palette, and maybe this should be dynamic?
+    color: var(--fp-main-blue);
+    margin-bottom: $global-margin;
+    li {
+      &:after {
+        content: ', ';
+        color: inherit;
+        white-space: break-spaces;
+      }
+      &:last-child:after {
+        display: none;
+      }
+    }
+  }
+  a {
+    font-size: inherit;
+    white-space: nowrap;
+  }
+}
+
+.context-labels {
+  margin-bottom: $global-margin;
+  img {
+    width: 2.2rem;
+    margin-right: 12px;
+  }
+  label {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: $font-weight-regular;
+  }
+}

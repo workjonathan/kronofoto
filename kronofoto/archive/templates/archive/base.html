@@ -11,7 +11,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <link type="text/css" rel="stylesheet" href="{% static "assets/css/index.css" %}">
+  <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}">
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
   <script
@@ -28,6 +28,8 @@
   --fp-light-grey: #efeff1;
   --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
   --fp-main-blue: {{ theme.color }};
+  --fp-main-color: {{ theme.color }};
+  --fp-main-color-darker: {{ theme.color }};
 }
   </style>
 </head>
@@ -73,7 +75,7 @@
           <!-- end nav center -->
 
         <div class="main-nav_right">
-          
+
         {% comment %}
           <!-- <li>
             <img src="{% static "assets/images/05-iowa.svg" %}" alt="Icon in the shape of the state of Iowa">
@@ -115,14 +117,14 @@
 
 
         </div> <!-- end nav right -->
-       
+
       </div>
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   {% if debug %}
   <script type="module" src="{% static "assets/js/main-dev.js" %}"></script>
   {% else %}
-  <script src="{% static "assets/js/main.js" %}"></script>
+  <script src="{% static "assets/dist/js/main.js" %}"></script>
   {% endif %}
   </header>
   <div id="app">

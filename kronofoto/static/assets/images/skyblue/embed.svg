@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <defs>
-    <style>
-      .cls-1 {
-        fill: #6e86bc;
-      }
-    </style>
-  </defs>
-  <path class="cls-1" d="M17.2,37.38L26.42,10.62h4.38l-9.22,26.75h-4.38Z"/>
-  <g>
-    <path class="cls-1" d="M2.19,24.77v-3.18l12.5-5.19v3.81l-7.74,2.63-.96,.35,.96,.34,7.74,2.59v3.83L2.19,24.77Z"/>
-    <path class="cls-1" d="M33.09,26.15l8.1-2.71,.86-.28-.85-.28-8.11-2.67v-3.8l12.72,5.17v3.21l-12.72,5.19v-3.81Z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g id="embed" transform="translate(-1431 139)">
+        <g id="embed-white" transform="translate(1426 -144)">
+            <line id="Line_8" data-name="Line 8" x1="8.74" y2="23.78" transform="translate(21.07 13.11)" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+            <path id="Path_19" data-name="Path 19" d="M18.62,20.59l-8.07,4.56,7.76,4.26" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+            <path id="Path_20" data-name="Path 20" d="M31.38,29.41l8.07-4.56-7.76-4.26" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+        </g>
+        <rect id="Rectangle_40" data-name="Rectangle 40" width="40" height="40" transform="translate(1431 -139)" fill="none"/>
+    </g>
 </svg>

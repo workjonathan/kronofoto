@@ -2,56 +2,83 @@
 {% load widgets %}
 {% load krono_urls %}
 
-        <div class="metadata-1a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
-          <ul>
-            <li>{{ photo.year }}{% if photo.circa %}c{% endif %}, {{ photo.location }}{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}</li>
-            <li>ID#: {{photo.accession_number}}</li>
-	    <li>Contributed by <a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></li>
-          </ul>
-        </div>
-        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
-          <ul>
-            <li><span class="field-name">Category Terms:</span><br>
-            {% if photo.terms.exists %}
-                {% for term in photo.terms.all %}{% if not forloop.first %},{% endif %} 
-		<a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            </li>
-            <li><span class="field-name">Tags:</span><br>
-            {% if tags %}
-                {% for tag in tags %}{% if not forloop.first %},{% endif %} 
-		<a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a>{% endfor %}
-            {% else %}
-            None
-            {% endif %}
-            </li>
-            <li>add a new tag:<br>
-                <input /><br>
-                <button id="add-tag-button-in-metadata-popup">add</button>
-{% comment %}             <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
-{% endcomment %}            </li>
-
-            <li><span class="field-name">Comments:</span>{{ photo.caption | markdown }}</li>
-            {% comment  %} <li><a href="{% krono_url "kronofoto:add-to-list" url_kwargs photo=photo.id %}">Add to list</a></li> {% endcomment %}
-            {% if photo.notices %}<li><span class="field-name">Local Context Notices:</span>
-            {% for notice in photo.notices %}
-                <img style="width: 4rem;" src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
-            {% endfor %}
-            {% endif%}
-          </ul>
+<div class="row">
+    <div class="columns large-4">
+        <div>
+            <h1><a href="#">{{ photo.location }}</a></h1>
         </div>
 
-        <div class="metadata-2a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
-          <ul style="color: #777;">
+        <div>
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}
+        </div>
+
+        <div>
+            <p>ID#: {{photo.accession_number}}</p>
+            <p>Contributed by <strong><a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></strong></p>
+        </div>
+
+        <div class="text-small">
             {% if photo.photographer %}
-            <li>Photographed by {{ photo.photographer }}</li>
+            <p>Photographed by {{ photo.photographer }}</p>
             {% endif %}
 
             {% if photo.scanner %}
-            <li>Digitized by {{ photo.scanner.display_format }}</li>
+            <p>Digitized by {{ photo.scanner.display_format }}</p>
             {% endif %}
-            <li>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</li>
-          </ul>
+            <p>Added to the archive {{ photo.created | date:"DATE_FORMAT" }}</p>
         </div>
+
+    </div>
+
+    <div class="columns large-8">
+        <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
+            <h3>Tags:</h3>
+            <div class="tags">
+                {% if tags or photo.terms.exists %}
+                <ul>
+                    {% if tags %}
+                    {% for tag in tags %}
+                    <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a></li>
+                    {% endfor %}
+                    {% endif %}
+                    {% if photo.terms.exists %}
+                    {% for term in photo.terms.all %}
+                    <li><a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a></li>
+                    {% endfor %}
+                    {% endif %}
+                </ul>
+                {% endif %}
+                <p>
+                    <a class="link--icon" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}"><i class="fa fa-plus-circle"></i>Add new tag</a>
+                </p>
+            </div>
+
+
+            <div class="form form--add-tag hidden">
+                add a new tag:
+                <input /><br>
+                <button id="add-tag-button-in-metadata-popup">add</button>
+                <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
+            </div>
+
+        </div>
+
+        {% if photo.notices %}
+        <div class="context-labels">
+            <h3>Local Contexts:</h3>
+            <div>
+                {% for notice in photo.notices %}
+                <img src="{{notice.svg_url}}" title="{{notice.name}} {{notice.default_text}}">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif%}
+
+        <div class="comments">
+            <h3>Comments:</h3>
+            <div class="indent comments">
+                {{ photo.caption | markdown }}
+            </div>
+        </div>
+    </div>
+</div>

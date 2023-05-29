@@ -1,0 +1,31 @@
+$headerHeight: 80px;
+
+header {
+  /*max-height: 200px;
+  grid-row: 1 / span 1;
+  padding: 1.6vh;*/
+  height: $headerHeight;
+  padding: 10px;
+}
+
+nav {
+  display: flex;
+}
+
+nav ul {
+  display: flex;
+  display: -webkit-flex;
+  align-self: center;
+  flex-grow: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav ul li {
+  list-style: none;
+  text-transform: uppercase;
+}
+
+header nav div img {
+  width: 30px;
+}

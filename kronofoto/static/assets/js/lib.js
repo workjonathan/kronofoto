@@ -1,4 +1,25 @@
 import {enableMarkerDnD} from "./drag-drop.js"
+import $ from 'jquery'
+
+// Foundation
+import { Foundation, Toggler, Tooltip, Box, MediaQuery, Triggers } from 'foundation-sites'
+
+window.jQueryOrig = window.$
+window.jQuery = window.$ = $
+
+Foundation.MediaQuery = MediaQuery;
+Foundation.plugin(Toggler, 'Toggler');
+Foundation.plugin(Tooltip, 'Tooltip');
+
+$(document).ready(function($) {
+    $(document).foundation();
+});
+
+$(document).on('on.zf.toggler', function(e) {
+    $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+});
+
+window.jQuery = window.$ = window.jQueryOrig
 
 export const toggleLogin = evt => {
     const el = document.querySelector('#login');
@@ -58,9 +79,10 @@ export const markerDnD = root => content => {
         enableMarkerDnD(root)
     }
 }
- 
+
 export const installButtons = root => content => {
     const elems = Array.from(content.querySelectorAll('[data-popup-target]'))
+
     if (content.hasAttribute('data-popup-target')) {
         elems.push(content)
     }
@@ -73,13 +95,6 @@ export const installButtons = root => content => {
                     target.classList.remove("hidden")
                 } else {
                     target.classList.add('hidden')
-                }
-            }
-            for (const target of root.querySelectorAll('[data-popup-button]')) {
-                if (target.hasAttribute(datatarget)) {
-                    target.classList.add("hidden")
-                } else {
-                    target.classList.remove('hidden')
                 }
             }
             elem.dispatchEvent(new Event(datatarget, {bubbles:true}))
