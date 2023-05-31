@@ -46,7 +46,12 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
             return super().get_hx_context()
 
     def get_user_context(self, *, user, object):
-        if user.is_staff and (user.has_perm('archive.change_photo') or user.has_perm('archive.view_photo')):
+        if user.is_staff and (
+            user.has_perm('archive.change_photo') or
+            user.has_perm('archive.view_photo') or
+            user.has_perm('archive.archive.{}.view_photo'.format(object.archive.slug)) or
+            user.has_perm('archive.archive.{}.change_photo'.format(object.archive.slug))
+        ):
             return {'edit_url': object.get_edit_url()}
         else:
             return {}
