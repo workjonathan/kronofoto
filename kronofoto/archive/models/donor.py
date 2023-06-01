@@ -17,6 +17,7 @@ class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     last_name = models.CharField(max_length=256, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
+    email = models.EmailField(blank=True)
     home_phone = models.CharField(max_length=256, blank=True)
     street1 = models.CharField(max_length=256, blank=True)
     street2 = models.CharField(max_length=256, blank=True)

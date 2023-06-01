@@ -62,3 +62,5 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     },
 }
+
+AUTHENTICATION_BACKENDS = ['archive.auth.backends.ArchiveBackend']

@@ -602,11 +602,12 @@ class block_escalation:
     def __init__(self, *, editor, user, PAClass=PermissionAnalyst):
         self.editor = PAClass(editor)
         self.user = user
+        self.user_analyst = PAClass(user)
 
     def __enter__(self):
         self.changeable_archive_permissions = self.editor.get_archive_permissions()
         self.old_archives = set(self.user.archiveuserpermission_set.all())
-        self.old_archive_permissions = self.editor.get_archive_permissions()
+        self.old_archive_permissions = self.user_analyst.get_archive_permissions()
 
         self.old_perms = set(self.user.user_permissions.all())
         self.old_groups = set(self.user.groups.all())
@@ -620,9 +621,10 @@ class block_escalation:
         self.user.groups.set((self.old_groups - self.changeable_groups) | (self.changeable_groups & new_groups))
 
         new_archives = set(self.user.archiveuserpermission_set.all())
-        new_archive_permissions = self.editor.get_archive_permissions()
+        new_archive_permissions = self.user_analyst.get_archive_permissions()
         changed_archive_perms = self.old_archives | new_archives
         for related in changed_archive_perms:
+
             assign = (self.old_archive_permissions[related.archive.id] - (self.changeable_archive_permissions[related.archive.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.archive.id] | self.changeable_perms) & new_archive_permissions[related.archive.id])
             try:
                 obj = self.user.archiveuserpermission_set.get(archive__id=related.archive.id)

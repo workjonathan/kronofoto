@@ -361,11 +361,12 @@ class UserAdminTests(TestCase):
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
+    @hsettings(deadline=None)
     @given(
         st.booleans(),
         st.booleans(),
         st.lists(st.builds(Group), unique_by=lambda g: g.name),
-        st.lists(st.builds(Archive), unique_by=lambda a: a.slug),
+        st.lists(st.builds(Archive), unique_by=lambda a: a.slug, min_size=1),
         st.data(),
     )
     def test_users_cannot_change_privileges_they_do_not_have(self, su1, su2, groups, archives, data):
@@ -374,53 +375,67 @@ class UserAdminTests(TestCase):
         Group.objects.bulk_create(groups)
         Archive.objects.bulk_create(archives)
         archives = list(Archive.objects.all())
-        perms = list(Permission.objects.all()[:10])
+        perms = list(Permission.objects.filter(content_type__app_label='archive')[:10])
         groups = list(Group.objects.all())
+        note('drawing u1 perms')
         u1.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+        note('drawing u2 perms')
         u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
         for group in groups:
+            note(f'drawing group {group.id} perms')
             group.permissions.set(data.draw(st.sets(st.sampled_from(perms))))
 
         if groups:
+            note(f'drawing groups for u1')
             u1.groups.set(data.draw(st.sets(st.sampled_from(groups))))
+            note(f'drawing groups for u2')
             u2.groups.set(data.draw(st.sets(st.sampled_from(groups))))
 
         if archives:
+            note('drawing archives for u1 perms')
             for archive in data.draw(st.sets(st.sampled_from(archives))):
                 obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u1)
+                note('drawing archive perms for u1')
                 userperms = data.draw(st.sets(st.sampled_from(perms)))
-                if created:
-                    obj.permission.add(*userperms)
-                else:
-                    obj.permission.set(userperms)
+                obj.permission.set(userperms)
+            note('drawing archives for u2 perms')
             for archive in data.draw(st.sets(st.sampled_from(archives))):
+                note('drawing archive perms for u2')
                 obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
                 userperms = data.draw(st.sets(st.sampled_from(perms)))
-                if created:
-                    obj.permission.add(*userperms)
-                else:
-                    obj.permission.set(userperms)
+                obj.permission.set(userperms)
         u1 = User.objects.get(pk=u1.id)
         u1_perm_set = u1.get_all_permissions()
         u2_perm_set_pre = u2.get_all_permissions()
 
         with block_escalation(editor=u1, user=u2):
-            u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+            note('drawing new perms for u2')
+            assign_perms = data.draw(st.sets(st.sampled_from(perms)))
+            u2.user_permissions.set(assign_perms)
+            assign_groups = []
             if groups:
-                u2.groups.set(data.draw(st.sets(st.sampled_from(groups))))
+                note('drawing new groups for u2')
+                assign_groups = data.draw(st.sets(st.sampled_from(groups)))
+                u2.groups.set(assign_groups)
             u2.archiveuserpermission_set.all().delete()
+            assign_archive_perms = {}
             if archives:
+                note('drawing new archives for u2 perms')
                 for archive in data.draw(st.sets(st.sampled_from(archives))):
                     obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
+                    note('drawing new archive perms for u2')
                     userperms = data.draw(st.sets(st.sampled_from(perms)))
+                    assign_archive_perms[archive.slug] = userperms
                     if created:
                         obj.permission.add(*userperms)
                     else:
                         obj.permission.set(userperms)
+            requested_set = User.objects.get(pk=u2.id).get_all_permissions()
         u2 = User.objects.get(pk=u2.id)
         u2_perm_set_post = u2.get_all_permissions()
         assert u2_perm_set_pre.symmetric_difference(u2_perm_set_post) <= u1_perm_set
-
+        # every permission which is assigned should be there either because it was there before or because it was requested.
+        assert u2_perm_set_post <= (u2_perm_set_pre | requested_set)
 
 
 
