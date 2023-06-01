@@ -71,7 +71,7 @@ class NewList(FormView):
         collection = Collection.objects.create(
             name=form.cleaned_data['name'],
             owner=self.request.user,
-            visibility='PR',
+            visibility='PR' if form.cleaned_data['is_private'] else 'PU',
         )
         collection.photos.add(self.kwargs['photo'])
         return super().form_valid(form)
