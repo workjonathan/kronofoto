@@ -22,6 +22,7 @@ class WebComponentForm(forms.Form):
 
 class ListForm(forms.Form):
     name = forms.CharField(label="create a list")
+    name.widget.attrs['placeholder'] = "my list"
     is_private = forms.BooleanField(label="Make Private", label_suffix="", required=False)
     is_private.widget.attrs.update({
         "class": "switch-input",
