@@ -121,11 +121,7 @@
       </div>
     </nav>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  {% if debug %}
-  <script type="module" src="{% static "assets/js/main-dev.js" %}"></script>
-  {% else %}
   <script src="{% static "assets/dist/js/main.js" %}"></script>
-  {% endif %}
   </header>
   <div id="app">
     {% block content %}
