@@ -28,7 +28,7 @@ class ListForm(forms.Form):
     })
 
 class ListMemberForm(forms.Form):
-    membership = forms.BooleanField(required=False)
+    membership = forms.BooleanField(required=False, label_suffix="")
     collection = forms.IntegerField(widget=forms.HiddenInput())
     def __init__(self, *args, initial, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)
