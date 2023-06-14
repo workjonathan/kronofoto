@@ -18,8 +18,48 @@ from typing import final
 
 NO_URLS = dict(url='#', json_url='#')
 
+class OrderedDetailBase(DetailView):
+    pk_url_kwarg = 'photo'
 
-class PhotoView(BasePhotoTemplateMixin, DetailView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+        object = self.object
+        position = int(self.request.headers.get('us.fortepan.position', 3))
+        object.position = position
+        object.active = True
+        before = list(reversed(queryset.photos_before(year=object.year, id=object.id)[:position+10]))
+        if before:
+            context['prev_photo'] = before[-1]
+        for (i, photo) in enumerate(reversed(before)):
+            photo.position = (position - i - 1) % 10
+        position = len(before) % 10
+        has_next = has_prev = True
+        if len(before) < 10:
+            has_prev = False
+            before = [FAKE_PHOTO for _ in range(10)] + before
+        after = list(queryset.photos_after(year=object.year, id=object.id)[:20-position-1])
+        if after:
+            context['next_photo'] = after[0]
+        for (i, photo) in enumerate(after):
+            photo.position = (position + i + 1) % 10
+        if len(after) < 10 - position:
+            has_next = False
+
+        carousel = before + [object] + after
+        while len(carousel) < 30:
+            carousel.append(FAKE_PHOTO)
+        context['object_list'] = carousel
+
+        context['carousel_has_next'] = has_next
+        context['carousel_has_prev'] = has_prev
+
+        context['queryset'] = queryset
+
+        return context
+
+
+class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     items = 10
     pk_url_kwarg = 'photo'
     _queryset = None
@@ -45,60 +85,20 @@ class PhotoView(BasePhotoTemplateMixin, DetailView):
         else:
             return super().get_hx_context()
 
-    def get_user_context(self, *, user, object):
-        if user.is_staff and (
-            user.has_perm('archive.change_photo') or
-            user.has_perm('archive.view_photo') or
-            user.has_perm('archive.archive.{}.view_photo'.format(object.archive.slug)) or
-            user.has_perm('archive.archive.{}.change_photo'.format(object.archive.slug))
-        ):
-            return {'edit_url': object.get_edit_url()}
-        else:
-            return {}
 
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
         self.params = self.request.GET.copy()
-        position = int(self.request.headers.get('us.fortepan.position', 3))
+        object = self.object
         queryset = self.queryset
         year_range = queryset.year_range()
         start = year_range['start']
         end = year_range['end']
-        photo_rec = self.object
-        photo_rec.position = position
-        photo_rec.active = True
-        before = list(reversed(queryset.photos_before(year=photo_rec.year, id=photo_rec.id)[:position+10]))
-        if before:
-            context['prev_photo'] = before[-1]
-        for (i, photo) in enumerate(reversed(before)):
-            photo.position = (position - i - 1) % 10
-        position = len(before) % 10
-        has_next = has_prev = True
-        if len(before) < 10:
-            has_prev = False
-            before = [FAKE_PHOTO for _ in range(10)] + before
-        after = list(queryset.photos_after(year=photo_rec.year, id=photo_rec.id)[:20-position-1])
-        if after:
-            context['next_photo'] = after[0]
-        for (i, photo) in enumerate(after):
-            photo.position = (position + i + 1) % 10
-        carousel = before + [photo_rec] + after
-        if len(after) < 10 - position:
-            has_next = False
-        while len(carousel) < 30:
-            carousel.append(FAKE_PHOTO)
 
-        context['object_list'] = carousel
-        context['carousel_has_next'] = has_next
-        context['carousel_has_prev'] = has_prev
-        context['grid_url'] = photo_rec.get_grid_url()
-        context['timeline_url'] = photo_rec.get_absolute_url()
-        context["photo"] = photo_rec
-        context["alttext"] = ', '.join(photo_rec.describe(self.request.user))
-        context["tags"] = photo_rec.get_accepted_tags(self.request.user)
-        #context["years"] = index
-        context['timelinesvg_url'] = "{}?{}".format(reverse('kronofoto:timelinesvg', kwargs=dict(**self.url_kwargs, **dict(start=start, end=end))), self.request.GET.urlencode())
-        context.update(self.get_user_context(user=self.request.user, object=photo_rec))
+        context['grid_url'] = object.get_grid_url()
+        context['timeline_url'] = object.get_absolute_url()
+        context["photo"] = object
+        context["tags"] = object.get_accepted_tags(self.request.user)
         return context
 
     def render(self, context, **kwargs):
