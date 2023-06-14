@@ -19,7 +19,7 @@
         <article class="gallery__image fi-image" id="fi-image">
             <figure>
                 {% block image %}
-                <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ alttext }}" />
+                <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ photo|describe:request.user|join:", " }}" />
                 {% endblock image %}
             </figure>
         </article>

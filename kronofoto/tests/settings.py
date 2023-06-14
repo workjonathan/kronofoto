@@ -64,3 +64,4 @@ CACHES = {
 }
 
 AUTHENTICATION_BACKENDS = ['archive.auth.backends.ArchiveBackend']
+KF_URL_SCHEME = ""

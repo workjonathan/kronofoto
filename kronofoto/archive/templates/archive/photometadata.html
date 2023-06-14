@@ -1,5 +1,6 @@
 {% load static %}
 {% load widgets %}
+{% load permissions %}
 {% load krono_urls %}
 
 <div class="row">
@@ -9,7 +10,7 @@
         </div>
 
         <div>
-            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if request.user|has_view_or_change_permission:photo %} <a href="{{ object.get_edit_url }}">[ Edit ]</a>{% endif %}
         </div>
 
         <div>
