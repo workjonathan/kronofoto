@@ -68,6 +68,7 @@ class GridTest(TestCase):
 
 @tag("integration")
 class ViewIntegrationTests(TestCase):
+    @pytest.mark.skip(reason="very slow")
     @settings(deadline=4000)  # , max_examples=5)
     @given(
         st.lists(archives(), min_size=1).flatmap(

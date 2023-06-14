@@ -1,18 +1,31 @@
-<div class="row">
+<div class="row" hx-target="closest .photo-menu-popup__wrapper">
     <div class="columns large-4 container--scroll">
         <h1 class="h1">My Lists</h1>
 
-        <form method="post" class="form" hx-target="closest .photo-menu-popup__wrapper" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
+        <form method="post" class="form" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
             {% csrf_token %}
-            {{ new_list_form.as_p }}
+{% comment %}
+    This roughly copies django's normal rendering for forms, but skips rendering the
+    is_private field, so it can be rendered later, seperately. 
+{% endcomment %}
+            {{ new_list_form.non_field_errors }}
+            {% for field in new_list_form.visible_fields %}
+              {% if field != new_list_form.is_private %}
+                <p>{{ field.label_tag }}
+                {{ field.errors }}
+                {{ field }}
+                {{ field.help_text }}
+                </p>
+              {% endif %}
+            {% endfor %}
             <div class="switch-group">
                 <div class="switch">
-                    <input class="switch-input" id="list-private" type="checkbox" name="list-private">
-                    <label class="switch-paddle" for="list-private">
+                    {{ new_list_form.is_private }}
+                    <label class="switch-paddle" for="{{ new_list_form.is_private.id_for_label }}">
                         <span class="show-for-sr">Private List</span>
                     </label>
                 </div>
-                <label class="switch-group__right-label" for="list-private">Make Private</label>
+                <label class="switch-group__right-label" for="{{ new_list_form.is_private.id_for_label }}">{{ new_list_form.is_private.label }}</label>
             </div>
             <input type="submit" value="add" class="sticky-parent">
         </form>
