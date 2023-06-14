@@ -81,17 +81,18 @@ $grey: grey;
 .photos-timeline__slider {
   position: absolute;
   top: calc(50% - 35px/2);
-  width: rem(70px);
+  width: 3.5rem;
   padding: 0px;
   border-radius: 4px;
   transition: left 0.4s $ease-out-expo, background-color 0.3s $ease-out-expo;
   cursor: pointer;
   font-weight: $font-weight-bold;
-  font-size: rem(16px);
+  font-size: 0.8rem;
   line-height: rem(35px);
   box-sizing: border-box;
   user-select: none;
   text-align: center;
+  letter-spacing: 0.3px;
 
   .is-used & {
     transition: background-color 0.3s $ease-out-expo, border-color 0.3s $ease-out-expo;
@@ -208,13 +209,14 @@ $grey: grey;
 
 .photos-timeline__year-label {
   position: absolute;
-  width: rem(60px);
+  width: 60px;
   top: 50%;
   transform: translateY(-50%);
   left: rem(14px);
   cursor: pointer;
   font-weight: $font-weight-bold;
-  font-size: rem(16px);
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
   line-height: rem(30px);
   text-align: center;
   border-radius: 6px;
@@ -308,7 +310,12 @@ $grey: grey;
   height: 40px;
   border: none;
   cursor: pointer;
+  position: relative;
+  &:not([href]) {
+    opacity: 0.5;
+    cursor: default;
+  }
 }
 .forward-arrows > a {
-  transform: rotate(180deg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='auto-slide-icon-right' transform='translate(243 972) rotate(180)'%3E%3Cg id='Group_16' data-name='Group 16' transform='translate(197.782 927)'%3E%3Cpath id='Path_44' data-name='Path 44' d='M25.722,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%234c4c4c' stroke-miterlimit='10' stroke-width='3'/%3E%3Cpath id='Path_45' data-name='Path 45' d='M35.545,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%234c4c4c' stroke-miterlimit='10' stroke-width='3'/%3E%3C/g%3E%3Crect id='Rectangle_51' data-name='Rectangle 51' width='40' height='40' transform='translate(203 932)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
 }

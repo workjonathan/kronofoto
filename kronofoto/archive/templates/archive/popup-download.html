@@ -1,10 +1,25 @@
-<div class="photo-menu-popup__title">Download</div>
 
-<div class="">
-    <label>Attribution</label>
-    <input value="“{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “https:{{ host_uri }}{{ citation_url }},” CC-BY-SA 4.0" />
-    <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>
-    <a class="button--copy">copy</a>
+<div class="row">
+    <div class="columns large-3">
+        <h1 class="h1">{{ object.accession_number }}</h1>
+        <a class="button" href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>
+    </div>
+    <div class="columns large-4">
+        <h4 class="h4">License</h4>
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            <img alt="Creative Commons License" src="/static/assets/images/Creative-Commons-Icons.png" style="width: 190px; height: auto; border-width: 0px" />
+        </a>
+        <p>&nbsp;</p>
+        <p>Attribution-ShareAlike 4.0 <br/> International <a href="https://creativecommons.org/licenses/by-sa/4.0/">(CC-BY-SA 4.0)</a></p>
+    </div>
+    <div class="columns large-5">
+        <div class="form">
+            <h4 class="h4">Attribution</h4>
+            <textarea rows="4" id="attribution-input">“{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “https:{{ host_uri }}{{ citation_url }},” CC-BY-SA 4.0</textarea>
+            <a class="button float-right" data-clipboard-target="#attribution-input">copy</a>
+        </div>
+    </div>
+
 </div>
 
-<a class="button" href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">continue download</a>
+

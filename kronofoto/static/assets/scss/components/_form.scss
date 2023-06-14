@@ -1,10 +1,28 @@
+@import 'button';
+@import 'input';
+
 $form-spacing: 16px;
 $switch-background: $medium-gray !default;
 $switch-background-active: var(--fp-main-blue);
 
 .form {
-  input[type=text] {
+
+  input[type=submit] {
+    @include button--round;
+  }
+
+  textarea, input[type=text] {
+    @include input--text-round;
     margin-bottom: $form-spacing;
+  }
+  textarea {
+    line-height: 20px;
+    padding: 20px;
+    border-radius: 13px;
+  }
+
+  p {
+    margin-bottom: 16px;
   }
   .switch-group {
     display: flex;

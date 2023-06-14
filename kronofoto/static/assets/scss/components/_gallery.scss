@@ -97,10 +97,10 @@ $headerHeight: 80px;
     top: 0px;
     left: 50%;
     width: calc(100% - ($gallerySidesSize*2));
-    height: 80px;
+    height: 50px;
     display: flex;
     justify-content: flex-end;
-    padding: 20px;
+    padding: 0px;
     transform: translateX(-50%);
     > button {
       background: none;
