@@ -15,6 +15,8 @@ $(document).ready(function($) {
     $(document).foundation();
 });
 
+new window.ClipboardJS('[data-clipboard-target]');
+
 $(document).on('on.zf.toggler', function(e) {
     $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
 });
