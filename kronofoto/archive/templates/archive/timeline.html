@@ -1,3 +1,4 @@
+{% with range=queryset.year_range %}
 <div {% if id %}id="{{ id }}" {% endif %}class="photos-timeline"
      data-controller="timeline"
      data-action="resize@window->timeline#onResize
@@ -8,8 +9,8 @@
                photosThumbnail:select@document->timeline#toggleShadow
                photosCarousel:hide@document->timeline#toggleShadow"
 >
-    <div class="photos-timeline__year-label photos-timeline__year-label--yearStart" data-timeline-target="yearLabel yearStart">1800</div>
-    <div class="photos-timeline__year-label photos-timeline__year-label--yearEnd" data-timeline-target="yearLabel yearEnd">2000</div>
+    <div class="photos-timeline__year-label photos-timeline__year-label--yearStart" data-timeline-target="yearLabel yearStart">{{ range.start }}</div>
+    <div class="photos-timeline__year-label photos-timeline__year-label--yearEnd" data-timeline-target="yearLabel yearEnd">{{ range.end }}</div>
     <div class="photos-timeline__slider__container" data-timeline-target="slider">
         <div class="photos-timeline__ruler" data-timeline-target="ruler">
             <div class="photos-timeline__ruler-indicator" data-timeline-target="rulerIndicator"></div>
@@ -26,3 +27,4 @@
         </div>
     </div>
 </div>
+{% endwith %}
