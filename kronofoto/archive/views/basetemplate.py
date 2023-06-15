@@ -3,6 +3,7 @@ from django.http import QueryDict
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.templatetags.static import static
+from django.template.loader import select_template
 import random
 import json
 from ..reverse import set_request
@@ -11,51 +12,56 @@ from ..search.parser import Parser, NoExpression
 from ..models import Photo
 from functools import reduce
 import operator
+from dataclasses import dataclass, replace
 
+class ThemeDict(dict):
+    def __missing__(self, key):
+        return self['us']
 
-THEME = [
-    {
-        'color': "#6c84bd",
-        "logo": static("assets/images/skyblue/logo.svg"),
-        "menuSvg": static("assets/images/skyblue/menu.svg"),
-        "infoSvg": static("assets/images/skyblue/info.svg"),
-        "downloadSvg": static("assets/images/skyblue/download.svg"),
-        "searchSvg": static("assets/images/skyblue/search.svg"),
-        "carrotSvg": static("assets/images/skyblue/carrot.svg"),
-        "timelineSvg": static("assets/images/skyblue/toggle.svg"),
-    },
-    {
-        'color': "#c28800",
-        'logo': static("assets/images/golden/logo.svg"),
-        'menuSvg': static("assets/images/golden/menu.svg"),
-        'infoSvg': static("assets/images/golden/info.svg"),
-        'downloadSvg': static("assets/images/golden/download.svg"),
-        'searchSvg': static("assets/images/golden/search.svg"),
-        'carrotSvg': static("assets/images/golden/carrot.svg"),
-        "timelineSvg": static("assets/images/golden/toggle.svg"),
-    },
-    {
-        'color': "#c2a55e",
-        'logo': static("assets/images/haybail/logo.svg"),
-        'menuSvg': static("assets/images/haybail/menu.svg"),
-        'infoSvg': static("assets/images/haybail/info.svg"),
-        'downloadSvg': static("assets/images/haybail/download.svg"),
-        'searchSvg': static("assets/images/haybail/search.svg"),
-        'carrotSvg': static("assets/images/haybail/carrot.svg"),
-        "timelineSvg": static("assets/images/haybail/toggle.svg"),
-    },
-    {
-        'color': "#445170",
-        'logo': static("assets/images/navy/logo.svg"),
-        'menuSvg': static("assets/images/navy/menu.svg"),
-        'infoSvg': static("assets/images/navy/info.svg"),
-        'downloadSvg': static("assets/images/navy/download.svg"),
-        'searchSvg': static("assets/images/navy/search.svg"),
-        'carrotSvg': static("assets/images/navy/carrot.svg"),
-        "timelineSvg": static("assets/images/navy/toggle.svg"),
-    }
-]
+@dataclass
+class Theme:
+    color: str
+    logo: str
+    menuSvg: str
+    infoSvg: str
+    downloadSvg: str
+    searchSvg: str
+    carrotSvg: str
+    timelineSvg: str
 
+    @classmethod
+    def generate_themes(cls):
+        # This is a very annoying feature, and this is unpleasantly non-general.
+        colors = (
+            ('skyblue', "#6c84bd"),
+            ('golden', "#c28800"),
+            ('haybail', "#c2a55e"),
+            ('lakeblue', "#445170"), # was navy?
+        )
+        colors = {
+            name: Theme(
+                color=color,
+                logo='assets/images/{}/logo.svg'.format(name),
+                menuSvg='assets/images/{}/menu.svg'.format(name),
+                infoSvg='assets/images/{}/info.svg'.format(name),
+                downloadSvg='assets/images/{}/download.svg'.format(name),
+                searchSvg='assets/images/{}/search.svg'.format(name),
+                carrotSvg='assets/images/{}/carrot.svg'.format(name),
+                timelineSvg='assets/images/{}/toggle.svg'.format(name),
+            )
+            for name, color in colors
+        }
+        themes = {
+            archive: [
+                replace(theme, logo='assets/images/{}/{}/logo.svg'.format(name, archive))
+                for name, theme in colors.items()
+            ]
+            for archive in ('ia', 'ct')
+        }
+        themes['us'] = list(colors.values())
+        return ThemeDict(themes)
+
+THEME = Theme.generate_themes()
 
 class BaseTemplateMixin:
     def set_request(self, request):
@@ -119,7 +125,11 @@ class BaseTemplateMixin:
         elif self.request.headers.get('Embedded', 'false') != 'false':
             context['base_template'] = 'archive/embedded-base.html'
         else:
-            context['base_template'] = 'archive/base.html'
+            templates = []
+            if 'short_name' in self.kwargs:
+                templates.append('archive/base/{}.html'.format(self.kwargs['short_name']))
+            templates.append('archive/base.html')
+            context['base_template'] = select_template(templates)
         return context
 
     def get_context_data(self, **kwargs):
@@ -141,7 +151,7 @@ class BaseTemplateMixin:
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
         context['photo_count'] = photo_count
         context['timeline_url'] = '#'
-        context['theme'] = random.choice(THEME)
+        context['theme'] = random.choice(THEME[self.kwargs['short_name'] if 'short_name' in self.kwargs else 'us'])
         hxheaders = dict()
         hxheaders['Constraint'] = self.request.headers.get('Constraint', None)
         hxheaders['Embedded'] = self.request.headers.get('Embedded', 'false')
@@ -171,3 +181,4 @@ class BasePhotoTemplateMixin(BaseTemplateMixin):
             return qs
         else:
             raise SuspiciousOperation('invalid search request')
+
