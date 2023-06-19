@@ -16,7 +16,6 @@ from django.conf import settings
 from django.urls import reverse, NoReverseMatch
 from django.contrib import messages
 from django import forms
-from django.forms import ModelForm, Textarea
 from functools import reduce
 import operator
 from collections import defaultdict
