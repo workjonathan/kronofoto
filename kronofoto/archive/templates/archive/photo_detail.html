@@ -5,7 +5,7 @@
 {% load krono_urls %}
 
 {% block opengraph %}
-    <meta property="og:title" content="Fortepan.us: {{ photo.accession_number }}" />
+    <meta property="og:title" content="{{ request.site.name }}: {{ photo.accession_number }}" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="{{ photo.h700.url }}" />
     <meta property="og:url" content="{% object_url photo %}" />
