@@ -84,7 +84,7 @@ class Photo(models.Model):
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
-    photographer = models.TextField(blank=True)
+    photographer = models.CharField(max_length=128, blank=True)
     location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
