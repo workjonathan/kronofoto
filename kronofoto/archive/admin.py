@@ -668,6 +668,15 @@ class KronofotoUserAdmin(UserAdmin):
             kwargs['queryset'] = permission_analyst.get_changeable_permissions()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj and not request.user.is_superuser:
+            fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'groups', 'user_permissions')
+        return fieldsets
+
+
+
+
 class KronofotoGroupAdmin(GroupAdmin):
 
     def save_related(self, request, form, formsets, change):
