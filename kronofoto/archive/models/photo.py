@@ -96,7 +96,7 @@ class Photo(models.Model):
     country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
-    caption = models.TextField(blank=True)
+    caption = models.TextField(blank=True, verbose_name="comment")
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     local_context_id = models.CharField(
