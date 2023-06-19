@@ -4,7 +4,7 @@
 
 <div class="container-center login-page-container">
     {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
+    <p>Your email and password didn't match. Please try again.</p>
     {% endif %}
 
     {% if next %}
@@ -20,7 +20,7 @@
     {% csrf_token %}
     <table>
     <tr>
-        <td>Email</td>
+        <td>{{ form.username.label_tag }}</td>
         <td>{{ form.username }}</td>
     </tr>
     <tr>

@@ -10,10 +10,10 @@ import urllib.request
 import json
 from ..views import BaseTemplateMixin
 from .token import UserEmailVerifier
-from .forms import RegisterUserForm
+from .forms import RegisterUserForm, FortepanAuthenticationForm
 
 class LoginView(BaseTemplateMixin, django_views.LoginView):
-    pass
+    form_class = FortepanAuthenticationForm
 
 class LogoutView(BaseTemplateMixin, django_views.LogoutView):
     pass

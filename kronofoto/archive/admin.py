@@ -19,10 +19,12 @@ from django import forms
 from functools import reduce
 import operator
 from collections import defaultdict
+from .auth.forms import FortepanAuthenticationForm
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
+admin.site.login_form = FortepanAuthenticationForm
 
 class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"
