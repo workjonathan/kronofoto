@@ -20,5 +20,5 @@ class URLify(Preprocessor):
 
 
 class URLifyExtension(Extension):
-    def extendMarkdown(self, md, md_globals):
-        md.preprocessors.add('urlify', URLify(md), '_end')
+    def extendMarkdown(self, md):
+        md.preprocessors.register(URLify(md), "urlify", 200)
