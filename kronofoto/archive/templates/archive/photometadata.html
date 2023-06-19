@@ -35,20 +35,15 @@
         <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
             <h3>Tags:</h3>
             <div class="tags">
-                {% if tags or photo.terms.exists %}
-                <ul>
-                    {% if tags %}
-                    {% for tag in tags %}
-                    <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a></li>
-                    {% endfor %}
+                {% with tags=photo|all_tags_with:request.user %}
+                    {% if tags|length > 0 %}
+                    <ul>
+                        {% for tag in tags|dictsort:"label_lower" %}
+                        <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag.label }}</a></li>
+                        {% endfor %}
+                    </ul>
                     {% endif %}
-                    {% if photo.terms.exists %}
-                    {% for term in photo.terms.all %}
-                    <li><a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a></li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
-                {% endif %}
+                {% endwith %}
                 <p>
                     <a class="link--icon" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}"><i class="fa fa-plus-circle"></i>Add new tag</a>
                 </p>

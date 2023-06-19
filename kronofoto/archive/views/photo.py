@@ -98,7 +98,6 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
         context['grid_url'] = object.get_grid_url()
         context['timeline_url'] = object.get_absolute_url()
         context["photo"] = object
-        context["tags"] = object.get_accepted_tags(self.request.user)
         return context
 
     def render(self, context, **kwargs):

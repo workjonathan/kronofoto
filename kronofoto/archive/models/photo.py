@@ -12,7 +12,6 @@ from datetime import datetime
 import uuid
 from PIL import Image, ExifTags, ImageOps, UnidentifiedImageError
 from io import BytesIO
-from itertools import chain
 import os
 from os import path
 import operator
@@ -124,7 +123,7 @@ class Photo(models.Model):
         "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
         tags = self.get_accepted_tags(user=user).annotate(label_lower=Lower("tag"), label=models.F("tag"))
         terms = self.terms.annotate(label_lower=Lower("term"), label=models.F("term"))
-        return chain(tags, terms)
+        return list(tags) + list(terms)
 
 
     def get_accepted_tags(self, user=None):
