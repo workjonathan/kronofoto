@@ -107,7 +107,7 @@ class BaseTemplateMixin(BasePermissiveCORSMixin):
     def get_constraint_expr(self, constraint):
         if constraint:
             try:
-                constraint_expr = Parser.tokenize(constraint).parse().shakeout()
+                return Parser.tokenize(constraint).parse().shakeout()
             except:
                 raise SuspiciousOperation("invalid constraint")
         return None
