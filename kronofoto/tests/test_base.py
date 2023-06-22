@@ -104,6 +104,11 @@ class Tests(SimpleTestCase):
         for k in removals:
             assert k not in params
 
+    def test_constraint_parse_works(self):
+        template = Template()
+        assert template.get_constraint_expr("county:Jones")
+
+
     @given(s=st.text())
     def test_constraint_parse(self, s):
         template = Template()
