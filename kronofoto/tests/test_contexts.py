@@ -22,7 +22,11 @@ def test_photo_hx_context(photo):
     request = RequestFactory().get(reverse('kronofoto:photoview', kwargs={'photo': photo}))
     photoview = PhotoView()
     photoview.request = request
-    assert photoview.get_hx_context()['base_template'] == 'archive/base.html'
+    photoview.kwargs = {}
+    from unittest.mock import patch
+    with patch('django.template.loader.select_template') as mock:
+        photoview.get_hx_context()
+        assert mock.called_with(['archive/base.html'])
 
 @given(photo=st.integers(min_value=1, max_value=100000))
 def test_photo_hx_context_swap(photo):
