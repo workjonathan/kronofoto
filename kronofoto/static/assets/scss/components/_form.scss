@@ -47,3 +47,79 @@ $switch-background-active: var(--fp-main-blue);
     }
   }
 }
+
+.form--add-tag {
+
+  button {
+    appearance: none;
+    border: none;
+    background: transparent;
+  }
+
+  .wrapper {
+    position: relative;
+    max-width: 0px;
+    width: 200px;
+    transition: all ease-in-out 200ms;
+  }
+
+  input, button {
+    opacity: 0;
+    padding: 0px;
+    margin-bottom: 0px !important;
+    transition: all ease-in-out 200ms;
+  }
+
+  input {
+    line-height: 37px;
+    position: relative;
+    z-index: 2;
+  }
+
+  button {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    right: 9px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    i {
+      font-size: 25px;
+      color: var(--fp-main-blue);
+    }
+  }
+
+
+  .link--icon {
+    opacity: 1;
+    cursor: pointer;
+    width: 200px;
+    top: 50%;
+    left: 0px;
+    transform: translateY(-50%);
+    position: absolute;
+    transition: all ease-in-out 200ms;
+    span {
+
+    }
+  }
+
+  &.expanded {
+    .link--icon {
+      width: 0px;
+      opacity: 0;
+    }
+    button {
+      opacity: 1;
+      max-width: none;
+    }
+    .wrapper {
+      max-width: 200px;
+    }
+    input {
+      opacity: 1;
+      width: 100%;
+      @include input--text-round;
+    }
+  }
+}

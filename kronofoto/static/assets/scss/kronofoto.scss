@@ -633,58 +633,6 @@ main article.fi-image {
    background: #f1f2f2;
  }
 
-
-
-.fi-thumbnail-carousel {
-  height: 110px;
-  display: flex;
-  flex-direction: row;
-  flex-grow: 1;
-}
-
-.back-arrows, .forward-arrows {
-  width: calc(50vw - 475px);
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  font-size: 20px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.4);
-  position: relative;
-  z-index: 2;
-}
-
-.back-arrows {
-  justify-content: flex-end;
-  clip-path: inset(0px -25px 0px 1px);
-}
-
-.forward-arrows {
-  clip-path: inset(0px 0px 0px -25px);
-}
-
-.forward-arrows img {
-  transform: scaleX(-1);
-}
-
-.back-arrows img, .forward-arrows img {
-  width: 25px;
-}
-
-.slide-container {
-  overflow: hidden;
-  position: relative;
-  width: 950px;
-/*  height: 100%;*/
-
-}
-
-#fi-thumbnail-carousel-images {
-  background-color: #b2b2b2; // TODO: Add to color palette.
-  position: absolute;
-  left: -950px;
-  height: 100%;
-}
-
 #fi-preload-zone {
     position: absolute;
     left: -9999999px;
@@ -933,41 +881,6 @@ main article.fi-image {
   pointer-events: none;
 }
 
-
-/*******************************
- ****** Follow Zoom Popup ******
- *******************************/
-
-.follow-zoom-background-overlay {
-  position: absolute;
-  top: -60px;
-  left: 0px;
-  height: 100vh;
-  width: 100vw;
-  background-color: black;
-  opacity: 60%;
-  z-index: 998;
-}
-
-.follow-zoom-timeline-popup-img {
-  position: absolute;
-     top: 50vh;
-     left: 50vw;
-
-
-  transform: translate(-50%, calc(-50% - 130px));
-  max-height: calc(100vh - 295px);
-
-    max-width: calc(100vw - 20px);
-    z-index: 999;
-}
-
-@media (max-width: 1140px) {
-  .follow-zoom-background-overlay, .follow-zoom-timeline-popup-img {
-    display: none;
-  }
-
-}
 
 .gridden {
     display: grid;

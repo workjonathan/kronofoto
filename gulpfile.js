@@ -34,12 +34,12 @@ var config = {
 };
 
 gulp.task('build:sass', function () {
-    return gulp.src(path.join(config.root, '/scss/*.scss'))
+    return gulp.src(path.join(config.root, '/scss/index.scss'))
         .pipe(sourcemaps.init())
         .pipe(sass({
             outputStlye: 'compressed',
             includePaths: [
-                './node_modules/foundation-sites/scss'
+                './node_modules'
             ]
         }).on('error', sass.logError))
         .pipe(autoprefixer())

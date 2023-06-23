@@ -1,0 +1,24 @@
+@mixin styles {
+  .social-share-icons {
+    .st-btn {
+      background-color: var(--fp-main-color) !important;
+      position: relative !important;
+      margin: 0px 20px 20px 0px !important;
+      width: 48px !important;
+      height: 48px !important;
+      img {
+        width: 35px !important;
+        height: 35px !important;
+        top: 50% !important;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+      }
+    }
+  }
+  .sharethis-inline-share-buttons {
+    display: flex !important;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

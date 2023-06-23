@@ -1,6 +1,4 @@
-//@use 'input' as *;
-//@use 'input' as ;
-//@use '../typography' as *;
+@use '../typography' as *;
 @import 'button';
 @import 'input';
 
@@ -128,6 +126,33 @@ $popupMaxHeight: 40vh;
     margin-bottom: calc($global-margin * 2);
     padding: calc($global-margin / 2) 0px;
     font-size: 22px; // TODO: Add to font-size palette
+  }
+
+  &__edit-btn {
+    &:after {
+      content: '';
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28.839' height='28.929' viewBox='0 0 28.839 28.929'%3E%3Cg id='Group_37' data-name='Group 37' transform='translate(-11.417 -11.293)'%3E%3Cpath id='Path_55' data-name='Path 55' d='M23.336,16.36H12.767V38.872H35.283V28.3' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.7'/%3E%3Cg id='Group_36' data-name='Group 36' transform='translate(21.707 12.796)'%3E%3Cg id='Group_35' data-name='Group 35'%3E%3Cpath id='Path_56' data-name='Path 56' d='M32.83,13.214,27.2,18.84l-.365.365-5.076,5.076-1.728,5.713,5.713-1.728,5.076-5.077.365-.364L36.815,17.2a1.222,1.222,0,0,0,.119-1.716l-2.387-2.388A1.224,1.224,0,0,0,32.83,13.214Z' transform='translate(-20.035 -12.796)' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.7'/%3E%3Cline id='Line_18' data-name='Line 18' x2='3.67' y2='3.67' transform='translate(9.823 3.649)' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.7'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A");
+      width: 100%;
+      height: 100%;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      transition: all ease-in-out 0.15s;
+    }
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 15px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    color: var(--fp-secondary-ticker-color);
+    &:hover:after {
+      transform: rotate(180deg);
+    }
   }
 
   &__close-btn {

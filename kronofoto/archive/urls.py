@@ -5,6 +5,7 @@ from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
+from archive.views.photo import LogoSvg
 from django.conf import settings
 
 class NegativeIntConverter:
@@ -32,6 +33,7 @@ app_name = 'kronofoto'
 urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
+    path('logo.svg/<int:theme>', LogoSvg.as_view(), name='logosvg'),
     path('original/<int:photo>/', views.DownloadPageView.as_view()),
     path('photos/<accession:photo>/original', views.DownloadPageView.as_view(), name='download'),
     path('user/<str:username>/', views.Profile.as_view()),

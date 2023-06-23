@@ -15,6 +15,8 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
 from typing import final
+from .basetemplate import THEME
+import random
 
 NO_URLS = dict(url='#', json_url='#')
 
@@ -156,6 +158,32 @@ class TimelineSvg(TemplateView):
                 context['majornotches'].append(marker)
             else:
                 context['minornotches'].append(marker)
+        return context
+
+    def options(self, *args, **kwargs):
+        response = super().options(*args, **kwargs)
+        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
+        return response
+
+    @cache_control(max_age=60*60, public=True)
+    def dispatch(self, *args, **kwargs):
+        response = super().dispatch(*args, **kwargs)
+        response['Vary'] = 'Constraint'
+        response['Content-Type'] = 'image/svg+xml'
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
+
+
+
+class LogoSvg(TemplateView):
+    template_name = "archive/logo.svg"
+    def get_context_data(self, theme=0):
+        url_kwargs = {}
+        if theme:
+                    url_kwargs['theme'] = theme
+        context = {
+            'theme': THEME[theme]
+        }
         return context
 
     def options(self, *args, **kwargs):

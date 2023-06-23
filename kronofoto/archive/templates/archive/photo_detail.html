@@ -12,10 +12,17 @@
 <main hx-target="#fi-image-tag" hx-swap="outerHTML">
 
     <div class="gallery">
-        <div class="gallery__left-space"></div>
-        <div class="gallery__background"></div>
-        <div class="gallery__right-space"></div>
-
+        <div class="gallery__left-space">
+            {% block left_arrow %}
+            <a id="fi-arrow-left" class="control previous"
+               {% if prev_photo %}
+               hx-headers='{ "us.fortepan.position": {{ prev_photo.position }} }'
+               href="{% object_url prev_photo url_kwargs get_params %}"
+               hx-get="{% object_url prev_photo url_kwargs get_params %}"
+               {% endif %}>
+            </a>
+            {% endblock %}
+        </div>
         <article class="gallery__image fi-image" id="fi-image">
             <figure>
                 {% block image %}
@@ -23,6 +30,22 @@
                 {% endblock image %}
             </figure>
         </article>
+        <div class="gallery__right-space">
+            {% block right_arrow %}
+            <a id="fi-arrow-right" class="control forward"
+               {% if next_photo %}
+               hx-headers='{ "us.fortepan.position": {{ next_photo.position }} }'
+               href="{% object_url next_photo url_kwargs get_params %}"
+               hx-get="{% object_url next_photo url_kwargs get_params %}"
+               {% endif %}>
+            </a>
+            {% endblock right_arrow %}
+        </div>
+
+        <div id="zoom-popup" class="follow-zoom-popup hidden" data-popup-zoom data-popup>
+<!--            <div class="follow-zoom-background-overlay"></div>-->
+            <div style='background: url("https://fortepanstage.uni.edu/{{ object.original.url }}");' id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
+        </div>
 
         <div class="gallery__controls">
             {% block image_control_buttons %}
@@ -58,25 +81,6 @@
             {% endblock image_control_buttons %}
         </div>
 
-        {% block left_arrow %}
-        <a id="fi-arrow-left" class="control previous"
-           {% if prev_photo %}
-           hx-headers='{ "us.fortepan.position": {{ prev_photo.position }} }'
-           href="{% object_url prev_photo url_kwargs get_params %}"
-           hx-get="{% object_url prev_photo url_kwargs get_params %}"
-           {% endif %}>
-        </a>
-        {% endblock %}
-        {% block right_arrow %}
-        <a id="fi-arrow-right" class="control forward"
-           {% if next_photo %}
-           hx-headers='{ "us.fortepan.position": {{ next_photo.position }} }'
-           href="{% object_url next_photo url_kwargs get_params %}"
-           hx-get="{% object_url next_photo url_kwargs get_params %}"
-           {% endif %}>
-        </a>
-        {% endblock right_arrow %}
-
         <div class="gallery__popups">
 
             <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
@@ -95,10 +99,6 @@
             </div>
             <div id="download-popup" class="gallery__popup" data-toggler=".expanded" hx-target="find .photo-menu-popup__wrapper" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect">
                 <a href="#" class="photo-menu-popup__close-btn" data-toggle="download-popup" data-toggler=".expanded"></a><div class="photo-menu-popup__wrapper"></div>
-            </div>
-            <div id="zoom-popup" class="follow-zoom-popup hidden" data-popup-zoom data-popup>
-                <div class="follow-zoom-background-overlay"></div>
-                <div style='background: url("{{ object.original.url }}");' id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
             </div>
 
         </div>
@@ -121,10 +121,11 @@
 
                 Object.assign(container.style, {
 
-                    height: "calc(100vh - 295px)",
-                    width: "calc(100 * " + ratio + "vh - 295 * " + ratio + "px)",
+                    height: "calc(100vh)",
+                    width: "calc(100vw)",
                     backgroundPosition: "top",
-                    backgroundSize: "cover"
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat"
                   });
 
             container.onmousemove = (e) => {
@@ -143,7 +144,7 @@
             container.onmouseleave = (e) => {
               Object.assign(container.style, {
                 backgroundPosition: "top",
-                backgroundSize: "cover"
+                backgroundSize: "contain"
                   });
                 };
               }

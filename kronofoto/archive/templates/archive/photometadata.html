@@ -2,6 +2,8 @@
 {% load widgets %}
 {% load krono_urls %}
 
+{% if edit_url %} <a class="photo-menu-popup__edit-btn" href="{{ edit_url }}"></a>{% endif %}
+
 <div class="row">
     <div class="columns large-4">
         <div>
@@ -9,7 +11,7 @@
         </div>
 
         <div>
-            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if edit_url %} <a href="{{ edit_url }}">[ Edit ]</a>{% endif %}
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>
         </div>
 
         <div>
@@ -49,17 +51,18 @@
                 </ul>
                 {% endif %}
                 <p>
-                    <a class="link--icon" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}"><i class="fa fa-plus-circle"></i>Add new tag</a>
+                    <form class="form form--add-tag" id="add-tag-form">
+                        <div class="wrapper">
+                            <a class="link--icon"><i class="fa fa-plus-circle"></i><span>Add new tag</span></a>
+                            <input type="text" />
+                            <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
+                        </div>
+<!--                        <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>-->
+                    </form>
                 </p>
             </div>
 
 
-            <div class="form form--add-tag hidden">
-                add a new tag:
-                <input /><br>
-                <button id="add-tag-button-in-metadata-popup">add</button>
-                <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>
-            </div>
 
         </div>
 

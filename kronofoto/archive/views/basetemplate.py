@@ -15,10 +15,11 @@ import operator
 
 THEME = [
     {
-        'color': "#6c84bd",
+        'index': 0,
+        'color': "#6E85B8",
         'colorDarker': "",
-        'colorLighter': "",
-        "logo": static("assets/images/skyblue/logo.svg"),
+        'colorLighter': "#A8B6D7",
+        "logo": "/logo.svg",
         "menuSvg": static("assets/images/skyblue/menu.svg"),
         "infoSvg": static("assets/images/skyblue/info.svg"),
         "downloadSvg": static("assets/images/skyblue/download.svg"),
@@ -27,10 +28,11 @@ THEME = [
         "timelineSvg": static("assets/images/skyblue/toggle.svg"),
     },
     {
+        'index': 1,
         'color': "#c28800",
         'colorDarker': "",
-        'colorLighter': "",
-        'logo': static("assets/images/golden/logo.svg"),
+        'colorLighter': "E0A928",
+        'logo': "/logo.svg",
         'menuSvg': static("assets/images/golden/menu.svg"),
         'infoSvg': static("assets/images/golden/info.svg"),
         'downloadSvg': static("assets/images/golden/download.svg"),
@@ -39,10 +41,11 @@ THEME = [
         "timelineSvg": static("assets/images/golden/toggle.svg"),
     },
     {
+        'index': 2,
         'color': "#c2a55e",
         'colorDarker': "",
-        'colorLighter': "",
-        'logo': static("assets/images/haybail/logo.svg"),
+        'colorLighter': "#E0CB94",
+        'logo': "/logo.svg",
         'menuSvg': static("assets/images/haybail/menu.svg"),
         'infoSvg': static("assets/images/haybail/info.svg"),
         'downloadSvg': static("assets/images/haybail/download.svg"),

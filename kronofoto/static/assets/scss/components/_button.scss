@@ -1,3 +1,4 @@
+@use '../typography' as *;
 @use 'sass:math';
 
 @function rem($value) {
@@ -12,7 +13,7 @@
     background-color: var(--fp-main-blue);
     @include font-paragraph2;
     line-height: 48px;
-    padding: 0px 35px;
+    padding: 0px 25px;
     border: none;
     cursor: pointer;
     &:hover {
