@@ -142,6 +142,10 @@ class SearchForm(forms.Form):
             return reduce(expression.And, form_exprs)
         raise NoExpression
 
+class TimelineForm(SearchForm):
+    year = forms.IntegerField(widget=forms.HiddenInput())
+    year.widget.attrs['data-timeline-target'] = 'formYear'
+
 
 class TagForm(forms.Form):
     tag = forms.CharField()

@@ -1,7 +1,7 @@
 import { setAppState, removeAppState, getURLParams, trigger } from "./utils"
 // import photoManager from "../../js/photo-manager"
-import HTMX from "./htmx.js"
-const htmx = HTMX(document)
+//import HTMX from "./htmx.js"
+//const htmx = HTMX(document)
 export default class {
     get targets() {
         return [
@@ -17,6 +17,7 @@ export default class {
             "sliderYearCount",
             "ruler",
             "rulerIndicator",
+            "formYear",
         ]
     }
 
@@ -127,6 +128,7 @@ export default class {
 
     setTimelineLabels() {
         this.sliderYearLabelTarget.textContent = this.year
+        this.formYearTarget.value = this.year
 
         // check if selected year (this.year) has photos at all (not already loaded)
         // and if not, grey out the slider
@@ -211,10 +213,6 @@ export default class {
     // TODO
     setYear(year) {
         this.year = year || this.calcYear()
-        htmx.ajax('GET', '/photos/year:' + this.year + '?', {
-            'target': '#fi-image-tag',
-            'swap': 'outerHTML'
-        })
         // // check if selected year (this.year) has photos at all (not already loaded)
         // // and if not, jump to the closest year that has
         // if (!photoManager.getYearsInContext().find(item => item.year === this.year)) {
@@ -239,9 +237,9 @@ export default class {
         if ((this.sliderDragged && this.year !== this.sliderDragStartYear) || !this.sliderDragged) {
             // if we are in a year context, let's clear the context
             if (getURLParams().year > 0 || getURLParams().id > 0) {
-                trigger("photos:historyPushState", { url: "?q=", resetPhotosGrid: true, jumpToYearAfter: this.year })
+                //trigger("photos:historyPushState", { url: "?q=", resetPhotosGrid: true, jumpToYearAfter: this.year })
             } else {
-                trigger("timeline:yearSelected", { year: this.year })
+                trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
             }
         }
     }

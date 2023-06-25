@@ -1,5 +1,5 @@
 from django import template
-from ..forms import SearchForm
+from ..forms import SearchForm, TimelineForm
 
 register = template.Library()
 
@@ -12,3 +12,11 @@ def make_search_form(context):
     else:
         form = SearchForm()
     return { 'form': form, 'vary_on': params, 'theme': context['theme'], 'url_kwargs': context['url_kwargs'], 'get_params': context['get_params']}
+
+@register.inclusion_tag("archive/timeline.html", takes_context=True)
+def timeline(context):
+    return {
+        'form': TimelineForm(context['request'].GET, auto_id="timeline_id_%s"),
+        'object': context['object'],
+        'queryset': context['queryset'],
+    }

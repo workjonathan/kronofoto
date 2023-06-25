@@ -3,6 +3,7 @@
 {% load cache %}
 {% load widgets %}
 {% load krono_urls %}
+{% load searchform %}
 
 {% block opengraph %}
     <meta property="og:title" content="{{ request.site.name }}: {{ photo.accession_number }}" />
@@ -206,7 +207,9 @@
 
 
 
-    {% include "archive/timeline.html" %}
+    <form hx-trigger="timeline:yearSelected" hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+        {% timeline %}
+    </form>
 
 
 

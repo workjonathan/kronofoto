@@ -27,4 +27,11 @@
         </div>
     </div>
 </div>
+{% for field in form %}
+    {% if field != form.year %}
+    {{ field.as_hidden }}
+    {% else %}
+    {{ field }}
+    {% endif %}
+{% endfor %}
 {% endwith %}
