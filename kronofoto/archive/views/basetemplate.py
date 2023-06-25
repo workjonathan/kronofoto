@@ -172,7 +172,6 @@ class BaseTemplateMixin(BasePermissiveCORSMixin):
         context['photo_count'] = photo_count
         context['timeline_url'] = '#'
         archive_themes = THEME[self.kwargs['short_name'] if 'short_name' in self.kwargs else 'us']
-        print(archive_themes)
 
         context['theme'] = random.choice(list(archive_themes.values()))
         hxheaders = dict()
