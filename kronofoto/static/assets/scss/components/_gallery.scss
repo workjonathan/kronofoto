@@ -1,146 +1,252 @@
-//$timelineHeight: 110px;
+//@use 'timeline' as timeline;
+//@use 'header' as header;
+
+// TODO: move to peer @use
+$thumbnailsHeight: 90px;
+$timelineHeight: 45px;
+$headerHeight: 60px;
+//
+
 $galleryBg: #4C4C4C;
 $gallerySidesBg: #666666;
 $gallerySidesSize: 260px;
+$galleryWidth: calc(100vw - 560px);
+$galleryHeight: calc(100vh - $thumbnailsHeight - $timelineHeight - $headerHeight);
 $thumbnailsHeight: 120px;
 $timelineHeight: 65px;
 $headerHeight: 80px;
 
-.gallery {
-
-  position: relative;
-  height: calc(100vh - ($headerHeight + $timelineHeight + $thumbnailsHeight));
-
-  &__image {
-    height: 100%;
-    width: calc(100vw - ($gallerySidesSize*2));
-    figure {
-      width: 100%;
-      height: 100%;
-    }
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-  }
-
-
-  .fi-image .control {
-    position: absolute;
-    height: 100%;
-    /*width: 100%;*/
-  }
-
-  .fi-image .control.previous {
-    /*grid-column: 1 / 4;*/
-    position: absolute;
-    height:calc(100vh - 275px);
-    top:0px;
-    cursor: url('../images/arrow-cursor-back.png'), auto;
-    width: 50vw;
-
-    /*transform: translateX(-50%);*/
-  }
-
-  .fi-image .control.forward {
-    /*grid-column-start: 4;*/
-    position:absolute;
-    top:0px;
-    height:calc(100vh - 275px);
-    cursor: url('../images/arrow-cursor.png'), auto;
-    width: 50vw;
-    right:0px;
-  }
-
-  @media (max-width: 1140px) {
-    .fi-image .control.previous, .fi-image .control.forward {
-      height: calc(100vh - 175px);
-    }
-
-  }
-
-  &__left-space, &__right-space {
-    position:absolute;
-    background: $gallerySidesBg;
-    height: 100%;
-    width: $gallerySidesSize;
-  }
-
-  &__left-space {
-    left: 0px;
-  }
-
-  &__right-space {
-    right:0px;
-  }
-
-  &__background{
-    position: absolute;
-    z-index: -1;
-    width: calc(100% - ($gallerySidesSize*2));
-    height: 100%;
-    background: $galleryBg;
-    margin:auto;
-    top: 0px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  &__controls {
-
-  }
-
-  &__controls-top, &__controls-bottom {
-    z-index: 100;
-    position: absolute;
-    top: 0px;
-    left: 50%;
-    width: calc(100% - ($gallerySidesSize*2));
-    height: 80px;
+@mixin styles {
+  .gallery {
     display: flex;
-    justify-content: flex-end;
-    padding: 20px;
-    transform: translateX(-50%);
-    > button {
-      background: none;
-      border: none;
-      padding: 0px 10px;
-      cursor: pointer;
-      img {
-        transition: all ease-in-out 100ms;
+    position: relative;
+    height: $galleryHeight;
+
+    &__image {
+      height: 100%;
+      width: $galleryWidth;
+      background: $galleryBg;
+      figure {
+        width: 100%;
+        height: 100%;
       }
-      &:hover {
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+
+    .fi-image .control {
+      position: absolute;
+      height: 100%;
+      /*width: 100%;*/
+    }
+
+    .fi-image .control.previous {
+      /*grid-column: 1 / 4;*/
+      position: absolute;
+      height:calc(100vh - 275px);
+      top:0px;
+      cursor: url('../images/arrow-cursor-back.png'), auto;
+      width: 50vw;
+
+      /*transform: translateX(-50%);*/
+    }
+
+    .fi-image .control.forward {
+      /*grid-column-start: 4;*/
+      position:absolute;
+      top:0px;
+      height:calc(100vh - 275px);
+      cursor: url('../images/arrow-cursor.png'), auto;
+      width: 50vw;
+      right:0px;
+    }
+
+    @media (max-width: 1140px) {
+      .fi-image .control.previous, .fi-image .control.forward {
+        height: calc(100vh - 175px);
+      }
+
+    }
+
+    &__left-space, &__right-space {
+      background: $gallerySidesBg;
+      height: 100%;
+      flex-grow: 1;
+      position: relative;
+    }
+
+    &__left-space {
+      left: 0px;
+    }
+
+    &__right-space {
+      right:0px;
+    }
+
+    &__background{
+      display: none;
+      position: absolute;
+      z-index: -1;
+      width: $galleryWidth;
+      height: 100%;
+      background: $galleryBg;
+      margin:auto;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &__controls {
+
+    }
+
+    &__controls-top, &__controls-bottom {
+      z-index: 100;
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      width: $galleryWidth;
+      height: 50px;
+      display: flex;
+      justify-content: flex-end;
+      padding: 0px;
+      transform: translateX(-50%);
+      > button {
+        background: none;
+        border: none;
+        padding: 0px 10px;
+        cursor: pointer;
         img {
-          transform: translateY(-5px);
+          transition: all ease-in-out 100ms;
+        }
+        &:hover {
+          img {
+            transform: translateY(-5px);
+          }
         }
       }
     }
+
+    &__controls-top {
+      background: transparent linear-gradient(180deg, #0000004D 0%, #00000000 100%) 0% 0% no-repeat padding-box;
+    }
+
+    &__controls-bottom {
+      background: transparent linear-gradient(180deg, #00000000 0%, #0000004D 100%) 0% 0% no-repeat padding-box;
+      top: auto;
+      bottom: 0px;
+      z-index: 200;
+    }
+
+    &__popups {
+      width: $galleryWidth;
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      //min-height: 300px;
+      z-index: 150;
+    }
+
+    &__popup {
+      @extend .photo-menu-popup;
+    }
+
   }
 
-  &__controls-top {
-    background: transparent linear-gradient(180deg, #0000004D 0%, #00000000 100%) 0% 0% no-repeat padding-box;
-  }
-
-  &__controls-bottom {
-    background: transparent linear-gradient(180deg, #00000000 0%, #0000004D 100%) 0% 0% no-repeat padding-box;
-    top: auto;
-    bottom: 0px;
-    z-index: 200;
-  }
-
-  &__popups {
-    width: calc(100% - ($gallerySidesSize*2));
+  // Nav arrows
+  .control.forward, .control.previous {
     position: absolute;
-    bottom: 0px;
-    left: 50%;
-    transform: translateX(-50%);
-    //min-height: 300px;
-    z-index: 150;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    padding: 100px 32px;
+    transition: all ease-in-out 200ms;
+    //&:before {
+    //  content: '';
+    //  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23.993' height='19.131' viewBox='0 0 23.993 19.131'%3E%3Cg id='Group_16' data-name='Group 16' transform='translate(-15.096 -15.435)'%3E%3Cpath id='Path_44' data-name='Path 44' d='M25.722,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Cpath id='Path_54' data-name='Path 54' d='M215.345,952h21.526' transform='translate(-197.782 -927)' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
+    //  border-radius: 100%;
+    //  background-color: #4C4C4C;
+    //  display: block;
+    //  width: 44px;
+    //  height: 44px;
+    //  position: absolute;
+    //  top: 50%;
+    //  transform: translateY(-50%);
+    //}
+    &:after {
+      content: '';
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23.993' height='19.131' viewBox='0 0 23.993 19.131'%3E%3Cg id='Group_16' data-name='Group 16' transform='translate(-15.096 -15.435)'%3E%3Cpath id='Path_44' data-name='Path 44' d='M25.722,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Cpath id='Path_54' data-name='Path 54' d='M215.345,952h21.526' transform='translate(-197.782 -927)' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
+      background-repeat: no-repeat;
+      background-position: center center;
+      border-radius: 100%;
+      background-color: #4C4C4C;
+      display: block;
+      width: 44px;
+      height: 44px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    &:hover {
+      padding: 100px 37px;
+    }
+  }
+  .control.forward {
+    left: 0px;
+    &:after {
+      right: 0px;
+      transform: translateY(-50%) rotate(180deg)
+    }
+  }
+  .control.previous {
+    right: 0px;
+    &:after {
+      left: 0px;
+    }
   }
 
-  &__popup {
-    @extend .photo-menu-popup;
+  // Zoom Popup
+  .follow-zoom-popup:not(.hidden) {
+    background-color: gray;
+    cursor: zoom-in;
+    & + .gallery__controls {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      background-color: black;
+      .gallery__controls-top, .gallery__controls-bottom {
+        width: 100%;
+      }
+    }
+  }
+
+  .follow-zoom-timeline-popup-img {
+    position: absolute;
+    top: 50vh;
+    left: 50vw;
+
+
+    transform: translate(-50%, calc(-50% - 130px));
+    max-height: calc(100vh - 295px);
+
+    max-width: calc(100vw - 20px);
+    z-index: 99999;
+  }
+
+  @media (max-width: 1140px) {
+    .follow-zoom-background-overlay, .follow-zoom-timeline-popup-img {
+      display: none;
+    }
+
   }
 
 }

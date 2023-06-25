@@ -1,5 +1,7 @@
 import { setAppState, removeAppState, getURLParams, trigger } from "./utils"
 // import photoManager from "../../js/photo-manager"
+import HTMX from "./htmx.js"
+const htmx = HTMX(document)
 export default class {
     get targets() {
         return [
@@ -89,6 +91,7 @@ export default class {
 
     // TODO
     setSlider(e) {
+        console.log(1)
         if (true) { //if (photoManager.hasData()) {
             this.yearStart = 1900 //photoManager.getFirstYearInContext().year
             this.yearEnd = 2000 //photoManager.getLastYearInContext().year
@@ -208,7 +211,10 @@ export default class {
     // TODO
     setYear(year) {
         this.year = year || this.calcYear()
-
+        htmx.ajax('GET', '/photos/year:' + this.year + '?', {
+            'target': '#fi-image-tag',
+            'swap': 'outerHTML'
+        })
         // // check if selected year (this.year) has photos at all (not already loaded)
         // // and if not, jump to the closest year that has
         // if (!photoManager.getYearsInContext().find(item => item.year === this.year)) {

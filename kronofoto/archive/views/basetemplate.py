@@ -6,7 +6,7 @@ from django.templatetags.static import static
 from django.template.loader import select_template
 import random
 import json
-from ..reverse import set_request
+from ..reverse import set_request, reverse
 from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
 from ..models import Photo
@@ -23,13 +23,21 @@ class Theme:
     color: str
     colorDarker: str
     colorLighter: str
-    logo: str
     menuSvg: str
     infoSvg: str
     downloadSvg: str
     searchSvg: str
     carrotSvg: str
     timelineSvg: str
+
+    name: str
+    archive: str
+
+    def logo(self):
+        kwargs = {'theme': self.name}
+        if self.archive:
+            kwargs['archive'] = self.archive
+        return reverse('kronofoto:logosvg', kwargs=kwargs)
 
     @classmethod
     def generate_themes(cls):
@@ -45,24 +53,25 @@ class Theme:
                 color=color,
                 colorLighter="",
                 colorDarker="",
-                logo='assets/images/{}/logo.svg'.format(name),
                 menuSvg='assets/images/{}/menu.svg'.format(name),
                 infoSvg='assets/images/{}/info.svg'.format(name),
                 downloadSvg='assets/images/{}/download.svg'.format(name),
                 searchSvg='assets/images/{}/search.svg'.format(name),
                 carrotSvg='assets/images/{}/carrot.svg'.format(name),
                 timelineSvg='assets/images/{}/toggle.svg'.format(name),
+                name=name,
+                archive=None,
             )
             for name, color in colors
         }
         themes = {
-            archive: [
-                replace(theme, logo='assets/images/{}/{}/logo.svg'.format(name, archive))
+            archive: {
+                name: replace(theme, archive=archive)
                 for name, theme in colors.items()
-            ]
+            }
             for archive in ('ia', 'ct')
         }
-        themes['us'] = list(colors.values())
+        themes['us'] = colors
         return ThemeDict(themes)
 
 THEME = Theme.generate_themes()
@@ -162,7 +171,10 @@ class BaseTemplateMixin(BasePermissiveCORSMixin):
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
         context['photo_count'] = photo_count
         context['timeline_url'] = '#'
-        context['theme'] = random.choice(THEME[self.kwargs['short_name'] if 'short_name' in self.kwargs else 'us'])
+        archive_themes = THEME[self.kwargs['short_name'] if 'short_name' in self.kwargs else 'us']
+        print(archive_themes)
+
+        context['theme'] = random.choice(list(archive_themes.values()))
         hxheaders = dict()
         hxheaders['Constraint'] = self.request.headers.get('Constraint', None)
         hxheaders['Embedded'] = self.request.headers.get('Embedded', 'false')

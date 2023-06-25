@@ -1,48 +1,56 @@
+@use 'components/gallery' as gallery;
+@use 'components/header' as header;
+@use 'components/social-share-icons' as shareSocialIcons;
+@use 'components/tags' as tags;
+@use 'components/timeline' as timeline;
+
+@use 'typography' as typography;
 
 // Foundation Dependencies
-@import '../_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
-@import '../_vendor/sassy-lists/stylesheets/helpers/true';
-@import '../_vendor/sassy-lists/stylesheets/functions/contain';
-@import '../_vendor/sassy-lists/stylesheets/functions/purge';
-@import '../_vendor/sassy-lists/stylesheets/functions/remove';
-@import '../_vendor/sassy-lists/stylesheets/functions/replace';
-@import '../_vendor/sassy-lists/stylesheets/functions/to-list';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/true';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/contain';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/purge';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/remove';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/replace';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/to-list';
 
 // Foundation Utilities
-@import 'util/util';
+@import 'foundation-sites/scss/util/util';
 
 // Foundation Global styles
-@import 'global';
-@import 'typography/typography';
+@import 'foundation-sites/scss/global';
+@import 'foundation-sites/scss/typography/typography';
 
 // Foundation Grids
-@import 'grid/grid';
-@import 'xy-grid/xy-grid';
+@import 'foundation-sites/scss/grid/grid';
+@import 'foundation-sites/scss/xy-grid/xy-grid';
 
 @import 'kronofoto';
-@import 'typography';
+@include typography.styles;
 
 // Kronofoto Components
 @import 'components/checkboxes';
 @import 'components/form';
-@import 'components/gallery';
-@import 'components/header';
+@include gallery.styles;
+@include header.styles;
 @import 'components/input';
 @import 'components/photo-menu-popup';
-@import 'components/tags';
-@import 'components/timeline';
+@include shareSocialIcons.styles;
+@include tags.styles;
+@include timeline.styles;
 @import 'components/button';
 
 
 // Foundation Components
-@import 'components/switch';
-@import 'components/tooltip';
+@import 'foundation-sites/scss/components/switch';
+@import 'foundation-sites/scss/components/tooltip';
 
 // Foundation Helpers
-@import 'components/float';
-@import 'components/visibility';
-@import 'prototype/prototype';
-@import 'components/flex';
+@import 'foundation-sites/scss/components/float';
+@import 'foundation-sites/scss/components/visibility';
+@import 'foundation-sites/scss/prototype/prototype';
+@import 'foundation-sites/scss/components/flex';
 
 @include foundation-switch;
 @include foundation-tooltip;

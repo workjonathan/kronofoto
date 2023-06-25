@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
-from .basetemplate import BasePhotoTemplateMixin
+from .basetemplate import BasePhotoTemplateMixin, BasePermissiveCORSMixin
 from .paginator import TimelinePaginator, FAKE_PHOTO
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
@@ -15,6 +15,8 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
 from typing import final
+from .basetemplate import THEME
+import random
 
 NO_URLS = dict(url='#', json_url='#')
 
@@ -168,4 +170,20 @@ class TimelineSvg(TemplateView):
         response['Vary'] = 'Constraint'
         response['Content-Type'] = 'image/svg+xml'
         response['Access-Control-Allow-Origin'] = '*'
+        return response
+
+
+
+class LogoSvg(BasePermissiveCORSMixin, TemplateView):
+    template_name = "archive/logo.svg"
+    def get_context_data(self, theme='skyblue', short_name='us'):
+        context = {
+            'theme': THEME[short_name][theme]
+        }
+        return context
+
+    @cache_control(max_age=60*60, public=True)
+    def dispatch(self, *args, **kwargs):
+        response = super().dispatch(*args, **kwargs)
+        response['Content-Type'] = 'image/svg+xml'
         return response

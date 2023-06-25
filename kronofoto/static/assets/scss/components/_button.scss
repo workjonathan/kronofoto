@@ -1,3 +1,4 @@
+@use '../typography' as *;
 @use 'sass:math';
 
 @function rem($value) {
@@ -12,7 +13,7 @@
     background-color: var(--fp-main-blue);
     @include font-paragraph2;
     line-height: 48px;
-    padding: 0px 35px;
+    padding: 0px 25px;
     border: none;
     cursor: pointer;
     &:hover {
@@ -28,10 +29,14 @@
   cursor: pointer;
   font-weight: bold;
 }
-
-a.button, button#login-btn, .logout-btn, input[type="submit"] {
-  //@extend .button--default;
+a.button {
+  @include button--round;
+  display: inline-block;
 }
+
+//a.button, button#login-btn, .logout-btn, input[type="submit"] {
+//  @extend .button--default;
+//}
 
 a.button, input[type="submit"] {
   background-color: var(--fp-main-blue);
@@ -231,4 +236,8 @@ button#login-btn:hover {
   font-size: rem(18px);
   text-align: center;
   line-height: rem(48px);
+}
+
+[data-clipboard-target] {
+  margin-left: 10px;
 }

@@ -13,10 +13,25 @@ Foundation.plugin(Tooltip, 'Tooltip');
 
 $(document).ready(function($) {
     $(document).foundation();
+    $('.form--add-tag').each(function(i,e) {
+        $('.link--icon', e).click(function() {
+            $(e).addClass('expanded')
+            $('input[type=text]', e).focus()
+        })
+        $(e).on('focusout', 'input[type=text]', function(f) {
+            $(e).removeClass('expanded')
+            $(f.currentTarget).val('')
+        })
+    })
+
 });
 
+new window.ClipboardJS('[data-clipboard-target]');
+
 $(document).on('on.zf.toggler', function(e) {
-    $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+    if($(e.target).hasClass('gallery__popup')) {
+        $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+    }
 });
 
 window.jQuery = window.$ = window.jQueryOrig

@@ -1,3 +1,5 @@
+@use '../typography' as *;
+
 @mixin input--text-round {
   @include font-paragraph();
   border-radius: 24px;
