@@ -36,7 +36,7 @@ class Theme:
     def logo(self):
         kwargs = {'theme': self.name}
         if self.archive:
-            kwargs['archive'] = self.archive
+            kwargs['short_name'] = self.archive
         return reverse('kronofoto:logosvg', kwargs=kwargs)
 
     @classmethod

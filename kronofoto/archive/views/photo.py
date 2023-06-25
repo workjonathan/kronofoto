@@ -175,7 +175,14 @@ class TimelineSvg(TemplateView):
 
 
 class LogoSvg(BasePermissiveCORSMixin, TemplateView):
-    template_name = "archive/logo.svg"
+    template_name = "archive/svg/logo.svg"
+    def get_template_names(self):
+        templates = []
+        if 'short_name' in self.kwargs:
+            templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
+        templates.append(self.template_name)
+        return templates
+
     def get_context_data(self, theme='skyblue', short_name='us'):
         context = {
             'theme': THEME[short_name][theme]
