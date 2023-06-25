@@ -93,9 +93,9 @@ export default class {
     setSlider(e) {
         console.log(1)
         if (true) { //if (photoManager.hasData()) {
-            this.yearStart = 1900 //photoManager.getFirstYearInContext().year
-            this.yearEnd = 2000 //photoManager.getLastYearInContext().year
-            this.year = 1980
+            this.yearStart = +this.yearStartTarget.textContent //photoManager.getFirstYearInContext().year
+            this.yearEnd = +this.yearEndTarget.textContent //photoManager.getLastYearInContext().year
+            this.year = +this.sliderYearLabelTarget.textContent
             if (e && e.type === "photos:yearChanged" && e.detail && e.detail.year) {
                 // when it is a listener for photos:yearChanged
                 // where the parameter year should be passed
@@ -140,8 +140,8 @@ export default class {
         //     this.sliderYearCountTarget.textContent = 0
         // }
 
-        this.yearStartTarget.textContent = this.yearStart
-        this.yearEndTarget.textContent = this.yearEnd
+        // jthis.yearStartTarget.textContent = this.yearStart
+        // this.yearEndTarget.textContent = this.yearEnd
     }
 
     fixSlider() {
