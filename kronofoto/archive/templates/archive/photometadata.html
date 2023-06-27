@@ -1,5 +1,6 @@
 {% load static %}
 {% load widgets %}
+{% load permissions %}
 {% load krono_urls %}
 
 {% if edit_url %} <a class="photo-menu-popup__edit-btn" href="{{ edit_url }}"></a>{% endif %}
@@ -11,7 +12,7 @@
         </div>
 
         <div>
-            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if request.user|has_view_or_change_permission:photo %} <a href="{{ object.get_edit_url }}">[ Edit ]</a>{% endif %}
         </div>
 
         <div>
@@ -36,20 +37,15 @@
         <div class="metadata-3a" hx-target="#app" hx-headers="{}" hx-swap="innerHTML">
             <h3>Tags:</h3>
             <div class="tags">
-                {% if tags or photo.terms.exists %}
-                <ul>
-                    {% if tags %}
-                    {% for tag in tags %}
-                    <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag }}</a></li>
-                    {% endfor %}
+                {% with tags=photo|all_tags_with:request.user %}
+                    {% if tags|length > 0 %}
+                    <ul>
+                        {% for tag in tags|dictsort:"label_lower" %}
+                        <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag.label }}</a></li>
+                        {% endfor %}
+                    </ul>
                     {% endif %}
-                    {% if photo.terms.exists %}
-                    {% for term in photo.terms.all %}
-                    <li><a hx-get="{% object_url term url_kwargs %}" href="{% object_url term url_kwargs %}">{{ term }}</a></li>
-                    {% endfor %}
-                    {% endif %}
-                </ul>
-                {% endif %}
+                {% endwith %}
                 <p>
                     <form class="form form--add-tag" id="add-tag-form">
                         <div class="wrapper">
@@ -57,7 +53,7 @@
                             <input type="text" />
                             <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
                         </div>
-<!--                        <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a>-->
+{#                        <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a> #}
                     </form>
                 </p>
             </div>

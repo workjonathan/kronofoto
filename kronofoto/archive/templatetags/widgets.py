@@ -9,6 +9,14 @@ from django.utils.html import escape
 
 register = template.Library()
 
+@register.filter
+def all_tags_with(photo, user=None):
+    return photo.get_all_tags(user=user)
+
+@register.filter
+def describe(object, user=None):
+    return object.describe(user)
+
 @register.inclusion_tag('archive/page-links.html', takes_context=False)
 def page_links(formatter, page_obj, target=None):
     links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]

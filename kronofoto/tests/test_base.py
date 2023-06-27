@@ -59,6 +59,7 @@ class DbTests(TestCase):
         template.get_collection_name = Mock(return_value={})
         template.get_hx_context = Mock(return_value={})
         template.request = request
+        template.kwargs = {}
         template.get_params = sentinel.get_params
         template.form = sentinel.form
         template.constraint = None
@@ -103,6 +104,11 @@ class Tests(SimpleTestCase):
         for k in removals:
             assert k not in params
 
+    def test_constraint_parse_works(self):
+        template = Template()
+        assert template.get_constraint_expr("county:Jones")
+
+
     @given(s=st.text())
     def test_constraint_parse(self, s):
         template = Template()
@@ -115,7 +121,13 @@ class Tests(SimpleTestCase):
         template = Template()
         request = RequestFactory().get('/')
         template.request = request
-        assert template.get_hx_context() == {'base_template': 'archive/base.html'}
+        template.kwargs = {}
+        #import django
+        #from django.template import loader
+        from unittest.mock import patch
+        with patch('django.template.loader.select_template') as mock:
+            template.get_hx_context()
+            assert mock.called_with(['archive/base.html'])
         request = RequestFactory().get('/', HTTP_HX_REQUEST="true")
         template.request = request
         assert template.get_hx_context() == {'base_template': 'archive/base_partial.html'}

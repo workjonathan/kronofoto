@@ -16,14 +16,15 @@ from django.conf import settings
 from django.urls import reverse, NoReverseMatch
 from django.contrib import messages
 from django import forms
-from django.forms import ModelForm, Textarea
 from functools import reduce
 import operator
 from collections import defaultdict
+from .auth.forms import FortepanAuthenticationForm
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
+admin.site.login_form = FortepanAuthenticationForm
 
 class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"
@@ -198,17 +199,27 @@ class ArchivePermissionMixin:
                 else request.user.has_perm("{}.any.{}".format(self.opts.app_label, codename_delete))
             ))
 
+    def has_view_or_change_all(self, request):
+        return super().has_view_permission(request) or super().has_change_permission(request)
+
+
 class FilteringArchivePermissionMixin(ArchivePermissionMixin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if not super().has_view_permission(request) and not super().has_change_permission(request):
+        if not self.has_view_or_change_all(request):
             opts = self.opts
             codename_view = get_permission_codename('view', opts)
             codename_change = get_permission_codename('change', opts)
-            qs = qs.filter(Q(
-                archive__archiveuserpermission__user=request.user,
-                archive__archiveuserpermission__permission__content_type__model=opts.model_name,
-            ) & Q(archive__archiveuserpermission__permission__codename=codename_view) | Q(archive__archiveuserpermission__permission__codename=codename_change))
+            related_query_name = qs.model._meta.get_field('archive').related_query_name()
+            q = (
+                (Q(codename=codename_change) | Q(codename=codename_view)) &
+                Q(
+                    content_type__model=opts.model_name,
+                    archiveuserpermission__user=request.user,
+                    **{'archiveuserpermission__archive__{}'.format(related_query_name): OuterRef('pk')},
+                )
+            )
+            qs = qs.filter(Exists(Permission.objects.filter(q)))
         return qs
 
 @admin.register(Donor)
@@ -231,14 +242,14 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
         return qs.annotate_scannedcount().annotate_donatedcount()
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if not super().has_change_permission(request) and not super().has_add_permission(request):
+        if not self.has_view_or_change_all(request):
             opts = self.opts
             codename_add = get_permission_codename('add', opts)
             codename_change = get_permission_codename('change', opts)
             kwargs['queryset'] = Archive.objects.filter(Q(
                 archiveuserpermission__user=request.user,
                 archiveuserpermission__permission__content_type__model=opts.model_name,
-            ) & Q(archiveuserpermission__permission__codename=codename_add) | Q(archiveuserpermission__permission__codename=codename_change)).distinct()
+            ) & (Q(archiveuserpermission__permission__codename=codename_add) | Q(archiveuserpermission__permission__codename=codename_change)))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -656,6 +667,15 @@ class KronofotoUserAdmin(UserAdmin):
         if db_field.name == 'user_permissions':
             kwargs['queryset'] = permission_analyst.get_changeable_permissions()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj and not request.user.is_superuser:
+            fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'groups', 'user_permissions')
+        return fieldsets
+
+
+
 
 class KronofotoGroupAdmin(GroupAdmin):
 

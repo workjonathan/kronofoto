@@ -3,6 +3,14 @@
 {% load cache %}
 {% load widgets %}
 {% load krono_urls %}
+{% load searchform %}
+
+{% block opengraph %}
+    <meta property="og:title" content="{{ request.site.name }}: {{ photo.accession_number }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="{{ photo.h700.url }}" />
+    <meta property="og:url" content="{% object_url photo %}" />
+{% endblock %}
 
 {% block viewbuttons %}
 {% include "archive/view-buttons.html" with timelineclass="current-view" %}
@@ -26,7 +34,7 @@
         <article class="gallery__image fi-image" id="fi-image">
             <figure>
                 {% block image %}
-                <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ alttext }}" />
+                <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ photo|describe:request.user|join:", " }}" />
                 {% endblock image %}
             </figure>
         </article>
@@ -199,7 +207,9 @@
 
 
 
-    {% include "archive/timeline.html" %}
+    <form hx-trigger="timeline:yearSelected" hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+        {% timeline %}
+    </form>
 
 
 

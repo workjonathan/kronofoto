@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from django.http import QueryDict
 from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
+from django.db.models.functions import Lower
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -83,7 +84,7 @@ class Photo(models.Model):
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     terms = models.ManyToManyField(Term, blank=True)
-    photographer = models.TextField(blank=True)
+    photographer = models.CharField(max_length=128, blank=True)
     location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
@@ -94,7 +95,7 @@ class Photo(models.Model):
     country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
-    caption = models.TextField(blank=True)
+    caption = models.TextField(blank=True, verbose_name="comment")
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     local_context_id = models.CharField(
@@ -118,11 +119,18 @@ class Photo(models.Model):
     def page_number(self):
         return {'year:gte': self.year, 'id:gt': self.id-1}
 
+    def get_all_tags(self, user=None):
+        "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
+        tags = self.get_accepted_tags(user=user).annotate(label_lower=Lower("tag"), label=models.F("tag"))
+        terms = self.terms.annotate(label_lower=Lower("term"), label=models.F("term"))
+        return list(tags) + list(terms)
+
+
     def get_accepted_tags(self, user=None):
-        tags = self.tags.filter(phototag__accepted=True)
+        query = Q(phototag__accepted=True)
         if user:
-            tags |= self.tags.filter(phototag__creator__pk=user.pk)
-        return tags.distinct()
+            query |= Q(phototag__creator__pk=user.pk)
+        return self.tags.filter(query)
 
     def get_proposed_tags(self):
         return self.tags.filter(phototag__accepted=False)

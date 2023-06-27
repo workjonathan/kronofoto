@@ -2,6 +2,12 @@ from .token import UserEmailVerifier
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.forms import AuthenticationForm
+
+class FortepanAuthenticationForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Email'
 
 class RegisterUserForm(forms.Form):
     email = forms.EmailField()

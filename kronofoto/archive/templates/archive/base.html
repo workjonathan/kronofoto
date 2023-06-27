@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 {% load static %}
 {% load login %}
 {% load searchform %}
@@ -12,6 +12,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}">
+  {% block opengraph %}
+  {% endblock %}
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
   <script
@@ -42,7 +44,7 @@
       <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
-            <a href="{% url "kronofoto:random-image" %}"><img class="logo-img" src="{{ theme.logo }}/{{ theme.index }}" alt="Fortepan Iowa Logo"></a>
+            <a href="{% url "kronofoto:random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
 
             <div class="collection-name">
               <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
@@ -59,7 +61,7 @@
               </div>
 
               <div class="search-options">
-                <img src="{{ theme.carrotSvg }}" alt="Carrot" class="carrot">
+                <img src="{% static theme.carrotSvg %}" alt="Carrot" class="carrot">
               </div>
 
             </div>
@@ -99,7 +101,7 @@
           <div class="hamburger-container">
 
             <div class="hamburger">
-              <img class="hamburger-icon" src="{% static "assets/images/hamburger.svg" %}" alt="menu icon" title="Menu">
+              <img class="hamburger-icon" src="{% static theme.menuSvg %}" alt="menu icon" title="Menu">
             </div>
 
             <div class="hamburger-menu hidden">

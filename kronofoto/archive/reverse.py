@@ -4,6 +4,7 @@ from threading import local
 from dataclasses import dataclass
 from django.contrib.sites.models import Site
 from urllib.parse import urlparse
+from django.conf import settings
 
 requests = local()
 
@@ -25,7 +26,7 @@ def as_absolute(uri):
 def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None, domain=None):
     domain = domain or Site.objects.get_current().domain
     uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)
-    return "//{domain}{uri}".format(domain=domain, uri=uri)
+    return "{scheme}//{domain}{uri}".format(scheme=settings.KF_URL_SCHEME, domain=domain, uri=uri)
 
 def resolve(path, urlconf=None):
     parseResults = urlparse(path)

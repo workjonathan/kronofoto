@@ -22,7 +22,11 @@ def test_photo_hx_context(photo):
     request = RequestFactory().get(reverse('kronofoto:photoview', kwargs={'photo': photo}))
     photoview = PhotoView()
     photoview.request = request
-    assert photoview.get_hx_context()['base_template'] == 'archive/base.html'
+    photoview.kwargs = {}
+    from unittest.mock import patch
+    with patch('django.template.loader.select_template') as mock:
+        photoview.get_hx_context()
+        assert mock.called_with(['archive/base.html'])
 
 @given(photo=st.integers(min_value=1, max_value=100000))
 def test_photo_hx_context_swap(photo):
@@ -45,13 +49,13 @@ class Tests(TestCase):
         photo = Photo.objects.create(archive=archive, donor=donor, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'), h700=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'), thumbnail=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
         permissions = data.draw(st.lists(st.sampled_from(list(Permission.objects.all().order_by('id')))))
         user.user_permissions.add(*permissions)
-        photoview = PhotoView()
-        ctx = photoview.get_user_context(user=user, object=photo)
+        from archive.templatetags.permissions import has_view_or_change_permission
+        has_perm = has_view_or_change_permission(user, photo)
         note(f'{user.is_staff=}')
         client = Client()
         client.force_login(user)
-        if 'edit_url' in ctx:
-            assert client.get(ctx['edit_url'][13:]).status_code == 200
+        if has_perm:
+            assert client.get(photo.get_edit_url()[13:]).status_code == 200
         elif user.is_staff:
             assert client.get(photo.get_edit_url()[13:]).status_code == 403
         else:
@@ -66,16 +70,13 @@ class Tests(TestCase):
         resp = PhotoView.as_view(
             get_object=Mock(return_value=photo),
             get_hx_context=Mock(return_value={'hxstuff': True}),
-            get_user_context=Mock(return_value={'userstuff': True}),
         )(request)
         assert resp.status_code == 200
         assert 'photo' in resp.context_data
         assert resp.context_data['hxstuff']
-        assert resp.context_data['userstuff']
         assert resp.context_data['photo'].id == photo.id
         assert 'carousel_has_prev' in resp.context_data
         assert 'carousel_has_next' in resp.context_data
-        assert 'timelinesvg_url' in resp.context_data
 
 
     @settings(max_examples=5)

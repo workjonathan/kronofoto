@@ -33,7 +33,7 @@ app_name = 'kronofoto'
 urlpatterns = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
-    path('logo.svg/<int:theme>', LogoSvg.as_view(), name='logosvg'),
+    path('logo.svg/<str:theme>', LogoSvg.as_view(), name='logosvg'),
     path('original/<int:photo>/', views.DownloadPageView.as_view()),
     path('photos/<accession:photo>/original', views.DownloadPageView.as_view(), name='download'),
     path('user/<str:username>/', views.Profile.as_view()),
@@ -53,7 +53,8 @@ urlpatterns = [
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view()),
     path('photo/year:<int:year>/', YearRedirect.as_view()),
-    path('photos/year:<int:year>', YearRedirect.as_view(), name="year-redirect"),
+    path('photos/year:<int:year>', YearRedirect.as_view()),
+    path('photos/year', YearRedirect.as_view(), name="year-redirect"),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view()),
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
     path('photo/<accession:photo>/tag-members/edit', views.AddTagView.as_view(), name='addtag'),
