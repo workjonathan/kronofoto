@@ -1,4 +1,4 @@
-$height: 60px;
+$height: 80px;
 
 @mixin styles {
   header {
@@ -7,6 +7,11 @@ $height: 60px;
     padding: 1.6vh;*/
     height: $height;
     padding: 6px 15px;
+  }
+
+  .logo-img {
+    width: 223px;
+    vertical-align: middle;
   }
 
   nav {
