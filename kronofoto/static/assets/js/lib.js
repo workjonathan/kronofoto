@@ -41,27 +41,22 @@ export const toggleLogin = evt => {
     toggleElement(el);
 }
 export const toggleMenu = evt => {
-    const el = document.querySelector('.hamburger-menu')
-    toggleElement(el)
-    toggleHover()
+    if(!$('.hamburger').hasClass('is-active')) {
+      $('.hamburger').addClass('is-active')
+      $('.hamburger-menu').removeClass('collapse')
+      $('body').addClass('menu-expanded')
+      $('.overlay').fadeIn()
+    }
+    else {
+      $('.hamburger').removeClass('is-active')
+      $('.hamburger-menu').addClass('collapse')
+      $('body').removeClass('menu-expanded')
+      $('.overlay').fadeOut()
+    }
 }
 const toggleElement = el => {
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
-    }
-}
-
-const toggleHover = () => {
-    if($('.hamburger-menu').hasClass('gridden')) {
-        $('.overlay').css('display', 'block')
-        /* $('.hamburger-container').css('background-color', 'var(--fp-main-blue)')
-        $('.hamburger-container div img').css('filter', 'brightness(0) invert(1)') */
-        /* $('.hamburger-icon').attr('src', '/static/assets/images/close.png') */
-    } else {
-        $('.overlay').css('display', 'none')
-        /* $('.hamburger-container').css('background-color', '')
-        $('.hamburger-container div img').css('filter', '') */
-        /* $('.hamburger-icon').attr('src', '/static/assets/images/hamburger.svg') */
     }
 }
 

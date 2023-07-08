@@ -10,9 +10,12 @@ window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
 //htmx.logAll()
 
 const init = () => {
+
     document.querySelector('.hamburger').addEventListener("click", toggleMenu)
+
     $(document).click(function(event)
     {
+
         //~TESTING LINE
         //console.log(event.target.className)
 
@@ -66,10 +69,11 @@ const init = () => {
         minLength: 2,
     })
 
-    $('.overlay, .close-btn').click(() => {
-        $('.gridden').removeClass('gridden').addClass('hidden')
-        $('.overlay').css('display', 'none')
-    })
+    //
+    // $('.overlay, .close-btn').click(() => {
+    //     $('.gridden').removeClass('gridden').addClass('hidden')
+    //     $('.overlay').css('display', 'none')
+    // })
 
 
     $('#login-btn').click(() => {
