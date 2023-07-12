@@ -3,7 +3,11 @@
 {% load permissions %}
 {% load krono_urls %}
 
-{% if edit_url %} <a class="photo-menu-popup__edit-btn" href="{{ edit_url }}"></a>{% endif %}
+{% if request.user|has_view_or_change_permission:photo %}
+<script>
+    $('.photo-menu-popup__edit-btn').removeClass('hide').attr('href', '{{ object.get_edit_url }}');
+</script>
+{% endif %}
 
 <div class="row">
     <div class="columns large-4">
@@ -12,7 +16,7 @@
         </div>
 
         <div>
-            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>{% if request.user|has_view_or_change_permission:photo %} <a href="{{ object.get_edit_url }}">[ Edit ]</a>{% endif %}
+            <h2><a href="#">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>
         </div>
 
         <div>
@@ -73,11 +77,13 @@
         </div>
         {% endif%}
 
+        {% if photo.caption %}
         <div class="comments">
             <h3>Comments:</h3>
             <div class="indent comments">
                 {{ photo.caption | markdown }}
             </div>
         </div>
+        {% endif %}
     </div>
 </div>

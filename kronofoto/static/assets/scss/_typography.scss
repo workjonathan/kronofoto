@@ -114,3 +114,24 @@ $font-weight-thin: 100;
   letter-spacing: 0.05em;
   font-weight: $font-weight-bold;
 }
+
+.icon {
+  &.lock-icon {
+    display: block;
+    width: 54px;
+    height: 54px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='54' viewBox='0 0 54 54'%3E%3Ccircle id='Ellipse_3' data-name='Ellipse 3' cx='27' cy='27' r='27' fill='%237f7f7f'/%3E%3Cg id='lock-white' transform='translate(18.332 14.217)'%3E%3Cpath id='Path_14' data-name='Path 14' d='M29.975,23.708V19.271c0-3.278-2.122-5.951-4.748-5.951s-4.748,2.66-4.748,5.951v4.437h9.485Z' transform='translate(-16.56 -13.32)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Crect id='Rectangle_33' data-name='Rectangle 33' width='17.336' height='14.343' rx='3.61' transform='translate(0 9.422)' fill='%23fff' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
+  }
+  &.new-icon {
+    display: block;
+    width: 54px;
+    height: 54px;
+    background-image: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='54' viewBox='0 0 54 54'%3E%3Cg id='new-images-icon' transform='translate(-1791 -19)'%3E%3Cpath id='new-sky' d='M28.85,14.54l2.832,7.47,7.278-3.27-3.27,7.278,7.47,2.832-7.47,2.832,3.27,7.278-7.278-3.27-2.832,7.47-2.832-7.47-7.278,3.27,3.27-7.278L14.54,28.85l7.47-2.832L18.74,18.74l7.278,3.27Z' transform='translate(1789.15 17.15)' fill='%237F7F7F' stroke='%237F7F7F' stroke-linecap='square' stroke-linejoin='round' stroke-width='2.8'/%3E%3Crect id='Rectangle_35' data-name='Rectangle 35' width='54' height='54' transform='translate(1791 19)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+  }
+  &.map-icon {
+    display: block;
+    width: 55px;
+    height: 55px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='55' height='55' viewBox='0 0 55 55'%3E%3Cg id='location-icon' transform='translate(-1153 -23)'%3E%3Cg id='location-grey' transform='translate(1164.519 30.522)'%3E%3Cpath id='Path_13' data-name='Path 13' d='M41.271,21.371A15.981,15.981,0,0,0,25.291,5.39C16.47,5.39,9.31,11.44,9.31,21.371S25.291,45.346,25.291,45.346,41.271,30.2,41.271,21.371Z' transform='translate(-9.31 -5.39)' fill='%237f7f7f'/%3E%3Ccircle id='Ellipse_2' data-name='Ellipse 2' cx='6.335' cy='6.335' r='6.335' transform='translate(9.645 9.482)' fill='%23fff'/%3E%3C/g%3E%3Crect id='Rectangle_32' data-name='Rectangle 32' width='55' height='55' transform='translate(1153 23)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+  }
+}

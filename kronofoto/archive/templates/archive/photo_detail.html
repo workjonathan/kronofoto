@@ -19,7 +19,7 @@
 
 <main hx-target="#fi-image-tag" hx-swap="outerHTML">
 
-    <div class="gallery">
+    <div class="gallery" id="gallery" data-toggler=".zoom-opened">
         <div class="gallery__left-space">
             {% block left_arrow %}
             <a id="fi-arrow-left" class="control previous"
@@ -50,7 +50,7 @@
             {% endblock right_arrow %}
         </div>
 
-        <div id="zoom-popup" class="follow-zoom-popup hidden" data-popup-zoom data-popup>
+        <div id="zoom-popup" class="follow-zoom-popup">
 <!--            <div class="follow-zoom-background-overlay"></div>-->
             <div style='background: url("https://fortepanstage.uni.edu/{{ object.original.url }}");' id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
         </div>
@@ -60,7 +60,7 @@
 
             <div class="gallery__controls-top">
                 <!--Zoom Button-->
-                <button id="zoom-image-control-button" class="image-control-button" data-popup-target="data-popup-zoom" data-popup-button data-popup-zoom>
+                <button id="zoom-image-control-button" class="image-control-button" data-toggle="gallery">
                     <img class="meta-info-icon" src="{% static "assets/images/skyblue/zoom.svg" %}">
                 </button>
                 <!--Auto Play Button-->
@@ -92,6 +92,7 @@
         <div class="gallery__popups">
 
             <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__edit-btn hide"></a>
                 <a href="#" class="photo-menu-popup__close-btn" data-toggle="metadata-popup" data-toggler=".expanded"></a>
                 <div class="photo-menu-popup__wrapper">
                     {% block metadata %}
@@ -121,42 +122,61 @@
                 imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
 
           let img = new Image();
+          let zoomOpened = false
+          let zoomed = false
+          let galleryElem = document.getElementsByClassName('gallery')[0]
           img.src = imgsrc;
           img.onload = () => {
 
 
             let ratio = img.naturalWidth / img.naturalHeight;
 
-                Object.assign(container.style, {
+            Object.assign(container.style, {
+                height: "calc(100vh)",
+                width: "calc(100vw)",
+                backgroundPosition: "top",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat"
+              });
 
-                    height: "calc(100vh)",
-                    width: "calc(100vw)",
-                    backgroundPosition: "top",
-                    backgroundSize: "contain",
-                    backgroundRepeat: "no-repeat"
+              let removeZoom = () => {
+                  Object.assign(container.style, {
+                      backgroundPosition: "top",
+                      backgroundSize: "contain"
                   });
+              }
+
+            container.addEventListener('click', (e) => {
+                zoomed = !zoomed;
+
+                if(zoomed) {
+                    galleryElem.classList.add('zoomed')
+                }
+                else {
+                    galleryElem.classList.remove('zoomed')
+                    removeZoom()
+                }
+            })
 
             container.onmousemove = (e) => {
-              let rect = e.target.getBoundingClientRect(),
-                  xPos = e.clientX - rect.left,
-                  yPos = e.clientY - rect.top,
-                  xPercent = xPos / (container.clientWidth / 100) + "%",
-                  yPercent = yPos / ((container.clientWidth * ratio) / 100) + "%";
+              if(zoomed) {
+                  let rect = e.target.getBoundingClientRect(),
+                      xPos = e.clientX - rect.left,
+                      yPos = e.clientY - rect.top,
+                      xPercent = ((xPos / container.clientWidth) * 100) + "%",
+                      yPercent = ((yPos / container.clientHeight) * 100) + "%";
 
-              Object.assign(container.style, {
-                backgroundPosition: xPercent + " " + yPercent,
-                backgroundSize: img.naturalWidth + "px"
-              });
-            };
-
-            container.onmouseleave = (e) => {
-              Object.assign(container.style, {
-                backgroundPosition: "top",
-                backgroundSize: "contain"
+                  Object.assign(container.style, {
+                      backgroundPosition: xPercent + " " + yPercent,
+                      backgroundSize: img.naturalWidth + "px"
                   });
-                };
               }
             };
+
+            // container.onmouseleave = removeZoom
+
+              }
+            }
 
             window.onload = () => { addZoom("follow-zoom-timeline-version"); };
 

@@ -4,7 +4,7 @@
 // TODO: move to peer @use
 $thumbnailsHeight: 90px;
 $timelineHeight: 45px;
-$headerHeight: 60px;
+$headerHeight: 80px;
 //
 
 $galleryBg: #4C4C4C;
@@ -21,6 +21,7 @@ $headerHeight: 80px;
     display: flex;
     position: relative;
     height: $galleryHeight;
+    z-index: 0;
 
     &__image {
       height: 100%;
@@ -36,7 +37,6 @@ $headerHeight: 80px;
         object-fit: contain;
       }
     }
-
 
     .fi-image .control {
       position: absolute;
@@ -98,10 +98,6 @@ $headerHeight: 80px;
       top: 0px;
       left: 50%;
       transform: translateX(-50%);
-    }
-
-    &__controls {
-
     }
 
     &__controls-top, &__controls-bottom {
@@ -212,34 +208,96 @@ $headerHeight: 80px;
   }
 
   // Zoom Popup
-  .follow-zoom-popup:not(.hidden) {
-    background-color: gray;
-    cursor: zoom-in;
-    & + .gallery__controls {
+  .follow-zoom-popup {
+    display: none;
+  }
+
+  .gallery.zoom-opened {
+    z-index: 9999;
+    .gallery__popups {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 99999;
-      background-color: black;
-      .gallery__controls-top, .gallery__controls-bottom {
+      width: 100%;
+      z-index: 999999;
+    }
+    .control {
+      position: fixed;
+      z-index: 9999999;
+      &.previous {
+        left: 150px;
+        right: auto;
+        padding: 100px 32px !important;
+        &:after {
+          left: auto;
+          right: 0px;
+          transition: all ease-in-out 200ms;
+        }
+        &:hover {
+          &:after {
+            right: 10px;
+          }
+        }
+      }
+      &.forward {
+        left: auto;
+        right: 150px;
+        padding: 100px 32px !important;
+        &:after {
+          right: auto;
+          left: 0px;
+          transition: all ease-in-out 200ms;
+        }
+        &:hover {
+          &:after {
+            left: 10px;
+          }
+        }
+      }
+    }
+    .gallery__controls {
+      .gallery__controls-top {
         width: 100%;
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        z-index: 999999;
+        transform: translateX(0%);
+      }
+
+      .gallery__controls-bottom {
+        width: 100%;
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        z-index: 9999999;
+        transform: translateX(0%);
       }
     }
   }
 
+  .gallery.zoom-opened {
+    .follow-zoom-popup {
+      display: block;
+      background-color: gray;
+      cursor: zoom-in;
+    }
+  }
+
   .follow-zoom-timeline-popup-img {
-    position: absolute;
-    top: 50vh;
-    left: 50vw;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    z-index: 999999;
+    background-color: #000 !important;
+    cursor: zoom-in;
+  }
 
-
-    transform: translate(-50%, calc(-50% - 130px));
-    max-height: calc(100vh - 295px);
-
-    max-width: calc(100vw - 20px);
-    z-index: 99999;
+  .gallery.zoom-opened.zoomed {
+    .control {
+      display: none;
+    }
+    .follow-zoom-timeline-popup-img {
+      cursor: zoom-out;
+    }
   }
 
   @media (max-width: 1140px) {

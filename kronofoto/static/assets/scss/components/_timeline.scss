@@ -43,7 +43,7 @@ $grey: grey;
   #fi-thumbnail-carousel-images {
     background-color: #b2b2b2; // TODO: Add to color palette.
     position: absolute;
-    left: -950px;
+    left: -44%;
     height: 100%;
   }
 
@@ -346,7 +346,7 @@ $grey: grey;
   }
 
   .slide-container {
-    overflow: hidden;
+    overflow-x: clip;
     position: relative;
     width: gallery.$galleryWidth;
   }
