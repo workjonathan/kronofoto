@@ -7,13 +7,13 @@
     <div class="columns large-5">
         <div class="form">
             <h1 class="h1">Share</h1>
-            <p>Timeline view (current image)</p>
+            <p id="share-name">{{ name }}</p>
             <div class="social-share-icons">
                 <div class="sharethis-inline-share-buttons"></div>
             </div>
             <div class="row collapse">
                 <div class="columns small-8">
-                    <input type="text" id="share-input" rows="1" value="{{ src }}" />
+                    <input type="text" id="share-input" rows="1" value="{{ src }}{% if params %}?{{ params.urlencode }}{% endif %}" />
                 </div>
                 <div class="columns small-4">
                     <a class="button" data-clipboard-target="#share-input">Copy</a>
@@ -24,7 +24,7 @@
     <div class="columns large-7">
         <div class="form">
             <h1 class="h1">Embed</h1>
-            <form class="form" hx-get="{% krono_url "kronofoto:popup-web-component" view.kwargs %}?{{ params.urlencode }}" hx-push-url="false" hx-trigger="change">
+            <form class="form" hx-swap="outerHTML" id="web-component-form" hx-select-oob="#share-input,#share-name" hx-target="this" hx-select="#web-component-form" hx-get="{% krono_url "kronofoto:popup-web-component" view.kwargs %}?{{ params.urlencode }}" hx-push-url="false" hx-trigger="change">
             <p>Embedding keeps the current filters such as a search or list.</p>
 
             {% for field in form %}

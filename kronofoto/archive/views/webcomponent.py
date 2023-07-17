@@ -9,7 +9,7 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
     template_name = 'archive/web-component.html'
     form_class = WebComponentForm
     def get_initial(self):
-        return {'page': 'image'}
+        return {'page': 'random'}
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -24,13 +24,18 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
         context['site'] = Site.objects.get_current().domain
         kwargs = self.kwargs.copy()
         kwargs.pop('photo')
-        if not form.is_valid() or form.cleaned_data['page'] == 'image':
-            src = reverse('kronofoto:photoview', kwargs=self.kwargs)
+        choices = dict(WebComponentForm.CHOICES)
+        if not form.is_valid() or form.cleaned_data['page'] == 'random':
+            name = choices['random']
+            src = reverse('kronofoto:random-image', kwargs=kwargs)
         elif form.cleaned_data['page'] == 'results':
+            name = choices['results']
             src = reverse('kronofoto:gridview', kwargs=kwargs)
         else:
-            src = reverse('kronofoto:random-image', kwargs=kwargs)
-        context['src'] = 'https:' + src
+            name = choices[form.cleaned_data['page']]
+            src = reverse('kronofoto:photoview', kwargs=self.kwargs)
+        context['src'] = src
+        context['name'] = name
         context['params'] = self.request.GET.copy()
         if 'page' in context['params']:
             context['params'].pop('page')

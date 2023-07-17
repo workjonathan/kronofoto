@@ -10,14 +10,15 @@ from .widgets import HeadingWidget, PositioningWidget
 from .models.photosphere import IncompleteGPSInfo
 
 class WebComponentForm(forms.Form):
+    CHOICES = [
+        ('random', "Timeline view (random image)"),
+        ('image', "Timeline view (current image)"),
+        ('results', "Grid view"),
+    ]
     page = forms.ChoiceField(
         widget=forms.RadioSelect(),
         initial="image",
-        choices=[
-            ('image', "this image"),
-            ('results', "search results"),
-            ('random', "any image"),
-        ],
+        choices=CHOICES,
     )
 
 class ListForm(forms.Form):
