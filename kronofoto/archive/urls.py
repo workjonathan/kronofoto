@@ -6,6 +6,7 @@ from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
 from archive.views.photo import LogoSvg
+from archive.views import carousel
 from django.conf import settings
 
 class NegativeIntConverter:
@@ -48,6 +49,7 @@ urlpatterns = [
     path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
     path('photos/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
     path('photos/<accession:photo>/download', downloadpage.DownloadPopupView.as_view(), name='popup-download'),
+    path('photos/carousel', carousel.CarouselView.as_view(), name='carousel'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),

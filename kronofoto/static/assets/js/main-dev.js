@@ -8,7 +8,14 @@ const htmx = HTMX(document)
 htmx.onLoad(installButtons(document))
 window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
 //htmx.logAll()
-
+htmx.onLoad(elt => {
+    for (let child of elt.querySelectorAll("#thumbnail-request")) {
+        child.addEventListener('kronofoto:onThumbnails', evt => {
+            console.log(evt.detail.object_list)
+        })
+    }
+}
+)
 const init = () => {
 
     document.querySelector('.hamburger').addEventListener("click", toggleMenu)

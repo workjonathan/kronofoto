@@ -146,6 +146,29 @@ class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())
     year.widget.attrs['data-timeline-target'] = 'formYear'
 
+class CarouselForm(SearchForm):
+    year_lte = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    year_gte = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    id_lt = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    id_gt = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    count = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+
+    def clean(self):
+        data = super().clean()
+        if ((
+            data['id_gt'] is None
+            or data['year_gte'] is None
+            or data['year_lte'] is not None
+            or data['id_lt'] is not None)
+           and (
+            data['id_lt'] is None
+            or data['year_lte'] is None
+            or data['year_gte'] is not None
+            or data['id_gt'] is not None
+           )):
+
+            self.add_error(None, 'Either year_lte and id_lt or year_gte and id_gt must be specified but not both.')
+        return data
 
 class TagForm(forms.Form):
     tag = forms.CharField()
