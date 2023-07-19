@@ -75,8 +75,6 @@ class Tests(TestCase):
         assert 'photo' in resp.context_data
         assert resp.context_data['hxstuff']
         assert resp.context_data['photo'].id == photo.id
-        assert 'carousel_has_prev' in resp.context_data
-        assert 'carousel_has_next' in resp.context_data
 
 
     @settings(max_examples=5)

@@ -27,34 +27,23 @@ class OrderedDetailBase(DetailView):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         object = self.object
-        position = int(self.request.headers.get('us.fortepan.position', 3))
-        object.position = position
         object.active = True
-        before = list(reversed(queryset.photos_before(year=object.year, id=object.id)[:position+10]))
+
+        before = list(queryset.photos_before(year=object.year, id=object.id)[:20])
         if before:
-            context['prev_photo'] = before[-1]
-        for (i, photo) in enumerate(reversed(before)):
-            photo.position = (position - i - 1) % 10
-        position = len(before) % 10
-        has_next = has_prev = True
-        if len(before) < 10:
-            has_prev = False
-            before = [FAKE_PHOTO for _ in range(10)] + before
-        after = list(queryset.photos_after(year=object.year, id=object.id)[:20-position-1])
-        if after:
+            context['prev_photo'] = before[0]
+        while len(before) < 20:
+            before.append(FAKE_PHOTO)
+
+        after = list(queryset.photos_after(year=object.year, id=object.id)[:20])
+        if len(after):
             context['next_photo'] = after[0]
-        for (i, photo) in enumerate(after):
-            photo.position = (position + i + 1) % 10
-        if len(after) < 10 - position:
-            has_next = False
+        while len(after) < 20:
+            after.append(FAKE_PHOTO)
 
+        before.reverse()
         carousel = before + [object] + after
-        while len(carousel) < 30:
-            carousel.append(FAKE_PHOTO)
         context['object_list'] = carousel
-
-        context['carousel_has_next'] = has_next
-        context['carousel_has_prev'] = has_prev
 
         context['queryset'] = queryset
 

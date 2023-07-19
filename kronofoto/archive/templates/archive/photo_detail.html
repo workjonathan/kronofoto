@@ -24,7 +24,6 @@
             {% block left_arrow %}
             <a id="fi-arrow-left" class="control previous"
                {% if prev_photo %}
-               hx-headers='{ "us.fortepan.position": {{ prev_photo.position }} }'
                href="{% object_url prev_photo url_kwargs get_params %}"
                hx-get="{% object_url prev_photo url_kwargs get_params %}"
                {% endif %}>
@@ -42,7 +41,6 @@
             {% block right_arrow %}
             <a id="fi-arrow-right" class="control forward"
                {% if next_photo %}
-               hx-headers='{ "us.fortepan.position": {{ next_photo.position }} }'
                href="{% object_url next_photo url_kwargs get_params %}"
                hx-get="{% object_url next_photo url_kwargs get_params %}"
                {% endif %}>
@@ -195,7 +193,6 @@
             <div class="back-arrows">
                 <a id="backward"
                     {% if carousel_has_prev %}
-                        hx-headers='{ "us.fortepan.position": 0 }'
                         hx-get="{% object_url object_list.0 url_kwargs get_params %}"
                         href="{% object_url object_list.0 url_kwargs get_params %}"
                     {% endif %}>
@@ -212,7 +209,6 @@
             <div class="forward-arrows">
                 <a id="forward"
                     {% if carousel_has_next %}
-                        hx-headers='{ "us.fortepan.position": 0 }'
                         hx-get="{% object_url object_list.20 url_kwargs get_params %}"
                         href="{% object_url object_list.20 url_kwargs get_params %}"
                     {% endif %}>

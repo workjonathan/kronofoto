@@ -4,7 +4,7 @@ from itertools import chain
 
 EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
-FAKE_PHOTO = dict(thumbnail=dict(url=EMPTY_PNG, height=75, width=75))
+FAKE_PHOTO = dict(thumbnail=dict(url=EMPTY_PNG, height=75, width=75), is_spacer=True)
 
 class KeysetPaginator(Paginator):
     def __init__(self, object_list, per_page):
