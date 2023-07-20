@@ -16,6 +16,7 @@
       color: var(--fp-main-blue);
       margin-bottom: $global-margin;
       li {
+        font-size: 12px;
         &:after {
           content: ', ';
           color: inherit;

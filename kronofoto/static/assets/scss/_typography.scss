@@ -11,19 +11,20 @@ $font-weight-extralight: 200;
 $font-weight-thin: 100;
 
 @mixin styles {
-  .h1 {
+  h1, .h1 {
     font-size: 40px;
-    font-weight: $font-weight-bold;
+    font-weight: $font-weight-semibold;
     letter-spacing: 0.05em;
     margin-bottom: 16px;
   }
 
-  .h2 {
+  h2, .h2 {
     font-size: 36px;
-    font-weight: $font-weight-medium;
+    font-weight: $font-weight-semibold;
     letter-spacing: 0.05em;
     margin-bottom: 16px;
   }
+
   .h3 {
     font-size: 28px;
     letter-spacing: 1.4px;
@@ -45,6 +46,10 @@ $font-weight-thin: 100;
     letter-spacing: 0.1em;
   }
 
+  .text-semibold {
+    font-weight: $font-weight-semibold;
+  }
+
   .text-tiny {
     font-size: 14px;
     line-height: 20px;
@@ -54,10 +59,25 @@ $font-weight-thin: 100;
 
   .link {
     &--icon {
-      i {
-        font-size: 25px;
+      display: flex;
+      align-items: center;
+      .plus-icon-circle {
+        width: 25px;
+        height: 25px;
         vertical-align: middle;
         margin-right: 8px;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--fp-main-blue);
+        &:after {
+          content: '';
+          display: block;
+          width: 12.5px;
+          height: 12.5px;
+          background-image: url("data:image/svg+xml,%3Csvg id='plus' xmlns='http://www.w3.org/2000/svg' width='12.5' height='12.5' viewBox='0 0 12.5 12.5'%3E%3Cpath id='Path_46' data-name='Path 46' d='M372.5,532.169v12.5' transform='translate(-366.25 -532.169)' fill='none' stroke='%23343434' stroke-width='3'/%3E%3Cpath id='Path_47' data-name='Path 47' d='M0,0V12.5' transform='translate(12.5 6.25) rotate(90)' fill='none' stroke='%23343434' stroke-width='3'/%3E%3C/svg%3E%0A");
+        }
       }
     }
   }
