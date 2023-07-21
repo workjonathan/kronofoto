@@ -67,10 +67,6 @@
                 </button>
             </div>
             <div class="gallery__controls-bottom">
-                <!--Info Button-->
-                <button class="image-control-button" data-toggle="metadata-popup">
-                    <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
-                </button>
                 <!--Add to List Button-->
                 <button class="image-control-button" data-toggle="add-to-list-popup">
                     <img class="add-to-list-icon" src="{% static "assets/images/skyblue/add-to-list.svg" %}">
@@ -83,6 +79,11 @@
                 <button class="image-control-button" data-toggle="download-popup">
                     <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
                 </button>
+                <!--Info Button-->
+                <button class="image-control-button" data-toggle="metadata-popup">
+                    <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
+                </button>
+
             </div>
             {% endblock image_control_buttons %}
         </div>
