@@ -22,6 +22,7 @@ $headerHeight: 80px;
     position: relative;
     height: $galleryHeight;
     z-index: 0;
+    overflow: hidden;
 
     &__image {
       height: 100%;
@@ -51,8 +52,6 @@ $headerHeight: 80px;
       top:0px;
       cursor: url('../images/arrow-cursor-back.png'), auto;
       width: 50vw;
-
-      /*transform: translateX(-50%);*/
     }
 
     .fi-image .control.forward {
@@ -77,6 +76,12 @@ $headerHeight: 80px;
       height: 100%;
       flex-grow: 1;
       position: relative;
+      a {
+        opacity: 1;
+        .hide-nav.zoom-opened & {
+          opacity: 0;
+        }
+      }
     }
 
     &__left-space {
@@ -111,6 +116,7 @@ $headerHeight: 80px;
       justify-content: flex-end;
       padding: 0px;
       transform: translateX(-50%);
+      transition: top ease-in-out 350ms, bottom ease-in-out 350ms;
       > button {
         background: none;
         border: none;
@@ -129,6 +135,9 @@ $headerHeight: 80px;
 
     &__controls-top {
       background: transparent linear-gradient(180deg, #0000004D 0%, #00000000 100%) 0% 0% no-repeat padding-box;
+      .hide-nav & {
+        top: -50px !important;
+      }
     }
 
     &__controls-bottom {
@@ -136,6 +145,9 @@ $headerHeight: 80px;
       top: auto;
       bottom: 0px;
       z-index: 200;
+      .hide-nav & {
+        bottom: -50px !important;
+      }
     }
 
     &__popups {
@@ -163,18 +175,6 @@ $headerHeight: 80px;
     height: 44px;
     padding: 100px 32px;
     transition: all ease-in-out 200ms;
-    //&:before {
-    //  content: '';
-    //  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23.993' height='19.131' viewBox='0 0 23.993 19.131'%3E%3Cg id='Group_16' data-name='Group 16' transform='translate(-15.096 -15.435)'%3E%3Cpath id='Path_44' data-name='Path 44' d='M25.722,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Cpath id='Path_54' data-name='Path 54' d='M215.345,952h21.526' transform='translate(-197.782 -927)' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
-    //  border-radius: 100%;
-    //  background-color: #4C4C4C;
-    //  display: block;
-    //  width: 44px;
-    //  height: 44px;
-    //  position: absolute;
-    //  top: 50%;
-    //  transform: translateY(-50%);
-    //}
     &:after {
       content: '';
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23.993' height='19.131' viewBox='0 0 23.993 19.131'%3E%3Cg id='Group_16' data-name='Group 16' transform='translate(-15.096 -15.435)'%3E%3Cpath id='Path_44' data-name='Path 44' d='M25.722,16.5l-8.5,8.5,8.5,8.5' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Cpath id='Path_54' data-name='Path 54' d='M215.345,952h21.526' transform='translate(-197.782 -927)' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
@@ -288,6 +288,11 @@ $headerHeight: 80px;
     left: 0px;
     z-index: 999999;
     background-color: #000 !important;
+    height: calc(100vh);
+    width: calc(100vw);
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: contain;
     cursor: zoom-in;
   }
 

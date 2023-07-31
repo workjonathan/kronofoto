@@ -500,48 +500,6 @@ main article.fi-image {
     overflow: hidden;
 }
 
-#fi-thumbnail-carousel-images li {
-  --carousel-image-padding: 10px;
-  padding: 0 var(--carousel-image-padding);
-
-  margin:  0 0 5px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-#fi-thumbnail-carousel-images li img {
-    width: auto;
-    transform: translateY(5px);
-    z-index: 2;
-
-
-}
-
-#fi-thumbnail-carousel-images li[data-active]:before {
-  content: '';
-  margin: 0 10px;
-  position: absolute;
-  top: 0;
-  height: 85px;
-  width: calc(100% - (2 * var(--carousel-image-padding)));
-  background-color: var(--fp-main-blue);
-    z-index: 0;
-}
-
-#fi-thumbnail-carousel-images li[data-active]:after {
-  --active-image-arrow-size: 8px;
-  content: '';
-  position: absolute;
-  top: calc(var(--active-image-arrow-size) * -1);
-  width: 0;
-  height: 0;
-  border-left: var(--active-image-arrow-size) solid transparent;
-  border-right: var(--active-image-arrow-size) solid transparent;
-  border-bottom: var(--active-image-arrow-size) solid var(--fp-main-blue);
-}
-
 .year-ticker {
     grid-area: year-ticker;
 
