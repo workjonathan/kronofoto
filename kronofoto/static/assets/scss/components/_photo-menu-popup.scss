@@ -28,7 +28,7 @@ $popupMaxHeight: 40vh;
   }
 }
 
-.photo-menu-popup {
+.photo-menu-popup { // TODO this selector is no longer applicable, so this might not be doing anything
   width: 100%;
   max-height: 0px;
   opacity: 1;
@@ -57,17 +57,17 @@ $popupMaxHeight: 40vh;
     opacity: 1;
   }
 
-  h1 {
-    font-size: 28px;
+  h1 { // TODO: Add to font palette
+    font-size: 20px;
     margin-bottom: 20px;
     a {
       color: $white;
-      border-bottom: 4px solid var(--fp-main-blue);
+      border-bottom: 2px solid var(--fp-main-blue);
     }
   }
-  h2 {
-    font-size: 22px;
-    margin-bottom: 20px;
+  h2 { // TODO: Add to font palette
+    font-size: 18px;
+    margin-bottom: 10px;
   }
   h3 {
     @extend .h4;
@@ -112,11 +112,11 @@ $popupMaxHeight: 40vh;
     }
     p {
       letter-spacing: 0.1em;
-      font-size: 14px;
-      line-height: 20px;
+      font-size: 12px;
+      line-height: 18px;
     }
     .text-small {
-      margin-top: 20px;
+      margin-top: 14px;
     }
   }
 

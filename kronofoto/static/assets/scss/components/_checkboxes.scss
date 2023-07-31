@@ -70,7 +70,7 @@
     align-items: flex-start;
     position: relative;
     padding-left: 35px;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     cursor: pointer;
     user-select: none;
     line-height: 30px;
@@ -78,14 +78,15 @@
       color: #DBDBDB;
       cursor: pointer;
       margin: 0px;
-      font-size: 16px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
       text-transform: none;
       display: flex;
     }
     input[type="radio"] {
       position: relative;
       appearance: none;
-      margin-right: 15px;
+      margin-right: 12px;
       cursor: pointer;
       &:hover:before {
         background-color: transparent;
