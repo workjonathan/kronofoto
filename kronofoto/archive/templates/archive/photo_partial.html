@@ -1,33 +1,52 @@
-<div hx-swap-oob="innerHTML:#navigation-menu">
-  {% include "archive/navigation-menu.html" %}
+<!--<div hx-swap-oob="innerHTML:#navigation-menu">-->
+<!--  {% include "archive/navigation-menu.html" %}-->
+<!--</div>-->
+
+<div hx-swap-oob="innerHTML:[data-timeline-target=sliderYearLabel]">
+    {{ object.year }}
 </div>
-<div hx-swap-oob="delete:#timeline-container"></div>
-<div hx-swap-oob="delete:#grid-icon"></div>
-<div hx-swap-oob="afterbegin:.main-nav_center">
-{% block viewbuttons %}
-{% endblock %}
-</div>
-<!--<div hx-swap-oob="innerHTML:#active-year-marker">-->
-<!--{% block year_marker %}-->
+
+<!--<div hx-swap-oob="delete:#timeline-container"></div>-->
+
+<!--<div hx-swap-oob="delete:#grid-icon"></div>-->
+
+<!--<div hx-swap-oob="afterbegin:.main-nav_center">-->
+<!--{% block viewbuttons %}-->
 <!--{% endblock %}-->
 <!--</div>-->
+
 <div hx-swap-oob="innerHTML:#fi-timeline">
 {% block thumbnails %}
 {% endblock %}
 </div>
-<div hx-swap-oob="innerHTML:#metadata">
+
+<div hx-swap-oob="innerHTML:#metadata-popup .photo-menu-popup__wrapper">
   {% block metadata %}
   {% endblock %}
 </div>
-<!--<div hx-swap-oob="delete:#fi-arrow-left"></div>-->
-<!--<div hx-swap-oob="delete:#fi-arrow-right"></div>-->
-<!--<div hx-swap-oob="afterend:#fi-image figure">-->
-<!--{% block left_arrow %}-->
-<!--{% endblock %}-->
-<!--</div>-->
-<!--<div hx-swap-oob="afterend:#fi-arrow-left">-->
-<!--{% block right_arrow %}-->
-<!--{% endblock %}-->
-<!--</div>-->
+
+<div hx-swap-oob="innerHTML:.gallery__left-space">
+{% block left_arrow %}
+{% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:.gallery__right-space">
+{% block right_arrow %}
+{% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:#fi-image">
 {% block image %}
 {% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:#zoom-popup">
+{% block zoom_popup %}
+{% endblock %}
+</div>
+
+<!--<div hx-swap-oob="innerHTML:#gallery">-->
+<!--{% block gallery %}-->
+<!--{% endblock %}-->
+<!--</div>-->
+

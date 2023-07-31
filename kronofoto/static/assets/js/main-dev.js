@@ -1,17 +1,113 @@
 import HTMX from "./htmx.js"
 import timeline from "./timeline.js"
-import {installButtons, toggleMenu, markerDnD, toggleLogin} from "./lib.js"
+import {
+  installButtons,
+  toggleMenu,
+  markerDnD,
+  toggleLogin,
+  initGalleryNav,
+  autoplayStart,
+  autoplayStop,
+  timelineForward,
+  timelineBackward,
+  timelineZipForward,
+  timelineZipBackward,
+  timelineCrawlForward,
+  timelineCrawlForwardRelease,
+  timelineCrawlBackward,
+  timelineCrawlBackwardRelease,
+  moveTimelineCoin,
+  dropTimelineCoin }
+  from "./lib.js"
+
 window.toggleLogin = toggleLogin
 
 const htmx = HTMX(document)
+window.htmx = htmx
+const _timeline = new timeline();
 
-htmx.onLoad(installButtons(document))
+document.addEventListener("DOMContentLoaded", function () {
+  const preloadImages = document.querySelectorAll("img[preload]");
+  for (const img of preloadImages) {
+    const image = new Image();
+    image.src = img.src;
+  }
+});
+
+function showImagesBeforeSwap(target) {
+  const images = target.querySelectorAll('img');
+
+  images.forEach((img) => {
+    if (!img.complete) {
+      // When the image is not yet loaded, set an event listener to show it when loaded
+      img.addEventListener('load', function () {
+        img.style.opacity = 1; /* or use visibility: visible; */
+      });
+    } else {
+      img.style.opacity = 1; /* or use visibility: visible; */
+    }
+  });
+}
+
+// Attach the function to HTMX beforeSwap events
+document.addEventListener('htmx:beforeSwap', function (event) {
+  // showImagesBeforeSwap(event.detail.target);
+  if($(event.srcElement).attr('id') == 'fi-image-tag') {
+    let res = event.detail.serverResponse
+    let images = $(res).find('#fi-thumbnail-carousel-images img')
+    // images.each((i,e) => {
+    //   let url = $(e).attr('src')
+    //   $('#fi-thumbnail-carousel-images li:nth-child('+i+') img').attr('src', url)
+    // })
+    // $('#fi-thumbnail-carousel-images').css({left: 0})
+
+    return false;
+  }
+  return false;
+});
+
+htmx.onLoad(() => {
+  installButtons(document)
+  initDraggableThumbnails()
+  $('#fi-thumbnail-carousel-images').css({left: 0})
+})
+
+initGalleryNav()
+
+document.addEventListener('htmx:afterSwap', (event) => {
+  let newYear = $('[data-timeline-target=sliderYearLabel]').html()
+  _timeline.setYear(newYear, false)
+})
+//
+// window.checkDrag = (event) => {
+//   console.log(event)
+//   if (event.originalEvent && event.originalEvent.type === 'drag') {
+//     return false; // Prevent the hx-get request after a drag event
+//   }
+//   return true;
+// }
+
 window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
 //htmx.logAll()
+
+const initDraggableThumbnails = () => {
+  $('#fi-thumbnail-carousel-images').draggable({
+    axis: 'x',
+    drag: (event, ui) => {
+      moveTimelineCoin(ui.position.left, true)
+    },
+    stop: (event, ui) => {
+      dropTimelineCoin(ui.position.left)
+    }
+  })
+}
+
 
 const init = () => {
 
     document.querySelector('.hamburger').addEventListener("click", toggleMenu)
+
+    // initDraggableThumbnails()
 
     $(document).click(function(event)
     {
@@ -59,14 +155,44 @@ const init = () => {
         }
     })
 
-    $('.photos-timeline').each(function(i,e) {
-       var _timeline = new timeline();
-       _timeline.connect(e);
-    });
-
     $('#tag-search').autocomplete({
         source: '/tags',
         minLength: 2,
+    })
+
+    $(document).on('click', '#forward', timelineZipForward)
+    $(document).on('mousedown', '#forward', timelineCrawlForward)
+    $(document).on('mouseup', '#forward', timelineCrawlForwardRelease)
+    $(document).on('click', '#backward', timelineZipBackward)
+    $(document).on('mousedown', '#backward', timelineCrawlBackward)
+    $(document).on('mouseup', '#backward', timelineCrawlBackwardRelease)
+
+    $(document).on('keydown', function(event) {
+      var keyCode = event.which || event.keyCode;
+
+      // Handle forward arrow key (Right Arrow or Down Arrow)
+      if (keyCode === 39) {
+        // Perform the action for the forward arrow key
+        timelineForward()
+      }
+
+      // Handle back arrow key (Left Arrow or Up Arrow)
+      if (keyCode === 37) {
+        // Perform the action for the back arrow key
+        timelineBackward()
+      }
+    });
+
+    $(document).on('click', '#auto-play-image-control-button', (e) => {
+      let $btn = $('#auto-play-image-control-button')
+      $btn.toggleClass('active')
+      $('img', $btn).toggleClass('hide')
+      if($btn.hasClass('active')) {
+        autoplayStart()
+      }
+      else {
+        autoplayStop()
+      }
     })
 
     //
@@ -75,6 +201,9 @@ const init = () => {
     //     $('.overlay').css('display', 'none')
     // })
 
+    $('.photos-timeline').each(function(i,e) {
+      _timeline.connect(e);
+    });
 
     $('#login-btn').click(() => {
         if($('#login').hasClass('gridden')) {
@@ -107,4 +236,5 @@ const ready = fn => {
         document.addEventListener("DOMContentLoaded", fn)
     }
 }
+
 ready(init)

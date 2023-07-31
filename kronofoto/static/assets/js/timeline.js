@@ -36,7 +36,6 @@ export default class {
 
         // init targets
         this.initTargets()
-        console.log(this)
 
         // init event handlers
         this.initEventHandlers()
@@ -92,7 +91,6 @@ export default class {
 
     // TODO
     setSlider(e) {
-        console.log(1)
         if (true) { //if (photoManager.hasData()) {
             this.yearStart = +this.yearStartTarget.textContent //photoManager.getFirstYearInContext().year
             this.yearEnd = +this.yearEndTarget.textContent //photoManager.getLastYearInContext().year
@@ -130,6 +128,21 @@ export default class {
         this.sliderYearLabelTarget.textContent = this.year
         this.formYearTarget.value = this.year
 
+        // console.log(this.yearOriginal)
+        // console.log(this.year)
+        // console.log(this.yearStart)
+        // console.log(this.yearEnd)
+        let numberOfThumbnailsPerYear= 1000
+        let yearDiff = this.year - this.yearOriginal
+        let yearDiffX = yearDiff * numberOfThumbnailsPerYear
+        yearDiffX = this.yearOriginalX - yearDiffX
+        yearDiffX = Math.floor(yearDiffX / 95) * 95
+        $('#fi-thumbnail-carousel-images').stop().animate(
+            {left: yearDiffX},
+            800,
+            'easeOutCirc'
+        );
+
         // check if selected year (this.year) has photos at all (not already loaded)
         // and if not, grey out the slider
         // if (photoManager.getYearsInContext().find(item => item.year === this.year)) {
@@ -142,7 +155,7 @@ export default class {
         //     this.sliderYearCountTarget.textContent = 0
         // }
 
-        // jthis.yearStartTarget.textContent = this.yearStart
+        // this.yearStartTarget.textContent = this.yearStart
         // this.yearEndTarget.textContent = this.yearEnd
     }
 
@@ -211,7 +224,7 @@ export default class {
     }
 
     // TODO
-    setYear(year) {
+    setYear(year, triggerHTMX = true) {
         this.year = year || this.calcYear()
         // // check if selected year (this.year) has photos at all (not already loaded)
         // // and if not, jump to the closest year that has
@@ -239,7 +252,9 @@ export default class {
             if (getURLParams().year > 0 || getURLParams().id > 0) {
                 //trigger("photos:historyPushState", { url: "?q=", resetPhotosGrid: true, jumpToYearAfter: this.year })
             } else {
-                trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
+                if(triggerHTMX) {
+                  trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
+                }
             }
         }
     }
