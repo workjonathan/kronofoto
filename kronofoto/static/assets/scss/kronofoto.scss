@@ -118,32 +118,6 @@ input#search-box::placeholder {
   /*padding: 0 15px;*/
 }
 
-#login {
-  position: absolute;
-  z-index: 1000;
-  background-color: var(--fp-light-grey);
-  padding: 30px
-}
-#login form {
-  display: flex;
-  flex-direction: column;
-}
-#login form input {
-  margin: 10px 0;
-}
-#login form input[type="text"], #login form input[type="password"] {
-  background: var(--fp-main-grey);
-}
-
-#login p a {
-  color: var(--fp-main-blue);
-  text-decoration: none;
-}
-
-#login p {
-  margin-bottom: 5px;
-}
-
 .new-label {
   width: 60px;
   vertical-align: middle;
@@ -442,6 +416,7 @@ main article.fi-image {
   width: 100vw;
   height: 100vh;
   z-index: 999;
+  display: none;
 }
 
 .collection-grid ul li {

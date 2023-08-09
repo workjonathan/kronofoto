@@ -17,22 +17,16 @@ import {
   timelineCrawlBackward,
   timelineCrawlBackwardRelease,
   moveTimelineCoin,
-  dropTimelineCoin }
+  dropTimelineCoin, gotoTimelinePosition
+}
   from "./lib.js"
 
 window.toggleLogin = toggleLogin
+window.$ = window.jQuery
 
 const htmx = HTMX(document)
 window.htmx = htmx
 const _timeline = new timeline();
-
-document.addEventListener("DOMContentLoaded", function () {
-  const preloadImages = document.querySelectorAll("img[preload]");
-  for (const img of preloadImages) {
-    const image = new Image();
-    image.src = img.src;
-  }
-});
 
 function showImagesBeforeSwap(target) {
   const images = target.querySelectorAll('img');
@@ -49,27 +43,18 @@ function showImagesBeforeSwap(target) {
   });
 }
 
-// Attach the function to HTMX beforeSwap events
-document.addEventListener('htmx:beforeSwap', function (event) {
-  // showImagesBeforeSwap(event.detail.target);
-  if($(event.srcElement).attr('id') == 'fi-image-tag') {
-    let res = event.detail.serverResponse
-    let images = $(res).find('#fi-thumbnail-carousel-images img')
-    // images.each((i,e) => {
-    //   let url = $(e).attr('src')
-    //   $('#fi-thumbnail-carousel-images li:nth-child('+i+') img').attr('src', url)
-    // })
-    // $('#fi-thumbnail-carousel-images').css({left: 0})
-
-    return false;
-  }
-  return false;
-});
-
 htmx.onLoad(() => {
   installButtons(document)
   initDraggableThumbnails()
-  $('#fi-thumbnail-carousel-images').css({left: 0})
+  if($('#fi-preload-zone li').length) {
+    let html = $('#fi-preload-zone').html()
+    $('#fi-thumbnail-carousel-images').html(html)
+    $('#fi-thumbnail-carousel-images').addClass('dragging')
+    $('#fi-thumbnail-carousel-images').css('left', '0px')
+    $('#fi-thumbnail-carousel-images').removeClass('dragging')
+    htmx.process($('#fi-thumbnail-carousel-images').get(0))
+    $('#fi-preload-zone').empty()
+  }
 })
 
 initGalleryNav()
@@ -78,14 +63,6 @@ document.addEventListener('htmx:afterSwap', (event) => {
   let newYear = $('[data-timeline-target=sliderYearLabel]').html()
   _timeline.setYear(newYear, false)
 })
-//
-// window.checkDrag = (event) => {
-//   console.log(event)
-//   if (event.originalEvent && event.originalEvent.type === 'drag') {
-//     return false; // Prevent the hx-get request after a drag event
-//   }
-//   return true;
-// }
 
 window.setTimeout(() => { htmx.onLoad(markerDnD(document)) }, 100)
 //htmx.logAll()
@@ -105,7 +82,33 @@ const initDraggableThumbnails = () => {
 
 const init = () => {
 
-    document.querySelector('.hamburger').addEventListener("click", toggleMenu)
+  new window.ClipboardJS('[data-clipboard-target]');
+
+  $(document).ready(function() {
+
+    $('#overlay').on('click', (e) => {
+      $('#login').addClass('collapse')
+      $('#hamburger-menu').addClass('collapse')
+      $('#overlay').fadeOut()
+    })
+    $('#hamburger-menu').on('off.zf.toggler', (e) => {
+      $('#login').addClass('collapse')
+      $('#overlay').fadeIn()
+    }).on('on.zf.toggler', (e) => {
+      if($('#login').hasClass('collapse')) {
+        $('#overlay').fadeOut()
+      }
+    })
+    $('#login').on('off.zf.toggler', (e) => {
+      $('#hamburger-menu').addClass('collapse')
+      $('#overlay').fadeIn()
+    }).on('on.zf.toggler', (e) => {
+      if($('#hamburger-menu').hasClass('collapse')) {
+        $('#overlay').fadeOut()
+      }
+    })
+
+  })
 
     // initDraggableThumbnails()
 
@@ -166,6 +169,13 @@ const init = () => {
     $(document).on('click', '#backward', timelineZipBackward)
     $(document).on('mousedown', '#backward', timelineCrawlBackward)
     $(document).on('mouseup', '#backward', timelineCrawlBackwardRelease)
+    $(document).on('click', '#fi-arrow-right', timelineForward)
+    $(document).on('click', '#fi-arrow-left', timelineBackward)
+    $(document).on('click', '#fi-thumbnail-carousel-images li span', function(e) {
+      let num = $('#fi-thumbnail-carousel-images li').length
+      let delta = $(e.currentTarget).parent().index() - ((num-1)/2)
+      gotoTimelinePosition(delta)
+    })
 
     $(document).on('keydown', function(event) {
       var keyCode = event.which || event.keyCode;
@@ -183,35 +193,26 @@ const init = () => {
       }
     });
 
-    $(document).on('click', '#auto-play-image-control-button', (e) => {
-      let $btn = $('#auto-play-image-control-button')
-      $btn.toggleClass('active')
-      $('img', $btn).toggleClass('hide')
-      if($btn.hasClass('active')) {
-        autoplayStart()
-      }
-      else {
-        autoplayStop()
-      }
-    })
+  $(document).on('click', '#auto-play-image-control-button', (e) => {
+    let $btn = $('#auto-play-image-control-button')
+    $btn.toggleClass('active')
+    if($btn.hasClass('active')) {
+      autoplayStart()
+    }
+    else {
+      autoplayStop()
+    }
+  })
 
-    //
-    // $('.overlay, .close-btn').click(() => {
-    //     $('.gridden').removeClass('gridden').addClass('hidden')
-    //     $('.overlay').css('display', 'none')
-    // })
+
+  $(document).on('click', '.image-control-button--toggle', (e) => {
+    let $btn = $(e.currentTarget)
+    $('img', $btn).toggleClass('hide')
+  })
 
     $('.photos-timeline').each(function(i,e) {
       _timeline.connect(e);
     });
-
-    $('#login-btn').click(() => {
-        if($('#login').hasClass('gridden')) {
-            $('.overlay').css('display', 'block')
-        } else {
-            $('.overlay').css('display', 'none')
-        }
-    })
 
     $('#search-box').focus(function() {
         $('#search-box-container').css('background','var(--fp-main-blue)')

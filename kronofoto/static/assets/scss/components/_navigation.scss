@@ -4,16 +4,12 @@
   align-items: flex-end;
 }
 
-//.hamburger:hover {
-//  background-color: var(--fp-main-blue);
-//}
-
-.hamburger-menu {
-
+@mixin collapsibleMenu {
   background: var(--fp-light-grey);
   position: absolute;
   z-index: 1000;
   top: 80px;
+  right: 1rem;
   width: 250px;
   transition: all ease-in-out 250ms;
   max-height: 600px;
@@ -23,6 +19,47 @@
   &.collapse {
     max-height: 0px;
   }
+}
+
+#login {
+
+  @include collapsibleMenu;
+
+  .wrapper {
+    padding: 35px 15px 15px 15px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+
+    input {
+      margin: 10px 0;
+    }
+
+    input[type="text"], input[type="password"] {
+      background: var(--fp-main-grey);
+    }
+
+    input[type=submit] {
+      @include button--round;
+    }
+  }
+
+  p a {
+    color: var(--fp-main-blue);
+    text-decoration: none;
+  }
+
+  p {
+    margin-bottom: 5px;
+  }
+
+}
+
+.hamburger-menu {
+
+  @include collapsibleMenu;
 
   ul {
     padding: 35px 15px 15px 15px;
@@ -54,31 +91,16 @@
 
 }
 
-@media (max-width: 1140px) {
-  //.mobile-hidden * {
-  //  display: none;
-  //}
-  //
-  //.mobile-visible * {
-  //  display: flex;
-  //}
+@media only screen and (max-width: 1140px) {
   .mobile-hidden {
     display: none;
   }
 }
 
-//.mobile-hidden * {
-//  display: flex;
-//}
-
 @media (min-width: 1140px) {
   .mobile-visible {
     display: none;
   }
-
-  //.mobile-visible * {
-  //  display: none;
-  //}
 }
 
 .main-nav {
