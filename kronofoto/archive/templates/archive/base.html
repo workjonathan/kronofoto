@@ -30,7 +30,11 @@
 			  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
 			  crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
-  <title>Fortepan Iowa</title>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/js/foundation.min.js" crossorigin="anonymous"></script>
+    <script src="{% static "assets/dist/js/main.js" %}"></script>
+
+    <title>Fortepan Iowa</title>
   <style>
 :root {
   --fp-main-font: 'Montserrat', sans-serif;
@@ -47,7 +51,7 @@
 </head>
 <body hx-push-url="true">
   {% gtm_body %}
-  <div class="overlay" style="display: none;"></div>
+  <div id="overlay" class="overlay"></div>
   <header>
     <nav aria-label="Main navigation">
       <div class="main-nav">
@@ -121,17 +125,15 @@
           </div>
           <div class="hamburger-container">
 
-            <button class="hamburger hamburger--squeeze" type="button">
+            <button class="hamburger hamburger--squeeze" type="button" data-toggler="is-active" data-toggle="hamburger-button hamburger-menu" id="hamburger-button">
                 <span class="hamburger-box">
                     <span class="hamburger-inner"></span>
                 </span>
             </button>
 
-              <div class="hamburger-menu collapse">
-              <!-- <img src="{% static "assets/images/close.png" %}" alt="" class="close-btn"> -->
-<!--              <i class="fas fa-times fa-2x close-btn"></i>-->
+              <div class="hamburger-menu collapse" id="hamburger-menu" data-toggler="collapse">
 
-              <ul class="navigation-menu" id="navigation-menu">
+              <ul class="navigation-menu">
                 {% include "archive/navigation-menu.html"%}
               </ul>
               <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
@@ -146,13 +148,12 @@
 
       </div>
     </nav>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <script src="{% static "assets/dist/js/main.js" %}"></script>
   </header>
   <div id="app">
     {% block content %}
     {% endblock %}
   </div>
   <!-- <footer></footer> -->
+
 </body>
 </html>

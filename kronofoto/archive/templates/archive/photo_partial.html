@@ -15,24 +15,17 @@
 <!--{% endblock %}-->
 <!--</div>-->
 
-<div hx-swap-oob="innerHTML:#fi-timeline">
-{% block thumbnails %}
-{% endblock %}
+<ul hx-swap-oob="innerHTML:#fi-preload-zone">
+    {% include "archive/thumbnails.html" %}
+</ul>
+
+<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
+    {% include "archive/popup-download.html" %}
 </div>
 
 <div hx-swap-oob="innerHTML:#metadata-popup .photo-menu-popup__wrapper">
-  {% block metadata %}
-  {% endblock %}
-</div>
-
-<div hx-swap-oob="innerHTML:.gallery__left-space">
-{% block left_arrow %}
-{% endblock %}
-</div>
-
-<div hx-swap-oob="innerHTML:.gallery__right-space">
-{% block right_arrow %}
-{% endblock %}
+    {% block metadata %}
+    {% endblock %}
 </div>
 
 <div hx-swap-oob="innerHTML:#fi-image">

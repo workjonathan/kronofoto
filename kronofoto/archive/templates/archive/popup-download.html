@@ -1,13 +1,14 @@
+{% load static %}
 
 <div class="row">
     <div class="columns large-3">
-        <h1 class="h1">{{ object.accession_number }}</h1>
+        <h1 class="h1">ID#: {{ object.accession_number }}</h1>
         <a class="button" href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>
     </div>
     <div class="columns large-4">
         <h4 class="h4">License</h4>
         <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
-            <img alt="Creative Commons License" src="/static/assets/images/Creative-Commons-Icons.svg" style="width: 190px; height: auto; border-width: 0px" />
+            <img alt="Creative Commons License" src="{% static "assets/images/Creative-Commons-Icons.svg" %}" style="width: 190px; height: auto; border-width: 0px" />
         </a>
         <p>&nbsp;</p>
         <p><strong> <a href="https://creativecommons.org/licenses/by-sa/4.0/">Attribution-ShareAlike 4.0</a></strong><br/>International (CC-BY-SA 4.0)</a></p>
