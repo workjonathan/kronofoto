@@ -11,15 +11,15 @@ let timelineCrawlBackwardTimeout = null
 
 $(document).ready(function() {
     $(document).foundation();
-    $('.form--add-tag').each(function(i,e) {
-        $('.link--icon', e).click(function() {
-            $(e).addClass('expanded')
-            $('input[type=text]', e).focus()
-        })
-        $(e).on('focusout', 'input[type=text]', function(f) {
-            $(e).removeClass('expanded')
-            $(f.currentTarget).val('')
-        })
+    $(document).on('click', '.form--add-tag .link--icon', (e) => {
+      let $form = $(e.currentTarget).closest('form')
+      $form.addClass('expanded')
+      $('input[type=text]', $form).focus()
+    })
+    $(document).on('focusout', '.form--add-tag input[type=text]', function(e) {
+        let $form = $(e.currentTarget).closest('form')
+        $form.removeClass('expanded')
+        $(e.currentTarget).val('')
     })
 })
 
@@ -61,7 +61,6 @@ export const dropTimelineCoin = (deltaX) => {
   let quantizedX = (Math.round(deltaX / width))
   let itemNum = quantizedX
   $('#fi-thumbnail-carousel-images').css({left: itemNum * width})
-  console.log(window.htmx)
   window.htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
 }
 

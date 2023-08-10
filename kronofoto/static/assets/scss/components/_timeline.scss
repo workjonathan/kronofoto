@@ -20,6 +20,7 @@ $grey: grey;
 }
 
 @mixin styles {
+
   .fi-timeline {
     //display: none;
     //@include breakpoint(large up) {
@@ -43,13 +44,12 @@ $grey: grey;
   #fi-thumbnail-carousel-images {
     position: relative;
     left: 0px;
-    margin-left: calc(-1947px + 50vw - 280px);
+    margin-left: calc((95px * -20.5) + 50%);
     height: 100%;
-    //transform: translateX(-50%);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='95' height='90'%3E%3Crect width='75' height='75' style='fill:rgb(102,102,102)' /%3E%3C/svg%3E");
     background-position-x: 10px;
     background-position-y: 8px;
-    transition: filter ease-in-out 50ms, left ease-in-out 100ms;
+    transition: filter ease-in-out 50ms, left ease-in-out 500ms;
     &.dragging { // don't animate left when dragging
       transition: filter ease-in-out 50ms;
     }

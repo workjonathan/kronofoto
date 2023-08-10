@@ -51,9 +51,22 @@ htmx.onLoad(() => {
     $('#fi-thumbnail-carousel-images').html(html)
     $('#fi-thumbnail-carousel-images').addClass('dragging')
     $('#fi-thumbnail-carousel-images').css('left', '0px')
-    $('#fi-thumbnail-carousel-images').removeClass('dragging')
+    setTimeout(() => {
+      $('#fi-thumbnail-carousel-images').removeClass('dragging')
+    }, 100)
     htmx.process($('#fi-thumbnail-carousel-images').get(0))
     $('#fi-preload-zone').empty()
+  }
+  if($('#fi-image-preload img').length && !$('#fi-image-preload img').data('loaded')) {
+    $('#fi-image-preload img').data('loaded', true)
+    let url = $('#fi-image-preload img').attr('src')
+    const image = new Image();
+    image.src = url;
+    image.onload = () => {
+      let html = $('#fi-image-preload').html()
+      $('#fi-image').html(html)
+      $('#fi-image-preload').empty()
+    }
   }
 })
 
@@ -163,10 +176,10 @@ const init = () => {
         minLength: 2,
     })
 
-    $(document).on('click', '#forward', timelineZipForward)
+    $(document).on('click', '#forward', timelineZipBackward)
     $(document).on('mousedown', '#forward', timelineCrawlForward)
     $(document).on('mouseup', '#forward', timelineCrawlForwardRelease)
-    $(document).on('click', '#backward', timelineZipBackward)
+    $(document).on('click', '#backward', timelineZipForward)
     $(document).on('mousedown', '#backward', timelineCrawlBackward)
     $(document).on('mouseup', '#backward', timelineCrawlBackwardRelease)
     $(document).on('click', '#fi-arrow-right', timelineForward)

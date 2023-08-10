@@ -24,7 +24,8 @@
         {% block left_arrow %}
             <a id="fi-arrow-left" class="control previous"></a>
         {% endblock %}
-
+        <div id="fi-image-preload" class="hide">
+        </div>
         <article class="gallery__image fi-image" id="fi-image">
             {% block image %}
             <figure>
@@ -44,6 +45,7 @@
             <!-- script for follow zoom -->
             <script type="text/javascript">
               var addZoom = (target) => {
+
                 let container = document.getElementById(target),
                     imgsrc = container.currentStyle || window.getComputedStyle(container, false);
                 imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
