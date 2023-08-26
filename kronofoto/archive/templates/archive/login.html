@@ -8,21 +8,21 @@
 </button>
 <div id="login" class="collapse" data-toggler="collapse">
     <div class="wrapper">
+        <h3>Login</h3>
         <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">
             {% csrf_token %}
-            Email
+
             {{ form.username }}
-            {{ form.password.label_tag }}
             {{ form.password }}
 
-            <input type="submit" value="login">
+            <p><a href="{% url 'password_reset' %}">Forgot password? &rarr;</a></p>
+            <p><a href="{% url 'register-account' %}">Don't have an account? Sign up &rarr;</a></p>
+
+            <input type="submit" value="Sign In">
         </form>
         {% if form.errors %}
         <p>Your username and password didn't match. Please try again.</p>
         {% endif %}
-
-        <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-        <p><a href="{% url 'register-account' %}">Need an account?</a></p>
     </div>
 </div>
 

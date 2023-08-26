@@ -19,6 +19,14 @@
     {% include "archive/thumbnails.html" %}
 </ul>
 
+<div hx-swap-oob="innerHTML:#add-to-list-popup .photo-menu-popup__wrapper">
+    {% include "archive/popup_collection_list.html" %}
+</div>
+
+<div hx-swap-oob="innerHTML:#share-popup .photo-menu-popup__wrapper">
+    {% include "archive/web-component.html" %}
+</div>
+
 <div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
     {% include "archive/popup-download.html" %}
 </div>

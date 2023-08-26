@@ -1,21 +1,41 @@
+@use '../typography' as *;
+
 .hamburger-container {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  button {
+    position: relative;
+  }
+  .is-active {
+    &:after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 40px;
+      border-radius: 100%;
+      background-color: var(--fp-main-blue);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: -1;
+    }
+  }
 }
 
 @mixin collapsibleMenu {
-  background: var(--fp-light-grey);
+  background: $white;
   position: absolute;
   z-index: 1000;
-  top: 80px;
+  top: 73px;
   right: 1rem;
   width: 250px;
   transition: all ease-in-out 250ms;
   max-height: 600px;
   overflow: hidden;
   box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-
+  border-radius: 3px;
   &.collapse {
     max-height: 0px;
   }
@@ -26,12 +46,13 @@
   @include collapsibleMenu;
 
   .wrapper {
-    padding: 35px 15px 15px 15px;
+    padding: 10px 15px 15px 15px;
   }
 
   form {
     display: flex;
     flex-direction: column;
+    align-items: center;
 
     input {
       margin: 10px 0;
@@ -43,15 +64,19 @@
 
     input[type=submit] {
       @include button--round;
+      width: auto;
     }
   }
 
   p a {
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
     color: var(--fp-main-blue);
     text-decoration: none;
   }
 
   p {
+    width: 100%;
     margin-bottom: 5px;
   }
 
@@ -62,17 +87,18 @@
   @include collapsibleMenu;
 
   ul {
-    padding: 35px 15px 15px 15px;
+    padding: 10px 15px 15px 15px;
     display: block;
   }
 
   li {
     list-style-type: none;
-    padding: 12px;
+    padding: 6px;
+    text-align: center;
 
     a {
-      color: #333;
-      text-transform: uppercase;
+      color: #535353;
+      font-size: 12px;
       text-decoration: none;
     }
 

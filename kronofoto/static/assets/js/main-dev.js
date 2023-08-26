@@ -17,7 +17,9 @@ import {
   timelineCrawlBackward,
   timelineCrawlBackwardRelease,
   moveTimelineCoin,
-  dropTimelineCoin, gotoTimelinePosition
+  dropTimelineCoin,
+  gotoTimelinePosition,
+  showToast,
 }
   from "./lib.js"
 
@@ -43,7 +45,7 @@ function showImagesBeforeSwap(target) {
   });
 }
 
-htmx.onLoad(() => {
+htmx.onLoad((e, f) => {
   installButtons(document)
   initDraggableThumbnails()
   if($('#fi-preload-zone li').length) {
@@ -98,6 +100,10 @@ const init = () => {
   new window.ClipboardJS('[data-clipboard-target]');
 
   $(document).ready(function() {
+
+    $('#add-to-list-popup').on('htmx:afterSwap', function(e) {
+      showToast('Updated photo lists')
+    })
 
     $('#overlay').on('click', (e) => {
       $('#login').addClass('collapse')
@@ -176,12 +182,14 @@ const init = () => {
         minLength: 2,
     })
 
-    $(document).on('click', '#forward', timelineZipBackward)
-    $(document).on('mousedown', '#forward', timelineCrawlForward)
-    $(document).on('mouseup', '#forward', timelineCrawlForwardRelease)
-    $(document).on('click', '#backward', timelineZipForward)
-    $(document).on('mousedown', '#backward', timelineCrawlBackward)
-    $(document).on('mouseup', '#backward', timelineCrawlBackwardRelease)
+    $(document).on('click', '#forward-zip', timelineZipBackward)
+    $(document).on('click', '#forward', timelineForward)
+    $(document).on('mousedown', '#forward-zip', timelineCrawlForward)
+    $(document).on('mouseup', '#forward-zip', timelineCrawlForwardRelease)
+    $(document).on('click', '#backward-zip', timelineZipForward)
+    $(document).on('click', '#backward', timelineBackward)
+    $(document).on('mousedown', '#backward-zip', timelineCrawlBackward)
+    $(document).on('mouseup', '#backward-zip', timelineCrawlBackwardRelease)
     $(document).on('click', '#fi-arrow-right', timelineForward)
     $(document).on('click', '#fi-arrow-left', timelineBackward)
     $(document).on('click', '#fi-thumbnail-carousel-images li span', function(e) {

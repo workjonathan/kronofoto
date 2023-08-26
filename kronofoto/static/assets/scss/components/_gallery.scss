@@ -59,12 +59,12 @@ $headerHeight: 80px;
     }
 
     .control.previous {
-      cursor: url('../../images/arrow-cursor-back.png'), auto;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg id='Group_56' data-name='Group 56' transform='translate(2542 -4764)'%3E%3Cpath id='Path_90' data-name='Path 90' d='M15,0A15,15,0,1,1,0,15,15,15,0,0,1,15,0Z' transform='translate(-2542 4764)' fill='rgba(51,51,51,0.2)'/%3E%3Cpath id='Path_89' data-name='Path 89' d='M33.779,16.5,27.041,24l6.738,7.5' transform='translate(-2557.287 4754.505)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A"), auto;
       left: 0px;
     }
 
     .control.forward {
-      cursor: url('../../images/arrow-cursor.png'), auto;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg id='Group_58' data-name='Group 58' transform='translate(-2512 4794) rotate(180)'%3E%3Cpath id='Path_90' data-name='Path 90' d='M15,0A15,15,0,1,1,0,15,15,15,0,0,1,15,0Z' transform='translate(-2542 4764)' fill='rgba(51,51,51,0.2)'/%3E%3Cpath id='Path_89' data-name='Path 89' d='M33.779,16.5,27.041,24l6.738,7.5' transform='translate(-2557.287 4754.505)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A"), auto;
       right: 0px;
     }
 
@@ -117,7 +117,7 @@ $headerHeight: 80px;
     }
 
     &__controls-bottom {
-      background: transparent linear-gradient(180deg, #00000000 0%, #0000004D 100%) 0% 0% no-repeat padding-box;
+      background: transparent linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 100%) 0% 0% no-repeat padding-box;
       top: auto;
       bottom: 0px;
       z-index: 200;

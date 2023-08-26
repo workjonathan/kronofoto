@@ -88,17 +88,12 @@
           {% include "archive/view-buttons.html" %}
           {% endblock %}
 
-            <button>
-                <i class="icon map-icon"></i>
-            </button>
-
-
         </div>
           <!-- end nav center -->
 
         <div class="main-nav_right">
 
-            <div id="new-label_container" class="new-label_container">
+            <div id="new-label_container" class="new-label_container show-for-medium">
                 <a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=is_new%3Atrue">
                 <i class="icon new-icon"></i>
                 </a>
@@ -120,7 +115,7 @@
           <li>Auto</li>
           -->
         {% endcomment %}
-          <div class="login-container">
+          <div class="login-container show-for-medium">
             {% make_login %}
           </div>
           <div class="hamburger-container">

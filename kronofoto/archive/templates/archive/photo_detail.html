@@ -186,6 +186,7 @@
         <div class="fi-thumbnail-carousel">
 
             <div class="back-arrows">
+                <a id="backward-zip"></a>
                 <a id="backward"></a>
             </div>
 
@@ -197,8 +198,9 @@
             </div>
 
             <div class="forward-arrows">
-                <a id="forward">
-                    <span data-tooltip class="top" data-click-open="false" title="Click to zip,&#xA; hold to crawl"></span>
+                <a id="forward"></a>
+                <a id="forward-zip">
+                    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
                 </a>
             </div>
 
@@ -218,6 +220,13 @@
 
 
     <div class="car-right-space"></div>
+
+    <div id="messages">
+        <script type="template" id="toast-template">
+            <div class="callout success">
+            </div>
+        </script>
+    </div>
 
 </main>
 {% endblock %}

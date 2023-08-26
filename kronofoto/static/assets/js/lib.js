@@ -31,6 +31,18 @@ $(document).on('on.zf.toggler', function(e) {
 
 // window.jQuery = window.$ = window.jQueryOrig
 
+export const showToast = (message) => {
+  let content = $('#toast-template').html()
+  let $message = $(content)
+  $message.prepend('<p>'+message+'</p>')
+  $('#messages').append($message)
+  setTimeout(() => {
+    $message.fadeOut(() => {
+      $message.remove()
+    })
+  }, 5000)
+}
+
 export const autoplayStart = () => {
   window.autoplayTimer = setInterval(() => {
     window.htmx.trigger('#fi-arrow-right', 'click')
@@ -74,6 +86,7 @@ export const timelineZipForward = () => {
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.nextAll().eq(numToZip)
+    console.log(4)
     gotoTimelinePosition(numToZip * -1)
     // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
@@ -102,11 +115,12 @@ export const timelineBackward = () => {
 export const timelineCrawlForward = () => {
   let self = this
   timelineCrawlForwardTimeout = setTimeout(() => {
+    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlForwardInterval = setInterval(() => {
-      let left = $('#fi-thumbnail-carousel-images').position().left
-      $('#fi-thumbnail-carousel-images').css('left', left - 20)
-      moveTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    }, 100)
+      currentPosition -= 20
+      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+      moveTimelineCoin(currentPosition)
+    }, 50)
   }, 500)
 }
 
@@ -124,11 +138,12 @@ export const timelineCrawlForwardRelease = () => {
 
 export const timelineCrawlBackward = () => {
   timelineCrawlBackwardTimeout = setTimeout(() => {
+    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlBackwardInterval = setInterval(() => {
-      let left = $('#fi-thumbnail-carousel-images').position().left
-      $('#fi-thumbnail-carousel-images').css('left', left + 20)
-      moveTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    }, 100)
+      currentPosition += 20
+      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+      moveTimelineCoin(currentPosition)
+    }, 50)
   }, 500)
 }
 
