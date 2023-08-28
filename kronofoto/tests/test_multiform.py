@@ -83,7 +83,11 @@ class MultiformView(TemplateView):
                 while self.step < len(self.form_classes) and self.completed_form_store.get(self.step, None) is not None:
                     self.step += 1
                 if self.step >= len(self.form_classes) and len(self.completed_form_store) == len(self.form_classes):
-                    return self.forms_valid(self.completed_form_store.values())
+                    resp = self.forms_valid(self.completed_form_store.values())
+                    self.data_store.clear()
+                    self.completed_form_store.clear()
+            else:
+                self.completed_form_store.set(self.step, None)
             context = self.get_context_data()
             return self.render_to_response(context)
 
@@ -192,6 +196,8 @@ class MultiformStateMachine(RuleBasedStateMachine):
         if step == 3 and len(self.submitted) == 4 and all(self.submitted_valid.values()):
             with raises(NotImplementedError):
                 self.client.post('/test/multiform', data=data)
+            self.submitted = {}
+            self.submitted_valid = {}
         else:
             resp = self.client.post('/test/multiform', data=data)
             assert resp.status_code == 200
@@ -200,7 +206,7 @@ class MultiformStateMachine(RuleBasedStateMachine):
             assert stepform2.cleaned_data['step'] != step
             self.forms[stepform2.cleaned_data['step']] = resp.context['form'].__class__
 
-            resp_form_class = self.forms[step]
+            resp_form_class = self.forms[stepform2.cleaned_data['step']]
             resp_form = resp_form_class(data=resp.context['form'].initial)
             if resp_form.is_valid():
                 pass
@@ -208,7 +214,7 @@ class MultiformStateMachine(RuleBasedStateMachine):
                 resp_form_class = resp_form_class.get_invalid()
                 resp_form = resp_form_class(data=resp.context['form'].initial)
             if resp_form.is_valid() and stepform2.cleaned_data['step'] in self.submitted:
-                assert resp_form.cleaned_data == self.submitted[step + 1].cleaned_data
+                assert resp_form.cleaned_data == self.submitted[stepform2.cleaned_data['step']].cleaned_data
 
 
 
