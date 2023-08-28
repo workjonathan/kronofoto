@@ -10,9 +10,9 @@ class FortepanAuthenticationForm(AuthenticationForm):
         self.fields['username'].label = 'Email'
 
 class RegisterUserForm(forms.Form):
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'placeholder': 'Emai'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'placeholder': 'Email'}))
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'placeholder': 'Password'}))
-    password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput())
+    password2 = forms.CharField(label='Verify Password', widget=forms.PasswordInput(attrs={'placeholder': 'Password again'}))
 
     def __init__(self, user_checker=UserEmailVerifier(), **kwargs):
         self.user_checker = user_checker
