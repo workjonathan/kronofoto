@@ -20,7 +20,7 @@
         </div>
 
         <div>
-            <p>ID#: {{photo.accession_number}}</p>
+            <p>ID# {{photo.accession_number}}</p>
             <p>Contributed by <strong class="text-semibold"><a hx-get="{% object_url photo.donor url_kwargs %}" href="{% object_url photo.donor url_kwargs %}">{{ photo.donor.display_format }}</a></strong></p>
         </div>
 

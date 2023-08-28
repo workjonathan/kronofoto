@@ -36,10 +36,6 @@ a.button {
   display: inline-block;
 }
 
-//a.button, button#login-btn, .logout-btn, input[type="submit"] {
-//  @extend .button--default;
-//}
-
 a.button, input[type="submit"] {
   background-color: var(--fp-main-blue);
   color: white;
@@ -50,7 +46,7 @@ button#login-btn, .logout-btn {
   color: var(--fp-main-blue);
 }
 
-button#login-btn:hover, .logout-btn:hover, input[type="submit"]:hover {
+.logout-btn:hover, input[type="submit"]:hover {
   background-color: var(--fp-main-blue);
   color: white;
 }

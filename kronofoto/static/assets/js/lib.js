@@ -1,36 +1,27 @@
 import {enableMarkerDnD} from "./drag-drop.js"
-import $ from 'jquery'
 
 // Foundation
 import { Foundation, Toggler, Tooltip, Box, MediaQuery, Triggers } from 'foundation-sites'
 
-window.jQueryOrig = window.$
-window.jQuery = window.$ = $
+window.$ = window.jQuery
 let timelineCrawlForwardInterval = null
 let timelineCrawlForwardTimeout = null
 let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
 
-Foundation.MediaQuery = MediaQuery;
-Foundation.plugin(Toggler, 'Toggler');
-Foundation.plugin(Tooltip, 'Tooltip');
-
-$(document).ready(function($) {
+$(document).ready(function() {
     $(document).foundation();
-    $('.form--add-tag').each(function(i,e) {
-        $('.link--icon', e).click(function() {
-            $(e).addClass('expanded')
-            $('input[type=text]', e).focus()
-        })
-        $(e).on('focusout', 'input[type=text]', function(f) {
-            $(e).removeClass('expanded')
-            $(f.currentTarget).val('')
-        })
+    $(document).on('click', '.form--add-tag .link--icon', (e) => {
+      let $form = $(e.currentTarget).closest('form')
+      $form.addClass('expanded')
+      $('input[type=text]', $form).focus()
     })
-
-});
-
-new window.ClipboardJS('[data-clipboard-target]');
+    $(document).on('focusout', '.form--add-tag input[type=text]', function(e) {
+        let $form = $(e.currentTarget).closest('form')
+        $form.removeClass('expanded')
+        $(e.currentTarget).val('')
+    })
+})
 
 $(document).on('on.zf.toggler', function(e) {
     if($(e.target).hasClass('gallery__popup')) {
@@ -38,7 +29,19 @@ $(document).on('on.zf.toggler', function(e) {
     }
 });
 
-window.jQuery = window.$ = window.jQueryOrig
+// window.jQuery = window.$ = window.jQueryOrig
+
+export const showToast = (message) => {
+  let content = $('#toast-template').html()
+  let $message = $(content)
+  $message.prepend('<p>'+message+'</p>')
+  $('#messages').append($message)
+  setTimeout(() => {
+    $message.fadeOut(() => {
+      $message.remove()
+    })
+  }, 5000)
+}
 
 export const autoplayStart = () => {
   window.autoplayTimer = setInterval(() => {
@@ -70,14 +73,22 @@ export const dropTimelineCoin = (deltaX) => {
   let quantizedX = (Math.round(deltaX / width))
   let itemNum = quantizedX
   $('#fi-thumbnail-carousel-images').css({left: itemNum * width})
-  window.htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] a').get(0), 'manual')
+  window.htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
+}
+
+export const gotoTimelinePosition = (delta) => {
+  let width = $('#fi-thumbnail-carousel-images li').outerWidth()
+  moveTimelineCoin(delta * -1 * width)
+  dropTimelineCoin(delta * -1 * width)
 }
 export const timelineZipForward = () => {
   if(timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.nextAll().eq(numToZip)
-    window.htmx.trigger($nextLi.find('a').get(0), 'manual')
+    console.log(4)
+    gotoTimelinePosition(numToZip * -1)
+    // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false
 }
@@ -87,27 +98,29 @@ export const timelineZipBackward = () => {
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.prevAll().eq(numToZip)
-    window.htmx.trigger($nextLi.find('a').get(0), 'manual')
+    gotoTimelinePosition(numToZip)
+    // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false
 }
 
 export const timelineForward = () => {
-  window.htmx.trigger($('#fi-arrow-right').get(0), 'click')
+  gotoTimelinePosition(1)
 }
 
 export const timelineBackward = () => {
-  window.htmx.trigger($('#fi-arrow-left').get(0), 'click')
+  gotoTimelinePosition(-1)
 }
 
 export const timelineCrawlForward = () => {
   let self = this
   timelineCrawlForwardTimeout = setTimeout(() => {
+    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlForwardInterval = setInterval(() => {
-      let left = $('#fi-thumbnail-carousel-images').position().left
-      $('#fi-thumbnail-carousel-images').css('left', left - 20)
-      moveTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    }, 100)
+      currentPosition -= 20
+      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+      moveTimelineCoin(currentPosition)
+    }, 50)
   }, 500)
 }
 
@@ -125,11 +138,12 @@ export const timelineCrawlForwardRelease = () => {
 
 export const timelineCrawlBackward = () => {
   timelineCrawlBackwardTimeout = setTimeout(() => {
+    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlBackwardInterval = setInterval(() => {
-      let left = $('#fi-thumbnail-carousel-images').position().left
-      $('#fi-thumbnail-carousel-images').css('left', left + 20)
-      moveTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    }, 100)
+      currentPosition += 20
+      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+      moveTimelineCoin(currentPosition)
+    }, 50)
   }, 500)
 }
 
@@ -175,18 +189,18 @@ export const toggleLogin = evt => {
     toggleElement(el);
 }
 export const toggleMenu = evt => {
-    if(!$('.hamburger').hasClass('is-active')) {
-      $('.hamburger').addClass('is-active')
-      $('.hamburger-menu').removeClass('collapse')
-      $('body').addClass('menu-expanded')
-      $('.overlay').fadeIn()
-    }
-    else {
-      $('.hamburger').removeClass('is-active')
-      $('.hamburger-menu').addClass('collapse')
-      $('body').removeClass('menu-expanded')
-      $('.overlay').fadeOut()
-    }
+    // if(!$('.hamburger').hasClass('is-active')) {
+    //   $('.hamburger').addClass('is-active')
+    //   $('.hamburger-menu').removeClass('collapse')
+    //   $('body').addClass('menu-expanded')
+    //   $('.overlay').fadeIn()
+    // }
+    // else {
+    //   $('.hamburger').removeClass('is-active')
+    //   $('.hamburger-menu').addClass('collapse')
+    //   $('body').removeClass('menu-expanded')
+    //   $('.overlay').fadeOut()
+    // }
 }
 const toggleElement = el => {
     if (!el.classList.replace('hidden', 'gridden')) {

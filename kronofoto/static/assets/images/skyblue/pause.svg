@@ -1,2 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" stroke="#fff" fill-rule="evenodd" clip-rule="evenodd"><path d="M10 24h-6v-24h6v24zm10 0h-6v-24h6v24zm-11-23h-4v22h4v-22zm10 0h-4v22h4v-22z"/></svg>
+<svg id="auto-play" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <rect id="Rectangle_42" data-name="Rectangle 42" width="40" height="40" fill="none"/>
+    <rect id="Rectangle_77" data-name="Rectangle 77" width="6" height="20" transform="translate(11 10)" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+    <rect id="Rectangle_78" data-name="Rectangle 78" width="6" height="20" transform="translate(23 10)" fill="none" stroke="#fff" stroke-linejoin="bevel" stroke-width="3"/>
+</svg>

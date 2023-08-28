@@ -3,7 +3,8 @@
 
 @mixin styles {
   .tags {
-    font-size: 16px;
+    font-size: 14px;
+    letter-spacing: 0.05em;
     line-height: 20px;
     line-spacing: 0.5em;
     padding-left: 20px;

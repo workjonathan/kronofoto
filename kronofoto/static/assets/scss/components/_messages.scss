@@ -1,0 +1,11 @@
+
+@mixin styles {
+  #messages {
+    position: fixed;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20%;
+    min-width: 300px;
+  }
+}

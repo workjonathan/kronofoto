@@ -1,27 +1,29 @@
 {% if user.is_authenticated %}
-<a href="{% url "kronofoto:user-page" user.username %}">
-    <i class="icon lock-icon" title="Account"></i>
+<a href="{% url "kronofoto:user-page" user.username %}" title="Account">
+    <i class="icon user-icon"></i>
 </a>
 {% else %}
-<button id="login-btn" onclick="toggleLogin()">
-    <i class="fas fa-lock"></i> <div style="float:right; margin-left:.5em" class="mobile-hidden">Login</div>
+<button id="login-btn" data-toggle="login">
+    <i class="icon lock-icon"></i>
 </button>
-<div id="login" class="hidden">
-    <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">
-        {% csrf_token %}
-        Email
-        {{ form.username }}
-        {{ form.password.label_tag }}
-        {{ form.password }}
+<div id="login" class="collapse" data-toggler="collapse">
+    <div class="wrapper">
+        <h3>Login</h3>
+        <form method="post" action="{% url "login"%}?next={{request.get_full_path | urlencode}}">
+            {% csrf_token %}
 
-        <input type="submit" value="login">
-    </form>
-    {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
-    {% endif %}
+            {{ form.username }}
+            {{ form.password }}
 
-    <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-    <p><a href="{% url 'register-account' %}">Need an account?</a></p>
+            <p><a href="{% url 'password_reset' %}">Forgot password? &rarr;</a></p>
+            <p><a href="{% url 'register-account' %}">Don't have an account? Sign up &rarr;</a></p>
+
+            <input type="submit" value="Sign In">
+        </form>
+        {% if form.errors %}
+        <p>Your username and password didn't match. Please try again.</p>
+        {% endif %}
+    </div>
 </div>
 
 {% endif %}

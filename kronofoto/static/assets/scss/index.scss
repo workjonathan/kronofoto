@@ -1,5 +1,6 @@
 @use 'components/gallery' as gallery;
 @use 'components/header' as header;
+@use 'components/messages' as messages;
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
 @use 'components/timeline' as timeline;
@@ -35,6 +36,7 @@
 @include gallery.styles;
 @import 'components/hamburger';
 @include header.styles;
+@include messages.styles;
 @import 'components/input';
 @import 'components/navigation';
 @import 'components/photo-menu-popup';
@@ -47,6 +49,7 @@
 // Foundation Components
 @import 'foundation-sites/scss/components/switch';
 @import 'foundation-sites/scss/components/tooltip';
+@import 'foundation-sites/scss/components/callout';
 
 // Foundation Helpers
 @import 'foundation-sites/scss/components/float';
@@ -56,6 +59,7 @@
 
 @include foundation-switch;
 @include foundation-tooltip;
+@include foundation-callout;
 
 // Foundation Components
 @include foundation-visibility-classes;

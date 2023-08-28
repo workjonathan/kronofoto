@@ -25,11 +25,14 @@
 }
 
 #search-box-container {
-  margin-right: 35px;
+  margin-right: 18px;
   flex-grow: 1;
   max-width: 550px;
-  background-color: var(--fp-light-grey);
+  background-color: #DBDBDB;
   z-index: 9999;
+  border: 1px solid #B2B2B2;
+  border-radius: 3px;
+  min-width: 200px;
 }
 #search-box-container img {
   margin: 7px;
@@ -37,6 +40,8 @@
 }
 #search-box-container label {
   display: flex;
+  flex-direction: row-reverse;
+  margin-bottom: 0px;
 }
 
 input#search-box {
@@ -108,6 +113,7 @@ input#search-box::placeholder {
 }
 
 .search-options {
+  display: none;
   align-self: center;
     padding-right: 5px;
 }
@@ -116,32 +122,6 @@ input#search-box::placeholder {
   display: flex;
   justify-content: space-between;
   /*padding: 0 15px;*/
-}
-
-#login {
-  position: absolute;
-  z-index: 1000;
-  background-color: var(--fp-light-grey);
-  padding: 30px
-}
-#login form {
-  display: flex;
-  flex-direction: column;
-}
-#login form input {
-  margin: 10px 0;
-}
-#login form input[type="text"], #login form input[type="password"] {
-  background: var(--fp-main-grey);
-}
-
-#login p a {
-  color: var(--fp-main-blue);
-  text-decoration: none;
-}
-
-#login p {
-  margin-bottom: 5px;
 }
 
 .new-label {
@@ -255,8 +235,8 @@ input#search-box::placeholder {
 }
 
 .search-box-content_inner {
-  width: 95%;
-    padding: 0 7px 0 5px;
+  width: 100%;
+  padding: 0 5px 0 0px;
 }
 
 
@@ -442,6 +422,7 @@ main article.fi-image {
   width: 100vw;
   height: 100vh;
   z-index: 999;
+  display: none;
 }
 
 .collection-grid ul li {

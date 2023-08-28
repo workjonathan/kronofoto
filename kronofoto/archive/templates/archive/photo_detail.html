@@ -19,17 +19,12 @@
 
 <main hx-target="#fi-image-tag" hx-swap="outerHTML">
 
-
     <div class="gallery" id="gallery" data-toggler=".zoom-opened">
-        <div class="gallery__left-space">
-            {% block left_arrow %}
-            <a id="fi-arrow-left" class="control previous"
-               {% if prev_photo %}
-               href="{% object_url prev_photo url_kwargs get_params %}"
-               hx-get="{% object_url prev_photo url_kwargs get_params %}"
-               {% endif %}>
-            </a>
-            {% endblock %}
+
+        {% block left_arrow %}
+            <a id="fi-arrow-left" class="control previous"></a>
+        {% endblock %}
+        <div id="fi-image-preload" class="hide">
         </div>
         <article class="gallery__image fi-image" id="fi-image">
             {% block image %}
@@ -38,16 +33,10 @@
             </figure>
             {% endblock image %}
         </article>
-        <div class="gallery__right-space">
-            {% block right_arrow %}
-            <a id="fi-arrow-right" class="control forward"
-               {% if next_photo %}
-               href="{% object_url next_photo url_kwargs get_params %}"
-               hx-get="{% object_url next_photo url_kwargs get_params %}"
-               {% endif %}>
-            </a>
-            {% endblock right_arrow %}
-        </div>
+
+        {% block right_arrow %}
+        <a id="fi-arrow-right" class="control forward"></a>
+        {% endblock right_arrow %}
 
         <div id="zoom-popup" class="follow-zoom-popup">
             {% block zoom_popup %}
@@ -56,6 +45,7 @@
             <!-- script for follow zoom -->
             <script type="text/javascript">
               var addZoom = (target) => {
+
                 let container = document.getElementById(target),
                     imgsrc = container.currentStyle || window.getComputedStyle(container, false);
                 imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
@@ -129,11 +119,12 @@
 
             <div class="gallery__controls-top">
                 <!--Zoom Button-->
-                <button id="zoom-image-control-button" class="image-control-button" data-toggle="gallery">
+                <button id="zoom-image-control-button" class="image-control-button image-control-button--toggle" data-toggle="gallery">
                     <img class="meta-info-icon" src="{% static "assets/images/skyblue/zoom.svg" %}">
+                    <img class="meta-info-icon hide" src="{% static "assets/images/skyblue/zoom-out.svg" %}">
                 </button>
                 <!--Auto Play Button-->
-                <button id="auto-play-image-control-button" class="image-control-button">
+                <button id="auto-play-image-control-button" class="image-control-button image-control-button--toggle">
                     <img id="autoplay--play" src="{% static "assets/images/skyblue/auto-play.svg" %}">
                     <img id="autoplay--pause" class="hide" src="{% static "assets/images/skyblue/pause.svg" %}">
                 </button>
@@ -195,19 +186,21 @@
         <div class="fi-thumbnail-carousel">
 
             <div class="back-arrows">
+                <a id="backward-zip"></a>
                 <a id="backward"></a>
             </div>
 
             <div class="slide-container">
                 <ul id="fi-preload-zone"></ul>
-                <ul id="fi-thumbnail-carousel-images">
+                <ul id="fi-thumbnail-carousel-images" style="left: 0px;">
                     {% include "archive/thumbnails.html" %}
                 </ul>
             </div>
 
             <div class="forward-arrows">
-                <a id="forward">
-                    <span data-tooltip class="top" data-click-open="false" title="Click to zip,&#xA; hold to crawl"></span>
+                <a id="forward"></a>
+                <a id="forward-zip">
+                    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
                 </a>
             </div>
 
@@ -227,6 +220,13 @@
 
 
     <div class="car-right-space"></div>
+
+    <div id="messages">
+        <script type="template" id="toast-template">
+            <div class="callout success">
+            </div>
+        </script>
+    </div>
 
 </main>
 {% endblock %}
