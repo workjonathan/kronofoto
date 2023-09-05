@@ -75,20 +75,14 @@ def format_location(force_country=False, **kwargs):
 def get_original_path(instance, filename):
     return path.join('original', '{}.jpg'.format(instance.uuid))
 
+def get_submission_path(instance, filename):
+    return path.join('submissions', '{}.jpg'.format(instance.uuid))
 
-class Photo(models.Model):
+class PhotoBase(models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
-    h700 = models.ImageField(null=True, editable=False)
-    thumbnail = models.ImageField(null=True, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
-    terms = models.ManyToManyField(Term, blank=True)
     photographer = models.CharField(max_length=128, blank=True)
-    location_from_google = models.BooleanField(editable=False, default=False)
-    location_point = models.PointField(null=True, srid=4326, blank=True)
-    location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
@@ -97,6 +91,27 @@ class Photo(models.Model):
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True, verbose_name="comment")
+
+    scanner = models.ForeignKey(
+        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned"
+    )
+
+    class Meta:
+        abstract = True
+
+class Submission(PhotoBase):
+    image = models.ImageField(upload_to=get_submission_path, null=False, editable=False)
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+class Photo(PhotoBase):
+    original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
+    h700 = models.ImageField(null=True, editable=False)
+    thumbnail = models.ImageField(null=True, editable=False)
+    tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
+    terms = models.ManyToManyField(Term, blank=True)
+    location_from_google = models.BooleanField(editable=False, default=False)
+    location_point = models.PointField(null=True, srid=4326, blank=True)
+    location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False)
     local_context_id = models.CharField(
@@ -106,9 +121,6 @@ class Photo(models.Model):
         validators=[RegexValidator(regex="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", message='This should be blank or 36 alphanumerics with hyphens grouped like this: 8-4-4-4-12')],
     )
     created = models.DateTimeField(auto_now_add=True)
-    scanner = models.ForeignKey(
-        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="photos_scanned"
-    )
 
     objects = PhotoQuerySet.as_manager()
 

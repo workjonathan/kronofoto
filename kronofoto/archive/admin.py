@@ -7,7 +7,7 @@ from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
-from .models.archive import Archive, ArchiveUserPermission
+from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count, Q, Exists, OuterRef, F
@@ -134,10 +134,13 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
     #def has_change_permission(self, request, obj=None):
     #    return False
 
+class AgreementInline(admin.StackedInline):
+    model = ArchiveAgreement
+    extra = 0
 
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
-    pass
+    inlines = (AgreementInline,)
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
