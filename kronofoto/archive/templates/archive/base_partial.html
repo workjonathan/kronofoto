@@ -1,19 +1,17 @@
-<div hx-swap-oob="innerHTML:#navigation-menu">
+<div hx-swap-oob="innerHTML:.navigation-menu">
 {% include "archive/navigation-menu.html" %}
-</div>
-<div id="collection-name" hx-swap-oob="true">
-    {{ collection_name }}
 </div>
 <div hx-swap-oob="innerHTML:#all-photos">
 {% if collection_name != "All Photos" %}
     <a href="{% url "kronofoto:random-image" %}" hx-get="{% url "kronofoto:random-image" %}" hx-target="#app">Back to All Photos</a>
 {% endif %}
 </div>
-<div hx-swap-oob="delete:#timeline-container"></div>
-<div hx-swap-oob="delete:#grid-icon"></div>
-<div hx-swap-oob="afterbegin:.main-nav_center">
-{% block viewbuttons %}
-{% endblock %}
+<div hx-swap-oob="innerHTML:.main-nav_center">
+    {% block searchbox %}
+    {% include "archive/search-box.html" %}
+    {% endblock %}
+    {% block viewbuttons %}
+    {% endblock %}
 </div>
 {% block content %}
 {% endblock %}

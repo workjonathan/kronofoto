@@ -1,19 +1,22 @@
-<!--<div hx-swap-oob="innerHTML:#navigation-menu">-->
-<!--  {% include "archive/navigation-menu.html" %}-->
-<!--</div>-->
+<div hx-swap-oob="innerHTML:#navigation-menu">
+  {% include "archive/navigation-menu.html" %}
+</div>
 
 <div hx-swap-oob="innerHTML:[data-timeline-target=sliderYearLabel]">
     {{ object.year }}
 </div>
 
-<!--<div hx-swap-oob="delete:#timeline-container"></div>-->
+<div hx-swap-oob="delete:#timeline-container"></div>
 
-<!--<div hx-swap-oob="delete:#grid-icon"></div>-->
+<div hx-swap-oob="delete:#grid-icon"></div>
 
-<!--<div hx-swap-oob="afterbegin:.main-nav_center">-->
-<!--{% block viewbuttons %}-->
-<!--{% endblock %}-->
-<!--</div>-->
+<div hx-swap-oob="innerHTML:.main-nav_center">
+    {% block searchbox %}
+    {% include "archive/search-box.html" %}
+    {% endblock %}
+    {% block viewbuttons %}
+{% endblock %}
+</div>
 
 <ul hx-swap-oob="innerHTML:#fi-preload-zone">
     {% include "archive/thumbnails.html" %}
@@ -42,9 +45,11 @@
 </div>
 
 <div hx-swap-oob="innerHTML:#zoom-popup">
-{% block zoom_popup %}
-{% endblock %}
+    {% block zoom_popup %}
+    {% endblock %}
 </div>
+
+
 
 <!--<div hx-swap-oob="innerHTML:#gallery">-->
 <!--{% block gallery %}-->

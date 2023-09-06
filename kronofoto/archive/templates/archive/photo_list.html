@@ -6,7 +6,7 @@
 {% include "archive/view-buttons.html" with gridclass="current-view" photo=page_obj.0 %}
 {% endblock %}
 {% block content %}
-<div>
+<main hx-target="#fi-image-tag" hx-swap="outerHTML">
 {% if noresults %}
     <div class="container-center add_tag-container">
         <p style="width:50%">
@@ -30,6 +30,6 @@
     {% page_links formatter page_obj "grid-top" %}
 </div>
 {% endif %}
-</div>
+</main>
 {% endblock %}
 
