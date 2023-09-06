@@ -50,7 +50,7 @@ urlpatterns = [
     path('photos/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
     path('photos/<accession:photo>/download', downloadpage.DownloadPopupView.as_view(), name='popup-download'),
     path('photo/<accession:photo>/', views.PhotoView.as_view()),
-    path('photos/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
+    path('photos/<accession:photo>', views.PhotoView.as_view(item_count=20), name="photoview"),
     path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),
     path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view()),
     path('photo/year:<int:year>/', YearRedirect.as_view()),

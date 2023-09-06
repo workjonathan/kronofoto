@@ -29,16 +29,16 @@ class OrderedDetailBase(DetailView):
         object = self.object
         object.active = True
 
-        before = list(queryset.photos_before(year=object.year, id=object.id)[:20])
+        before = list(queryset.photos_before(year=object.year, id=object.id)[:self.item_count])
         if before:
             context['prev_photo'] = before[0]
-        while len(before) < 20:
+        while len(before) < self.item_count:
             before.append(FAKE_PHOTO)
 
-        after = list(queryset.photos_after(year=object.year, id=object.id)[:20])
+        after = list(queryset.photos_after(year=object.year, id=object.id)[:self.item_count])
         if len(after):
             context['next_photo'] = after[0]
-        while len(after) < 20:
+        while len(after) < self.item_count:
             after.append(FAKE_PHOTO)
 
         before.reverse()
@@ -51,7 +51,7 @@ class OrderedDetailBase(DetailView):
 
 
 class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
-    items = 10
+    item_count = 20
     pk_url_kwarg = 'photo'
     _queryset = None
     model = Photo
