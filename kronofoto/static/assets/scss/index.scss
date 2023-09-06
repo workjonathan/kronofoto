@@ -44,7 +44,7 @@
 @include tags.styles;
 @include timeline.styles;
 @import 'components/button';
-
+@import 'components/search';
 
 // Foundation Components
 @import 'foundation-sites/scss/components/switch';
@@ -91,7 +91,7 @@ body {
 }
 
 a {
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
   text-decoration: none;
 }
 

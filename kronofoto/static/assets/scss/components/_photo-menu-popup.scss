@@ -51,10 +51,13 @@ $popupMaxHeight: 40vh;
     margin-bottom: $global-margin;
   }
 
-
   &.expanded {
     max-height: $popupMaxHeight;
     opacity: 1;
+  }
+
+  a {
+    color: var(--fp-main-color-lighter);
   }
 
   h1 { // TODO: Add to font palette
@@ -62,7 +65,7 @@ $popupMaxHeight: 40vh;
     margin-bottom: 20px;
     a {
       color: $white;
-      border-bottom: 2px solid var(--fp-main-blue);
+      border-bottom: 2px solid var(--fp-main-color);
     }
   }
   h2 { // TODO: Add to font palette

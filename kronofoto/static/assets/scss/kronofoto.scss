@@ -24,77 +24,9 @@
   transform: translateY(-20px);
 }
 
-#search-box-container {
-  margin-right: 18px;
-  flex-grow: 1;
-  max-width: 550px;
-  background-color: #DBDBDB;
-  z-index: 9999;
-  border: 1px solid #B2B2B2;
-  border-radius: 3px;
-  min-width: 200px;
-}
-#search-box-container img {
-  margin: 7px;
-  width: 20px;
-}
-#search-box-container label {
-  display: flex;
-  flex-direction: row-reverse;
-  margin-bottom: 0px;
-}
-
-input#search-box {
-  width: 100%;
-  border: none;
-  height: 40px;
-  background: none;
-  color: #333;
-  font-weight: 500;
-  align-self: center;
-  font-size: 13px;
-}
-
-input#search-box::placeholder {
-  color: #999;
-  opacity: 1;
-}
-
 .placeholder-light::placeholder {
   color: white !important;
   opacity: 1;
-}
-
-
-.search-form {
-  display: none;
-  position: absolute;
-  max-width: 650px;
-  width: 100%;
-  background: white;
-  margin: 0 -15px;
-  padding: 60px 130px;
-  z-index: 99;
-  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-}
-
-.search-form th, .search-form td {
-  padding: 10px 15px;
-}
-
-.search-form label {
-  font-weight: initial;
-  justify-content: left;
-  color: #333;
-  text-transform: uppercase;
-}
-
-.search-form-section {
-  margin-bottom: 40px;
-}
-
-.search-form-section div {
-  margin: 15px 0;
 }
 
 .daterange {
@@ -136,23 +68,6 @@ input#search-box::placeholder {
 .grid-icon_reg, .timeline-icon {
   vertical-align: middle;
   width: 20px;
-}
-.new-label_container:hover, .grid-icon:hover, .timeline-container:hover {
-  background-color: var(--fp-secondary-ticker-color);
-}
-.new-label_container:hover > a img, .grid-icon:hover > a img, .timeline-container:hover > a img {
-  opacity: 1 !important;
-  filter: brightness(0) invert(1);
-}
-.new-label_container, .grid-icon, .timeline-container {
-  padding: 10px;
-}
-.current-view {
-  background: var(--fp-main-blue);
-}
-.current-view a img{
-  opacity: 1 !important;
-  filter: brightness(0) invert(1);
 }
 
 .register-container, .collection_create-container, .login-page-container, .add_tag-container, .container-center {
@@ -202,7 +117,7 @@ input#search-box::placeholder {
 
 .add_tag-container span.back-btn a {
   font-size: 13px;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
   padding: 11px 15px;
   text-transform: uppercase;
   font-weight: bold;
@@ -210,7 +125,7 @@ input#search-box::placeholder {
 
 .add_tag-container span.back-btn a:hover {
   color: white !important;
-  background: var(--fp-main-blue);
+  background: var(--fp-main-color);
 }
 
 .collection_delete-container input[type="submit"] {
@@ -227,7 +142,7 @@ input#search-box::placeholder {
   right: 10px;
   font-size: 27px !important;
   cursor: pointer;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
 }
 
 .close-btn:hover {
@@ -315,7 +230,7 @@ main article.fi-image {
   width: 40px;
   background: rgb(255,255,255,0.9);
   border: none;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
   cursor: pointer;
   font-size: 30px;
 }
@@ -433,7 +348,7 @@ main article.fi-image {
   position: absolute;
   top: 100px;
   font-size: 12px;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
   background: var(--fp-light-grey);
   padding: 7px 17px;
   z-index: 998;
@@ -516,7 +431,7 @@ main article.fi-image {
 
 #download-container .back-btn a:hover {
     color: white;
-    background: var(--fp-main-blue);
+    background: var(--fp-main-color);
 }
 
 
@@ -643,7 +558,7 @@ main article.fi-image {
 }
 
 .tl a:hover > rect {
-  fill: var(--fp-main-blue);
+  fill: var(--fp-main-color);
 }
 
 

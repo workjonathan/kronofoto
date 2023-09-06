@@ -3,7 +3,7 @@
 
 $form-spacing: 16px;
 $switch-background: $medium-gray !default;
-$switch-background-active: var(--fp-main-blue);
+$switch-background-active: var(--fp-main-color);
 
 .form {
 
@@ -86,7 +86,7 @@ $switch-background-active: var(--fp-main-blue);
     cursor: pointer;
     i {
       font-size: 25px;
-      color: var(--fp-main-blue);
+      color: var(--fp-main-color);
     }
   }
 
