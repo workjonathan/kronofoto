@@ -62,7 +62,7 @@ class UserAgreementCheck(RedirectView):
             session_key = "kf.agreement.{}.{}".format(object.pk, object.version)
             agreed = request.session.get(session_key, False)
             if not agreed:
-                agreed = user_agreement_model.objects.filter(user=request.user, agreement=object, version__gte=object.version)
+                agreed = user_agreement_model.objects.filter(user=request.user, agreement=object, version__gte=object.version).exists()
                 request.session[session_key] = agreed
             return not agreed
         return False
