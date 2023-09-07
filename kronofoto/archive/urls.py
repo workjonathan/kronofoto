@@ -4,6 +4,8 @@ from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
+from archive.views.agreement import AgreementView
+from archive.views.submission import SubmissionFormView, KronofotoTemplateView
 from django.conf import settings
 
 class NegativeIntConverter:
@@ -63,5 +65,8 @@ urlpatterns = urlpatterns + [
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
+    path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
+    path("<slug:short_name>/photos/contribute", SubmissionFormView.as_view(), name="submission-create"),
+    path("<slug:short_name>/photos/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
 ]

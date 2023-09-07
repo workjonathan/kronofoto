@@ -96,12 +96,29 @@ class PhotoBase(models.Model):
         Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned"
     )
 
+    def location(self, with_address=False, force_country=False):
+        kwargs = dict(
+            city=self.city, state=self.state, county=self.county, country=self.country
+        )
+        if with_address:
+            kwargs['address'] = self.address
+        if self.city:
+            del kwargs['county']
+        return format_location(force_country=force_country, **kwargs)
+
     class Meta:
         abstract = True
 
 class Submission(PhotoBase):
-    image = models.ImageField(upload_to=get_submission_path, null=False, editable=False)
-    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    image = models.ImageField(upload_to=get_submission_path, null=False)
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
+
+    def __str__(self):
+        location = self.location()
+        if self.year:
+            return "{} - {}".format(self.year, location)
+        return location
+
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
@@ -301,15 +318,6 @@ class Photo(PhotoBase):
                 self.h700.name = fname
         super().save(*args, **kwargs)
 
-    def location(self, with_address=False, force_country=False):
-        kwargs = dict(
-            city=self.city, state=self.state, county=self.county, country=self.country
-        )
-        if with_address:
-            kwargs['address'] = self.address
-        if self.city:
-            del kwargs['county']
-        return format_location(force_country=force_country, **kwargs)
 
     def describe(self, user=None):
         terms = {str(t) for t in self.terms.all()}

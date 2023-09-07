@@ -7,6 +7,7 @@ from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
+from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
@@ -489,6 +490,12 @@ class CSVRecordAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
 
+
+@admin.register(Submission)
+class SubmissionAdmin(admin.OSMGeoAdmin):
+    readonly_fields = ["image_display"]
+    def image_display(self, obj):
+        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.image.url, obj.image.width, obj.image.height))
 
 @admin.register(Photo)
 class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):

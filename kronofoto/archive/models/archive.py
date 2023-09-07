@@ -31,6 +31,7 @@ class ArchiveAgreement(models.Model):
 class UserAgreement(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False)
     agreement = models.ForeignKey(ArchiveAgreement, on_delete=models.CASCADE, null=False)
+    version = models.DateTimeField(null=False)
 
     class Meta:
         constraints = [
