@@ -42,18 +42,19 @@ class BaseSubmissionFormView(BaseTemplateMixin, MultiformView):
         return redirect("kronofoto:submission-done", **self.kwargs)
 
 
-
-
 class KronofotoTemplateView(BaseTemplateMixin, TemplateView):
     pass
 
 class AnonymousAgreementCheckTemplateView(AnonymousAgreementCheck, KronofotoTemplateView):
     template_name = 'archive/anonymous_agreement.html'
 
+class UserAgreementCheckRedirect(UserAgreementCheck):
+    pattern_name = "kronofoto:agreement-create"
+
 class SubmissionFormView(View):
     checkers = (
         AnonymousAgreementCheckTemplateView,
-        UserAgreementCheck,
+        UserAgreementCheckRedirect,
     )
     view = BaseSubmissionFormView
     def dispatch(self, request, *args, **kwargs):
