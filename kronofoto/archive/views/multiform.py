@@ -121,7 +121,7 @@ class MultiformView(TemplateView):
                         in enumerate(self.form_classes)
                     ]
                     for form in forms:
-                        assert form.is_valid()
+                        form.is_valid()
                     resp = self.forms_valid(forms)
                     self.data_store.clear()
                     self.completed_form_store.clear()
