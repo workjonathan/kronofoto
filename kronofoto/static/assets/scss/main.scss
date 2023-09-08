@@ -53,7 +53,7 @@
   --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
   --fp-light-grey: #e6e7e8;
   --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
-  --fp-main-blue: #6e86bc;
+  --fp-main-color: #6e86bc;
 }
 
 * {
@@ -132,20 +132,20 @@ nav {
 }
 
 .navigation-menu li.selected > a {
-  background: var(--fp-main-blue);
+  background: var(--fp-main-color);
   color: white;
 }
 
 .main-nav_right a {
   font-size: 13px;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
   padding: 11px 15px;
   text-transform: uppercase;
 }
 
 .main-nav_right a:hover {
   color: white;
-  background: var(--fp-main-blue);
+  background: var(--fp-main-color);
 }
 
 nav ul {
@@ -228,15 +228,15 @@ button#archive-btn, input[type="submit"] {
 }
 button#archive-btn {
   background-color: white;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
 }
 button#archive-btn:hover, input[type="submit"]:hover {
-  background-color: var(--fp-main-blue);
+  background-color: var(--fp-main-color);
   color: white;
 }
 
 section a {
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
 }
 
 .img-grid {

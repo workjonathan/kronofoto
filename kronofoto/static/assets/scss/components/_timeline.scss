@@ -81,7 +81,7 @@ $grey: grey;
           top: 0;
           height: 85px;
           width: calc(100% - (20px));
-          background-color: var(--fp-main-blue);
+          background-color: var(--fp-main-color);
           z-index: 0;
         }
         &:after {
@@ -95,7 +95,7 @@ $grey: grey;
           height: 0;
           border-left: var(--active-image-arrow-size) solid transparent;
           border-right: var(--active-image-arrow-size) solid transparent;
-          border-bottom: var(--active-image-arrow-size) solid var(--fp-main-blue);
+          border-bottom: var(--active-image-arrow-size) solid var(--fp-main-color);
         }
       }
 
@@ -181,7 +181,7 @@ $grey: grey;
     &:hover,
     &.is-active {
       color: $white;
-      background-color: var(--fp-main-blue);
+      background-color: var(--fp-main-color);
 
       &.is-empty {
         color: $white;
@@ -190,7 +190,7 @@ $grey: grey;
     }
 
     color: $white;
-    background-color: var(--fp-main-blue);
+    background-color: var(--fp-main-color);
 
   }
 
@@ -266,7 +266,7 @@ $grey: grey;
       transition: none;
     }
 
-    background-color: var(--fp-main-blue);
+    background-color: var(--fp-main-color);
 
   }
 
@@ -309,7 +309,7 @@ $grey: grey;
 
     &:hover {
       color: $white;
-      background: var(--fp-main-blue);
+      background: var(--fp-main-color);
     }
 
     &.photos-timeline__year-label--yearEnd {
@@ -335,7 +335,7 @@ $grey: grey;
       width: rem(2px);
       height: rem(14px);
       border-radius: 1px;
-      background-color: var(--fp-main-blue);
+      background-color: var(--fp-main-color);
 
       opacity: 0;
       transform: scale(0);

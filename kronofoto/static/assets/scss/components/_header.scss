@@ -1,22 +1,38 @@
-$height: 80px;
+@use "sass:map";
+
+@import 'foundation-sites/scss/global';
+
+$height: ("small": 60px, "medium": 80px, "large": 80px);
 
 @mixin styles {
   header {
     /*max-height: 200px;
     grid-row: 1 / span 1;
     padding: 1.6vh;*/
-    height: $height;
+
+    @include breakpoint(small up) {
+      height: map.get($height, 'small');
+    }
+    @include breakpoint(medium up) {
+      height: map.get($height, 'medium');
+    }
     padding: 6px 15px;
   }
 
   .logo-img {
-    width: 11.5vw;
-    min-width: 165px;
+    @include breakpoint(small up) {
+      width: 75px;
+    }
+    @include breakpoint(medium up) {
+      width: 11.5vw;
+      min-width: 165px;
+    }
     vertical-align: middle;
   }
 
   nav {
     display: flex;
+    height: 100%;
   }
 
   nav ul {

@@ -8,4 +8,6 @@ register = template.Library()
 def make_login(context):
     request = context['request']
     form = AuthenticationForm(request)
+    form.fields['username'].widget.attrs['placeholder'] = 'Email'
+    form.fields['password'].widget.attrs['placeholder'] = 'Password'
     return { 'form': form, 'user': request.user, 'request': request}

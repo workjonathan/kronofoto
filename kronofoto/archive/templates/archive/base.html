@@ -45,19 +45,24 @@
   --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
   --fp-main-blue: {{ theme.color }};
   --fp-main-color: {{ theme.color }};
-  --fp-main-color-darker: {{ theme.color }};
+  --fp-main-color-lighter: {{ theme.colorLighter }};
+  --fp-main-color-darker: {{ theme.colorDarker }};
 }
   </style>
 </head>
 <body hx-push-url="true">
   {% gtm_body %}
   <div id="overlay" class="overlay"></div>
+  {% block header %}
   <header>
     <nav aria-label="Main navigation">
       <div class="main-nav">
         <div class="main-nav_left">
           <div id="logo">
-            <a href="{% url "kronofoto:random-image" %}"><img class="logo-img" src="{{ theme.logo }}" alt="Fortepan Iowa Logo"></a>
+            <a href="{% url "kronofoto:random-image" %}">
+              <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Iowa Logo">
+              <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">
+            </a>
 
             <div class="collection-name">
               <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
@@ -68,21 +73,11 @@
 
         </div> <!-- end nav left -->
 
-        <div class="main-nav_center mobile-hidden">
+        <div class="main-nav_center">
 
-            <div id="search-box-container">
-                <div class="search-box-content">
-
-                    <div class="search-box-content_inner">
-                        {% make_search_form %}
-                    </div>
-
-                    <div class="search-options">
-                        <img src="{% static theme.carrotSvg %}" alt="Carrot" class="carrot">
-                    </div>
-
-                </div>
-            </div>
+            {% block searchbox %}
+            {% include "archive/search-box.html" %}
+            {% endblock %}
 
           {% block viewbuttons %}
           {% include "archive/view-buttons.html" %}
@@ -144,6 +139,7 @@
       </div>
     </nav>
   </header>
+  {% endblock header %}
   <div id="app">
     {% block content %}
     {% endblock %}

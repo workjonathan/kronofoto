@@ -183,3 +183,24 @@ class LogoSvg(BasePermissiveCORSMixin, TemplateView):
         response = super().dispatch(*args, **kwargs)
         response['Content-Type'] = 'image/svg+xml'
         return response
+
+class LogoSvgSmall(BasePermissiveCORSMixin, TemplateView):
+    template_name = "archive/svg/logo-small.svg"
+    def get_template_names(self):
+        templates = []
+        if 'short_name' in self.kwargs:
+            templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
+        templates.append(self.template_name)
+        return templates
+
+    def get_context_data(self, theme='skyblue', short_name='us'):
+        context = {
+            'theme': THEME[short_name][theme]
+        }
+        return context
+
+    @cache_control(max_age=60*60, public=True)
+    def dispatch(self, *args, **kwargs):
+        response = super().dispatch(*args, **kwargs)
+        response['Content-Type'] = 'image/svg+xml'
+        return response

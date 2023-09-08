@@ -101,7 +101,13 @@ const init = () => {
 
   $(document).ready(function() {
 
-    $('#add-to-list-popup').on('htmx:afterSwap', function(e) {
+    $(document).on('change keydown paste input', 'input', (e) => {
+      if($(e.currentTarget).closest('form')) {
+        $(e.currentTarget).closest('form').find('[data-enable-on-modify]').removeAttr('disabled')
+      }
+    })
+
+    $(document).on('submit', '#add-to-list-popup form', function(e) {
       showToast('Updated photo lists')
     })
 
@@ -166,14 +172,14 @@ const init = () => {
         //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
 
         //if the search menu is open and the user clicks on something outside of the menu, close the menu
-        if($('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
+        if($(event.target).attr('id') != 'search-box' && $('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
         {
-            $('.search-form').toggle()
+            $('.search-form').hide()
         }
         //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
         else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')
         {
-            $('.search-form').toggle()
+            // $('.search-form').toggle()
         }
     })
 
@@ -236,17 +242,18 @@ const init = () => {
     });
 
     $('#search-box').focus(function() {
-        $('#search-box-container').css('background','var(--fp-main-blue)')
+        $('#search-box-container').addClass('expanded')
+        $('.search-form').show()
         $('.search-icon').css('filter', 'brightness(0) invert(1)')
         $('.carrot').css('filter', 'brightness(0) invert(1)')
         $('#search-box').addClass('placeholder-light').css('color', 'white')
 
     }).blur(function() {
-        $('#search-box-container').css('background','var(--fp-light-grey)')
+        $('#search-box-container').removeClass('expanded')
+        // $('.search-form').hide()
         $('.search-icon').css('filter', 'none')
         $('.carrot').css('filter', 'none')
         $('#search-box').removeClass('placeholder-light').css('color', '#333')
-        //('#search-box').css('color', 'var(--fp-light-grey)')
     });
 
 }

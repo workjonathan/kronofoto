@@ -1,0 +1,15 @@
+{% load static %}
+{% load searchform %}
+<div id="search-box-container">
+    <div class="search-box-content">
+
+        <div class="search-box-content_inner">
+            {% make_search_form %}
+        </div>
+
+        <div class="search-options">
+            <img src="{% static theme.carrotSvg %}" alt="Carrot" class="carrot">
+        </div>
+
+    </div>
+</div>

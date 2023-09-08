@@ -1,0 +1,90 @@
+#search-box-container {
+  @include breakpoint(small up) {
+    margin-right: 10px;
+    transition: all ease-in-out 250ms;
+    z-index: 9999;
+    border: 1px solid transparent;
+    max-width: 40px;
+  }
+  &.expanded {
+    //background-color: #DBDBDB;
+    border-color: #B2B2B2;
+    border-radius: 3px;
+    max-width: 800px;
+    background-color: var(--fp-main-color);
+  }
+  @include breakpoint(medium up) {
+    background-color: var(--fp-light-grey);
+    margin-right: 18px;
+    max-width: 800px;
+    min-width: 200px;
+    flex-grow: 1;
+    border-color: #B2B2B2;
+    border-radius: 3px;
+  }
+  img {
+    margin: 7px;
+    width: 20px;
+  }
+  label {
+    display: flex;
+    flex-direction: row-reverse;
+    margin-bottom: 0px;
+  }
+
+  input#search-box {
+    width: 100%;
+    border: none;
+    height: 40px;
+    background: none;
+    color: #333;
+    font-weight: 500;
+    align-self: center;
+    font-size: 13px;
+    outline: none;
+  }
+
+  input#search-box::placeholder {
+    color: #999;
+    opacity: 1;
+  }
+
+  input[type=submit] {
+    @include button--round();
+  }
+
+  .search-form {
+    left: 50%;
+    top: 70px;
+    transform: translateX(-50%);
+    position: fixed;
+    overflow-y: scroll;
+    max-height: 70vh;
+    display: none;
+    max-width: 650px;
+    width: 100%;
+    background: white;
+    margin: 0 -15px;
+    padding: 60px 130px;
+    z-index: 99;
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+
+    th, td {
+      padding: 10px 15px;
+    }
+
+    label {
+      font-weight: initial;
+      justify-content: left;
+      color: #333;
+      text-transform: uppercase;
+    }
+
+    .search-form-section {
+      margin-bottom: 40px;
+      div {
+        margin: 15px 0;
+      }
+    }
+  }
+}

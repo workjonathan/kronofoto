@@ -39,20 +39,25 @@ class Theme:
             kwargs['short_name'] = self.archive
         return reverse('kronofoto:logosvg', kwargs=kwargs)
 
+    def logosmall(self):
+        kwargs = {'theme': self.name}
+        if self.archive:
+            kwargs['short_name'] = self.archive
+        return reverse('kronofoto:logosvgsmall', kwargs=kwargs)
+
     @classmethod
     def generate_themes(cls):
         # This is a very annoying feature, and this is unpleasantly non-general.
         colors = (
-            ('skyblue', "#6c84bd"),
-            ('golden', "#c28800"),
-            ('haybail', "#c2a55e"),
-            #('lakeblue', "#445170"), # was navy?
+            ('skyblue', ("#6E86BC", "#A8B6D7", "#53658D")),
+            ('golden', ("#C2891C", "#D6BC89", "#987024")),
+            ('haybail', ("#C2A562", "#CEB57C", "#A28B54")),
         )
         colors = {
             name: Theme(
-                color=color,
-                colorLighter="",
-                colorDarker="",
+                color=color[0],
+                colorLighter=color[1],
+                colorDarker=color[2],
                 menuSvg='assets/images/{}/menu.svg'.format(name),
                 infoSvg='assets/images/{}/info.svg'.format(name),
                 downloadSvg='assets/images/{}/download.svg'.format(name),

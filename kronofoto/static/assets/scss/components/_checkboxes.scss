@@ -29,8 +29,8 @@
         background-color: #ccc;
       }
       &:checked:before {
-        background-color: var(--fp-main-blue);
-        border-color: var(--fp-main-blue);
+        background-color: var(--fp-main-color);
+        border-color: var(--fp-main-color);
       }
       &:checked:after {
         display: block;
@@ -92,7 +92,7 @@
         background-color: transparent;
       }
       &:checked:before {
-        border-color: var(--fp-main-blue);
+        border-color: var(--fp-main-color);
       }
       &:checked:after {
         display: block;
@@ -106,7 +106,7 @@
         width: 15px;
         height: 15px;
         border-radius: 100%;
-        background-color: var(--fp-main-blue);
+        background-color: var(--fp-main-color);
       }
       &:before {
         content: '';

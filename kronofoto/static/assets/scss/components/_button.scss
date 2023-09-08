@@ -10,7 +10,7 @@
     border-radius: 3px;
     text-transform: uppercase;
     color: $white;
-    background-color: var(--fp-main-blue);
+    background-color: var(--fp-main-color);
     font-weight: $font-weight-semibold;
     font-size: 12px;
     letter-spacing: 1px;
@@ -18,7 +18,7 @@
     padding: 0px 25px;
     border: none;
     cursor: pointer;
-    &:hover {
+    &:not([disabled]):hover {
       background-color: var(--fp-main-color-darker);
     }
 }
@@ -37,17 +37,22 @@ a.button {
 }
 
 a.button, input[type="submit"] {
-  background-color: var(--fp-main-blue);
+  background-color: var(--fp-main-color);
+  &[disabled] {
+    cursor: default;
+    background-color: var(--fp-main-color-darker);
+    color: #fefefe59;
+  }
   color: white;
 }
 
 button#login-btn, .logout-btn {
   background-color: white;
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
 }
 
-.logout-btn:hover, input[type="submit"]:hover {
-  background-color: var(--fp-main-blue);
+.logout-btn:hover, input[type="submit"]:not([disabled]):hover {
+  background-color: var(--fp-main-color);
   color: white;
 }
 button#login-btn:hover {
@@ -56,10 +61,10 @@ button#login-btn:hover {
 
 .logout-btn {
   background-color: var(--fp-main-grey);
-  color: var(--fp-main-blue);
+  color: var(--fp-main-color);
 
   a {
-    color: var(--fp-main-blue);
+    color: var(--fp-main-color);
     text-decoration: none;
   }
 

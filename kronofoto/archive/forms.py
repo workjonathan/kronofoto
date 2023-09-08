@@ -16,9 +16,10 @@ class WebComponentForm(forms.Form):
         ('results', "Grid view"),
     ]
     page = forms.ChoiceField(
-        widget=forms.RadioSelect(),
+        widget=forms.Select(),
         initial="image",
         choices=CHOICES,
+        label="View-type"
     )
 
 class ListForm(forms.Form):
@@ -58,8 +59,7 @@ class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
     basic.group = 'BASIC'
     basic.widget.attrs.update({
-        'id': 'search-box',
-        'placeholder': 'Search...',
+        'id': 'search-box'
     })
     tag = forms.CharField(required=False, label='')
     tag.group = 'TAG'
