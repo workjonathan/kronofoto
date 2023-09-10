@@ -1,4 +1,6 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
+from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
+from django.db import transaction
 from archive.models import Photo, Donor, PhotoTag
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -33,6 +35,15 @@ class MockQuerySet(list):
         return len(self) > 0
 
 
+class TransactionalRuleBasedStateMachine(RuleBasedStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.atomic = transaction.atomic()
+        self.atomic.__enter__()
+
+    def teardown(self):
+        transaction.set_rollback(True)
+        self.atomic.__exit__(None, None, None)
 
 register_field_strategy(LowerCaseCharField, st.text().map(lambda s: s.lower()))
 

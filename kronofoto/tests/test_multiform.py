@@ -95,9 +95,9 @@ class MultiformStateMachine(RuleBasedStateMachine):
         stepform2 = StepForm(data=resp.context['step_form'].initial)
         assert stepform2.is_valid()
         assert stepform2.cleaned_data['step'] == step
-
-        assert not self.forms[step](data=resp.context['form'].initial).is_valid()
-        resp_form = self.forms[step].get_invalid()(data=resp.context['form'].initial)
+        form_data = resp.context['form'].initial or resp.context['form'].data
+        assert not self.forms[step](data=form_data).is_valid()
+        resp_form = self.forms[step].get_invalid()(data=form_data)
         assert resp_form.is_valid()
         self.submitted[step] = form
         self.submitted_valid[step] = False
@@ -124,12 +124,13 @@ class MultiformStateMachine(RuleBasedStateMachine):
             self.forms[stepform2.cleaned_data['step']] = resp.context['form'].__class__
 
             resp_form_class = self.forms[stepform2.cleaned_data['step']]
-            resp_form = resp_form_class(data=resp.context['form'].initial)
+            form_data = resp.context['form'].initial or resp.context['form'].data
+            resp_form = resp_form_class(data=form_data)
             if resp_form.is_valid():
                 pass
             else:
                 resp_form_class = resp_form_class.get_invalid()
-                resp_form = resp_form_class(data=resp.context['form'].initial)
+                resp_form = resp_form_class(data=form_data)
             if resp_form.is_valid() and stepform2.cleaned_data['step'] in self.submitted:
                 assert resp_form.cleaned_data == self.submitted[stepform2.cleaned_data['step']].cleaned_data
 
