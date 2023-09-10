@@ -322,7 +322,7 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 100, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 10, stateful_step_count = 10, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass

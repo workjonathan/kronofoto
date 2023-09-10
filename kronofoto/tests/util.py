@@ -5,7 +5,7 @@ from archive.models import Photo, Donor, PhotoTag
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
-from hypothesis import strategies as st
+from hypothesis import strategies as st, note
 from archive.models.archive import Archive
 from archive.models.tag import Tag, LowerCaseCharField
 from archive.models.term import Term
