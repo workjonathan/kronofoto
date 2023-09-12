@@ -17,6 +17,12 @@ def get_photosphere_path(instance, filename):
     return path.join('photosphere', '{}.jpg'.format(instance.uuid))
 
 
+class MainStreetSet(models.Model):
+    name = models.CharField(max_length=256)
+
+    def __str__(self):
+        return self.name
+
 
 class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -29,6 +35,8 @@ class PhotoSphere(models.Model):
     )
     photos = models.ManyToManyField("Photo", through="PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
+    mainstreetset = models.ForeignKey(MainStreetSet, default=None, null=True, on_delete=models.SET_NULL)
+    links = models.ManyToManyField("self", symmetrical=True)
 
     @staticmethod
     def decimal(*, pos, ref):
@@ -85,5 +93,3 @@ class PhotoSpherePair(models.Model):
 
     def __str__(self):
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)
-
-

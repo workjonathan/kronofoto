@@ -7,6 +7,7 @@ from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
+from .models.photosphere import MainStreetSet
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.csvrecord import ConnecticutRecord
@@ -413,6 +414,9 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+@admin.register(MainStreetSet)
+class MainStreetSetAdmin(base_admin.ModelAdmin):
+    pass
 
 class PhotoInline(admin.StackedInline):
     model = PhotoSpherePair
