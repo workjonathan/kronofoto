@@ -45,34 +45,65 @@ function showImagesBeforeSwap(target) {
   });
 }
 
-htmx.onLoad((e, f) => {
-  installButtons(document)
-  initDraggableThumbnails()
-  if($('#fi-preload-zone li').length) {
-    let html = $('#fi-preload-zone').html()
-    $('#fi-thumbnail-carousel-images').html(html)
-    $('#fi-thumbnail-carousel-images').addClass('dragging')
-    $('#fi-thumbnail-carousel-images').css('left', '0px')
-    setTimeout(() => {
-      $('#fi-thumbnail-carousel-images').removeClass('dragging')
-    }, 100)
-    htmx.process($('#fi-thumbnail-carousel-images').get(0))
-    $('#fi-preload-zone').empty()
+// After HTMX is done loading
+htmx.onLoad((e) => {
+
+
+  if($(e).is('body')) {
+    initPopups()
   }
-  if($('#fi-image-preload img').length && !$('#fi-image-preload img').data('loaded')) {
-    $('#fi-image-preload img').data('loaded', true)
-    let url = $('#fi-image-preload img').attr('src')
-    const image = new Image();
-    image.src = url;
-    image.onload = () => {
-      let html = $('#fi-image-preload').html()
-      $('#fi-image').html(html)
-      $('#fi-image-preload').empty()
+
+    // Init gallery nav buttons
+    installButtons(document)
+
+    // Init gallery thumbnails
+    initDraggableThumbnails()
+
+    //
+    if($('#fi-preload-zone li').length) {
+      let html = $('#fi-preload-zone').html()
+      $('#fi-thumbnail-carousel-images').html(html)
+      $('#fi-thumbnail-carousel-images').addClass('dragging')
+      $('#fi-thumbnail-carousel-images').css('left', '0px')
+      setTimeout(() => {
+        $('#fi-thumbnail-carousel-images').removeClass('dragging')
+      }, 100)
+      htmx.process($('#fi-thumbnail-carousel-images').get(0))
+      $('#fi-preload-zone').empty()
     }
-  }
+
+
+    if($('#fi-image-preload img').length && !$('#fi-image-preload img').data('loaded')) {
+      $('#fi-image-preload img').data('loaded', true)
+      let url = $('#fi-image-preload img').attr('src')
+      const image = new Image();
+      image.src = url;
+      image.onload = () => {
+        let html = $('#fi-image-preload').html()
+        $('#fi-image').html(html)
+        $('#fi-image-preload').empty()
+      }
+    }
+  // }
+
 })
 
 initGalleryNav()
+
+htmx.logger = function(elt, event, data) {
+  if(console) {
+    // console.log(event, elt, data);
+  }
+}
+
+const initPopups = () => {
+  window.htmx.trigger($('#add-to-list-popup').get(0), 'manual')
+  window.htmx.trigger($('#download-popup').get(0), 'manual')
+  window.htmx.trigger($('#share-popup').get(0), 'manual')
+  $(document).foundation()
+}
+
+document.addEventListener('htmx:pushedIntoHistory', initPopups)
 
 document.addEventListener('htmx:afterSwap', (event) => {
   let newYear = $('[data-timeline-target=sliderYearLabel]').html()
