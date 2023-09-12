@@ -259,7 +259,8 @@
     width: 40px;
     height: 40px;
   }
-  @include breakpoint(large up) {
+
+  @include breakpoint(xlarge up) {
     width: 54px;
     height: 54px;
   }

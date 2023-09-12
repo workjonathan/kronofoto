@@ -13,7 +13,7 @@ $height: ("small": 60px, "medium": 80px, "large": 80px);
     @include breakpoint(small up) {
       height: map.get($height, 'small');
     }
-    @include breakpoint(medium up) {
+    @include breakpoint(xlarge up) {
       height: map.get($height, 'medium');
     }
     padding: 6px 15px;
@@ -23,7 +23,7 @@ $height: ("small": 60px, "medium": 80px, "large": 80px);
     @include breakpoint(small up) {
       width: 75px;
     }
-    @include breakpoint(medium up) {
+    @include breakpoint(xlarge up) {
       width: 11.5vw;
       min-width: 165px;
     }

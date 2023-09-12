@@ -1,3 +1,5 @@
+{% load krono_urls %}
+
 <div hx-swap-oob="innerHTML:#navigation-menu">
   {% include "archive/navigation-menu.html" %}
 </div>
@@ -22,14 +24,6 @@
     {% include "archive/thumbnails.html" %}
 </ul>
 
-<div hx-swap-oob="innerHTML:#add-to-list-popup .photo-menu-popup__wrapper">
-    {% include "archive/popup_collection_list.html" %}
-</div>
-
-<div hx-swap-oob="innerHTML:#share-popup .photo-menu-popup__wrapper">
-    {% include "archive/web-component.html" %}
-</div>
-
 <div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
     {% include "archive/popup-download.html" %}
 </div>
@@ -49,10 +43,26 @@
     {% endblock %}
 </div>
 
+<div hx-swap-oob="innerHTML:#add-to-list-popup .photo-menu-popup__wrapper">
+    Loading...
+    <script>
+      $('#add-to-list-popup').attr('hx-get', '{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}');
+      window.htmx.process($('#add-to-list-popup').get(0))
+    </script>
+</div>
 
+<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
+    Loading...
+    <script>
+      $('#download-popup').attr('hx-get', '{% krono_url "kronofoto:popup-download" photo=photo.id %}');
+      window.htmx.process($('#download-popup').get(0))
+    </script>
+</div>
 
-<!--<div hx-swap-oob="innerHTML:#gallery">-->
-<!--{% block gallery %}-->
-<!--{% endblock %}-->
-<!--</div>-->
-
+<div hx-swap-oob="innerHTML:#share-popup .photo-menu-popup__wrapper">
+    Loading...
+    <script>
+      $('#share-popup').attr('hx-get', '{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}');
+      window.htmx.process($('#share-popup').get(0))
+    </script>
+</div>

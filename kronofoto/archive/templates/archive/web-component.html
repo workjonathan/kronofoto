@@ -28,7 +28,7 @@
             <p>Embedding keeps the current filters such as a search or list.</p>
 
             {% for field in form %}
-            {{ field.label }}
+            <label for="{{ field.name }}">{{ field.label }}</label>
             {{ field }}
             {% endfor %}
 
