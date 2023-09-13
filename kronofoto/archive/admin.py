@@ -326,7 +326,6 @@ class TagFilter(StandardSimpleListFilter):
         ("approved", True),
     )
 
-
 class YearIsSetFilter(StandardSimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
@@ -425,11 +424,23 @@ class PhotoInline(admin.StackedInline):
     raw_id_fields = ['photo']
     form = PhotoSpherePairInlineForm
 
+class MainstreetSetIsSetFilter(StandardSimpleListFilter):
+    # should be deleted when db constraint is enabled
+    title = "belongs to set"
+    parameter_name = "in_set"
+    field = 'mainstreetset__isnull'
+
+    filters = (
+        ("Yes", False),
+        ("No", True),
+    )
+
 
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.OSMGeoAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
+    list_filter = (MainstreetSetIsSetFilter,) # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
