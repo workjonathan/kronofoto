@@ -71,7 +71,9 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
             raise Http404("No photo with this accession number is in this collection.")
 
     def get_hx_context(self):
-        if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
+        if self.request.headers.get('Hx-Target', None) == 'fi-preload-zone':
+            return {'base_template': 'archive/photo_partial_thumbnails.html'}
+        elif self.request.headers.get('Hx-Request', None) == 'true':
             return {'base_template': 'archive/photo_partial.html'}
         else:
             return super().get_hx_context()

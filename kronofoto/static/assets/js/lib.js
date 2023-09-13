@@ -31,6 +31,25 @@ $(document).on('on.zf.toggler', function(e) {
 
 // window.jQuery = window.$ = window.jQueryOrig
 
+export const initNavSearch = () => {
+  $('#search-box').focus(function() {
+    $('#search-box-container').addClass('expanded')
+    $('.search-form').show()
+    $('.search-icon').css('filter', 'brightness(0) invert(1)')
+    $('.carrot').css('filter', 'brightness(0) invert(1)')
+    $('#search-box').addClass('placeholder-light').css('color', 'white')
+
+  })
+  $('#search-box .close-icon').click(function() {
+    $('#search-box-container').removeClass('expanded')
+    $('.search-form').hide()
+    $('#search-box').val('')
+    $('.search-icon').css('filter', 'none')
+    $('.carrot').css('filter', 'none')
+    $('#search-box').removeClass('placeholder-light').css('color', '#333')
+  });
+}
+
 export const showToast = (message) => {
   let content = $('#toast-template').html()
   let $message = $(content)
@@ -53,19 +72,99 @@ export const autoplayStop = () => {
   clearInterval(window.autoplayTimer)
 }
 
-export const moveTimelineCoin = (deltaX, drag = false) => {
+export const moveTimelineCoin = (deltaX, drag = true) => {
   if(drag) {
     $('#fi-thumbnail-carousel-images').addClass('dragging')
   }
   else {
     $('#fi-thumbnail-carousel-images').removeClass('dragging')
   }
-  let width = $('#fi-thumbnail-carousel-images li').outerWidth()
-  let preItemNum = 20
-  let quantizedX = (Math.round(deltaX / width) * -1)
-  let itemNum = preItemNum + quantizedX + 1
+  let widthOfThumbnail = $('#fi-thumbnail-carousel-images li').outerWidth()
+  let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]').index()
+  let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
+  let currentPosition = preItemNum + quantizedPositionX + 1
+
+  let numThumbnails= $('#fi-thumbnail-carousel-images li').length
+
+  if(drag && numThumbnails - currentPosition < preItemNum) {
+    getMoreThumbnailsRight()
+  }
+  else if(drag && currentPosition < preItemNum) {
+    getMoreThumbnailsLeft()
+  }
+
   $('#fi-thumbnail-carousel-images li').removeAttr('data-active')
-  $('#fi-thumbnail-carousel-images li:nth-child('+ itemNum +')').attr('data-active', '')
+  $('#fi-thumbnail-carousel-images li:nth-child('+ currentPosition +')').attr('data-active', '')
+}
+
+let moreThumbnailsLoading = false
+
+const getMoreThumbnailsRight = () => {
+  let url = $('#fi-thumbnail-carousel-images li:last-child span').attr('hx-get')
+  if(!moreThumbnailsLoading) {
+    moreThumbnailsLoading = true
+    $.ajax({
+      url: url,
+      type: 'GET',
+      headers: {
+        'Hx-Target': 'fi-preload-zone',
+        'Hx-Request': true
+      },
+      success: (e) => {
+        moreThumbnailsLoading = false
+
+        let firstId = $('#fi-thumbnail-carousel-images li:last-child span').attr('hx-get')
+        let $after = $(e).find('span[hx-get="'+firstId+'"]').parent().nextAll()
+        // $after.find('[data-active]').removeAttr('data-active')
+        let index = 1
+        let offset = $('#fi-thumbnail-carousel-images li:last-child').position().left
+        let width = $('#fi-thumbnail-carousel-images li:last-child').outerWidth()
+        $after.each((i,e) => {
+          $(e).css({
+            position: 'absolute',
+            left: (index * width) + offset
+          })
+          index += 1
+        })
+        $('#fi-thumbnail-carousel-images').append($after)
+        htmx.process($('#fi-thumbnail-carousel-images').get(0))
+      }
+    })
+  }
+}
+
+const getMoreThumbnailsLeft = () => {
+  let url = $('#fi-thumbnail-carousel-images li:first-child span').attr('hx-get')
+  if(!moreThumbnailsLoading) {
+    moreThumbnailsLoading = true
+    $.ajax({
+      url: url,
+      type: 'GET',
+      headers: {
+        'Hx-Target': 'fi-preload-zone',
+        'Hx-Request': true
+      },
+      success: (e) => {
+        moreThumbnailsLoading = false
+        window.e = e
+        let firstId = $('#fi-thumbnail-carousel-images li:first-child span').attr('hx-get')
+        let $before = $(e).find('span[hx-get="'+firstId+'"]').parent().prevAll()
+        // $before.find('[data-active]').removeAttr('data-active')
+        let index = -1
+        let offset = $('#fi-thumbnail-carousel-images li:first-child').position().left
+        let width = $('#fi-thumbnail-carousel-images li:first-child').outerWidth()
+        $($before.get().reverse()).each((i,e) => {
+          $(e).css({
+            position: 'absolute',
+            left: index * width + offset
+          })
+          index -= 1
+        })
+        $('#fi-thumbnail-carousel-images').prepend($before)
+        htmx.process($('#fi-thumbnail-carousel-images').get(0))
+      }
+    })
+  }
 }
 
 export const dropTimelineCoin = (deltaX) => {
@@ -76,25 +175,44 @@ export const dropTimelineCoin = (deltaX) => {
   window.htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
 }
 
+export const refreshThumbnails = () => {
+  // Do we need thumbnails?
+  // Which direction do we need more thumbnails?
+
+  if($('#fi-preload-zone li').length) {
+    let html = $('#fi-preload-zone').html()
+    let firstId = $(html).find('li:first-child span').attr('hx-get')
+    $('#fi-thumbnail-carousel-images').html(html)
+    let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
+    $('#fi-thumbnail-carousel-images').append($after)
+    //   $('#fi-thumbnail-carousel-images').addClass('dragging')
+    //   $('#fi-thumbnail-carousel-images').css('left', '0px')
+    //   setTimeout(() => {
+    //     $('#fi-thumbnail-carousel-images').removeClass('dragging')
+    //   }, 100)
+    htmx.process($('#fi-thumbnail-carousel-images').get(0))
+    $('#fi-preload-zone').empty()
+  }
+}
+
 export const gotoTimelinePosition = (delta) => {
   let width = $('#fi-thumbnail-carousel-images li').outerWidth()
-  moveTimelineCoin(delta * -1 * width)
+  moveTimelineCoin(delta * -1 * width, false)
   dropTimelineCoin(delta * -1 * width)
 }
-export const timelineZipForward = () => {
-  if(timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
+export const timelineZipBackward = () => {
+  if(timelineCrawlBackwardInterval == null) { // only zip if we're not already crawling
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.nextAll().eq(numToZip)
-    console.log(4)
     gotoTimelinePosition(numToZip * -1)
     // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false
 }
 
-export const timelineZipBackward = () => {
-  if(timelineCrawlBackwardInterval == null) { // only zip if we're not already crawling
+export const timelineZipForward = () => {
+  if(timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.prevAll().eq(numToZip)
@@ -117,11 +235,18 @@ export const timelineCrawlForward = () => {
   timelineCrawlForwardTimeout = setTimeout(() => {
     let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlForwardInterval = setInterval(() => {
-      currentPosition -= 20
-      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
-      moveTimelineCoin(currentPosition)
+      if(canCrawlForward()) {
+        currentPosition -= 20
+        $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+        moveTimelineCoin(currentPosition)
+      }
     }, 50)
   }, 500)
+}
+
+const canCrawlForward = () => {
+  let length = $('#fi-thumbnail-carousel-images [data-active]').nextAll().length
+  return length > 10
 }
 
 export const timelineCrawlForwardRelease = () => {
@@ -132,7 +257,7 @@ export const timelineCrawlForwardRelease = () => {
     dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
     setTimeout(() => {
       timelineCrawlForwardInterval = null
-    }, 250)
+    }, 750)
   }
 }
 
@@ -140,11 +265,18 @@ export const timelineCrawlBackward = () => {
   timelineCrawlBackwardTimeout = setTimeout(() => {
     let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlBackwardInterval = setInterval(() => {
-      currentPosition += 20
-      $('#fi-thumbnail-carousel-images').css('left', currentPosition)
-      moveTimelineCoin(currentPosition)
+      if(canCrawlBackward()) {
+        currentPosition += 20
+        $('#fi-thumbnail-carousel-images').css('left', currentPosition)
+        moveTimelineCoin(currentPosition)
+      }
     }, 50)
   }, 500)
+}
+
+const canCrawlBackward = () => {
+  let length = $('#fi-thumbnail-carousel-images [data-active]').prevAll().length
+  return length > 10
 }
 
 export const timelineCrawlBackwardRelease = () => {
@@ -155,7 +287,7 @@ export const timelineCrawlBackwardRelease = () => {
     dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
     setTimeout(() => {
       timelineCrawlBackwardInterval = null
-    }, 250)
+    }, 750)
   }
 }
 

@@ -6,7 +6,7 @@
 {% include "archive/view-buttons.html" with gridclass="current-view" photo=page_obj.0 %}
 {% endblock %}
 {% block content %}
-<main hx-target="#fi-image-tag" hx-swap="outerHTML">
+<main hx-target="#app" hx-swap="innerHTML">
 {% if noresults %}
     <div class="container-center add_tag-container">
         <p style="width:50%">
