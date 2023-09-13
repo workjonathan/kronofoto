@@ -88,7 +88,7 @@
 
         <div class="main-nav_right">
 
-            <div id="new-label_container" class="new-label_container show-for-medium">
+            <div id="new-label_container" class="new-label_container show-for-medium" data-tooltip title="New" data-position="bottom" data-alignment="center">
                 <a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=is_new%3Atrue">
                 <i class="icon new-icon"></i>
                 </a>
@@ -110,7 +110,7 @@
           <li>Auto</li>
           -->
         {% endcomment %}
-          <div class="login-container show-for-medium">
+          <div class="login-container show-for-medium" data-tooltip title="Account" data-position="bottom" data-alignment="center">
             {% make_login %}
           </div>
           <div class="hamburger-container">

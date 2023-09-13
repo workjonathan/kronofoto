@@ -4,6 +4,7 @@
 <form action="{% krono_url "kronofoto:gridview" url_kwargs %}" method="get">
   <label for="search-box">
     <img class="search-icon" src="{% static theme.searchSvg %}" alt="Magnifying glass">
+    <span class="close-icon"></span>
     {{ form.basic }}
   </label>
   <div class="search-form">
