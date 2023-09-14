@@ -1,12 +1,16 @@
 from django.db import models
 from django.db.models import Count, QuerySet
 from django_stubs_ext import WithAnnotations
+from django.conf import settings
 from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
 from typing import final, Any, Type, List
 
 class DonorQuerySet(models.QuerySet):
+    def annotate_photographedcount(self) -> Self:
+        return self.annotate(photographed_count=Count("archive_photo_photographed", distinct=True))
+
     def annotate_scannedcount(self) -> Self:
         return self.annotate(scanned_count=Count("archive_photo_scanned", distinct=True))
 
@@ -28,6 +32,11 @@ class Donor(Collectible, models.Model):
     state = models.CharField(max_length=256, blank=True)
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
+    is_contributor = models.BooleanField(default=False)
+    is_scanner = models.BooleanField(default=False)
+    is_photographer = models.BooleanField(default=False)
+    users_starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+
     objects = DonorQuerySet.as_manager()
 
     class Meta:

@@ -231,7 +231,7 @@ class FilteringArchivePermissionMixin(ArchivePermissionMixin):
 class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
 
-    list_display = ('__str__', 'donated', 'scanned')
+    list_display = ('__str__', 'donated', 'scanned', "photographed")
 
     def scanned(self, obj):
         return '{} photos'.format(obj.scanned_count)
@@ -239,12 +239,16 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     def donated(self, obj):
         return '{} photos'.format(obj.donated_count)
 
+    def photographed(self, obj):
+        return '{} photos'.format(obj.photographed_count)
+
     scanned.admin_order_field = 'scanned_count'
     donated.admin_order_field = 'donated_count'
+    photographed.admin_order_field = 'photographed_count'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate_scannedcount().annotate_donatedcount()
+        return qs.annotate_scannedcount().annotate_donatedcount().annotate_photographedcount()
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not self.has_view_or_change_all(request):

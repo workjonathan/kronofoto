@@ -81,8 +81,11 @@ def get_submission_path(instance, filename):
 class PhotoBase(models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    photographer = models.CharField(max_length=128, blank=True)
+    donor = models.ForeignKey(Donor, models.PROTECT, null=True, limit_choices_to={'is_contributor': True})
+    photographer = models.ForeignKey(
+        Donor, models.PROTECT, null=True, related_name="%(app_label)s_%(class)s_photographed", limit_choices_to={'is_photographer':True},
+
+    )
     address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
@@ -93,7 +96,7 @@ class PhotoBase(models.Model):
     caption = models.TextField(blank=True, verbose_name="comment")
 
     scanner = models.ForeignKey(
-        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned"
+        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned", limit_choices_to={"is_scanner": True},
     )
 
     def location(self, with_address=False, force_country=False):
