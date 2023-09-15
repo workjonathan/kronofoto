@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import Count, QuerySet
 from django_stubs_ext import WithAnnotations
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Q, Exists, OuterRef, F
 from django.conf import settings
 from .collectible import Collectible
 from .archive import Archive
@@ -19,6 +21,10 @@ class DonorQuerySet(models.QuerySet):
 
     def filter_donated(self, at_least: int=1) -> Self:
         return self.annotate_donatedcount().filter(donated_count__gte=at_least)
+
+    def starred_by(self, user) -> Self:
+        return self.filter(users_starred_by=user)
+
 
 class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)

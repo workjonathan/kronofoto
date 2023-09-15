@@ -15,10 +15,15 @@ class Agreement(models.Model):
 class FakeDonor(models.Model):
     x = models.IntegerField()
     objects = DonorQuerySet.as_manager()
+    users_starred_by = models.ManyToManyField(User)
 
 class FakePhoto(models.Model):
     x = models.IntegerField()
+    is_published = models.BooleanField()
     donor = models.ForeignKey(FakeDonor, models.PROTECT, null=True, related_name="photo")
+    photographer = models.ForeignKey(
+        FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="archive_photo_photographed"
+    )
     scanner = models.ForeignKey(
         FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="archive_photo_scanned"
     )
