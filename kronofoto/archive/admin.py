@@ -542,6 +542,15 @@ class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
         else:
             return "-"
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'donor':
+            kwargs['queryset'] = Donor.objects.filter(is_contributor=True)
+        if db_field.name == 'photographer':
+            kwargs['queryset'] = Donor.objects.filter(is_photographer=True)
+        if db_field.name == 'scanner':
+            kwargs['queryset'] = Donor.objects.filter(is_scanner=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def save_form(self, request, form, change):
         photo = super().save_form(request, form, change)
         if len(request.FILES):

@@ -6,11 +6,27 @@ from archive.models.donor import Donor
 from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive
 from .agreement import AnonymousAgreementCheck, UserAgreementCheck
-from ..fields import RecaptchaField
+from ..fields import RecaptchaField, AutocompleteField
 
 from django import forms
 
 class SubmissionDetailsForm(forms.ModelForm):
+    donor = AutocompleteField(
+        queryset=Donor.objects.all(),
+        to_field_name="id",
+        label="Contributor",
+    )
+    photographer = AutocompleteField(
+        queryset=Donor.objects.all(),
+        to_field_name="id",
+        required=False,
+    )
+    scanner = AutocompleteField(
+        queryset=Donor.objects.all(),
+        to_field_name="id",
+        required=False,
+    )
+
     class Meta:
         model = Submission
         exclude = (
