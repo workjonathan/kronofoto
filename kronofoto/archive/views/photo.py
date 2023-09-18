@@ -7,18 +7,41 @@ from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
 from .basetemplate import BasePhotoTemplateMixin, BasePermissiveCORSMixin
-from .paginator import TimelinePaginator, FAKE_PHOTO
+from .paginator import TimelinePaginator, EMPTY_PNG
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 from ..reverse import get_request, set_request, as_absolute
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
-from typing import final
+from typing import final, TypedDict
 from .basetemplate import THEME
 import random
+from itertools import cycle, chain, islice
+from dataclasses import dataclass
+
+class Thumbnail(TypedDict):
+    url: str
+    height: int
+    width: int
+
+@dataclass
+class PhotoPlaceholder:
+    thumbnail: Thumbnail
+    is_spacer: bool
+    photo: Photo
+
+    def get_absolute_url(self, *args, **kwargs):
+        return self.photo.get_absolute_url(*args, **kwargs)
+
+    @property
+    def year(self):
+        return self.photo.year
+
+EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 NO_URLS = dict(url='#', json_url='#')
+
 
 class OrderedDetailBase(DetailView):
     pk_url_kwarg = 'photo'
@@ -29,17 +52,29 @@ class OrderedDetailBase(DetailView):
         object = self.object
         object.active = True
 
-        before = list(queryset.photos_before(year=object.year, id=object.id)[:self.item_count])
-        if before:
-            context['prev_photo'] = before[0]
-        while len(before) < self.item_count:
-            before.append(FAKE_PHOTO)
+        before = queryset.photos_before(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+        before_cycling = cycle(
+            PhotoPlaceholder(
+                thumbnail=EMPTY_THUMBNAIL,
+                is_spacer=True,
+                photo=photo
+            ) for photo in queryset.order_by('-year', '-id').iterator(chunk_size=self.item_count)
+        )
+        before_looping = chain(before, before_cycling)
+        before = list(islice(before_looping, self.item_count))
+        context['prev_photo'] = before[0]
 
-        after = list(queryset.photos_after(year=object.year, id=object.id)[:self.item_count])
-        if len(after):
-            context['next_photo'] = after[0]
-        while len(after) < self.item_count:
-            after.append(FAKE_PHOTO)
+        after = queryset.photos_after(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+        after_cycling = cycle(
+            PhotoPlaceholder(
+                thumbnail=EMPTY_THUMBNAIL,
+                is_spacer=True,
+                photo=photo,
+            ) for photo in queryset.iterator(chunk_size=self.item_count)
+        )
+        after_looping = chain(after, after_cycling)
+        after = list(islice(after_looping, self.item_count))
+        context['next_photo'] = after[0]
 
         before.reverse()
         carousel = before + [object] + after
