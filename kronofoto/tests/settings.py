@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'archive.apps.ArchiveConfig',
     'django.contrib.gis',
     'django.contrib.sites',
+    'tests',
     'gtm',
 ]
 ROOT_URLCONF = 'tests.urls'
@@ -65,3 +66,5 @@ CACHES = {
 
 AUTHENTICATION_BACKENDS = ['archive.auth.backends.ArchiveBackend']
 KF_URL_SCHEME = ""
+GOOGLE_RECAPTCHA3_SITE_KEY = 'google_test_key'
+GOOGLE_RECAPTCHA3_SECRET_KEY = 'google_secret_key'

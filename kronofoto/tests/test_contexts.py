@@ -102,7 +102,7 @@ class Tests(TestCase):
     @settings(max_examples=1)
     @given(photo=photos(donor=donors(archive=archives()), is_published=st.just(True), year=st.integers(min_value=1900, max_value=1950)))
     def test_randomimage_context(self, photo):
-        resp = Client().options('/', HTTP_ACCESS_CONTROL_REQUEST_HEADERS="embedded")
+        resp = Client().options('/kf/', HTTP_ACCESS_CONTROL_REQUEST_HEADERS="embedded")
         assert resp.status_code == 200
-        resp = Client().options('/')
+        resp = Client().options('/kf/')
         assert resp.status_code == 302

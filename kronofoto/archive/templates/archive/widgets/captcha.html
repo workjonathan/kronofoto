@@ -1,0 +1,18 @@
+<script src="https://www.google.com/recaptcha/api.js?render={{ public_key }}"></script>
+ <script>
+    grecaptcha.ready(() => {
+        const element = document.querySelector('[data-recaptcha-input]')
+        element.form.addEventListener("submit", event => {
+            event.preventDefault()
+            grecaptcha.execute('{{ public_key }}', {action: "form"})
+                .then(token => {
+                    element.value = token
+                    element.form.submit()
+                })
+        })
+    })
+
+   function onSubmit(token) {
+   }
+ </script>
+<input type="hidden" data-recaptcha-input name="{{ widget.name }}" {% for name, value in widget.attrs.items %}{{ name }}="{{ value }}" {% endfor %}>

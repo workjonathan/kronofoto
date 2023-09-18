@@ -1,5 +1,16 @@
-from django.forms.widgets import NumberInput
+from django.forms.widgets import NumberInput, Widget
 from django.forms import MultiWidget, HiddenInput
+
+class RecaptchaWidget(Widget):
+    template_name = 'archive/widgets/captcha.html'
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['public_key'] = self.attrs['data-sitekey']
+        return context
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(name, None)
 
 class HeadingWidget(NumberInput):
     sphere_width = 600

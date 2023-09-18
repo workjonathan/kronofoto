@@ -1,0 +1,17 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block viewbuttons %}
+{% include "archive/view-buttons.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="container-center">
+    <form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    {{ step_form }}
+    {{ form.as_p }}
+    <input type="submit" value="OK">
+    </form>
+</main>
+{% endblock %}
