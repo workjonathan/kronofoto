@@ -46,11 +46,11 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
         self.donor_model = defaultdict(set)
         self.scanner_model = defaultdict(set)
 
-    @rule(target=donors, donor=from_model(FakeDonor))
+    @rule(target=donors, donor=from_model(FakeDonor, id=st.none()))
     def make_donor(self, donor):
         return donor
 
-    @rule(target=photos, photo=from_model(FakePhoto))
+    @rule(target=photos, photo=from_model(FakePhoto, id=st.none()))
     def make_photo(self, photo):
         return photo
 
