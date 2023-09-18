@@ -1,7 +1,8 @@
-from django.views.generic import DetailView
-from django.http import Http404
+from django.views.generic import DetailView, ListView, View
+from django.views.generic.list import MultipleObjectMixin
+from django.http import Http404, HttpResponse
 from ..reverse import reverse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.core.cache import cache
 from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
@@ -16,6 +17,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
 from typing import final, TypedDict
 from .basetemplate import THEME
+from ..forms import CarouselForm
 import random
 from itertools import cycle, chain, islice
 from dataclasses import dataclass
@@ -83,6 +85,59 @@ class OrderedDetailBase(DetailView):
         context['queryset'] = queryset
 
         return context
+
+class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView):
+    item_count = 40
+    pk_url_kwarg = 'photo'
+    model = Photo
+    template_name = "archive/thumbnails.html"
+    form_class = CarouselForm
+
+    def get_form(self):
+        return self.form_class(self.request.GET)
+
+    def form_valid(self, form):
+        queryset = self.object_list = self.get_queryset()
+        object = get_object_or_404(self.model, pk=form.cleaned_data['id'])
+        if form.cleaned_data['forward']:
+            objects = queryset.photos_after(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+            objects_cycling = cycle(
+                PhotoPlaceholder(
+                    thumbnail=EMPTY_THUMBNAIL,
+                    is_spacer=True,
+                    photo=photo
+                ) for photo in queryset.iterator(chunk_size=self.item_count)
+            )
+            objects_looping = chain(objects, objects_cycling)
+            objects = list(islice(objects_looping, self.item_count))
+
+        else:
+            objects = queryset.photos_before(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+            objects_cycling = cycle(
+                PhotoPlaceholder(
+                    thumbnail=EMPTY_THUMBNAIL,
+                    is_spacer=True,
+                    photo=photo
+                ) for photo in queryset.order_by('-year', '-id').iterator(chunk_size=self.item_count)
+            )
+            objects_looping = chain(objects, objects_cycling)
+            objects = list(islice(objects_looping, self.item_count))
+            objects.reverse()
+        return self.render_to_response({'object_list': objects})
+
+    def form_invalid(self, form):
+        return HttpResponse("", status=400)
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.form = self.get_form()
+
+    def get(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            return self.form_valid(self.form)
+        else:
+            return self.form_invalid(self.form)
+
 
 
 class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):

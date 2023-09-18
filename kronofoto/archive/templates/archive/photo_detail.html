@@ -181,7 +181,9 @@
 
 
     <nav class="fi-timeline" id="fi-timeline">
+    <form id="thumbnail-request" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
     {% block thumbnails %}
+        {% carousel_form %}
 
         <div class="fi-thumbnail-carousel">
 
@@ -207,6 +209,7 @@
         </div>
 
     {% endblock thumbnails %}
+    </form>
     </nav>
 
 

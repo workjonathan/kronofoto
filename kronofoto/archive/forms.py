@@ -149,6 +149,10 @@ class SearchForm(forms.Form):
             return reduce(expression.And, form_exprs)
         raise NoExpression
 
+class CarouselForm(SearchForm):
+    id = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+    forward = forms.BooleanField(widget=forms.HiddenInput(), required=False)
+
 class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())
     year.widget.attrs['data-timeline-target'] = 'formYear'

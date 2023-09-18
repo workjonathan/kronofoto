@@ -4,7 +4,7 @@ from .views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView
 from archive.views.frontpage import RandomRedirect, YearRedirect
-from archive.views.photo import TimelineSvg
+from archive.views.photo import TimelineSvg, CarouselListView
 from archive.views.photo import LogoSvg, LogoSvgSmall
 from archive.views.agreement import AgreementView
 from archive.views.submission import SubmissionFormView, KronofotoTemplateView
@@ -46,6 +46,7 @@ urlpatterns = [
     path('collections', views.CollectionCreate.as_view(), name='collection-create'),
     path('collections/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     path('list/<str:photo>/', views.AddToList.as_view()),
+    path('carousel', CarouselListView.as_view(item_count=40), name='carousel'),
     path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
     path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
     path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
