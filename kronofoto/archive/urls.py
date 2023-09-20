@@ -6,6 +6,7 @@ from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
 from archive.views.agreement import AgreementView
 from archive.views.submission import SubmissionFormView, KronofotoTemplateView
+from archive.views.tagsearch import ContributorSearchView
 from django.conf import settings
 from typing import Sequence, Union, List
 
@@ -58,6 +59,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
     path('photo/<accession:photo>/tag-members/edit', views.AddTagView.as_view(), name='addtag'),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
+    path('contributors', ContributorSearchView.as_view(), name='contributor-search'),
     path('photos', views.GridView.as_view(), name='gridview'),
     path('grid/<int:page>/', views.GridView.as_view()),
     path('photos/<int:page>', views.GridView.as_view()),

@@ -7,25 +7,40 @@ from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive
 from .agreement import AnonymousAgreementCheck, UserAgreementCheck
 from ..fields import RecaptchaField, AutocompleteField
+from ..widgets import AutocompleteWidget
 
 from django import forms
 
 class SubmissionDetailsForm(forms.ModelForm):
+    prefix = "submission"
+
     donor = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
+        widget=AutocompleteWidget(url="/contributors"),
         label="Contributor",
     )
+    donor.widget.attrs.update({
+        "placeholder": "Enter name...",
+    })
     photographer = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
+        widget=AutocompleteWidget(url="/contributors"),
         required=False,
     )
+    photographer.widget.attrs.update({
+        "placeholder": "Enter name...",
+    })
     scanner = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
+        widget=AutocompleteWidget(url="/contributors"),
         required=False,
     )
+    scanner.widget.attrs.update({
+        "placeholder": "Enter name...",
+    })
 
     class Meta:
         model = Submission

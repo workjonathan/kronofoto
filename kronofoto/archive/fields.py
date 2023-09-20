@@ -1,5 +1,5 @@
 from django import forms
-from .widgets import RecaptchaWidget
+from .widgets import RecaptchaWidget, AutocompleteWidget
 from django.conf import settings
 from django.core.exceptions import ValidationError
 import urllib
@@ -11,8 +11,8 @@ id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
 
 class AutocompleteField(forms.CharField):
-    def __init__(self, *args, queryset, to_field_name="pk", **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, queryset, to_field_name="pk", widget=AutocompleteWidget, **kwargs):
+        super().__init__(*args, widget=widget, **kwargs)
         self.queryset = queryset
         self.to_field_name = to_field_name
 
@@ -44,7 +44,7 @@ class AutocompleteField(forms.CharField):
             return objs[0]
         if value.strip() == "":
             return None
-        raise ValidationError("Cound not find an ID.")
+        raise ValidationError("Could not find an ID.")
 
 
 class RecaptchaField(forms.CharField):

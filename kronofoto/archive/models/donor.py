@@ -22,7 +22,7 @@ class DonorQuerySet(models.QuerySet):
     def filter_donated(self, at_least: int=1) -> Self:
         return self.annotate_donatedcount().filter(donated_count__gte=at_least)
 
-    def starred_by(self, user) -> Self:
+    def starred_by(self, user: Any) -> Self:
         return self.filter(users_starred_by=user)
 
 
