@@ -22,9 +22,6 @@ class DonorQuerySet(models.QuerySet):
     def filter_donated(self, at_least: int=1) -> Self:
         return self.annotate_donatedcount().filter(donated_count__gte=at_least)
 
-    def starred_by(self, user: Any) -> Self:
-        return self.filter(users_starred_by=user)
-
 
 class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
@@ -41,7 +38,6 @@ class Donor(Collectible, models.Model):
     is_contributor = models.BooleanField(default=False)
     is_scanner = models.BooleanField(default=False)
     is_photographer = models.BooleanField(default=False)
-    users_starred_by = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
 
     objects = DonorQuerySet.as_manager()
 
