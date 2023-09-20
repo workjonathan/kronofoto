@@ -4,6 +4,7 @@ from .basetemplate import BaseTemplateMixin
 from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
 from typing import Any, Dict
 from djgeojson.views import GeoJSONLayerView # type: ignore
+from django.db.models import OuterRef, Exists, Q, QuerySet
 
 class PhotoSphereView(BaseTemplateMixin, DetailView):
     model = PhotoSphere
@@ -29,11 +30,14 @@ class MainStreetDetail(BaseTemplateMixin, DetailView):
 
 class MainStreetList(BaseTemplateMixin, ListView):
     model = MainStreetSet
+    def get_queryset(self) -> QuerySet:
+        return MainStreetSet.objects.filter(Exists(PhotoSphere.objects.filter(Q(mainstreetset__id=OuterRef('pk')))))
+
 
 class MainStreetGeojson(GeoJSONLayerView):
     model = PhotoSphere
     geometry_field = 'location'
     with_modelname = False
     properties = ['title', 'description']
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return PhotoSphere.objects.filter(mainstreetset__id=self.kwargs['pk'])
