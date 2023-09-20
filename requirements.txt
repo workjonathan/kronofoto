@@ -9,3 +9,4 @@ deal==4.24.*
 django-stubs>=4.2.4,<4.3.0
 django-stubs-ext>=4.2.2,<4.3.0
 typing-extensions>=4.4.0,<4.5.0
+django-geojson==4.0.*

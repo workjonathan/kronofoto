@@ -1,36 +1,38 @@
-from django.urls import path, include, register_converter
+from django.urls import path, include, register_converter, URLPattern, URLResolver
 from . import views
 from django.views.generic.base import TemplateView
-from archive.views.photosphere import PhotoSphereView
+from archive.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg
 from archive.views.agreement import AgreementView
 from archive.views.submission import SubmissionFormView, KronofotoTemplateView
 from django.conf import settings
+from typing import Sequence, Union, List
+
 
 class NegativeIntConverter:
     regex = '-?\d+'
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> int:
         return int(value)
 
-    def to_url(self, value):
+    def to_url(self, value: int) -> str:
         return "{}".format(value)
 
 class AccessionNumberConverter:
     regex = r'FI\d+'
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> int:
         return int(value[2:])
 
-    def to_url(self, value):
+    def to_url(self, value: int) -> str:
         return "FI" + str(value).zfill(7)
 
 register_converter(NegativeIntConverter, 'negint')
 register_converter(AccessionNumberConverter, 'accession')
 
 app_name = 'kronofoto'
-urlpatterns = [
+urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('original/<int:pk>/', views.DownloadPageView.as_view()),
@@ -49,6 +51,9 @@ urlpatterns = [
     path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view()),
     path('photo/year:<int:year>/', YearRedirect.as_view()),
     path('photos/year:<int:year>', YearRedirect.as_view(), name="year-redirect"),
+    path('mainstreets', MainStreetList.as_view(), name='mainstreet-list'),
+    path('mainstreets/<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
+    path('mainstreets/<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view()),
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
     path('photo/<accession:photo>/tag-members/edit', views.AddTagView.as_view(), name='addtag'),

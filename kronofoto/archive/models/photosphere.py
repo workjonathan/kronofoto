@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.gis.db import models
+from ..reverse import reverse
 import uuid
 from os import path
 from ..storage import OverwriteStorage
@@ -9,18 +10,22 @@ from PIL import Image
 from PIL.Image import Exif
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.geos import Point
+from typing import Tuple
 
 class IncompleteGPSInfo(Exception):
     pass
 
-def get_photosphere_path(instance, filename):
+def get_photosphere_path(instance: "PhotoSphere", filename: str) -> str:
     return path.join('photosphere', '{}.jpg'.format(instance.uuid))
 
 
 class MainStreetSet(models.Model):
     name = models.CharField(max_length=256)
 
-    def __str__(self):
+    def get_absolute_url(self) -> str:
+        return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
+
+    def __str__(self) -> str:
         return self.name
 
 
@@ -39,14 +44,14 @@ class PhotoSphere(models.Model):
     links = models.ManyToManyField("self", symmetrical=True)
 
     @staticmethod
-    def decimal(*, pos, ref):
+    def decimal(*, pos : Tuple[float, float, float], ref: str) -> float:
         degrees = pos[0]
         minutes = pos[1]
         seconds = pos[2]
         minutes += seconds/60
         return float(degrees + minutes/60) * (-1 if ref in ('S', 'W') else 1)
 
-    def exif_location(self):
+    def exif_location(self) -> Point:
         contents = self.image.read()
         img = Image.open(BytesIO(contents))
         exif_data = img.getexif()
@@ -67,11 +72,12 @@ class PhotoSphere(models.Model):
                 return Point(x=lon, y=lat, srid=4326)
             except KeyError as error:
                 raise IncompleteGPSInfo from error
+        raise IncompleteGPSInfo
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse('kronofoto:mainstreetview', kwargs=dict(pk=self.pk))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
 
@@ -91,5 +97,5 @@ class PhotoSpherePair(models.Model):
             models.Index(fields=['photo', 'photosphere']),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)

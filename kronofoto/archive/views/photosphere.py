@@ -1,11 +1,14 @@
 from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
-from ..models.photosphere import PhotoSphere, PhotoSpherePair
+from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
+from typing import Any, Dict
+from djgeojson.views import GeoJSONLayerView # type: ignore
 
 class PhotoSphereView(BaseTemplateMixin, DetailView):
     model = PhotoSphere
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         object = context['object']
         context['sphere_data'] = dict(
@@ -21,3 +24,16 @@ class PhotoSphereView(BaseTemplateMixin, DetailView):
         )
         return context
 
+class MainStreetDetail(BaseTemplateMixin, DetailView):
+    model = MainStreetSet
+
+class MainStreetList(BaseTemplateMixin, ListView):
+    model = MainStreetSet
+
+class MainStreetGeojson(GeoJSONLayerView):
+    model = PhotoSphere
+    geometry_field = 'location'
+    with_modelname = False
+    properties = ['title', 'description']
+    def get_queryset(self):
+        return PhotoSphere.objects.filter(mainstreetset__id=self.kwargs['pk'])
