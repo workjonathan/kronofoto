@@ -130,6 +130,8 @@ class Description:
             return GenericFilterReporter('termed with')
         if group == 'tag':
             return GenericFilterReporter('tagged with')
+        if group == 'photographer':
+            return DonorFilterReporter('photographed by')
         if group == 'donor':
             return DonorFilterReporter('contributed by')
         if group == 'new':
@@ -329,6 +331,35 @@ class TermExactly(Expression):
     def group(self):
         return "term"
 
+
+class PhotographerExactly(Expression):
+    def __init__(self, value):
+        value = models.Donor.objects.get(pk=int(value))
+        self.value = value
+
+    def __str__(self):
+        return 'photographer_exact:{}'.format(self.value.id)
+
+    def filter1(self, user):
+        return Q(photographer__id=self.value.id)
+
+    def scoreF(self, negated):
+        if not negated:
+            return Case(When(photographer__id=self.value.id, then=1), default=0, output_field=FloatField())
+        else:
+            return Case(When(photographer__id=self.value.id, then=0), default=1, output_field=FloatField())
+
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Photographer: {}".format(self.value)
+
+    def group(self):
+        return "photographer"
 
 class DonorExactly(Expression):
     def __init__(self, value):

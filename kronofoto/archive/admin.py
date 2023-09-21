@@ -231,7 +231,7 @@ class FilteringArchivePermissionMixin(ArchivePermissionMixin):
 class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
 
-    list_display = ('__str__', 'donated', 'scanned', "photographed")
+    list_display = ('__str__', 'donated', 'scanned', "photographed", "photography_collection")
 
     def scanned(self, obj):
         return '{} photos'.format(obj.scanned_count)
@@ -245,6 +245,9 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     scanned.admin_order_field = 'scanned_count'
     donated.admin_order_field = 'donated_count'
     photographed.admin_order_field = 'photographed_count'
+
+    def photography_collection(self, obj):
+        return mark_safe('<a class="button" href="{}?query=photographer_exact:{}">View Photography Collection</a>'.format(reverse("kronofoto:gridview"), obj.id))
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
