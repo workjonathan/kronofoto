@@ -7,6 +7,7 @@ from archive.views.photo import TimelineSvg
 from archive.views.agreement import AgreementView
 from archive.views.submission import SubmissionFormView, KronofotoTemplateView
 from archive.views.tagsearch import ContributorSearchView
+from archive.views.donor import ContributorCreateView
 from django.conf import settings
 from typing import Sequence, Union, List
 
@@ -59,7 +60,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
     path('photo/<accession:photo>/tag-members/edit', views.AddTagView.as_view(), name='addtag'),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
-    path('contributors', ContributorSearchView.as_view(), name='contributor-search'),
+    path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
     path('photos', views.GridView.as_view(), name='gridview'),
     path('grid/<int:page>/', views.GridView.as_view()),
     path('photos/<int:page>', views.GridView.as_view()),
@@ -72,8 +73,9 @@ urlpatterns = urlpatterns + [
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
+    path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(extra_context={"reason": "You must agree to terms before creating contributors."}), name='contributor-create'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
-    path("<slug:short_name>/photos/contribute", SubmissionFormView.as_view(), name="submission-create"),
+    path("<slug:short_name>/photos/contribute", SubmissionFormView.as_view(extra_context={"reason": "You must agree to terms before uploading."}), name="submission-create"),
     path("<slug:short_name>/photos/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
 ]
