@@ -41,7 +41,7 @@ class PhotoSphere(models.Model):
     photos = models.ManyToManyField("Photo", through="PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
     mainstreetset = models.ForeignKey(MainStreetSet, default=None, null=True, on_delete=models.SET_NULL)
-    links = models.ManyToManyField("self", symmetrical=True)
+    links = models.ManyToManyField("self", symmetrical=True, blank=True)
 
     @staticmethod
     def decimal(*, pos : Tuple[float, float, float], ref: str) -> float:
