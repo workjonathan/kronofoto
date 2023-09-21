@@ -30,7 +30,6 @@ class ContributorSearchView(JSONResponseMixin, BaseListView):
                     clauses.append(Q(first_name__icontains=s))
                     clauses.append(Q(last_name__icontains=s))
 
-        print(clauses)
         if clauses:
             return Donor.objects.filter(reduce(or_, clauses))[:20]
 

@@ -8,6 +8,7 @@ from archive.models.archive import ArchiveAgreement, UserAgreement, Archive
 from .agreement import AnonymousAgreementCheck, UserAgreementCheck
 from ..fields import RecaptchaField, AutocompleteField
 from ..widgets import AutocompleteWidget
+from ..reverse import reverse_lazy
 
 from django import forms
 
@@ -17,7 +18,7 @@ class SubmissionDetailsForm(forms.ModelForm):
     donor = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
-        widget=AutocompleteWidget(url="/contributors"),
+        widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
         label="Contributor",
     )
     donor.widget.attrs.update({
@@ -26,7 +27,7 @@ class SubmissionDetailsForm(forms.ModelForm):
     photographer = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
-        widget=AutocompleteWidget(url="/contributors"),
+        widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
         required=False,
     )
     photographer.widget.attrs.update({
@@ -35,7 +36,7 @@ class SubmissionDetailsForm(forms.ModelForm):
     scanner = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
-        widget=AutocompleteWidget(url="/contributors"),
+        widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
         required=False,
     )
     scanner.widget.attrs.update({
