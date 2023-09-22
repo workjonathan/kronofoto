@@ -31,7 +31,7 @@
   cursor: pointer;
   font-weight: bold;
 }
-a.button {
+a.button, button.button {
   @include button--round;
   display: inline-block;
 }
