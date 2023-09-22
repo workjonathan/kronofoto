@@ -163,7 +163,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     def get_hx_context(self):
         if self.request.headers.get('Hx-Target', None) == 'fi-preload-zone':
             return {'base_template': 'archive/photo_partial_thumbnails.html'}
-        elif self.request.headers.get('Hx-Request', None) == 'true':
+        elif self.request.headers.get('gallery', None) == 'true':
             return {'base_template': 'archive/photo_partial.html'}
         else:
             return super().get_hx_context()
