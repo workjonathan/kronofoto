@@ -1,8 +1,11 @@
-Django>=3.2.19,<4.0.0
+Django>=3.2.21,<4.0.0
 Pillow==9.5.*
 parsy==1.4.0
 django-google-tag-manager==0.0.5
 markdown==3.4.*
-hypothesis>=6.50.1,<6.51.0
+hypothesis>=6.84.2,<6.85.0
 requests==2.31.*
 deal==4.24.*
+django-stubs>=4.2.4,<4.3.0
+django-stubs-ext>=4.2.2,<4.3.0
+typing-extensions>=4.4.0,<4.5.0

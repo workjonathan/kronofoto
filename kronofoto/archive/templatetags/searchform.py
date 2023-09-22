@@ -1,5 +1,5 @@
 from django import template
-from ..forms import SearchForm, TimelineForm
+from ..forms import SearchForm, TimelineForm, CarouselForm
 
 register = template.Library()
 
@@ -19,4 +19,14 @@ def timeline(context):
         'form': TimelineForm(context['request'].GET, auto_id="timeline_id_%s"),
         'object': context['object'],
         'queryset': context['queryset'],
+    }
+
+@register.inclusion_tag("archive/carousel_form.html", takes_context=True)
+def carousel_form(context):
+    object = context['object']
+    initial = context['request'].GET.copy()
+    initial['id'] = object.id
+    initial['forward'] = True
+    return {
+        'form': CarouselForm(initial=initial, auto_id="carousel_id_%s"),
     }

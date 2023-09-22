@@ -7,7 +7,9 @@ from django.contrib.auth import get_permission_codename
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
-from .models.archive import Archive, ArchiveUserPermission
+from .models.photosphere import MainStreetSet
+from .models.photo import Submission
+from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count, Q, Exists, OuterRef, F
@@ -134,10 +136,13 @@ class ConnecticutRecordAdmin(admin.ModelAdmin):
     #def has_change_permission(self, request, obj=None):
     #    return False
 
+class AgreementInline(admin.StackedInline):
+    model = ArchiveAgreement
+    extra = 0
 
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
-    pass
+    inlines = (AgreementInline,)
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -321,7 +326,6 @@ class TagFilter(StandardSimpleListFilter):
         ("approved", True),
     )
 
-
 class YearIsSetFilter(StandardSimpleListFilter):
     title = "photo dated"
     parameter_name = "dated"
@@ -409,6 +413,9 @@ def unpublish_photos(modeladmin, request, queryset):
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos'
 
+@admin.register(MainStreetSet)
+class MainStreetSetAdmin(base_admin.ModelAdmin):
+    pass
 
 class PhotoInline(admin.StackedInline):
     model = PhotoSpherePair
@@ -417,11 +424,23 @@ class PhotoInline(admin.StackedInline):
     raw_id_fields = ['photo']
     form = PhotoSpherePairInlineForm
 
+class MainstreetSetIsSetFilter(StandardSimpleListFilter):
+    # should be deleted when db constraint is enabled
+    title = "belongs to set"
+    parameter_name = "in_set"
+    field = 'mainstreetset__isnull'
+
+    filters = (
+        ("Yes", False),
+        ("No", True),
+    )
+
 
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.OSMGeoAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
+    list_filter = (MainstreetSetIsSetFilter,) # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
@@ -486,6 +505,12 @@ class CSVRecordAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
 
+
+@admin.register(Submission)
+class SubmissionAdmin(admin.OSMGeoAdmin):
+    readonly_fields = ["image_display"]
+    def image_display(self, obj):
+        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.image.url, obj.image.width, obj.image.height))
 
 @admin.register(Photo)
 class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):

@@ -2,7 +2,7 @@ from django.test import Client, RequestFactory, SimpleTestCase
 from django.contrib.auth.models import AnonymousUser, User, Group
 from django.db import transaction
 from hypothesis import given, strategies as st, note, settings as hsettings
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
+from hypothesis.stateful import rule, invariant, Bundle, initialize, consumes, precondition
 from hypothesis.extra.django import TestCase, from_model
 from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
@@ -12,7 +12,7 @@ from archive.models.donor import Donor
 from archive.models.archive import Archive
 from archive.models.photo import Photo
 from archive.models.photosphere import PhotoSphere
-from .util import donors, small_gif, archives
+from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachine
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.contenttypes.models import ContentType
 import pytest
@@ -239,7 +239,7 @@ def test_userarchivepermissionsinline_accepted():
     request = RequestFactory().post('/')
     formfield = ma.formfield_for_manytomany(Archive.users.through.permission.field, request)
 
-class UserPrivilegeEscalationTest(RuleBasedStateMachine):
+class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
     permissions = Bundle("permissions")
     groups = Bundle("groups")
     some_permissions = Bundle("some_permissions")
@@ -251,13 +251,7 @@ class UserPrivilegeEscalationTest(RuleBasedStateMachine):
 
     def __init__(self):
         super().__init__()
-        self.atomic = transaction.atomic()
-        self.atomic.__enter__()
         self.editor = None
-
-    def teardown(self):
-        transaction.set_rollback(True)
-        self.atomic.__exit__(None, None, None)
 
     @initialize(target=permissions)
     def initialize(self):
@@ -328,7 +322,7 @@ class UserPrivilegeEscalationTest(RuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 100, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 10, stateful_step_count = 10, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass

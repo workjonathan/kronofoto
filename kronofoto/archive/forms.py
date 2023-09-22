@@ -8,6 +8,11 @@ from django.utils.text import slugify
 from django.core.cache import cache
 from .widgets import HeadingWidget, PositioningWidget
 from .models.photosphere import IncompleteGPSInfo
+from .fields import RecaptchaField
+
+class AgreementForm(forms.Form):
+    agree = forms.BooleanField(required=True, label="I agree to these terms")
+    captcha = RecaptchaField(required_score=0.55)
 
 class WebComponentForm(forms.Form):
     CHOICES = [
@@ -53,6 +58,7 @@ class LocationChoiceField(forms.ChoiceField):
     def get_choices(self):
         yield ('', self.field.capitalize())
         yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
+
 
 
 class SearchForm(forms.Form):
@@ -142,6 +148,10 @@ class SearchForm(forms.Form):
         if len(form_exprs):
             return reduce(expression.And, form_exprs)
         raise NoExpression
+
+class CarouselForm(SearchForm):
+    id = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+    forward = forms.BooleanField(widget=forms.HiddenInput(), required=False)
 
 class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())
