@@ -31,23 +31,31 @@ $(document).on('on.zf.toggler', function(e) {
 
 // window.jQuery = window.$ = window.jQueryOrig
 
-export const initNavSearch = () => {
-  $('#search-box').focus(function() {
-    $('#search-box-container').addClass('expanded')
-    $('.search-form').show()
-    $('.search-icon').css('filter', 'brightness(0) invert(1)')
-    $('.carrot').css('filter', 'brightness(0) invert(1)')
-    $('#search-box').addClass('placeholder-light').css('color', 'white')
+export const collapseNavSearch = () => {
+  $('#search-box-container').removeClass('expanded')
+  $('.search-form').hide()
+  $('#search-box').val('')
+  $('.search-icon').css('filter', 'none')
+  $('.carrot').css('filter', 'none')
+  $('#search-box').removeClass('placeholder-light').css('color', '#333')
+}
 
-  })
-  $('#search-box .close-icon').click(function() {
-    $('#search-box-container').removeClass('expanded')
-    $('.search-form').hide()
+export const expandNavSearch = () => {
+  $('#search-box-container').addClass('expanded')
+  $('.search-form').show()
+  $('.search-icon').css('filter', 'brightness(0) invert(1)')
+  $('.carrot').css('filter', 'brightness(0) invert(1)')
+  $('#search-box').addClass('placeholder-light').css('color', 'white')
+}
+export const initNavSearch = () => {
+  $('.search-form__clear-btn').click((e) => {
+    e.preventDefault();
     $('#search-box').val('')
-    $('.search-icon').css('filter', 'none')
-    $('.carrot').css('filter', 'none')
-    $('#search-box').removeClass('placeholder-light').css('color', '#333')
-  });
+    $('.search-form input[type=text]').val('')
+    $('.search-form select').val('')
+  })
+  $('#search-box').click(expandNavSearch)
+  $('#search-box-container .close-icon').click(collapseNavSearch)
 }
 
 export const showToast = (message) => {

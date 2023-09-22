@@ -28,6 +28,12 @@ $popupMaxHeight: 40vh;
   }
 }
 
+#share-popup {
+  select {
+    max-width: 546px;
+  }
+}
+
 .photo-menu-popup { // TODO this selector is no longer applicable, so this might not be doing anything
   width: 100%;
   max-height: 0px;

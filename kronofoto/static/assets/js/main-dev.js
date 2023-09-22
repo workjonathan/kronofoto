@@ -20,7 +20,9 @@ import {
   dropTimelineCoin,
   gotoTimelinePosition,
   showToast,
-  initNavSearch
+  initNavSearch,
+  collapseNavSearch,
+  expandNavSearch
 }
   from "./lib.js"
 
@@ -223,7 +225,7 @@ const init = () => {
       //if the search menu is open and the user clicks on something outside of the menu, close the menu
       if($(event.target).attr('id') != 'search-box' && $('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn))))
       {
-          $('.search-form').hide()
+          collapseNavSearch()
       }
       //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
       else if(classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot')

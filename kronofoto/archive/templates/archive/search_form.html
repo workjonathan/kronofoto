@@ -2,12 +2,17 @@
 {% load krono_urls %}
 {% load cache %}
 <form action="{% krono_url "kronofoto:gridview" url_kwargs %}" method="get">
+  <span class="close-icon"></span>
   <label for="search-box">
     <img class="search-icon" src="{% static theme.searchSvg %}" alt="Magnifying glass">
-    <span class="close-icon"></span>
     {{ form.basic }}
   </label>
   <div class="search-form">
+
+      <div class="search-form-section">
+        <button class="search-form__clear-btn button">Clear Filters</button>
+      </div>
+
     {% cache 300 search_form_ vary_on %}
     <!-- Display Form -->
       {% regroup form by field.group as field_groups %}
