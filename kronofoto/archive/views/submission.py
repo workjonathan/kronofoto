@@ -94,7 +94,7 @@ class SubmissionFormView(View):
         object = get_object_or_404(ArchiveAgreement, archive__slug=self.kwargs['short_name'])
         for checker in self.checkers:
             if checker.should_handle(request, object, UserAgreement):
-                view = checker.as_view(extra_context)
+                view = checker.as_view(extra_context=self.extra_context)
                 return view(request, *args, **kwargs)
         view = BaseSubmissionFormView.as_view()
         return view(request, *args, **kwargs)
