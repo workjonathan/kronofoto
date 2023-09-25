@@ -77,6 +77,27 @@ def get_original_path(instance, filename):
 def get_submission_path(instance, filename):
     return path.join('submissions', '{}.jpg'.format(instance.uuid))
 
+@dataclass
+class PlaceData:
+    address: str
+    city: str
+    county: str
+    state: str
+    country: str
+
+    def get_query(self):
+        parts = []
+        if self.city:
+            parts.append('city:"{}"'.format(self.city))
+        if not self.city and self.county:
+            parts.append('county:"{}"'.format(self.county))
+        if self.state:
+            parts.append('state:"{}"'.format(self.state))
+        if self.country:
+            parts.append('country:"{}"'.format(self.country))
+
+        return " AND ".join(parts)
+
 class PhotoBase(models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -94,6 +115,17 @@ class PhotoBase(models.Model):
     scanner = models.ForeignKey(
         Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned"
     )
+
+    def get_place(self, with_address=False):
+        return PlaceData(
+            address=self.address,
+            city=self.city,
+            county=self.county,
+            state=self.state,
+            country=self.country,
+        )
+
+    place = property(get_place)
 
     def location(self, with_address=False, force_country=False):
         kwargs = dict(
