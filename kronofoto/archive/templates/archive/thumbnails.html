@@ -2,5 +2,5 @@
 {% load widgets %}
 {% load krono_urls %}
 {% for p in object_list %}
-          <li {{p.active | yesno:"data-active,"}}><span hx-trigger="manual" hx-get="{% object_url p url_kwargs get_params %}"><img {{p.is_spacer | yesno:'class="empty",'}} src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" /></span></li>
+          <li {{p.active | yesno:"data-active,"}}><span hx-trigger="manual" hx-headers='{"gallery": "true"}' hx-get="{% object_url p url_kwargs get_params %}"><img {{p.is_spacer | yesno:'class=empty,'}} src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" /></span></li>
 {% endfor %}

@@ -46,9 +46,6 @@ $grey: grey;
     left: 0px;
     margin-left: calc((95px * -20.5) + 50%);
     height: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='95' height='90'%3E%3Crect width='75' height='75' style='fill:rgb(102,102,102)' /%3E%3C/svg%3E");
-    background-position-x: 10px;
-    background-position-y: 8px;
     transition: filter ease-in-out 50ms, left ease-in-out 250ms;
     &.dragging { // don't animate left when dragging
       transition: filter ease-in-out 50ms;
@@ -100,6 +97,9 @@ $grey: grey;
       }
 
       img {
+        &.empty {
+
+        }
         width: auto;
         transform: translateY(5px);
         z-index: 2;

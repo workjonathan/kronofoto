@@ -29,7 +29,9 @@
 
             {% for field in form %}
             <label for="{{ field.name }}">{{ field.label }}</label>
-            {{ field }}
+            <div class="small-10">
+                {{ field }}
+            </div>
             {% endfor %}
 
             </form>
@@ -38,7 +40,7 @@
                     <input type="text" id="embed-input" value="{% filter force_escape %}<script src="{% static 'assets/js/kronofoto.js' %}"></script>
         <fortepan-viewer{% if expression %} constraint="{{ expression }}"{% endif %} src="{{ src }}"></fortepan-viewer>{% endfilter %}" />
                 </div>
-                <div class="columns small-4">
+                <div class="columns small-2">
                     <a class="button" data-clipboard-target="#embed-input">Copy</a>
                 </div>
             </div>

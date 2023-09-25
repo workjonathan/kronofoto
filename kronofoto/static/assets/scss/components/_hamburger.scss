@@ -78,7 +78,7 @@ $hamburger-types: (
     padding: $hamburger-padding-y $hamburger-padding-x-sm;
     height: $hamburger-layer-height-sm * 3 + $hamburger-layer-spacing-sm * 2;
   }
-  @include breakpoint(large up) {
+  @include breakpoint(xxlarge up) {
     padding: $hamburger-padding-y $hamburger-padding-x-lg;
     height: $hamburger-layer-height-lg * 3 + $hamburger-layer-spacing-lg * 2;
   }
@@ -132,7 +132,7 @@ $hamburger-types: (
     width: $hamburger-layer-width-sm;
     height: $hamburger-layer-height-sm * 3 + $hamburger-layer-spacing-sm * 2;
   }
-  @include breakpoint(large up) {
+  @include breakpoint(xxlarge up) {
     width: $hamburger-layer-width-lg;
     height: $hamburger-layer-height-lg * 3 + $hamburger-layer-spacing-lg * 2;
   }
@@ -144,7 +144,7 @@ $hamburger-types: (
   @include breakpoint(small up) {
     margin-top: math.div($hamburger-layer-height-sm, -2);
   }
-  @include breakpoint(large up) {
+  @include breakpoint(xxlarge up) {
     margin-top: math.div($hamburger-layer-height-lg, -2);
   }
   &,
@@ -154,7 +154,7 @@ $hamburger-types: (
       width: $hamburger-layer-width-sm;
       height: $hamburger-layer-height-sm;
     }
-    @include breakpoint(large up) {
+    @include breakpoint(xxlarge up) {
       width: $hamburger-layer-width-lg;
       height: $hamburger-layer-height-lg;
     }
@@ -176,7 +176,7 @@ $hamburger-types: (
     @include breakpoint(small up) {
       top: ($hamburger-layer-spacing-sm + $hamburger-layer-height-sm) * -1;
     }
-    @include breakpoint(large up) {
+    @include breakpoint(xxlarge up) {
       top: ($hamburger-layer-spacing-lg + $hamburger-layer-height-lg) * -1;
     }
   }
@@ -185,7 +185,7 @@ $hamburger-types: (
     @include breakpoint(small up) {
       bottom: ($hamburger-layer-spacing-sm + $hamburger-layer-height-sm) * -1;
     }
-    @include breakpoint(large up) {
+    @include breakpoint(xxlarge up) {
       bottom: ($hamburger-layer-spacing-lg + $hamburger-layer-height-lg) * -1;
     }
   }
