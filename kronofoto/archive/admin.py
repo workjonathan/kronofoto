@@ -651,8 +651,22 @@ class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
                 return HttpResponseRedirect(new_obj_url)
 
     def change_view(self, request: HttpRequest, object_id: str, form_url: str='', extra_context: Optional[Dict[Any, Any]]=None) -> HttpResponse:
+        obj: Optional[Submission] = self.get_object(request, object_id)
+        user = request.user
+        assert not user.is_anonymous
+        target_model = Photo
+        photo_opts = target_model._meta
+        codename_add = get_permission_codename('add', photo_opts)
         extra_context = extra_context or {}
         extra_context['accept_form'] = self.AcceptForm({"is_published": True})
+        if obj:
+            extra_context['can_accept_submission'] = (
+                self.has_delete_permission(request, obj) and
+                (
+                    user.has_perm('{}.archive.{}.{}'.format(photo_opts.app_label, obj.archive.slug, codename_add)) or
+                    user.has_perm('{}.any.{}'.format(photo_opts.app_label, codename_add))
+                )
+            )
         return super().change_view(request, object_id, form_url, extra_context)
     #def response_change(self, request, obj: Submission):
     #    if '_accept_submission' in request.POST:

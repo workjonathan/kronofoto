@@ -3,6 +3,7 @@
 
 {% block content %}
     {{ block.super }}
+    {% if can_accept_submission %}
 
     <h1>Accepting photos into archive</h1>
     <p>Note: changes made on the above form will not be saved when clicking a button below. If you have made changes, click Save and continue editing, then fill out this form, and click Accept.</p>
@@ -24,4 +25,5 @@
     </div>
     </fieldset>
     </form>
+    {% endif %}
 {% endblock %}
