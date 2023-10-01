@@ -573,73 +573,82 @@ class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
         form_class = self.AcceptForm
         model = self.model
         opts = model._meta
-        if request.method and request.method.lower() == 'post':
-            form = form_class(request.POST)
-            if form.is_valid():
-                target_model = Photo
-                photo_opts = target_model._meta
-                codename_add = get_permission_codename('add', photo_opts)
-                with transaction.atomic(using=router.db_for_write(model)):
-                    obj: Optional[Submission] = self.get_object(request, quote(str(object_id)))
-                    user = request.user
-                    assert not user.is_anonymous
-                    if obj:
-                        if self.has_delete_permission(request, obj) and (user.has_perm('{}.archive.{}.{}'.format(photo_opts.app_label, obj.archive.slug, codename_add)) or user.has_perm('{}.any.{}'.format(photo_opts.app_label, codename_add))):
-                            file = ContentFile(obj.image.read())
-                            file.name = "submittedphoto"
-                            file.close()
-                            file.open()
-                            new_obj = target_model(
-                                archive=obj.archive,
-                                donor=obj.donor,
-                                photographer=obj.photographer,
-                                address=obj.address,
-                                city=obj.city,
-                                county=obj.county,
-                                state=obj.state,
-                                country=obj.country,
-                                year=obj.year,
-                                circa=obj.circa,
-                                caption=obj.caption,
-                                scanner=obj.scanner,
-                                original=file,
-                                is_published=form.cleaned_data['is_published'],
-                                is_featured=form.cleaned_data['is_featured'],
-                            )
-                            new_obj.save()
-                            new_obj_url = reverse("admin:{}_{}_change".format(photo_opts.app_label, photo_opts.model_name), args=[new_obj.pk], current_app=self.admin_site.name)
-                            msg_list = [photo_opts.verbose_name, format_html('<a href="{}">{}</a>', new_obj_url, str(new_obj))]
-                            msg_continue = format_html('The {} "{}" was accepted successfully. You may edit it below.', *msg_list)
-                            msg_accept = format_html('The {} "{}" was accepted successfully. You may accept or edit other submissions below', *msg_list)
-                            obj.image.delete(save=False)
-                            obj.delete()
-                            if '_accept' in request.POST:
-                                url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name), current_app=self.admin_site.name)
-                                self.message_user(request, msg_accept, messages.SUCCESS)
-                                return HttpResponseRedirect(url)
-                            else:
-                                self.message_user(request, msg_continue, messages.SUCCESS)
-                                return HttpResponseRedirect(new_obj_url)
-                        else:
-                            raise PermissionDenied
-                    else:
-                        msg = '{name} with ID “{key}” doesn’t exist. Perhaps it was deleted?'.format(
-                            name=opts.verbose_name,
-                            key=object_id,
-                        )
-                        self.message_user(request, msg, messages.WARNING)
-                        url = reverse('admin:index', current_app=self.admin_site.name)
-                        return HttpResponseRedirect(url)
-            else:
-                # form invalid. Should probably render form by itself at this point.
-                # although there is no way for this form to be invalid.
-                # For now, message user.
-                self.message_user(request, "The accept submission form was invalid.", messages.ERROR)
-                obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
-                return HttpResponseRedirect(obj_url)
-        else:
+        if not request.method or request.method.lower() != 'post':
             obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
             return HttpResponseRedirect(obj_url)
+
+        form = form_class(request.POST)
+        if not form.is_valid():
+            # form invalid. Should probably render form by itself at this point.
+            # although there is no way for this form to be invalid.
+            # For now, message user.
+            self.message_user(request, "The accept submission form was invalid.", messages.ERROR)
+            obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
+            return HttpResponseRedirect(obj_url)
+
+        target_model = Photo
+        photo_opts = target_model._meta
+        codename_add = get_permission_codename('add', photo_opts)
+        with transaction.atomic(using=router.db_for_write(model)):
+            obj: Optional[Submission] = self.get_object(request, quote(str(object_id)))
+            user = request.user
+            assert not user.is_anonymous
+            if not obj:
+                msg = '{name} with ID “{key}” doesn’t exist. Perhaps it was deleted?'.format(
+                    name=opts.verbose_name,
+                    key=object_id,
+                )
+                self.message_user(request, msg, messages.WARNING)
+                url = reverse('admin:index', current_app=self.admin_site.name)
+                return HttpResponseRedirect(url)
+
+            if not self.has_delete_permission(request, obj) or not user.has_perm('{}.archive.{}.{}'.format(photo_opts.app_label, obj.archive.slug, codename_add)) and not user.has_perm('{}.any.{}'.format(photo_opts.app_label, codename_add)):
+                raise PermissionDenied
+
+            file = ContentFile(obj.image.read())
+            file.name = "submittedphoto"
+            file.close()
+            file.open()
+            new_obj = target_model(
+                archive=obj.archive,
+                donor=obj.donor,
+                photographer=obj.photographer,
+                address=obj.address,
+                city=obj.city,
+                county=obj.county,
+                state=obj.state,
+                country=obj.country,
+                year=obj.year,
+                circa=obj.circa,
+                caption=obj.caption,
+                scanner=obj.scanner,
+                original=file,
+                is_published=form.cleaned_data['is_published'],
+                is_featured=form.cleaned_data['is_featured'],
+            )
+            if obj.donor:
+                obj.donor.is_contributor = True
+                obj.donor.save()
+            if obj.scanner:
+                obj.scanner.is_scanner = True
+                obj.scanner.save()
+            if obj.photographer:
+                obj.photographer.is_photographer = True
+                obj.photographer.save()
+            new_obj.save()
+            new_obj_url = reverse("admin:{}_{}_change".format(photo_opts.app_label, photo_opts.model_name), args=[new_obj.pk], current_app=self.admin_site.name)
+            msg_list = [photo_opts.verbose_name, format_html('<a href="{}">{}</a>', new_obj_url, str(new_obj))]
+            msg_continue = format_html('The {} "{}" was accepted successfully. You may edit it below.', *msg_list)
+            msg_accept = format_html('The {} "{}" was accepted successfully. You may accept or edit other submissions below', *msg_list)
+            obj.image.delete(save=False)
+            obj.delete()
+            if '_accept' in request.POST:
+                url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name), current_app=self.admin_site.name)
+                self.message_user(request, msg_accept, messages.SUCCESS)
+                return HttpResponseRedirect(url)
+            else:
+                self.message_user(request, msg_continue, messages.SUCCESS)
+                return HttpResponseRedirect(new_obj_url)
 
     def change_view(self, request: HttpRequest, object_id: str, form_url: str='', extra_context: Optional[Dict[Any, Any]]=None) -> HttpResponse:
         extra_context = extra_context or {}
