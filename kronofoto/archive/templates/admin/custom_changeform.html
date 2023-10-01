@@ -1,0 +1,27 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify kf_admin_modify %}
+
+{% block content %}
+    {{ block.super }}
+
+    <h1>Accepting photos into archive</h1>
+    <p>Note: changes made on the above form will not be saved when clicking a button below. If you have made changes, click Save and continue editing, then fill out this form, and click Accept.</p>
+    
+    <form method="post" action="{% url opts|admin_urlname:"accept" original.pk %}">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+    {% for field in accept_form %}
+      <div class="form-row">
+        <div class="checkbox_row">
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="vCheckboxLabel">{{ field.label }}</label>
+        </div>
+      </div>
+    {% endfor %}
+    <div class="submit-row">
+    <input type="submit" class="default" value="Accept" name="_accept" />
+    <input type="submit" value="Accept and continue editing" name="_accept_and_continue" />
+    </div>
+    </fieldset>
+    </form>
+{% endblock %}
