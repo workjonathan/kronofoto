@@ -1,7 +1,7 @@
 from django.core.cache import cache
 from django.http import QueryDict
 from django.conf import settings
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import BadRequest
 from django.templatetags.static import static
 from django.template.loader import select_template
 import random
@@ -98,7 +98,7 @@ class BaseTemplateMixin:
             try:
                 return Parser.tokenize(constraint).parse().shakeout()
             except:
-                raise SuspiciousOperation("invalid constraint")
+                raise BadRequest("invalid constraint")
         return None
 
     def get_final_expr(self, *exprs):
@@ -180,5 +180,5 @@ class BasePhotoTemplateMixin(BaseTemplateMixin):
                 qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
             return qs
         else:
-            raise SuspiciousOperation('invalid search request')
+            raise BadRequest('invalid search request')
 
