@@ -42,6 +42,7 @@ def test_queryset():
     qs = Mock(spec=Donor.objects)
     qs.annotate_scannedcount.return_value = qs
     qs.annotate_donatedcount.return_value = qs
+    qs.annotate_photographedcount.return_value = qs
     model._default_manager.get_queryset.return_value = qs
     admin = DonorAdmin(model=model, admin_site=AdminSite())
     request = RequestFactory().get('/')
@@ -170,7 +171,7 @@ def test_photosphere_form():
     ma = PhotoSphereAdmin(model=PhotoSphere, admin_site=AdminSite())
     request = RequestFactory().get('/')
     assert ['title', 'description', 'image'] == list(ma.get_form(request, obj=None).base_fields)
-    assert ['title', 'description', 'image', 'heading', 'location'] == list(ma.get_form(request, obj=PhotoSphere()).base_fields)
+    assert ['title', 'description', 'image', 'heading', 'location', "mainstreetset", "links"] == list(ma.get_form(request, obj=PhotoSphere()).base_fields)
 
 def test_photoadmin_thumb():
     ma = PhotoAdmin(model=Photo, admin_site=AdminSite())
