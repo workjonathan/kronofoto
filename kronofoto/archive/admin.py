@@ -254,6 +254,10 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
 
     class WithPhotographedCount(TypedDict):
         photographed_count: int
+    class WithCounts(TypedDict):
+        photographed_count: int
+        donated_count: int
+        scanned_count: int
 
     def scanned(self, obj: "WithAnnotations[Donor, WithScannedCount]") -> str:
         return '{} photos'.format(obj.scanned_count)
@@ -271,7 +275,7 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     def photography_collection(self, obj: Donor) -> str:
         return mark_safe('<a class="button" href="{}?query=photographer_exact:{}">View Photography Collection</a>'.format(reverse("kronofoto:gridview"), obj.id))
 
-    def get_queryset(self, request: HttpRequest) -> WithAnnotations[Any]:
+    def get_queryset(self, request: HttpRequest) -> "QuerySet[WithAnnotations[Donor, WithCounts]]":
         qs = super().get_queryset(request)
         return qs.annotate_scannedcount().annotate_donatedcount().annotate_photographedcount()
 
@@ -766,16 +770,45 @@ class UserArchivePermissionsInline(base_admin.TabularInline):
             kwargs['queryset'] = Permission.objects.filter(supported_permissions)
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+class GroupArchivePermissionsInline(base_admin.TabularInline):
+    model = Archive.groups.through
+    extra = 1
+
+    def formfield_for_manytomany(self, db_field: ManyToManyField, request: HttpRequest, **kwargs: Any) -> Optional[forms.ModelMultipleChoiceField]:
+        if db_field.name == 'permission':
+            models = [
+                'donor',
+                'photo',
+                'submission',
+                #'photosphere',
+                #'photospherepair',
+                'phototag',
+            ]
+            clauses = (
+                Q(content_type__model=model)
+                for model in models
+            )
+            combined = reduce(operator.__or__, clauses)
+            supported_permissions = Q(content_type__app_label='archive') & combined
+            kwargs['queryset'] = Permission.objects.filter(supported_permissions)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+class WithArchiveId(TypedDict):
+    archive_id: int
 class PermissionAnalyst:
     def __init__(self, user: User) -> None:
         self.user = user
-    class WithArchiveId(TypedDict):
-        archive_id: int
     def get_archive_permissions(self) -> DefaultDict[int, Set["WithAnnotations[Permission, WithArchiveId]"]]:
         sets = defaultdict(set)
         objects = (Permission.objects
             .filter(archiveuserpermission__user__id=self.user.id)
             .annotate(archive_id=F('archiveuserpermission__archive__id'))
+        )
+        for obj in objects:
+            sets[obj.archive_id].add(obj)
+        objects = (Permission.objects
+            .filter(archivegrouppermission__group__user__id=self.user.id)
+            .annotate(archive_id=F('group__archivegrouppermission__archive__id'))
         )
         for obj in objects:
             sets[obj.archive_id].add(obj)
@@ -794,23 +827,75 @@ class PermissionAnalyst:
 
         # Get permissions this user does not have.
         # Filter them to match any given group.
-        q = Q(pk=self.user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
-        missing = Exists(Permission.objects.exclude(Exists(User.objects.filter(q))).filter(group=OuterRef('pk')))
+        user_group_perms = Q(pk=self.user.id) & (Q(user_permissions=OuterRef('pk')) | Q(groups__permissions=OuterRef('pk')))
+        missing = Exists(Permission.objects.exclude(Exists(User.objects.filter(user_group_perms))).filter(group=OuterRef('pk')))
         # Exclude groups which have at least one match.
-        return Group.objects.exclude(missing)
+        groups = Group.objects.exclude(missing)
 
-class block_group_escalation:
-    def __init__(self, *, editor: User, group: Group, PAClass: Type[PermissionAnalyst]=PermissionAnalyst):
-        self.editor = PAClass(editor)
+        # For a group to be valid, user must have the same permissions, and every GAP associated with it must be valid.
+        # GAP is valid if the UAPs grant the same Permission and Archive pairs,
+        # or if the user directly has the permission, or if the user has permission through groups.
+        gap_q = Q(pk=self.user.id) & (Q(archiveuserpermission__permission=OuterRef('permission__pk'), archiveuserpermission__archive__slug=OuterRef('archive__slug')) | Q(groups__archivegrouppermission__permission=OuterRef('permission__pk'), groups__archivegrouppermission__archive__slug=OuterRef("archive__slug")))
+
+        from archive.models.archive import ArchiveGroupPermission
+        invalid_gaps = ArchiveGroupPermission.objects.exclude(Exists(User.objects.filter(gap_q)))
+        return groups.exclude(Exists(invalid_gaps.filter(group=OuterRef('pk'))))
+
+class GroupAnalyst:
+    def __init__(self, group: Group) -> None:
         self.group = group
 
+    def get_archive_permissions(self) -> DefaultDict[int, Set["WithAnnotations[Permission, WithArchiveId]"]]:
+        sets = defaultdict(set)
+        objects = (Permission.objects
+            .filter(archivegrouppermission__group__id=self.group.id)
+            .annotate(archive_id=F('archivegrouppermission__archive__id'))
+        )
+        for obj in objects:
+            sets[obj.archive_id].add(obj)
+        return sets
+
+
+class block_group_escalation:
+    def __init__(self,
+        *,
+        editor: User,
+        group: Group,
+        PAClass: Type[PermissionAnalyst]=PermissionAnalyst,
+        GAClass: Type[GroupAnalyst]=GroupAnalyst,
+    ):
+        self.editor = PAClass(editor)
+        self.group = group
+        self.group_analyst = GAClass(group)
+
     def __enter__(self) -> None:
-        self.changeable_perms = set(self.editor.get_changeable_permissions())
+        self.changeable_archive_permissions = self.editor.get_archive_permissions()
+        self.old_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all())
+        self.old_archive_permissions = self.group_analyst.get_archive_permissions()
+
         self.old_perms = set(self.group.permissions.all())
+        self.changeable_perms = set(self.editor.get_changeable_permissions())
+
 
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         new_perms = set(self.group.permissions.all())
         self.group.permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
+        new_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all())
+
+        new_archive_permissions = self.group_analyst.get_archive_permissions()
+        changed_archive_perms = self.old_archives | new_archives
+        for related in changed_archive_perms:
+            assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
+            try:
+                obj = self.group.archivegrouppermission_set.get(archive__id=related.id)
+                if len(assign) == 0:
+                    obj.delete()
+                else:
+                    obj.permission.set(assign)
+            except ObjectDoesNotExist:
+                if assign:
+                    obj = Archive.groups.through.objects.create(archive=related, group=self.group) # type: ignore
+                    obj.permission.set(assign)
 
 class block_escalation:
     def __init__(self, *, editor: User, user: User, PAClass: Type[PermissionAnalyst]=PermissionAnalyst) -> None:
@@ -820,7 +905,7 @@ class block_escalation:
 
     def __enter__(self) -> None:
         self.changeable_archive_permissions = self.editor.get_archive_permissions()
-        self.old_archives = set(self.user.archiveuserpermission_set.all())
+        self.old_archives = set(aup.archive for aup in self.user.archiveuserpermission_set.all())
         self.old_archive_permissions = self.user_analyst.get_archive_permissions()
 
         self.old_perms = set(self.user.user_permissions.all())
@@ -834,18 +919,20 @@ class block_escalation:
         self.user.user_permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
         self.user.groups.set((self.old_groups - self.changeable_groups) | (self.changeable_groups & new_groups))
 
-        new_archives = set(self.user.archiveuserpermission_set.all())
+        new_archives = set(aup.archive for aup in self.user.archiveuserpermission_set.all())
         new_archive_permissions = self.user_analyst.get_archive_permissions()
         changed_archive_perms = self.old_archives | new_archives
         for related in changed_archive_perms:
-
-            assign = (self.old_archive_permissions[related.archive.id] - (self.changeable_archive_permissions[related.archive.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.archive.id] | self.changeable_perms) & new_archive_permissions[related.archive.id]) # type: ignore
+            assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
             try:
-                obj = self.user.archiveuserpermission_set.get(archive__id=related.archive.id)
-                obj.permission.set(assign)
+                obj = self.user.archiveuserpermission_set.get(archive__id=related.id)
+                if len(assign) == 0:
+                    obj.delete()
+                else:
+                    obj.permission.set(assign)
             except ObjectDoesNotExist:
                 if assign:
-                    obj = Archive.users.through.objects.create(archive=related.archive, user=self.user) # type: ignore
+                    obj = Archive.users.through.objects.create(archive=related, user=self.user) # type: ignore
                     obj.permission.set(assign)
 
 
@@ -883,6 +970,7 @@ class KronofotoUserAdmin(UserAdmin):
 
 
 class KronofotoGroupAdmin(GroupAdmin):
+    inlines = (GroupArchivePermissionsInline,)
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: Any) -> None:
         instance = form.instance

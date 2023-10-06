@@ -243,6 +243,7 @@ def test_userarchivepermissionsinline_accepted():
 class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
     permissions = Bundle("permissions")
     groups = Bundle("groups")
+    archives = Bundle("archives")
     some_permissions = Bundle("some_permissions")
     some_groups = Bundle("some_groups")
     a_group = Bundle("a_group")
@@ -253,55 +254,85 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
     def __init__(self):
         super().__init__()
         self.editor = None
+        self.editor_perms = {}
 
     @initialize(target=permissions)
-    def initialize(self):
+    def initialize_permissions(self):
         return list(Permission.objects.all())
 
-    @rule()
-    def make_a_superuser(self):
+    def make_an_archive(self, archive):
+        return archive
+
+    @initialize(target=archives, archive=from_model(Archive, id=st.none()))
+    def make_an_archive_init(self, archive):
+        return self.make_an_archive(archive)
+
+    @rule(target=archives, archive=from_model(Archive, id=st.none()))
+    def make_an_archive_rule(self, archive):
+        archive = self.make_an_archive(archive)
+        if self.editor:
+            self.editor_perms = User.objects.get(id=self.editor.id).get_all_permissions()
+        return archive
+
+
+    @initialize(target=a_user, archive=archives, data=st.data())
+    def make_a_user(self, archive, data):
         self.uid = self.uid + 1
-        self.editor = User.objects.create_superuser(str(self.uid))
-        self.editor.get_all_permissions()
-        #return u
+        self.editor = User.objects.create_user(str(self.uid))
+        perms = list(Permission.objects.all())
+        self.editor.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+        obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=self.editor)
+        obj.permission.set(data.draw(st.sets(st.sampled_from(perms))))
+        self.editor_perms = self.editor.get_all_permissions()
+        return self.editor
 
-    @rule(target=a_user)
-    def make_a_user(self):
-        self.uid = self.uid + 1
-        return User.objects.create_user(str(self.uid))
-
-    @precondition(lambda self: self.editor)
-    @invariant()
-    def no_escalation(self):
-        assert self.editor.get_all_permissions() >= User.objects.get(id=self.editor.id).get_all_permissions()
-
-
-    @rule(data=st.data(), _=a_user)
-    def pick_an_editor(self, data, _):
-        self.editor = data.draw(st.sampled_from(list(User.objects.all())))
-        self.editor.get_all_permissions()
-
-    @rule(target=a_user, _=a_user, data=st.data())
-    def pick_a_user(self, data, _):
-        return data.draw(st.sampled_from(list(User.objects.all())))
-
-    @rule(target=a_group, group=from_model(Group))
-    def make_a_group(self, group):
+    @initialize(target=a_group, archive=archives, group=from_model(Group, id=st.none()), data=st.data())
+    def make_a_group(self, archive, group, data):
+        perms = list(Permission.objects.all())
+        group.permissions.set(data.draw(st.sets(st.sampled_from(perms))))
+        obj, created = Archive.groups.through.objects.get_or_create(archive=archive, group=group)
+        obj.permission.set(data.draw(st.sets(st.sampled_from(perms))))
         return group
 
-    @rule(target=a_group, _=a_group, data=st.data())
-    def pick_a_group(self, _, data):
-        return data.draw(st.sampled_from(list(Group.objects.all())))
+    @precondition(lambda self: self.editor and not self.editor.is_superuser)
+    @invariant()
+    def no_escalation(self):
+        assert self.editor_perms >= User.objects.get(id=self.editor.id).get_all_permissions()
 
     @rule(target=some_groups, _=a_group, data=st.data())
     def pick_some_groups(self, data, _):
         return data.draw(st.sets(st.sampled_from(list(Group.objects.all()))))
 
+    @rule(groups=some_groups)
+    def assign_groups(self, groups):
+        self.editor.groups.set(groups)
+        self.editor_perms = User.objects.get(id=self.editor.id).get_all_permissions()
+
     @rule(target=some_permissions, perms=permissions, data=st.data())
     def pick_some_permissions(self, perms, data):
         return data.draw(st.sets(st.sampled_from(perms)))
 
-    @rule(target=groups, group=from_model(Group))
+    @precondition(lambda self: self.editor)
+    @rule(user=a_user, archive=archives, perms=some_permissions)
+    def set_user_archive_permissions(self, user, archive, perms):
+        obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=user)
+        with block_escalation(editor=self.editor, user=user):
+            obj.permission.set(perms)
+
+    @rule(archive=archives, aup=a_user.flatmap(lambda u: st.sampled_from(list(u.archiveuserpermission_set.all())) if u.archiveuserpermission_set.exists() else st.nothing()))
+    def change_aup_target(self, archive, aup):
+        with block_escalation(editor=self.editor, user=self.editor):
+            aup.archive = archive
+            aup.save()
+
+    @precondition(lambda self: self.editor)
+    @rule(group=a_group, archive=archives, perms=some_permissions)
+    def set_group_archive_permissions(self, group, archive, perms):
+        obj, created = Archive.groups.through.objects.get_or_create(archive=archive, group=group)
+        with block_group_escalation(editor=self.editor, group=group):
+            obj.permission.set(perms)
+
+    @rule(target=groups, group=from_model(Group, id=st.none()))
     def add_group(self, group):
         return list(Group.objects.all())
 
@@ -323,7 +354,7 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 10, stateful_step_count = 10, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 100, stateful_step_count = 25, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass
@@ -340,19 +371,26 @@ class UserAdminTests(TestCase):
         user2.groups.add(group)
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
 
-    @given(st.data())
-    def test_changeable_groups(self, data):
+    @given(st.data(), from_model(Archive, id=st.none()))
+    def test_changeable_groups(self, data, archive):
         permissions = list(Permission.objects.all()[:10])
         perms1 = data.draw(st.sets(st.sampled_from(permissions)))
         perms2 = data.draw(st.sets(st.sampled_from(permissions)))
+        perms3 = data.draw(st.sets(st.sampled_from(permissions)))
         group1 = Group.objects.create(name='group1')
         group1.permissions.add(*perms1)
         group2 = Group.objects.create(name='group2')
         group2.permissions.add(*perms2)
+        group3 = Group.objects.create(name='group3')
+        through = group3.archive_set.through.objects.create(archive=archive, group=group3)
+        through.permission.set(perms3)
         user1 = User.objects.create_user("test1")
         user2 = User.objects.create_user("test2")
         user1.groups.add(group1)
+        user1.groups.add(group3)
         user2.user_permissions.add(*perms1)
+        through = user2.archive_set.through.objects.create(archive=archive, user=user2)
+        through.permission.set(perms3)
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
@@ -431,7 +469,6 @@ class UserAdminTests(TestCase):
         assert u2_perm_set_pre.symmetric_difference(u2_perm_set_post) <= u1_perm_set
         # every permission which is assigned should be there either because it was there before or because it was requested.
         assert u2_perm_set_post <= (u2_perm_set_pre | requested_set)
-
 
 
 def test_taginline_submitter():
