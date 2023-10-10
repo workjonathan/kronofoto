@@ -15,9 +15,9 @@ class PhotoSphereView(BaseTemplateMixin, DetailView):
         context['sphere_data'] = dict(
             sphere_image_url=object.image.url,
             photos=[dict(
-                url=position.photo.h700.url,
-                height=position.photo.h700.height,
-                width=position.photo.h700.width,
+                url=position.photo.original.url,
+                height=position.photo.original.height,
+                width=position.photo.original.width,
                 azimuth=position.azimuth,
                 inclination=position.inclination,
                 distance=position.distance,
