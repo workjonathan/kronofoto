@@ -13,6 +13,7 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.photosphere import MainStreetSet
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
+from .models.category import Category, ValidCategory
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
 from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey
@@ -155,9 +156,13 @@ class AgreementInline(admin.StackedInline):
     model = ArchiveAgreement
     extra = 0
 
+class CategoryInline(admin.TabularInline):
+    model = ValidCategory
+    extra = 0
+
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
-    inlines = (AgreementInline,)
+    inlines = (CategoryInline, AgreementInline)
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):

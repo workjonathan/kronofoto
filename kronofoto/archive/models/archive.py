@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.contrib.auth.models import Permission, Group
+from .category import Category, ValidCategory
 
 
 
@@ -13,8 +14,9 @@ class Archive(models.Model):
     slug = models.SlugField(unique=True, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="ArchiveGroupPermission")
+    categories = models.ManyToManyField(Category, through=ValidCategory)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 class ArchiveAgreement(models.Model):
@@ -22,7 +24,7 @@ class ArchiveAgreement(models.Model):
     version = models.DateTimeField(null=False, auto_now=True)
     archive = models.OneToOneField(Archive, on_delete=models.CASCADE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} agreement".format(self.archive.name)
 
     class Meta:
@@ -48,7 +50,7 @@ class ArchiveUserPermission(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.archive)
 
     class Meta:
@@ -66,7 +68,7 @@ class ArchiveGroupPermission(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.archive)
 
     class Meta:

@@ -23,6 +23,7 @@ from .donor import Donor
 from .tag import Tag
 from .term import Term
 from .archive import Archive
+from .category import Category
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
@@ -80,6 +81,7 @@ def get_submission_path(instance, filename):
 
 class PhotoBase(models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
+    category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
     photographer = models.ForeignKey(
