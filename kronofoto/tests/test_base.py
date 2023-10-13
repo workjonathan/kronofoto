@@ -1,7 +1,7 @@
 from django.test import Client, RequestFactory, SimpleTestCase
 from hypothesis import given, strategies as st, settings
 from hypothesis.extra.django import TestCase
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import BadRequest
 from django.contrib.auth.models import AnonymousUser
 from archive.views.basetemplate import BaseTemplateMixin, BasePhotoTemplateMixin
 from unittest.mock import Mock, sentinel
@@ -74,7 +74,7 @@ class DbTests(TestCase):
     def test_invalid_form(self):
         template = Template()
         template.form = SearchForm(data={'term': 'invalid'})
-        with self.assertRaises(SuspiciousOperation):
+        with self.assertRaises(BadRequest):
             template.get_queryset()
 
     @given(expr1=st.none() | searchTerms, expr2=st.none() | searchTerms)
@@ -114,7 +114,7 @@ class Tests(SimpleTestCase):
         template = Template()
         try:
             expr = template.get_constraint_expr(s)
-        except SuspiciousOperation:
+        except BadRequest:
             pass
 
     def test_hx_context(self):

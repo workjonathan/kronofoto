@@ -1,10 +1,28 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import Permission
+from django.db.models import Q, Exists, OuterRef
 from ..models.archive import Archive
 
 class ArchiveBackend(ModelBackend):
     def get_group_permissions(self, user_obj, obj=None):
         perm_cache = super().get_group_permissions(user_obj, obj)
+        group_perms = Permission.objects.filter(
+            archivegrouppermission__group__user__id=user_obj.id,
+            content_type__app_label='archive',
+        )
+        group_perms = group_perms.values_list(
+            'content_type__app_label',
+            'archivegrouppermission__archive__slug',
+            'codename',
+        ).order_by()
+        perm_cache = perm_cache.union({
+            "{label}.any.{codename}".format(label=label, codename=codename)
+            for label, slug, codename in group_perms
+        })
+        perm_cache = perm_cache.union({
+            "{label}.archive.{slug}.{codename}".format(label=label, slug=slug, codename=codename)
+            for label, slug, codename in group_perms
+        })
         perms = Permission.objects.filter(
             group__user=user_obj,
             content_type__app_label='archive',

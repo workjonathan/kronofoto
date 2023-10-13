@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from django.contrib.auth.models import User
 from hypothesis.extra.django import from_model, register_field_strategy, TestCase, from_form
 from hypothesis import given, strategies as st, note, settings as hsettings
 from hypothesis.stateful import rule, invariant, Bundle, initialize, consumes, precondition
@@ -14,6 +15,8 @@ class PhotoInterface:
     def test_should_have(self):
         assert hasattr(self.object, 'donor')
         assert hasattr(self.object, 'scanner')
+        assert hasattr(self.object, 'photographer')
+        assert hasattr(self.object, 'is_published')
 
 class PhotoInterfaceTest(PhotoInterface, SimpleTestCase):
     def setUp(self):
@@ -27,6 +30,7 @@ class DonorInterface:
     def test_should_have(self):
         assert self.object._meta.get_field('photo')
         assert self.object._meta.get_field("archive_photo_scanned")
+        assert self.object._meta.get_field("archive_photo_photographed")
 
 class DonorInterfaceTest(DonorInterface, SimpleTestCase):
     def setUp(self):
@@ -35,7 +39,6 @@ class DonorInterfaceTest(DonorInterface, SimpleTestCase):
 class FakeDonorInterfaceTest(DonorInterface, SimpleTestCase):
     def setUp(self):
         self.object = FakeDonor
-
 
 class DonorMachine(TransactionalRuleBasedStateMachine):
     donors = Bundle("donors")
@@ -84,6 +87,7 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
 
     @rule()
     def check_counts(self):
+        note(f"{FakeDonor.objects.count()=}")
         for donor in FakeDonor.objects.annotate_donatedcount().annotate_scannedcount():
             assert donor.donated_count == len(self.donor_model[donor.pk])
             assert donor.scanned_count == len(self.scanner_model[donor.pk])

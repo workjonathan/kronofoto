@@ -1,6 +1,19 @@
 from django.forms.widgets import NumberInput, Widget
 from django.forms import MultiWidget, HiddenInput
 
+class AutocompleteWidget(Widget):
+    template_name = "archive/widgets/autocomplete.html"
+
+    def __init__(self, *args, url, **kwargs):
+        self.url = url
+        super().__init__(*args, **kwargs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['type'] = 'text'
+        context['url'] = self.url
+        return context
+
 class RecaptchaWidget(Widget):
     template_name = 'archive/widgets/captcha.html'
 

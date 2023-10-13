@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
+from django.shortcuts import get_object_or_404
 from ..reverse import reverse
 from ..forms import TagForm
 from .basetemplate import BaseTemplateMixin
@@ -18,7 +19,7 @@ class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
         return context
 
     def dispatch(self, request, photo, **kwargs):
-        self.photo = Photo.objects.get(id=photo)
+        self.photo = get_object_or_404(Photo.objects.all(), id=photo)
         self.success_url = reverse('kronofoto:addtag', kwargs=dict(**self.url_kwargs, **{'photo': self.photo.id}))
         if request.GET:
             self.success_url += '?' + request.GET.urlencode()

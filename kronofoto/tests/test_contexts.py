@@ -91,7 +91,7 @@ class Tests(TestCase):
 
 
     @settings(max_examples=1)
-    @given(from_model(PhotoSphere.photos.through, photo=photos(), photosphere=from_model(PhotoSphere, image=st.builds(lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')))))
+    @given(from_model(PhotoSphere.photos.through, photo=photos(), photosphere=from_model(PhotoSphere, id=st.none(), image=st.builds(lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')))))
     def test_photosphere_context(self, pair):
         resp = Client().get(reverse('kronofoto:mainstreetview', kwargs={'pk': pair.id}))
         assertTemplateUsed(resp, 'archive/photosphere_detail.html')

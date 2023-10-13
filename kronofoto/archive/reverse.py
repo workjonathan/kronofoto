@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from django.contrib.sites.models import Site
 from urllib.parse import urlparse
 from django.conf import settings
+from django.utils.functional import lazy
 
 requests = local()
 
@@ -27,6 +28,8 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None, do
     domain = domain or Site.objects.get_current().domain
     uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)
     return "{scheme}//{domain}{uri}".format(scheme=settings.KF_URL_SCHEME, domain=domain, uri=uri)
+
+reverse_lazy = lazy(reverse, str)
 
 def resolve(path, urlconf=None):
     parseResults = urlparse(path)
