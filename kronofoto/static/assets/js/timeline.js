@@ -2,6 +2,9 @@ import { setAppState, removeAppState, getURLParams, trigger } from "./utils"
 // import photoManager from "../../js/photo-manager"
 //import HTMX from "./htmx.js"
 //const htmx = HTMX(document)
+import $ from "jquery"
+// import "jquery-ui-dist"
+
 export default class {
     get targets() {
         return [
@@ -21,7 +24,9 @@ export default class {
         ]
     }
 
-    connect(element) {
+    connect(element, context) {
+
+        this.context = context
         this.range = 0
 
         // slider status
@@ -46,17 +51,17 @@ export default class {
 
     initEventHandlers() {
 
-        $(this.yearStartTarget).on('click', (e) => { this.jumpToStart.call(this, e) })
-        $(this.yearEndTarget).on('click', (e) => { this.jumpToEnd.call(this, e) })
+        $(this.yearStartTarget, this.context).on('click', (e) => { this.jumpToStart.call(this, e) })
+        $(this.yearEndTarget, this.context).on('click', (e) => { this.jumpToEnd.call(this, e) })
 
-        $(this.sliderTarget).on('mouseenter', (e) => { this.onTimelineOver.call(this, e) })
-        $(document).on('mousemove', (e) => { this.onTimelineMove.call(this, e) })
-        $(this.sliderTarget).on('mouseleave',  (e) => { this.onTimelineOut.call(this, e) })
-        $(this.sliderTarget).on('click', (e) => { this.seek.call(this, e) })
+        $(this.sliderTarget, this.context).on('mouseenter', (e) => { this.onTimelineOver.call(this, e) })
+        $('#app', this.context).on('mousemove', (e) => { this.onTimelineMove.call(this, e) })
+        $(this.sliderTarget, this.context).on('mouseleave',  (e) => { this.onTimelineOut.call(this, e) })
+        $(this.sliderTarget, this.context).on('click', (e) => { this.seek.call(this, e) })
 
-        $(this.sliderKnobTarget).on('touchstart mousedown', (e) => { this.sliderStartDrag.call(this, e) })
-        $(document).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
-        $(document).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
+        $(this.sliderKnobTarget, this.context).on('touchstart mousedown', (e) => { this.sliderStartDrag.call(this, e) })
+        $('#app', this.context).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
+        $('#app', this.context).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
 
     }
 
@@ -117,7 +122,7 @@ export default class {
     }
 
     setRange() {
-        this.range = this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
+      this.range = this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
     }
 
     getRange() {
@@ -140,7 +145,7 @@ export default class {
         $('#fi-thumbnail-carousel-images').stop().animate(
             {left: yearDiffX},
             800,
-            'easeOutCirc'
+            'swing'
         );
 
         // check if selected year (this.year) has photos at all (not already loaded)
@@ -182,7 +187,7 @@ export default class {
             // creating the ruler indicators if they're not created yet
             while (this.rulerIndicatorTargets.length <= Math.floor(yearsCount / 10)) {
                 // clone template
-                const indicator = document.querySelectorAll(".photos-timeline__ruler-indicator")[0].cloneNode(true)
+                const indicator = this.context.querySelectorAll(".photos-timeline__ruler-indicator")[0].cloneNode(true)
                 this.rulerTarget.appendChild(indicator)
                 this.initTargets()
             }
@@ -190,7 +195,6 @@ export default class {
             // calculate the x position of the first decade marker
             let counter = this.yearStart
             const firstDecade = {}
-
             while (counter < this.yearEnd) {
                 if (counter % 10 === 0) {
                     firstDecade.left = left + Math.round((this.range / yearsCount) * (counter - this.yearStart))
@@ -253,7 +257,7 @@ export default class {
                 //trigger("photos:historyPushState", { url: "?q=", resetPhotosGrid: true, jumpToYearAfter: this.year })
             } else {
                 if(triggerHTMX) {
-                  trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
+                 trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
                 }
             }
         }

@@ -1,36 +1,311 @@
+"use strict";
+
 import {enableMarkerDnD} from "./drag-drop.js"
+import _HTMX from "./htmx.js"
+import timeline from "./timeline";
+import $ from "jquery"
+import ClipboardActionCopy from 'clipboard/src/actions/copy'
+import 'jquery-ui-pack'
 
 // Foundation
-import { Foundation, Toggler, Tooltip, Box, MediaQuery, Triggers } from 'foundation-sites'
+import { Foundation } from 'foundation-sites/js/foundation.core';
+import * as CoreUtils from 'foundation-sites/js/foundation.core.utils';
+import { Motion, Move } from 'foundation-sites/js/foundation.util.motion';
+import { Touch } from 'foundation-sites/js/foundation.util.touch';
+import { Triggers } from 'foundation-sites/js/foundation.util.triggers';
+import { Toggler } from 'foundation-sites/js/foundation.toggler';
+import { Tooltip } from 'foundation-sites/js/foundation.tooltip';
+import { Box } from 'foundation-sites/js/foundation.util.box';
+import { MediaQuery } from 'foundation-sites/js/foundation.util.mediaQuery';
 
-window.$ = window.jQuery
+export const HTMX = _HTMX
+var htmx = null
+
 let timelineCrawlForwardInterval = null
 let timelineCrawlForwardTimeout = null
 let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
+var timelineInstance = null
 
-$(document).ready(function() {
-    $(document).foundation();
-    $(document).on('click', '.form--add-tag .link--icon', (e) => {
-      let $form = $(e.currentTarget).closest('form')
-      $form.addClass('expanded')
-      $('input[type=text]', $form).focus()
-    })
-    $(document).on('focusout', '.form--add-tag input[type=text]', function(e) {
-        let $form = $(e.currentTarget).closest('form')
-        $form.removeClass('expanded')
-        $(e.currentTarget).val('')
-    })
-})
+export const initJQuery = (context) => {
+  var initjQuery = $.fn.init;
+  $.fn.init = function(s,c,r) {
+    c = c || context;
+    return new initjQuery(s,c,r);
+  };
+}
 
-$(document).on('on.zf.toggler', function(e) {
-    if($(e.target).hasClass('gallery__popup')) {
-        $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+export const initHTMXListeners = (context, root) => {
+
+  htmx = HTMX(context)
+  htmx.process(root)
+
+  htmx.onLoad((e) => {
+    if(typeof window.kfcontext.onceInitHTMXListeners === 'undefined') {
+      window.kfcontext.onceInitHTMXListeners = true
+      initTimeline(context)
     }
-});
 
-// window.jQuery = window.$ = window.jQueryOrig
+    // Init gallery thumbnails
+    if ($('#fi-preload-zone li').length) {
 
+      initPopups(context)
+      initDraggableThumbnails()
+
+      let html = $('#fi-preload-zone').html()
+      // let firstId = $(html).find('li:first-child span').attr('hx-get')
+      $('#fi-thumbnail-carousel-images').html(html)
+      // let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
+      // $('#fi-thumbnail-carousel-images').append($after)
+      $('#fi-thumbnail-carousel-images').addClass('dragging')
+      $('#fi-thumbnail-carousel-images').css('left', '0px')
+      setTimeout(() => {
+        $('#fi-thumbnail-carousel-images').removeClass('dragging')
+        if (!$('#fi-thumbnail-carousel-images [data-origin]').length) {
+          $('#fi-thumbnail-carousel-images [data-active]').attr('data-origin', '')
+        }
+      }, 100)
+
+      htmx.process($('#fi-thumbnail-carousel-images').get(0))
+      $('#fi-preload-zone').empty()
+    }
+
+    if ($('#fi-image-preload img').length && !$('#fi-image-preload img').data('loaded')) {
+      $('#fi-image-preload img').data('loaded', true)
+      let url = $('#fi-image-preload img').attr('src')
+      const image = new Image();
+      image.src = url;
+      image.onload = () => {
+        let html = $('#fi-image-preload').html()
+        $('#fi-image').html(html)
+        $('#fi-image-preload').empty()
+      }
+    }
+
+  })
+
+  return htmx
+
+}
+export const initFoundation = (context) => {
+
+  Foundation.addToJquery($);
+  Foundation.Box = Box;
+  Foundation.MediaQuery = MediaQuery;
+  Foundation.Motion = Motion;
+  Foundation.Move = Move;
+  Triggers.Initializers.addToggleListener($(context));
+
+  Foundation.plugin(Toggler, 'Toggler');
+  Foundation.plugin(Tooltip, 'Tooltip');
+
+  $(context).foundation()
+
+}
+
+export const initTimeline = (context) => {
+  if(!timelineInstance) {
+    timelineInstance = new timeline();
+    $('.photos-timeline', context).each(function(i, e) {
+      timelineInstance.connect(e, context);
+    });
+  }
+
+  return timelineInstance
+}
+export const initEventHandlers = (context) => {
+
+  context.addEventListener('htmx:pushedIntoHistory', initPopups)
+
+  context.addEventListener('htmx:pushedIntoHistory', initNavSearch)
+
+  $(context).on('click', '.form--add-tag .link--icon', (e) => {
+    let $form = $(e.currentTarget).closest('form')
+    $form.addClass('expanded')
+    $('input[type=text]', $form).focus()
+  })
+
+  $(context).on('click', (e) => {
+    if (!$('.form--add-tag input').is(":focus")) {
+        let $form = $('.form--add-tag input').closest('form')
+        $form.removeClass('expanded')
+        $('.form--add-tag input').val('')
+    }
+  })
+
+  $(context).on('change keydown paste input', 'input', (e) => {
+    if ($(e.currentTarget).closest('form')) {
+      $(e.currentTarget).closest('form').find('[data-enable-on-modify]').removeAttr('disabled')
+    }
+  })
+
+  $(context).on('on.zf.toggler', function(e) {
+    if($(e.target).hasClass('gallery__popup')) {
+      $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+    }
+  });
+
+  $(context).on('submit', '#add-to-list-popup form', function(e) {
+    // Check if logged in
+    if ($('#login-btn').length) {
+      $('#login-btn').trigger('click')
+      showToast('You must login to continue')
+    } else {
+      showToast('Updated photo lists')
+    }
+  })
+
+  $('#overlay').on('click', (e) => {
+    $('#login').addClass('collapse')
+    $('#hamburger-menu').addClass('collapse')
+    $('#overlay').fadeOut()
+  })
+
+  $('#hamburger-menu').on('off.zf.toggler', (e) => {
+    $('#login').addClass('collapse')
+    $('#overlay').fadeIn()
+  }).on('on.zf.toggler', (e) => {
+    if ($('#login').hasClass('collapse')) {
+      $('#overlay').fadeOut()
+    }
+  })
+
+  $('#login').on('off.zf.toggler', (e) => {
+    $('#hamburger-menu').addClass('collapse')
+    $('#overlay').fadeIn()
+  }).on('on.zf.toggler', (e) => {
+    if ($('#hamburger-menu').hasClass('collapse')) {
+      $('#overlay').fadeOut()
+    }
+  })
+
+  // $(context).click(function(event) {
+  //
+  //   //~TESTING LINE
+  //   //console.log(event.target.className)
+  //
+  //   var classOfThingClickedOn = event.target.className
+  //
+  //   //~TESTING LINE
+  //   //console.log($('.search-form').find('*'))
+  //
+  //   //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
+  //   var $descendantsOfSearchForm = $('.search-form').find('*')
+  //
+  //   //---creates an array of all components of the search menu dropdown---
+  //   //adds the search menu itself to the array
+  //   var componentsOfSearchMenuArray = ['search-form']
+  //
+  //   //adds the class of all the components of the search menu to the array
+  //   $descendantsOfSearchForm.each(function(index) {
+  //     //checks to make sure the class isn't already in the array
+  //     if ($.inArray(this.className, componentsOfSearchMenuArray) == -1) {
+  //       //adds the class to the array
+  //       componentsOfSearchMenuArray.push(this.className)
+  //     }
+  //   })
+  //
+  //   //~TESTING LINES
+  //   //console.log(componentsOfSearchMenuArray)
+  //   //console.log('Class:'+'"'+classOfThingClickedOn+'"')
+  //   //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
+  //
+  //   //if the search menu is open and the user clicks on something outside of the menu, close the menu
+  //   if ($(event.target).attr('id') != 'search-box' && $('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn)))) {
+  //     collapseNavSearch()
+  //   }
+  //   //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
+  //   else if (classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot') {
+  //     // $('.search-form').toggle()
+  //   }
+  // })
+
+  $(context).on('click', '#forward-zip', timelineZipForward)
+  $(context).on('click', '#forward', timelineForward)
+  $(context).on('mousedown', '#forward-zip', timelineCrawlForward)
+  $(context).on('mouseup', '#forward-zip', timelineCrawlForwardRelease)
+  $(context).on('click', '#backward-zip', timelineZipBackward)
+  $(context).on('click', '#backward', timelineBackward)
+  $(context).on('mousedown', '#backward-zip', timelineCrawlBackward)
+  $(context).on('mouseup', '#backward-zip', timelineCrawlBackwardRelease)
+  $(context).on('click', '#fi-arrow-right', timelineForward)
+  $(context).on('click', '#fi-arrow-left', timelineBackward)
+  $(context).on('click', '#fi-thumbnail-carousel-images li span', function(e) {
+    let num = $('#fi-thumbnail-carousel-images li').length
+    let delta = $(e.currentTarget).parent().index() - ((num - 1) / 2)
+    gotoTimelinePosition(delta)
+  })
+
+
+  $(context).on('keydown', function(event) {
+    var keyCode = event.which || event.keyCode;
+
+    // Handle forward arrow key (Right Arrow or Down Arrow)
+    if (keyCode === 39) {
+      // Perform the action for the forward arrow key
+      timelineForward()
+    }
+
+    // Handle back arrow key (Left Arrow or Up Arrow)
+    if (keyCode === 37) {
+      // Perform the action for the back arrow key
+      timelineBackward()
+    }
+  });
+
+  $(context).on('click', '#auto-play-image-control-button', (e) => {
+    let $btn = $('#auto-play-image-control-button')
+    $btn.toggleClass('active')
+    if ($btn.hasClass('active')) {
+      autoplayStart()
+    } else {
+      autoplayStop()
+    }
+  })
+
+  $(context).on('click', '.image-control-button--toggle', (e) => {
+    let $btn = $(e.currentTarget)
+    $('img', $btn).toggleClass('hide')
+  })
+
+}
+export const initClipboardJS = (context) => {
+  $(context).on('click', '.copy-button', (e) => {
+    let target = $(e.currentTarget).attr('data-clipboard-target')
+    let text = $(target).val()
+    ClipboardActionCopy(text)
+    $(target).select()
+    $(target)[0].setSelectionRange(0, 999999)
+  })
+}
+export const initAutocomplete = () => {
+  $('#tag-search').autocomplete({
+    source: '/tags',
+    minLength: 2,
+  })
+}
+export const initDraggableThumbnails = () => {
+  if (!$('#fi-thumbnail-carousel-images [data-origin]').length) {
+    $('#fi-thumbnail-carousel-images [data-active]').attr('data-origin', '')
+  }
+  $('#fi-thumbnail-carousel-images').draggable({
+    axis: 'x',
+    drag: (event, ui) => {
+      moveTimelineCoin(ui.position.left, true)
+    },
+    stop: (event, ui) => {
+      dropTimelineCoin(ui.position.left)
+    }
+  })
+}
+export const initPopups = (context) => {
+  if ($('#add-to-list-popup').length) {
+    htmx.trigger($('#add-to-list-popup').get(0), 'manual')
+    htmx.trigger($('#download-popup').get(0), 'manual')
+    htmx.trigger($('#share-popup').get(0), 'manual')
+    $('#app').foundation()
+  }
+}
 export const collapseNavSearch = () => {
   $('#search-box-container').removeClass('expanded')
   $('.search-form').hide()
@@ -47,7 +322,8 @@ export const expandNavSearch = () => {
   $('.carrot').css('filter', 'brightness(0) invert(1)')
   $('#search-box').addClass('placeholder-light').css('color', 'white')
 }
-export const initNavSearch = () => {
+export const initNavSearch = (context) => {
+
   $('.search-form__clear-btn').click((e) => {
     e.preventDefault();
     $('#search-box').val('')
@@ -55,6 +331,12 @@ export const initNavSearch = () => {
     $('.search-form select').val('')
   })
   $('#search-box').click(expandNavSearch)
+  $('#search-box').on('keydown', (e) => {
+    if(e.which === 13) {
+      e.preventDefault()
+      $('#search-box').closest('form').submit()
+    }
+  })
   $('#search-box-container .close-icon').click(collapseNavSearch)
 }
 
@@ -72,7 +354,7 @@ export const showToast = (message) => {
 
 export const autoplayStart = () => {
   window.autoplayTimer = setInterval(() => {
-    window.htmx.trigger('#fi-arrow-right', 'click')
+    htmx.trigger('#fi-arrow-right', 'click')
   }, 5000)
 }
 
@@ -108,6 +390,20 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
 let moreThumbnailsLoading = false
 
 const getMoreThumbnailsRight = () => {
+  $('#thumbnail-request-left').submit((e) => {
+    e.preventDefault()
+    $.ajax({
+      url: e.currentTarget.action,
+      type: 'post',
+      dataType: 'application/json',
+      data: $('#thumbnail-request-left').serialize(),
+      success: (data) => {
+        console.log(data)
+      }
+    })
+  })
+
+  return;
   let url = $('#fi-thumbnail-carousel-images li:last-child span').attr('hx-get')
   if(!moreThumbnailsLoading) {
     moreThumbnailsLoading = true
@@ -180,7 +476,7 @@ export const dropTimelineCoin = (deltaX) => {
   let quantizedX = (Math.round(deltaX / width))
   let itemNum = quantizedX
   $('#fi-thumbnail-carousel-images').css({left: itemNum * width})
-  window.htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
+  htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
 }
 
 export const refreshThumbnails = () => {
@@ -214,7 +510,7 @@ export const timelineZipBackward = () => {
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.nextAll().eq(numToZip)
     gotoTimelinePosition(numToZip * -1)
-    // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
+    // htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false
 }
@@ -225,7 +521,7 @@ export const timelineZipForward = () => {
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.prevAll().eq(numToZip)
     gotoTimelinePosition(numToZip)
-    // window.htmx.trigger($nextLi.find('a').get(0), 'manual')
+    // htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false
 }
@@ -306,10 +602,10 @@ const getNumVisibleTimelineTiles = () => {
   return Math.floor(widthOfTimeline/widthOfTile)
 }
 
-export const initGalleryNav = () => {
+export const initGalleryNav = (context) => {
   let hideGalleryTimeout = null;
   // When the mouse moves
-  document.addEventListener('mousemove', () => {
+  context.addEventListener('mousemove', () => {
     showGalleryNav()
     if(hideGalleryTimeout)
       clearTimeout(hideGalleryTimeout)

@@ -16,7 +16,7 @@
                     <input type="text" id="share-input" rows="1" value="{{ src }}{% if params %}?{{ params.urlencode }}{% endif %}" />
                 </div>
                 <div class="columns small-4">
-                    <a class="button" data-clipboard-target="#share-input">Copy</a>
+                    <a class="button copy-button" data-clipboard-target="#share-input">Copy</a>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
         <fortepan-viewer{% if expression %} constraint="{{ expression }}"{% endif %} src="{{ src }}"></fortepan-viewer>{% endfilter %}" />
                 </div>
                 <div class="columns small-2">
-                    <a class="button" data-clipboard-target="#embed-input">Copy</a>
+                    <a class="button copy-button" data-clipboard-target="#embed-input">Copy</a>
                 </div>
             </div>
         </div>

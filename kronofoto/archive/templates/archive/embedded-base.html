@@ -4,19 +4,29 @@
 {% load widgets %}
 {% load docnav %}
 {% load gtm_tags %}
-<style>@import "{% static "assets/dist/css/index.css" %}";
-* {
-    --fp-main-font: 'Montserrat', sans-serif;
-    --fp-secondary-ticker-color: #9d9d9c;
-    --fp-main-grey: #d6d6da;
-    --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
-    --fp-light-grey: #efeff1;
-    --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
-    --fp-main-blue: #c2a55e;
-}
-</style>
-<div id="kfroot" hx-headers="{{ hxheaders | escape }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+
+<head>
+
+    <link rel="stylesheet" href="{% static "assets/dist/css/index.css" %}">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+    <style>
+    * {
+        --fp-main-font: 'Montserrat', sans-serif;
+        --fp-secondary-ticker-color: #9d9d9c;
+        --fp-main-grey: #d6d6da;
+        --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
+        --fp-light-grey: #efeff1;
+        --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
+        --fp-main-blue: {{ theme.color }};
+        --fp-main-color: {{ theme.color }};
+        --fp-main-color-lighter: {{ theme.colorLighter }};
+        --fp-main-color-darker: {{ theme.colorDarker }};
+    }
+    </style>
+</head>
+
+<div id="kfroot" hx-headers="{{ hxheaders | escape }}" theme="{{ theme.name }}">
+
 <center>
 <div class="main-nav_center embed-nav">
 

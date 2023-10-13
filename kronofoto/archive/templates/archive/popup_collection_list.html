@@ -33,7 +33,7 @@
     <div class="large-6 large-offset-2 columns container--scroll">
         <form class="form" method="post" hx-post="{% url "kronofoto:popup-add-to-list" photo=view.kwargs.photo %}">
             {% csrf_token %}
-            <div class="h4">Save to a list</div>
+            <div class="h4">Save to an existing list</div>
             <label class="text-tiny">*private list</label>
             <ul class="checkboxes">
                 {{ form.as_ul }}
