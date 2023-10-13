@@ -39,7 +39,7 @@
 
         /*Credits https://code-boxx.com/image-zoom-css-javascript/, https://www.cssscript.com/image-zoom-pan-hover-detail-view/*/
         var addZoom = (target) => {
-            let container = document.getElementById(target),
+            let container = window.kfcontext.getElementById(target),
                 imgsrc = container.currentStyle || window.getComputedStyle(container, false);
                 imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
 

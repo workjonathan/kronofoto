@@ -1,9 +1,21 @@
-import HTMX from "./htmx.js"
-import {installButtons, markerDnD} from "./lib.js"
+import {
+  installButtons,
+  markerDnD,
+  HTMX,
+  initJQuery,
+  initHTMXListeners,
+  initEventHandlers,
+  initGalleryNav,
+  initFoundation,
+  initNavSearch,
+  initClipboardJS,
+  initAutocomplete, initPopups, initDraggableThumbnails, initTimeline
+} from "./lib.js"
+
 class FortepanViewer extends HTMLElement {
     constructor() {
         super()
-        const shadow = this.attachShadow({mode: "open"})
+        this.shadow = this.attachShadow({mode: "open"})
     }
     connectedCallback() {
         const constraint = this.getAttribute("constraint")
@@ -132,6 +144,38 @@ class FortepanViewer extends HTMLElement {
   src: url(https://fonts.gstatic.com/s/montserrat/v18/JTURjIg1_i6t8kCHKm45_ZpC3gnD_g.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+/* Font Awesome */
+@font-face{
+    font-family:"Font Awesome 5 Brands";
+    font-style:normal;
+    font-weight:400;
+    font-display:block;
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.eot);
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.eot?#iefix) format("embedded-opentype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.woff2) format("woff2"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.woff) format("woff"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.ttf) format("truetype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-brands-400.svg#fontawesome) format("svg")
+}
+.fab{
+    font-family:"Font Awesome 5 Brands"
+}
+@font-face{
+    font-family:"Font Awesome 5 Free";
+    font-style:normal;
+    font-weight:400;
+    font-display:block;
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.eot);
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.eot?#iefix) format("embedded-opentype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.woff2) format("woff2"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.woff) format("woff"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.ttf) format("truetype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-regular-400.svg#fontawesome) format("svg")
+}
+.fab,.far{
+    font-weight:400
+}
+@font-face{
+    font-family:"Font Awesome 5 Free";
+    font-style:normal;
+    font-weight:900;
+    font-display:block;
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.eot);
+    src:url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.eot?#iefix) format("embedded-opentype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.woff2) format("woff2"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.woff) format("woff"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.ttf) format("truetype"),url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/webfonts/fa-solid-900.svg#fontawesome) format("svg")
+}
+
 `
         body.appendChild(f)
         const mode = 'cors'
@@ -140,16 +184,29 @@ class FortepanViewer extends HTMLElement {
         fetch(req)
             .then(response => response.text())
             .then(response => {
-                this.shadowRoot.innerHTML = response
-                this.htmx = HTMX(this.shadowRoot)
-                this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
-                //this.htmx.logAll()
-                this.htmx.onLoad(installButtons(this.shadowRoot))
-                installButtons(this.shadowRoot)(this.shadowRoot.querySelector("#app"))
-                //this.htmx.onLoad(markerDnD(this.shadowRoot))
-                //window.setTimeout(() => {
-                //    markerDnD(this.shadowRoot)(this.shadowRoot.querySelector('#active-year-marker'))
-                //}, 500)
+              this.document = this.shadow.querySelector("#app")
+              this.shadow.innerHTML = response
+              window.kfcontext = this.shadow
+
+              let css = this.shadow.querySelector("link")
+              if(css) {
+                css.onload = () => {
+
+                  initJQuery(this.shadow.querySelector('#kfroot'))
+                  let htmx = initHTMXListeners(this.shadow, this.shadow.querySelector("#kfroot"))
+                  window.kfcontext.htmx = htmx
+                  initFoundation(this.shadow.querySelector('#kfroot'))
+                  initGalleryNav(this.shadow)
+                  initClipboardJS(this.shadow.querySelector("#app"))
+                  initEventHandlers(this.shadow.querySelector("#app"))
+                  installButtons(this.shadow)(this.shadow.querySelector("#app"))
+                  initPopups(this.shadow)
+                  initDraggableThumbnails()
+
+                }
+              }
+
+
             })
     }
 }

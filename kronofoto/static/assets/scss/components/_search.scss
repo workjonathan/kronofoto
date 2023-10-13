@@ -1,5 +1,5 @@
 .ui-autocomplete {
-  z-index: 9999;
+  z-index: 9999 !important;
 }
 #search-box-container {
   @include breakpoint(small up) {
