@@ -47,14 +47,14 @@
             <script type="text/javascript">
               var addZoom = (target) => {
 
-                let container = document.getElementById(target),
+                let container = window.kfcontext.getElementById(target),
                     imgsrc = container.currentStyle || window.getComputedStyle(container, false);
                 imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
 
                 let img = new Image();
                 let zoomOpened = false
                 let zoomed = false
-                let galleryElem = document.getElementsByClassName('gallery')[0]
+                let galleryElem = window.kfcontext.querySelector('.gallery')[0]
                 img.src = imgsrc;
                 img.onload = () => {
 
@@ -98,7 +98,7 @@
 
                       Object.assign(container.style, {
                         backgroundPosition: xPercent + " " + yPercent,
-                        backgroundSize: ($(window).width() * 1.5) + "px"
+                        backgroundSize: (window.innerWidth * 1.5) + "px"
                       });
                     }
                   };
@@ -197,11 +197,17 @@
 
     <div class="car-left-space"></div>
 
+    <form id="thumbnail-request-left" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
+    {% carousel_form %}
+    </form>
+
+    <form id="thumbnail-request-right" hx-trigger="kronofoto:loadThumbnails" hx-target="#fi-thumbnail-carousel-images" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
+    {% carousel_form %}
+    </form>
+
 
     <nav class="fi-timeline" id="fi-timeline">
-    <form id="thumbnail-request" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
-    {% block thumbnails %}
-        {% carousel_form %}
+        {% block thumbnails %}
 
         <div class="fi-thumbnail-carousel">
 
@@ -232,7 +238,7 @@
 
 
 
-    <form hx-trigger="timeline:yearSelected" hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+    <form hx-trigger="timeline:yearSelected" hx-swap="none" hx-headers='{"gallery": "true"}' hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
         {% timeline %}
     </form>
 
