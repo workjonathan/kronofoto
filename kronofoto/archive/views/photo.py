@@ -112,8 +112,10 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
 class TimelineSvg(TemplateView):
     template_name = "archive/timeline.svg"
-    def get_context_data(self, start, end, short_name=None, width=400):
+    def get_context_data(self, start, end, short_name=None, width=400, category=None):
         url_kwargs = {}
+        if category:
+            url_kwargs['category'] = category
         if short_name:
             url_kwargs['short_name'] = short_name
         context = {

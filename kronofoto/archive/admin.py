@@ -166,6 +166,10 @@ class CategoryInline(admin.TabularInline):
 class ArchiveAdmin(admin.ModelAdmin):
     inlines = (CategoryInline, AgreementInline)
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']

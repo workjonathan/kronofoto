@@ -19,6 +19,8 @@ class Term(Collectible, models.Model):
 
     class Meta:
         ordering = ['term']
+        verbose_name = "Subcategory"
+        verbose_name_plural = "Subcategories"
 
     @staticmethod
     def index():

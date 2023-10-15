@@ -9,6 +9,9 @@ class Category(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        verbose_name_plural = "Categories"
+
 class ValidCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
     archive = models.ForeignKey("Archive", on_delete=models.CASCADE, null=False)

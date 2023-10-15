@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import BadRequest
 from django.templatetags.static import static
 from django.template.loader import select_template
+from django.shortcuts import get_object_or_404
 import random
 import json
 from ..reverse import set_request
@@ -11,6 +12,7 @@ from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
 from ..models import Photo
 from ..models.archive import Archive
+from ..models import Category
 from functools import reduce
 import operator
 from dataclasses import dataclass, replace
@@ -65,6 +67,7 @@ class Theme:
 THEME = Theme.generate_themes()
 
 class BaseTemplateMixin:
+    category = None
     def set_request(self, request):
         # By default, the request should not be globally available.
         set_request(None)
@@ -83,6 +86,10 @@ class BaseTemplateMixin:
         self.params = self.request.GET.copy()
         self.form = SearchForm(self.request.GET)
         self.url_kwargs = {'short_name': self.kwargs['short_name']} if 'short_name' in self.kwargs else {}
+        if 'category' in self.kwargs:
+            self.url_kwargs['category'] = self.kwargs['category']
+        if self.category:
+            self.url_kwargs['category'] = self.category
         self.expr = None
         if self.form.is_valid():
             try:
@@ -172,8 +179,12 @@ class BasePhotoTemplateMixin(BaseTemplateMixin):
         if self.form.is_valid():
             expr = self.final_expr
             qs = self.model.objects.filter(is_published=True, year__isnull=False)
+            print(self.url_kwargs)
             if 'short_name' in self.kwargs:
                 qs = qs.filter(archive__slug=self.kwargs['short_name'])
+            if 'category' in self.url_kwargs:
+                category = get_object_or_404(Category.objects.all(), slug=self.url_kwargs['category'])
+                qs = qs.filter(category=category)
             if expr is None:
                 return qs.order_by('year', 'id')
 
