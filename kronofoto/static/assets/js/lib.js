@@ -45,11 +45,11 @@ export const initHTMXListeners = (context, root) => {
       window.kfcontext.onceInitHTMXListeners = true
       initTimeline(context)
     }
+    initPopups(e)
 
     // Init gallery thumbnails
     if ($('#fi-preload-zone li').length) {
 
-      initPopups(context)
       initDraggableThumbnails()
 
       let html = $('#fi-preload-zone').html()
@@ -300,9 +300,6 @@ export const initDraggableThumbnails = () => {
 }
 export const initPopups = (context) => {
   if ($('#add-to-list-popup').length) {
-    htmx.trigger($('#add-to-list-popup').get(0), 'manual')
-    htmx.trigger($('#download-popup').get(0), 'manual')
-    htmx.trigger($('#share-popup').get(0), 'manual')
     $('#app').foundation()
   }
 }
