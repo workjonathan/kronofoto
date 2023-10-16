@@ -310,7 +310,7 @@ class Photo(PhotoBase):
                             dim = (dim[0], round(h/w*dim[0]))
                         elif dim[1] and not dim[0]:
                             dim = (round(w/h*dim[1]), dim[1])
-                        img = img.resize(dim, Image.ANTIALIAS)
+                        img = img.resize(dim, Image.LANCZOS)
                         results.append(img)
                 thumb, h700 = results
                 fname = 'thumb/{}.jpg'.format(self.uuid)
