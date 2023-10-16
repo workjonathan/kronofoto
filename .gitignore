@@ -2,6 +2,7 @@ kronofoto/testphotos/
 kronofoto/archive/templates/archive/give2.html
 package-lock.json
 node_modules
+*.swp
 
 
 # Byte-compiled / optimized / DLL files
