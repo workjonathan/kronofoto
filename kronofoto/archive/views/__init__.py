@@ -1,6 +1,6 @@
 from .frontpage import RandomRedirect
 from .basetemplate import BaseTemplateMixin
-from .addtag import AddTagView
+from .addtag import tags_view
 from .keyframes import Keyframes
 from .paginator import TimelinePaginator, EMPTY_PNG, FAKE_PHOTO, FakeTimelinePage
 from .photo import PhotoView

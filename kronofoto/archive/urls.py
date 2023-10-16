@@ -10,6 +10,7 @@ from archive.views.agreement import AgreementView
 from archive.views.submission import SubmissionFormView, KronofotoTemplateView
 from archive.views.tagsearch import ContributorSearchView
 from archive.views.donor import ContributorCreateView
+from archive.views import tags_view
 from django.conf import settings
 from typing import Sequence, Union, List
 
@@ -68,7 +69,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('mainstreets/<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
     path('mainstreet360/<int:pk>/', PhotoSphereView.as_view()),
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
-    path('photo/<accession:photo>/tag-members/edit', views.AddTagView.as_view(), name='addtag'),
+    path('photos/<accession:photo>/tag-members', tags_view, name='tags-view'),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
     path('photos', views.GridView.as_view(), name='gridview'),

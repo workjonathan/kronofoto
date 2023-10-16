@@ -129,7 +129,7 @@ export const initEventHandlers = (context) => {
     if (!$('.form--add-tag input').is(":focus")) {
         let $form = $('.form--add-tag input').closest('form')
         $form.removeClass('expanded')
-        $('.form--add-tag input').val('')
+        setTimeout(() => $('.form--add-tag input').val(''), 0)
     }
   })
 
