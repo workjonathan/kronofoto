@@ -46,6 +46,9 @@ export const initHTMXListeners = (context, root) => {
       initTimeline(context)
     }
     initPopups(e)
+    if (e.querySelectorAll('.sharethis-inline-share-buttons').length) {
+        st.initialize()
+    }
 
     // Init gallery thumbnails
     if ($('#fi-preload-zone li').length) {
