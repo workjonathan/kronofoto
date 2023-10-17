@@ -46,7 +46,7 @@ export const initHTMXListeners = (context, root) => {
       initTimeline(context)
     }
     initPopups(e)
-    if (e.querySelectorAll('.sharethis-inline-share-buttons').length) {
+    if (window.st && e.querySelectorAll('.sharethis-inline-share-buttons').length) {
         st.initialize()
     }
 
