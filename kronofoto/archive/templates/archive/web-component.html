@@ -12,7 +12,7 @@
             </div>
             <div class="row collapse">
                 <div class="columns small-8">
-                    <input type="text" id="share-input" rows="1" value="{{ src }}{% if params %}?{{ params.urlencode }}{% endif %}" />
+                    <input type="text" id="share-input" rows="1" value="{{ this_photo }}{% if params %}?{{ params.urlencode }}{% endif %}" />
                 </div>
                 <div class="columns small-4">
                     <a class="button copy-button" data-clipboard-target="#share-input">Copy</a>
