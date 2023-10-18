@@ -43,8 +43,6 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
             context['params'].pop('page')
         return context
 
-
-        return context
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if 'page' in self.request.GET:
