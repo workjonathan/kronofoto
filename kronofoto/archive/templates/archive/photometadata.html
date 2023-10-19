@@ -4,13 +4,19 @@
 {% load krono_urls %}
 
 <div class="row">
-    <div class="columns large-4">
+    <div class="columns large-4" hx-target="#app">
         <div>
-            <h1><a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place.get_query }}">{{ photo.location }}</a></h1>
+            <h1><a 
+                href="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place.get_query }}"
+                hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place.get_query }}"
+            >{{ photo.location }}</a></h1>
         </div>
 
         <div>
-            <h2><a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=year:{{ photo.year }}">{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>
+            <h2><a 
+                href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=year:{{ photo.year }}"
+                hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}?query=year:{{ photo.year }}"
+            >{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>
         </div>
 
         <div>
@@ -38,17 +44,22 @@
                 {% with tags=photo|all_tags_with:request.user %}
                     {% if tags|length > 0 %}
                     <ul>
-                        {% for tag in tags|dictsort:"label_lower" %}
-                        <li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag.label }}</a></li>
-                        {% endfor %}
+                        {% include "archive/snippets/tags.html" %}
                     </ul>
                     {% endif %}
                 {% endwith %}
                 <p>
-                    <form class="form form--add-tag" id="add-tag-form">
+                    <form 
+                        class="form form--add-tag" 
+                        id="add-tag-form" 
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
+                        hx-target="previous ul"
+                        hx-push-url="false"
+                        hx-put="{% krono_url "kronofoto:tags-view" url_kwargs photo=photo.id %}" 
+                    >
                         <div class="wrapper">
                             <a class="link--icon"><i class="plus-icon-circle"></i><span>Add new tag</span></a>
-                            <input type="text" />
+                            <input type="text" name="tag" />
                             <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
                         </div>
 {#                        <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a> #}

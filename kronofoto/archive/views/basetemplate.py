@@ -1,7 +1,7 @@
 from django.core.cache import cache
-from django.http import QueryDict
+from django.http import QueryDict, Http404
 from django.conf import settings
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import BadRequest
 from django.templatetags.static import static
 from django.template.loader import select_template
 import random
@@ -10,6 +10,7 @@ from ..reverse import set_request, reverse
 from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
 from ..models import Photo
+from ..models.archive import Archive
 from functools import reduce
 import operator
 from dataclasses import dataclass, replace
@@ -123,7 +124,7 @@ class BaseTemplateMixin(BasePermissiveCORSMixin):
             try:
                 return Parser.tokenize(constraint).parse().shakeout()
             except:
-                raise SuspiciousOperation("invalid constraint")
+                raise BadRequest("invalid constraint")
         return None
 
     def get_final_expr(self, *exprs):
@@ -185,6 +186,13 @@ class BaseTemplateMixin(BasePermissiveCORSMixin):
         context['hxheaders'] = json.dumps(hxheaders)
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        if 'short_name' in self.kwargs and not Archive.objects.filter(slug=self.kwargs['short_name']).exists():
+            raise Http404('archive not found')
+        response = super().dispatch(request, *args, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
+        return response
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):
     def get_queryset(self):
@@ -202,5 +210,4 @@ class BasePhotoTemplateMixin(BaseTemplateMixin):
                 qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
             return qs
         else:
-            raise SuspiciousOperation('invalid search request')
-
+            raise BadRequest('invalid search request')

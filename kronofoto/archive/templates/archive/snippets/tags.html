@@ -1,0 +1,5 @@
+{% load krono_urls %}
+
+{% for tag in tags|dictsort:"label_lower" %}
+<li><a href="{% object_url tag url_kwargs %}" hx-get="{% object_url tag url_kwargs %}">{{ tag.label }}</a></li>
+{% endfor %}

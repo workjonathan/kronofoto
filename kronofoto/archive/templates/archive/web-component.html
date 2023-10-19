@@ -1,7 +1,6 @@
 {% load static %}
 {% load krono_urls %}
 
-<script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=647a29d940353a0019caf1f7&product=inline-share-buttons&source=platform" async="async"></script>
 
 <div class="row">
     <div class="columns large-5">
@@ -13,7 +12,7 @@
             </div>
             <div class="row collapse">
                 <div class="columns small-8">
-                    <input type="text" id="share-input" rows="1" value="{{ src }}{% if params %}?{{ params.urlencode }}{% endif %}" />
+                    <input type="text" id="share-input" rows="1" value="{{ this_photo }}{% if params %}?{{ params.urlencode }}{% endif %}" />
                 </div>
                 <div class="columns small-4">
                     <a class="button copy-button" data-clipboard-target="#share-input">Copy</a>
@@ -24,7 +23,7 @@
     <div class="columns large-7">
         <div class="form">
             <h1 class="h1">Embed</h1>
-            <form class="form" hx-swap="outerHTML" id="web-component-form" hx-select-oob="#share-input,#share-name" hx-target="this" hx-select="#web-component-form" hx-get="{% krono_url "kronofoto:popup-web-component" view.kwargs %}?{{ params.urlencode }}" hx-push-url="false" hx-trigger="change">
+            <form class="form" id="web-component-form" hx-target="#embed-input" hx-swap="outerHTML" hx-select="#embed-input" hx-get="{% krono_url "kronofoto:popup-web-component" view.kwargs %}?{{ params.urlencode }}" hx-push-url="false" hx-trigger="change">
             <p>Embedding keeps the current filters such as a search or list.</p>
 
             {% for field in form %}

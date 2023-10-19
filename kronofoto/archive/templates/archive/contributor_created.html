@@ -1,0 +1,15 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block viewbuttons %}
+{% include "archive/view-buttons.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="container-center">
+    The contributor has been added.
+    <p><a href="{% url 'kronofoto:contributor-create' short_name=view.kwargs.short_name %}">Create another</a></p>
+    <p><a href="{% url 'kronofoto:submission-create' short_name=view.kwargs.short_name %}">Submit images</a></p>
+    <p><a href="{% url 'kronofoto:random-image' short_name=view.kwargs.short_name %}">Return to archive</a></p>
+</main>
+{% endblock %}

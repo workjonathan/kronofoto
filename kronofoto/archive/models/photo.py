@@ -102,7 +102,10 @@ class PhotoBase(models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    photographer = models.CharField(max_length=128, blank=True)
+    photographer = models.ForeignKey(
+        Donor, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_photographed",
+
+    )
     address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
     county = models.CharField(max_length=128, blank=True, db_index=True)
@@ -113,7 +116,7 @@ class PhotoBase(models.Model):
     caption = models.TextField(blank=True, verbose_name="comment")
 
     scanner = models.ForeignKey(
-        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned"
+        Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned",
     )
 
     def get_place(self, with_address=False):
@@ -338,7 +341,7 @@ class Photo(PhotoBase):
                             dim = (dim[0], round(h/w*dim[0]))
                         elif dim[1] and not dim[0]:
                             dim = (round(w/h*dim[1]), dim[1])
-                        img = img.resize(dim, Image.ANTIALIAS)
+                        img = img.resize(dim, Image.LANCZOS)
                         results.append(img)
                 thumb, h700 = results
                 fname = 'thumb/{}.jpg'.format(self.uuid)

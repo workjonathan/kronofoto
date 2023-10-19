@@ -1,4 +1,5 @@
 {% extends "archive/base.html" %}
+{% load krono_urls %}
 
 {% block content %}
 <section class="user-page-content">
@@ -12,7 +13,7 @@
         </div>
         
         {% if profile_user == request.user %}
-        <span class="logout-btn"><a href="{% url "logout"%}?next={{request.get_full_path | urlencode}}">Logout</a></span> 
+        <span class="logout-btn"><a href="{% url "logout"%}?next={% krono_url "kronofoto:random-image" %}">Logout</a></span> 
         {% endif %}
     </div>
 

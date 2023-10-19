@@ -24,6 +24,7 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
         context['site'] = Site.objects.get_current().domain
         kwargs = self.kwargs.copy()
         kwargs.pop('photo')
+        this_photo = reverse('kronofoto:photoview', kwargs=self.kwargs)
         choices = dict(WebComponentForm.CHOICES)
         if not form.is_valid() or form.cleaned_data['page'] == 'random':
             name = choices['random']
@@ -33,16 +34,15 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
             src = reverse('kronofoto:gridview', kwargs=kwargs)
         else:
             name = choices[form.cleaned_data['page']]
-            src = reverse('kronofoto:photoview', kwargs=self.kwargs)
+            src = this_photo
         context['src'] = src
         context['name'] = name
         context['params'] = self.request.GET.copy()
+        context['this_photo'] = this_photo
         if 'page' in context['params']:
             context['params'].pop('page')
         return context
 
-
-        return context
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if 'page' in self.request.GET:

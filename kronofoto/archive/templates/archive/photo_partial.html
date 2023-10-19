@@ -42,26 +42,11 @@
     {% endblock %}
 </div>
 
-<div hx-swap-oob="innerHTML:#add-to-list-popup .photo-menu-popup__wrapper">
-    Loading...
-    <script>
-      window.kfcontext.getElementById('add-to-list-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}');
-      window.kfcontext.htmx.process(window.kfcontext.querySelector('#add-to-list-popup'))
-    </script>
-</div>
+{% block add_to_list %}
+{% endblock %}
 
-<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
-    Loading...
-    <script>
-      window.kfcontext.getElementById('download-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-download" photo=photo.id %}');
-      window.kfcontext.htmx.process(window.kfcontext.querySelector('#download-popup'))
-    </script>
-</div>
+{% block download_popup %}
+{% endblock %}
 
-<div hx-swap-oob="innerHTML:#share-popup .photo-menu-popup__wrapper">
-    Loading...
-    <script>
-      window.kfcontext.getElementById('share-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}');
-      window.kfcontext.htmx.process(window.kfcontext.querySelector('#share-popup'))
-    </script>
-</div>
+{% block share_popup %}
+{% endblock %}

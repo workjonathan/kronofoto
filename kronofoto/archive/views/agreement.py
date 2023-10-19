@@ -45,6 +45,7 @@ class AnonymousAgreementCheck:
 
 class UserAgreementCheck(RedirectView):
     redirect_field_name = 'next'
+    extra_context = {}
 
     def get_redirect_url(self, *args, **kwargs):
         url = super().get_redirect_url(*args, **kwargs)
