@@ -154,7 +154,7 @@
 
         <div class="gallery__popups">
 
-            <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
+            <div id="metadata-popup" data-photo-id="{{ photo.accession_number }}" class="gallery__popup" data-toggler=".expanded">
                 {% block metadata %}
                 {% if request.user|has_view_or_change_permission:photo %}
                 <a href="{{ object.get_edit_url }}" class="photo-menu-popup__edit-btn"></a>
@@ -165,27 +165,27 @@
                 </div>
                 {% endblock %}
             </div>
-            <div id="add-to-list-popup" class="gallery__popup" data-toggler=".expanded">
+            <div id="add-to-list-popup" data-photo-id="{{ photo.accession_number }}" class="gallery__popup" data-toggler=".expanded">
                 <a href="#" class="photo-menu-popup__close-btn" data-toggle="add-to-list-popup" data-toggler=".expanded"></a>
                 {% block add_to_list %}
-                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#add-to-list-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper no-scroll" hx-swap="innerHTML" hx-target="this" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+                <div class="photo-menu-popup__wrapper no-scroll" hx-swap="innerHTML" hx-target="this" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="manual">
                     Loading...
                 </div>
                 {% endblock add_to_list %}
             </div>
-            <div id="share-popup" class="gallery__popup" data-toggler=".expanded">
+            <div id="share-popup" data-photo-id="{{ photo.accession_number }}" class="gallery__popup" data-toggler=".expanded">
                 <a href="#" class="photo-menu-popup__close-btn" data-toggle="share-popup" data-toggler=".expanded"></a>
                 {% block share_popup %}
-                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#share-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="intersect">
+                <div class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="manual">
                     Loading...
                 </div>
                 {% endblock share_popup %}
             </div>
     {% block gallery %}
-            <div id="download-popup" class="gallery__popup" data-toggler=".expanded" >
+            <div id="download-popup" data-photo-id="{{ photo.accession_number }}" class="gallery__popup" data-toggler=".expanded" >
                 <a href="#" class="photo-menu-popup__close-btn" data-toggle="download-popup" data-toggler=".expanded"></a>
                 {% block download_popup %}
-                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#download-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect">
+                <div class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="manual">
                     Loading...
                 </div>
                 {% endblock download_popup %}
@@ -197,14 +197,9 @@
 
     <div class="car-left-space"></div>
 
-    <form id="thumbnail-request-left" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
+    <form id="thumbnail-request" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
     {% carousel_form %}
     </form>
-
-    <form id="thumbnail-request-right" hx-trigger="kronofoto:loadThumbnails" hx-target="#fi-thumbnail-carousel-images" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
-    {% carousel_form %}
-    </form>
-
 
     <nav class="fi-timeline" id="fi-timeline">
         {% block thumbnails %}
@@ -238,7 +233,7 @@
 
 
 
-    <form hx-trigger="timeline:yearSelected" hx-swap="none" hx-headers='{"gallery": "true"}' hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+    <form hx-trigger="timeline:yearSelected" hx-swap="none" hx-headers='{"gallery": "true", "yearupdated": "true"}' hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
         {% timeline %}
     </form>
 

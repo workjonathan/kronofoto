@@ -1,0 +1,87 @@
+{% load static %}
+{% load krono_urls %}
+
+<div hx-swap-oob="innerHTML:#navigation-menu">
+  {% include "archive/navigation-menu.html" %}
+</div>
+
+<div hx-swap-oob="innerHTML:[data-timeline-target=sliderYearLabel]">
+    {{ object.year }}
+</div>
+
+<div hx-swap-oob="delete:#timeline-container"></div>
+
+<div hx-swap-oob="delete:#grid-icon"></div>
+
+<div hx-swap-oob="innerHTML:.main-nav_center">
+    <div>
+        <a class="fpi-fpilink" href="{{ timeline_url }}"><img  src="{% static "assets/images/01-fi-logo.svg" %}" alt="Fortepan Iowa icon" title="Fortepan Iowa"></a>
+    </div>
+
+    <div class="timeline-container {{timelineclass}}" id="timeline-container">
+        {% if photo %}
+        <a class="fi-timeline-a" href="{% object_url photo url_kwargs get_params %}" hx-get="{% object_url photo url_kwargs get_params %}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+        {% else %}
+        <a class="fi-timeline-a" href="#" hx-get="#" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+        {% endif %}
+    </div>
+
+    <div class="grid-icon {{gridclass}}" id="grid-icon">
+        {% if photo %}
+        <a class="grid-a" href="{% grid_url photo url_kwargs get_params %}" hx-get="{% grid_url photo url_kwargs get_params %}" hx-target="#app">
+            <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
+        </a>
+        {% else %}
+        <a class="grid-a" href="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-target="#app">
+        <img class="grid-icon_reg" src="{% static "assets/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<ul hx-swap-oob="innerHTML:#fi-preload-zone">
+    {% include "archive/thumbnails.html" %}
+</ul>
+
+<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
+    {% include "archive/popup-download.html" %}
+</div>
+
+<div hx-swap-oob="innerHTML:#metadata-popup">
+    {% block metadata %}
+    {% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:#fi-image-preload">
+{% block image %}
+{% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:#zoom-popup">
+    {% block zoom_popup %}
+    {% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:#add-to-list-popup .photo-menu-popup__wrapper">
+    Loading
+    <script>
+      // window.kfcontext.getElementById('add-to-list-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}');
+      // window.kfcontext.htmx.process(window.kfcontext.querySelector('#add-to-list-popup'))
+    </script>
+</div>
+
+<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
+    Loading
+    <script>
+      // window.kfcontext.getElementById('download-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-download" photo=photo.id %}');
+      // window.kfcontext.htmx.process(window.kfcontext.querySelector('#download-popup'))
+    </script>
+</div>
+
+<div hx-swap-oob="innerHTML:#share-popup .photo-menu-popup__wrapper">
+    Loading
+    <script>
+      // window.kfcontext.getElementById('share-popup').setAttribute('hx-get', '{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}');
+      // window.kfcontext.htmx.process(window.kfcontext.querySelector('#share-popup'))
+    </script>
+</div>

@@ -1,16 +1,4 @@
-import {
-  installButtons,
-  markerDnD,
-  HTMX,
-  initJQuery,
-  initHTMXListeners,
-  initEventHandlers,
-  initGalleryNav,
-  initFoundation,
-  initNavSearch,
-  initClipboardJS,
-  initAutocomplete, initPopups, initDraggableThumbnails, initTimeline
-} from "./lib.js"
+import { FortepanInstance } from "./lib.js"
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -184,28 +172,27 @@ class FortepanViewer extends HTMLElement {
         fetch(req)
             .then(response => response.text())
             .then(response => {
-              this.document = this.shadow.querySelector("#app")
+
+              // window.kfcontext = this.shadow
               this.shadow.innerHTML = response
-              window.kfcontext = this.shadow
+
+              let fi = new FortepanInstance(this.shadow)
+              let htmx = fi.initHTMXListeners(this.shadow, this.shadow.querySelector("#kfroot"))
 
               let css = this.shadow.querySelector("link")
-              if(css) {
-                css.onload = () => {
-
-                  initJQuery(this.shadow.querySelector('#kfroot'))
-                  let htmx = initHTMXListeners(this.shadow, this.shadow.querySelector("#kfroot"))
-                  window.kfcontext.htmx = htmx
-                  initFoundation(this.shadow.querySelector('#kfroot'))
-                  initGalleryNav(this.shadow)
-                  initClipboardJS(this.shadow.querySelector("#app"))
-                  initEventHandlers(this.shadow.querySelector("#app"))
-                  installButtons(this.shadow)(this.shadow.querySelector("#app"))
-                  initPopups(this.shadow)
-                  initDraggableThumbnails()
-
-                }
+              css.onload = () => {
+                init(this.shadow, {'embedded': true})
+                fi.stylesReady = true
+                fi.tryInitTimline()
+                fi.initFoundation(this.shadow.querySelector('#kfroot'))
+                fi.initGalleryNav(this.shadow)
+                fi.initClipboardJS(this.shadow.querySelector("#app"))
+                fi.initEventHandlers(this.shadow.querySelector("#app"))
+                fi.installButtons(this.shadow)(this.shadow.querySelector("#app"))
+                fi.initPopups()
+                fi.initShareThis()
+                fi.initDraggableThumbnails()
               }
-
 
             })
     }

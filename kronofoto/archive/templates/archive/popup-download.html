@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="row">
+<div class="row" data-photo-id="{{ photo.accession_number }}">
     <div class="columns large-3">
         <h1 class="h1">ID#: {{ object.accession_number }}</h1>
         <a class="button" href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>

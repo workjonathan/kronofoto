@@ -164,7 +164,10 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
         if self.request.headers.get('Hx-Target', None) == 'fi-preload-zone':
             return {'base_template': 'archive/photo_partial_thumbnails.html'}
         elif self.request.headers.get('gallery', None) == 'true':
-            return {'base_template': 'archive/photo_partial.html'}
+            if self.request.headers.get('Embedded', 'false') != 'false':
+                return {'base_template': 'archive/embedded_partial.html'}
+            else:
+                return {'base_template': 'archive/photo_partial.html', 'yearupdated': self.request.headers.get('Yearupdated', 'false') != 'false'}
         else:
             return super().get_hx_context()
 

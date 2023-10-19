@@ -1,6 +1,6 @@
 {% load krono_urls %}
 <div hx-swap-oob="innerHTML:#navigation-menu">
-  {% include "archive/navigation-menu.html" %}
+    {% include "archive/navigation-menu.html" %}
 </div>
 
 <div hx-swap-oob="innerHTML:[data-timeline-target=sliderYearLabel]">
@@ -16,15 +16,7 @@
     {% include "archive/search-box.html" %}
     {% endblock %}
     {% block viewbuttons %}
-{% endblock %}
-</div>
-
-<ul hx-swap-oob="innerHTML:#fi-preload-zone">
-    {% include "archive/thumbnails.html" %}
-</ul>
-
-<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
-    {% include "archive/popup-download.html" %}
+    {% endblock %}
 </div>
 
 <div hx-swap-oob="innerHTML:#metadata-popup">
@@ -32,9 +24,16 @@
     {% endblock %}
 </div>
 
+{% if yearupdated %}
+<div hx-swap-oob="innerHTML:#fi-timeline">
+    {% block thumbnails %}
+    {% endblock %}
+</div>
+{% endif %}
+
 <div hx-swap-oob="innerHTML:#fi-image-preload">
-{% block image %}
-{% endblock %}
+    {% block image %}
+    {% endblock %}
 </div>
 
 <div hx-swap-oob="innerHTML:#zoom-popup">
@@ -42,11 +41,14 @@
     {% endblock %}
 </div>
 
-{% block add_to_list %}
-{% endblock %}
+<div hx-swap-oob="outerHTML:#download-popup .photo-menu-popup__wrapper" class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="manual">
+Loading...
+</div>
 
-{% block download_popup %}
-{% endblock %}
+<div hx-swap-oob="outerHTML:#share-popup .photo-menu-popup__wrapper" class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="manual">
+Loading...
+</div>
 
-{% block share_popup %}
-{% endblock %}
+<div hx-swap-oob="outerHTML:#add-to-list-popup .photo-menu-popup__wrapper" class="photo-menu-popup__wrapper no-scroll" hx-swap="innerHTML" hx-target="this" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="manual">
+Loading...
+</div>

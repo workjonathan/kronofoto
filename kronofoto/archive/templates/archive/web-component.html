@@ -1,8 +1,7 @@
 {% load static %}
-{% load krono_urls %}
+{% load krono_urls %}{% load static %}
 
-
-<div class="row">
+<div class="row" data-photo-id="{{ photo.accession_number }}">
     <div class="columns large-5">
         <div class="form">
             <h1 class="h1">Share</h1>
@@ -45,5 +44,7 @@
             </div>
         </div>
     </div>
-</div>
 
+    <script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=647a29d940353a0019caf1f7&product=inline-share-buttons&source=platform" async="async"></script>
+
+</div>

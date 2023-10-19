@@ -1,9 +1,4 @@
 import { setAppState, removeAppState, getURLParams, trigger } from "./utils"
-// import photoManager from "../../js/photo-manager"
-//import HTMX from "./htmx.js"
-//const htmx = HTMX(document)
-import $ from "jquery"
-// import "jquery-ui-dist"
 
 export default class {
     get targets() {
@@ -24,8 +19,8 @@ export default class {
         ]
     }
 
-    connect(element, context) {
-
+    connect(element, context, jQuery) {
+        this.jQuery = jQuery
         this.context = context
         this.range = 0
 
@@ -51,25 +46,25 @@ export default class {
 
     initEventHandlers() {
 
-        $(this.yearStartTarget, this.context).on('click', (e) => { this.jumpToStart.call(this, e) })
-        $(this.yearEndTarget, this.context).on('click', (e) => { this.jumpToEnd.call(this, e) })
+        this.jQuery(this.yearStartTarget, this.context).on('click', (e) => { this.jumpToStart.call(this, e) })
+        this.jQuery(this.yearEndTarget, this.context).on('click', (e) => { this.jumpToEnd.call(this, e) })
 
-        $(this.sliderTarget, this.context).on('mouseenter', (e) => { this.onTimelineOver.call(this, e) })
-        $('#app', this.context).on('mousemove', (e) => { this.onTimelineMove.call(this, e) })
-        $(this.sliderTarget, this.context).on('mouseleave',  (e) => { this.onTimelineOut.call(this, e) })
-        $(this.sliderTarget, this.context).on('click', (e) => { this.seek.call(this, e) })
+        this.jQuery(this.sliderTarget, this.context).on('mouseenter', (e) => { this.onTimelineOver.call(this, e) })
+        this.jQuery('#app', this.context).on('mousemove', (e) => { this.onTimelineMove.call(this, e) })
+        this.jQuery(this.sliderTarget, this.context).on('mouseleave',  (e) => { this.onTimelineOut.call(this, e) })
+        this.jQuery(this.sliderTarget, this.context).on('click', (e) => { this.seek.call(this, e) })
 
-        $(this.sliderKnobTarget, this.context).on('touchstart mousedown', (e) => { this.sliderStartDrag.call(this, e) })
-        $('#app', this.context).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
-        $('#app', this.context).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
+        this.jQuery(this.sliderKnobTarget, this.context).on('touchstart mousedown', (e) => { this.sliderStartDrag.call(this, e) })
+        this.jQuery('#app', this.context).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
+        this.jQuery('#app', this.context).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
 
     }
 
     initTargets() {
         this.targets.forEach((target, index) => {
             let targets = [];
-            $('[data-timeline-target]').each(function(i,e) {
-                let items = $(e).attr('data-timeline-target');
+            this.jQuery('[data-timeline-target]').each((i,e) => {
+                let items = this.jQuery(e).attr('data-timeline-target');
                 items = items.split(' ')
                 for(let i in items) {
                     let item = items[i]
@@ -133,16 +128,12 @@ export default class {
         this.sliderYearLabelTarget.textContent = this.year
         this.formYearTarget.value = this.year
 
-        // console.log(this.yearOriginal)
-        // console.log(this.year)
-        // console.log(this.yearStart)
-        // console.log(this.yearEnd)
         let numberOfThumbnailsPerYear= 1000
         let yearDiff = this.year - this.yearOriginal
         let yearDiffX = yearDiff * numberOfThumbnailsPerYear
         yearDiffX = this.yearOriginalX - yearDiffX
         yearDiffX = Math.floor(yearDiffX / 95) * 95
-        $('#fi-thumbnail-carousel-images').stop().animate(
+        this.jQuery('#fi-thumbnail-carousel-images').stop().animate(
             {left: yearDiffX},
             800,
             'swing'
@@ -183,7 +174,6 @@ export default class {
             // setting the ruler indicators (for every 10 years)
 
             const yearsCount = this.yearEnd - this.yearStart
-
             // creating the ruler indicators if they're not created yet
             while (this.rulerIndicatorTargets.length <= Math.floor(yearsCount / 10)) {
                 // clone template
@@ -370,7 +360,6 @@ export default class {
     calcIndicatorYear() {
         const knobBounds = this.sliderYearTarget.getBoundingClientRect()
         const targetX = this.yearIndicatorTarget.offsetLeft - Math.floor(knobBounds.width / 2)
-
         return Math.max(
             this.yearStart,
             Math.min(this.yearEnd, this.yearStart + Math.round((targetX / this.range) * (this.yearEnd - this.yearStart)))

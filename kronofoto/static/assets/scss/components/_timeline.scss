@@ -50,6 +50,10 @@ $grey: grey;
     &.dragging { // don't animate left when dragging
       transition: filter ease-in-out 50ms;
     }
+    &.block-transition {
+      display: none;
+      transition: none !important;
+    }
     li {
       --carousel-image-padding: 10px;
       padding: 0 var(--carousel-image-padding);
