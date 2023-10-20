@@ -38,22 +38,25 @@ export const initJQuery = (context) => {
 export const initHTMXListeners = (context, root) => {
 
   htmx = HTMX(context)
-  htmx.process(root)
 
   htmx.onLoad((e) => {
-    if(typeof window.kfcontext.onceInitHTMXListeners === 'undefined') {
-      window.kfcontext.onceInitHTMXListeners = true
-      initTimeline(context)
+    if (e.querySelectorAll(".photos-timeline").length) {
+        timelineInstance = undefined
+        initTimeline(context)
     }
+    initNavSearch(e)
     initPopups(e)
+    initEventHandlers(e)
+    initGalleryNav(e)
     if (window.st && e.querySelectorAll('.sharethis-inline-share-buttons').length) {
         st.initialize()
     }
 
+    initDraggableThumbnails()
+    initAutocomplete()
     // Init gallery thumbnails
     if ($('#fi-preload-zone li').length) {
 
-      initDraggableThumbnails()
 
       let html = $('#fi-preload-zone').html()
       // let firstId = $(html).find('li:first-child span').attr('hx-get')
@@ -117,10 +120,6 @@ export const initTimeline = (context) => {
   return timelineInstance
 }
 export const initEventHandlers = (context) => {
-
-  context.addEventListener('htmx:pushedIntoHistory', initPopups)
-
-  context.addEventListener('htmx:pushedIntoHistory', initNavSearch)
 
   $(context).on('click', '.form--add-tag .link--icon', (e) => {
     let $form = $(e.currentTarget).closest('form')

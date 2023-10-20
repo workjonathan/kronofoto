@@ -25,15 +25,7 @@ const init = () => {
   initJQuery(document.querySelector('#kfroot'))
   initHTMXListeners(document, $('body'))
   initFoundation(document)
-  initGalleryNav(document)
   initClipboardJS(document)
-  initEventHandlers(document)
-  installButtons(document)(document.querySelector('#app'))
-  initPopups(document)
-  initDraggableThumbnails()
-  initNavSearch()
-  initAutocomplete()
-
 }
 
 const ready = fn => {
