@@ -119,7 +119,6 @@ export const initTimeline = (context) => {
 }
 export const initEventHandlers = (context) => {
 
-  console.log(context)
   $(context).on('click', '.form--add-tag .link--icon', (e) => {
     let $form = $(e.currentTarget).closest('form')
     $form.addClass('expanded')
