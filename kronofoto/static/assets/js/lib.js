@@ -1,7 +1,6 @@
 "use strict";
 
 import {enableMarkerDnD} from "./drag-drop.js"
-import _HTMX from "./htmx.js"
 import timeline from "./timeline";
 import $ from "jquery"
 import ClipboardActionCopy from 'clipboard/src/actions/copy'
@@ -18,14 +17,13 @@ import { Tooltip } from 'foundation-sites/js/foundation.tooltip';
 import { Box } from 'foundation-sites/js/foundation.util.box';
 import { MediaQuery } from 'foundation-sites/js/foundation.util.mediaQuery';
 
-export const HTMX = _HTMX
-var htmx = null
 
 let timelineCrawlForwardInterval = null
 let timelineCrawlForwardTimeout = null
 let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
 var timelineInstance = null
+let htmx = undefined
 
 export const initJQuery = (context) => {
   var initjQuery = $.fn.init;
@@ -35,9 +33,9 @@ export const initJQuery = (context) => {
   };
 }
 
-export const initHTMXListeners = (context, root) => {
-
-  htmx = HTMX(context)
+export const initHTMXListeners = (_htmx, context, root) => {
+  htmx = _htmx
+  
 
   htmx.onLoad((e) => {
     if (e.querySelectorAll(".photos-timeline").length) {
@@ -121,6 +119,7 @@ export const initTimeline = (context) => {
 }
 export const initEventHandlers = (context) => {
 
+  console.log(context)
   $(context).on('click', '.form--add-tag .link--icon', (e) => {
     let $form = $(e.currentTarget).closest('form')
     $form.addClass('expanded')
@@ -519,7 +518,7 @@ export const timelineZipForward = () => {
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
     let $nextLi = $activeLi.prevAll().eq(numToZip)
-    gotoTimelinePosition(numToZip)
+    //gotoTimelinePosition(numToZip)
     // htmx.trigger($nextLi.find('a').get(0), 'manual')
   }
   return false

@@ -11,19 +11,19 @@ import {
   initFoundation,
   initHTMXListeners,
   initJQuery,
-  HTMX
 }
   from "./lib.js"
+import HTMX from "./htmx.js"
 
 window.toggleLogin = toggleLogin
-const htmx = window.htmx = HTMX(document)
+const htmx = HTMX(document)
 window.kfcontext = document
 window.kfcontext.htmx = htmx
 
 const init = () => {
 
   initJQuery(document.querySelector('#kfroot'))
-  initHTMXListeners(document, $('body'))
+  initHTMXListeners(htmx, document, $('body'))
   initFoundation(document)
   initClipboardJS(document)
 }
