@@ -18,13 +18,21 @@
 {% endblock %}
 {% block content %}
 
-<main hx-swap="innerHTML">
+<main hx-swap="innerHTML" hx-target="#fi-image" data-photo-details>
 
     <div class="gallery" id="gallery" data-toggler=".zoom-opened">
 
         {% block left_arrow %}
-            <a id="fi-arrow-left" class="control previous"></a>
-        {% endblock %}
+            <a
+                {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-left]"{% endif %}
+                id="fi-arrow-left"
+                data-fi-arrow-left
+                hx-trigger="click, keydown[code=='ArrowLeft'] from:#app"
+                class="control previous" 
+                href="{% object_url prev_photo url_kwargs get_params %}"
+                hx-get="{% object_url prev_photo url_kwargs get_params %}"
+            ></a>
+        {% endblock left_arrow %}
         <div id="fi-image-preload" class="hide">
         </div>
         <article class="gallery__image fi-image" id="fi-image">
@@ -36,7 +44,15 @@
         </article>
 
         {% block right_arrow %}
-        <a id="fi-arrow-right" class="control forward"></a>
+        <a
+            {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-right]"{% endif %}
+            id="fi-arrow-right"
+            hx-trigger="click, keydown[code=='ArrowRight'] from:#app"
+            data-fi-arrow-right
+            class="control forward" 
+            href="{% object_url next_photo url_kwargs get_params %}"
+            hx-get="{% object_url next_photo url_kwargs get_params %}"
+        ></a>
         {% endblock right_arrow %}
 
         <div id="zoom-popup" class="follow-zoom-popup">
@@ -197,37 +213,50 @@
 
     <div class="car-left-space"></div>
 
-    <form id="thumbnail-request-left" hx-trigger="kronofoto:loadThumbnails" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
-    {% carousel_form %}
-    </form>
-
-    <form id="thumbnail-request-right" hx-trigger="kronofoto:loadThumbnails" hx-target="#fi-thumbnail-carousel-images" hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}">
-    {% carousel_form %}
-    </form>
-
 
     <nav class="fi-timeline" id="fi-timeline">
+    <form 
+        hx-trigger="kronofoto:loadThumbnails" 
+        hx-target="[data-fi-thumbnail-carousel-images]" 
+        hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}"
+        hx-push-url="false"
+        hx-swap="beforeend"
+        hx-sync="this:drop"
+    >
         {% block thumbnails %}
 
-        <div class="fi-thumbnail-carousel">
-
-            <div class="back-arrows">
+        {% carousel_form %}
+        <div class="fi-thumbnail-carousel" hx-target="#fi-image" hx-push-url="true" hx-swap="innerHTML">
+            <div class="back-arrows" data-back-arrows>
+                {% block back_arrows %}
                 <a id="backward-zip"></a>
-                <a id="backward"></a>
+                <a 
+                    id="backward"
+                    href="{% object_url prev_photo url_kwargs get_params %}"
+                    hx-get="{% object_url prev_photo url_kwargs get_params %}"
+                ></a>
+                {% endblock back_arrows %}
             </div>
 
             <div class="slide-container">
                 <ul id="fi-preload-zone"></ul>
-                <ul id="fi-thumbnail-carousel-images" style="left: 0px;">
+                <div data-fi-load-thumbnails class="hide"></div>
+                <ul id="fi-thumbnail-carousel-images" style="left: 0px;" data-fi-thumbnail-carousel-images>
                     {% include "archive/thumbnails.html" %}
                 </ul>
             </div>
 
-            <div class="forward-arrows">
-                <a id="forward"></a>
+            <div class="forward-arrows" data-forward-arrows>
+                {% block forward_arrows %}
+                <a 
+                    id="forward"
+                    href="{% object_url next_photo url_kwargs get_params %}"
+                    hx-get="{% object_url next_photo url_kwargs get_params %}"
+                ></a>
                 <a id="forward-zip">
                     <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
                 </a>
+                {% endblock forward_arrows %}
             </div>
 
         </div>
@@ -238,7 +267,7 @@
 
 
 
-    <form hx-trigger="timeline:yearSelected" hx-swap="none" hx-headers='{"gallery": "true"}' hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+    <form hx-trigger="timeline:yearSelected" hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
         {% timeline %}
     </form>
 

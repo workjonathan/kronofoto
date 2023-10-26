@@ -152,6 +152,8 @@ class SearchForm(forms.Form):
 class CarouselForm(SearchForm):
     id = forms.IntegerField(widget=forms.HiddenInput(), required=True)
     forward = forms.BooleanField(widget=forms.HiddenInput(), required=False)
+    offset = forms.IntegerField(widget=forms.HiddenInput(), required=True)
+    width = forms.IntegerField(widget=forms.HiddenInput(), required=True)
 
 class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())

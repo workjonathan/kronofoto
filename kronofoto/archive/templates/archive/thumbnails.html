@@ -2,5 +2,18 @@
 {% load widgets %}
 {% load krono_urls %}
 {% for p in object_list %}
-          <li {{p.active | yesno:"data-active,"}}><span hx-trigger="manual" hx-headers='{"gallery": "true"}' hx-get="{% object_url p url_kwargs get_params %}"><img {{p.is_spacer | yesno:'class=empty,'}} src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" /></span></li>
+    <li 
+        {{p.active | yesno:"data-active data-origin,"}} 
+        data-fi="{{ p.id }}"
+        {% if positioning %}
+        style="position: absolute; left: {% thumb_left index=forloop.counter offset=positioning.offset width=positioning.width %}px"
+        {% endif %}
+    >
+        <a 
+            href="{% object_url p url_kwargs get_params %}"
+            hx-get="{% object_url p url_kwargs get_params %}"
+        >
+            <img {{p.is_spacer | yesno:'class=empty,'}} src="{{ p.thumbnail.url }}" height="{{ p.thumbnail.height }}" width="{{ p.thumbnail.width }}" />
+        </a>
+    </li>
 {% endfor %}

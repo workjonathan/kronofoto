@@ -39,3 +39,8 @@ def page_links(formatter, page_obj, target=None):
 @stringfilter
 def markdown(text):
     return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
+
+@register.simple_tag(takes_context=False)
+def thumb_left(*, index, offset, width):
+    return index * width + offset
+

@@ -1,6 +1,5 @@
 "use strict";
 
-import {enableMarkerDnD} from "./drag-drop.js"
 import timeline from "./timeline";
 import $ from "jquery"
 import ClipboardActionCopy from 'clipboard/src/actions/copy'
@@ -35,44 +34,84 @@ export const initJQuery = (context) => {
 
 export const initHTMXListeners = (_htmx, context, root) => {
   htmx = _htmx
-  
+ 
+  const slideToId = ({target, fi}) => {
+    for (const targets of context.querySelectorAll(target)) {
+        const destination = targets.querySelector(`:scope [data-fi="${fi}"]`)
+        const origin = targets.querySelector(`:scope [data-origin]`)
+        if (destination && origin) {
+            const children = [...targets.children]
+            const delta = children.indexOf(destination) - children.indexOf(origin)
+            gotoTimelinePosition(delta, false)
+        }
+    }
+  }
 
-  htmx.onLoad((e) => {
-    if (e.querySelectorAll(".photos-timeline").length) {
+
+  htmx.onLoad(elem => {
+    for (const elem2 of elem.querySelectorAll("#backward-zip")) {
+        elem2.addEventListener("click", timelineZipBackward)
+        elem2.addEventListener("mousedown", timelineCrawlBackward)
+        elem2.addEventListener("mouseup", timelineCrawlBackwardRelease)
+    }
+    if (elem.id == "backward-zip") {
+        elem.addEventListener("click", timelineZipBackward)
+        elem.addEventListener("mousedown", timelineCrawlBackward)
+        elem.addEventListener("mouseup", timelineCrawlBackwardRelease)
+    }
+    for (const elem2 of elem.querySelectorAll("#forward-zip")) {
+        elem2.addEventListener("click", timelineZipForward)
+        elem2.addEventListener("mousedown", timelineCrawlForward)
+        elem2.addEventListener("mouseup", timelineCrawlForwardRelease)
+    }
+    if (elem.id == "forward-zip") {
+        elem.addEventListener("click", timelineZipForward)
+        elem.addEventListener("mousedown", timelineCrawlForward)
+        elem.addEventListener("mouseup", timelineCrawlForwardRelease)
+    }
+    if (elem.querySelectorAll(".photos-timeline").length) {
         timelineInstance = undefined
         initTimeline(context)
     }
-    initNavSearch(e)
-    initPopups(e)
-    initEventHandlers(e)
-    initGalleryNav(e)
-    if (window.st && e.querySelectorAll('.sharethis-inline-share-buttons').length) {
+    for (const thumbs of elem.querySelectorAll("#fi-thumbnail-carousel-images")) {
+        initDraggableThumbnails(thumbs)
+    }
+    initAutocomplete()
+    initNavSearch(elem)
+    initPopups(elem)
+    if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
         st.initialize()
     }
+    initEventHandlers(elem)
+    initGalleryNav(elem)
+    /*
 
-    initDraggableThumbnails()
-    initAutocomplete()
+  */
     // Init gallery thumbnails
-    if ($('#fi-preload-zone li').length) {
 
-
-      let html = $('#fi-preload-zone').html()
-      // let firstId = $(html).find('li:first-child span').attr('hx-get')
-      $('#fi-thumbnail-carousel-images').html(html)
-      // let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
-      // $('#fi-thumbnail-carousel-images').append($after)
-      $('#fi-thumbnail-carousel-images').addClass('dragging')
-      $('#fi-thumbnail-carousel-images').css('left', '0px')
+    if (elem.id == 'fi-preload-zone') {
+      slideToId({
+        fi: elem.getAttribute("data-slide-id"),
+        target: "[data-fi-thumbnail-carousel-images]",
+      })
       setTimeout(() => {
-        $('#fi-thumbnail-carousel-images').removeClass('dragging')
-        if (!$('#fi-thumbnail-carousel-images [data-origin]').length) {
-          $('#fi-thumbnail-carousel-images [data-active]').attr('data-origin', '')
-        }
-      }, 100)
+          let html = $('#fi-preload-zone').html()
+          // let firstId = $(html).find('li:first-child span').attr('hx-get')
+          $('#fi-thumbnail-carousel-images').html(html)
+          // let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
+          // $('#fi-thumbnail-carousel-images').append($after)
+          $('#fi-thumbnail-carousel-images').addClass('dragging')
+          $('#fi-thumbnail-carousel-images').css('left', '0px')
+          setTimeout(() => {
+            $('#fi-thumbnail-carousel-images').removeClass('dragging')
+          }, 100)
 
-      htmx.process($('#fi-thumbnail-carousel-images').get(0))
-      $('#fi-preload-zone').empty()
+          htmx.process($('#fi-thumbnail-carousel-images').get(0))
+          $('#fi-preload-zone').empty()
+      }, 250)
     }
+
+/*  disabled until different solution is tried (set attributes without replacing tag)
 
     if ($('#fi-image-preload img').length && !$('#fi-image-preload img').data('loaded')) {
       $('#fi-image-preload img').data('loaded', true)
@@ -85,7 +124,7 @@ export const initHTMXListeners = (_htmx, context, root) => {
         $('#fi-image-preload').empty()
       }
     }
-
+*/
   })
 
   return htmx
@@ -220,40 +259,8 @@ export const initEventHandlers = (context) => {
   //   }
   // })
 
-  $(context).on('click', '#forward-zip', timelineZipForward)
-  $(context).on('click', '#forward', timelineForward)
-  $(context).on('mousedown', '#forward-zip', timelineCrawlForward)
-  $(context).on('mouseup', '#forward-zip', timelineCrawlForwardRelease)
-  $(context).on('click', '#backward-zip', timelineZipBackward)
-  $(context).on('click', '#backward', timelineBackward)
-  $(context).on('mousedown', '#backward-zip', timelineCrawlBackward)
-  $(context).on('mouseup', '#backward-zip', timelineCrawlBackwardRelease)
-  $(context).on('click', '#fi-arrow-right', timelineForward)
-  $(context).on('click', '#fi-arrow-left', timelineBackward)
-  $(context).on('click', '#fi-thumbnail-carousel-images li span', function(e) {
-    let num = $('#fi-thumbnail-carousel-images li').length
-    let delta = $(e.currentTarget).parent().index() - ((num - 1) / 2)
-    gotoTimelinePosition(delta)
-  })
 
-
-  $(context).on('keydown', function(event) {
-    var keyCode = event.which || event.keyCode;
-
-    // Handle forward arrow key (Right Arrow or Down Arrow)
-    if (keyCode === 39) {
-      // Perform the action for the forward arrow key
-      timelineForward()
-    }
-
-    // Handle back arrow key (Left Arrow or Up Arrow)
-    if (keyCode === 37) {
-      // Perform the action for the back arrow key
-      timelineBackward()
-    }
-  });
-
-  $(context).on('click', '#auto-play-image-control-button', (e) => {
+  $('#auto-play-image-control-button').on('click', (e) => {
     let $btn = $('#auto-play-image-control-button')
     $btn.toggleClass('active')
     if ($btn.hasClass('active')) {
@@ -284,17 +291,32 @@ export const initAutocomplete = () => {
     minLength: 2,
   })
 }
-export const initDraggableThumbnails = () => {
-  if (!$('#fi-thumbnail-carousel-images [data-origin]').length) {
-    $('#fi-thumbnail-carousel-images [data-active]').attr('data-origin', '')
+export const initDraggableThumbnails = context => {
+  let elem = undefined
+  let released = false
+  const handler = evt => {
+    if (!released || !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")) {
+        console.log("preventing", evt)
+        evt.preventDefault()
+    } else {
+        console.log("allowing", evt)
+        setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
+    }
   }
   $('#fi-thumbnail-carousel-images').draggable({
     axis: 'x',
     drag: (event, ui) => {
+      if (!elem) {
+          elem = event.target
+          console.log("installing htmx:confirm handler", elem)
+          elem.addEventListener("htmx:confirm", handler)
+      }
       moveTimelineCoin(ui.position.left, true)
     },
     stop: (event, ui) => {
       dropTimelineCoin(ui.position.left)
+      released = true
+      htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
     }
   })
 }
@@ -372,12 +394,38 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
   let currentPosition = preItemNum + quantizedPositionX + 1
 
   let numThumbnails= $('#fi-thumbnail-carousel-images li').length
+  //console.log({numThumbnails, currentPosition, preItemNum})
 
-  if(drag && numThumbnails - currentPosition < preItemNum) {
-    getMoreThumbnailsRight()
+  if(drag && numThumbnails - currentPosition < 20) {
+    const form = document.querySelector('#fi-thumbnail-carousel-images').closest("form")
+    form.querySelector("[name='forward']").value = 1
+    form.setAttribute("hx-swap", "beforeend")
+
+    const child = form.querySelector("#fi-thumbnail-carousel-images li:last-child")
+    const lastFI = child.getAttribute("data-fi")
+    const offset = $(child).position().left
+    const width = $(child).outerWidth()
+
+    form.querySelector("[name='offset']").value = offset
+    form.querySelector("[name='width']").value = width
+
+    form.querySelector("[name='id']").value = lastFI
+    htmx.trigger("#fi-thumbnail-carousel-images", "kronofoto:loadThumbnails")
   }
-  else if(drag && currentPosition < preItemNum) {
-    getMoreThumbnailsLeft()
+  else if(drag && currentPosition < 20) {
+    /* copy/pasted code */
+    const form = document.querySelector('#fi-thumbnail-carousel-images').closest("form")
+    form.setAttribute("hx-swap", "afterbegin")
+    form.querySelector("[name='forward']").value = ""
+    const child = form.querySelector("#fi-thumbnail-carousel-images li:first-child")
+    const lastFI = child.getAttribute("data-fi")
+    const offset = $(child).position().left
+    const width = $(child).outerWidth()
+
+    form.querySelector("[name='offset']").value = offset
+    form.querySelector("[name='width']").value = width
+    form.querySelector("[name='id']").value = lastFI
+    htmx.trigger("#fi-thumbnail-carousel-images", "kronofoto:loadThumbnails")
   }
 
   $('#fi-thumbnail-carousel-images li').removeAttr('data-active')
@@ -386,114 +434,12 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
 
 let moreThumbnailsLoading = false
 
-const getMoreThumbnailsRight = () => {
-  $('#thumbnail-request-left').submit((e) => {
-    e.preventDefault()
-    $.ajax({
-      url: e.currentTarget.action,
-      type: 'post',
-      dataType: 'application/json',
-      data: $('#thumbnail-request-left').serialize(),
-      success: (data) => {
-        console.log(data)
-      }
-    })
-  })
-
-  return;
-  let url = $('#fi-thumbnail-carousel-images li:last-child span').attr('hx-get')
-  if(!moreThumbnailsLoading) {
-    moreThumbnailsLoading = true
-    $.ajax({
-      url: url,
-      type: 'GET',
-      headers: {
-        'Hx-Target': 'fi-preload-zone',
-        'Hx-Request': true
-      },
-      success: (e) => {
-        moreThumbnailsLoading = false
-
-        let firstId = $('#fi-thumbnail-carousel-images li:last-child span').attr('hx-get')
-        let $after = $(e).find('span[hx-get="'+firstId+'"]').parent().nextAll()
-        // $after.find('[data-active]').removeAttr('data-active')
-        let index = 1
-        let offset = $('#fi-thumbnail-carousel-images li:last-child').position().left
-        let width = $('#fi-thumbnail-carousel-images li:last-child').outerWidth()
-        $after.each((i,e) => {
-          $(e).css({
-            position: 'absolute',
-            left: (index * width) + offset
-          })
-          index += 1
-        })
-        $('#fi-thumbnail-carousel-images').append($after)
-        htmx.process($('#fi-thumbnail-carousel-images').get(0))
-      }
-    })
-  }
-}
-
-const getMoreThumbnailsLeft = () => {
-  let url = $('#fi-thumbnail-carousel-images li:first-child span').attr('hx-get')
-  if(!moreThumbnailsLoading) {
-    moreThumbnailsLoading = true
-    $.ajax({
-      url: url,
-      type: 'GET',
-      headers: {
-        'Hx-Target': 'fi-preload-zone',
-        'Hx-Request': true
-      },
-      success: (e) => {
-        moreThumbnailsLoading = false
-        window.e = e
-        let firstId = $('#fi-thumbnail-carousel-images li:first-child span').attr('hx-get')
-        let $before = $(e).find('span[hx-get="'+firstId+'"]').parent().prevAll()
-        // $before.find('[data-active]').removeAttr('data-active')
-        let index = -1
-        let offset = $('#fi-thumbnail-carousel-images li:first-child').position().left
-        let width = $('#fi-thumbnail-carousel-images li:first-child').outerWidth()
-        $($before.get().reverse()).each((i,e) => {
-          $(e).css({
-            position: 'absolute',
-            left: index * width + offset
-          })
-          index -= 1
-        })
-        $('#fi-thumbnail-carousel-images').prepend($before)
-        htmx.process($('#fi-thumbnail-carousel-images').get(0))
-      }
-    })
-  }
-}
 
 export const dropTimelineCoin = (deltaX) => {
   let width = $('#fi-thumbnail-carousel-images li').outerWidth()
   let quantizedX = (Math.round(deltaX / width))
   let itemNum = quantizedX
   $('#fi-thumbnail-carousel-images').css({left: itemNum * width})
-  htmx.trigger($('#fi-thumbnail-carousel-images li[data-active] span').get(0), 'manual')
-}
-
-export const refreshThumbnails = () => {
-  // Do we need thumbnails?
-  // Which direction do we need more thumbnails?
-
-  if($('#fi-preload-zone li').length) {
-    let html = $('#fi-preload-zone').html()
-    let firstId = $(html).find('li:first-child span').attr('hx-get')
-    $('#fi-thumbnail-carousel-images').html(html)
-    let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
-    $('#fi-thumbnail-carousel-images').append($after)
-    //   $('#fi-thumbnail-carousel-images').addClass('dragging')
-    //   $('#fi-thumbnail-carousel-images').css('left', '0px')
-    //   setTimeout(() => {
-    //     $('#fi-thumbnail-carousel-images').removeClass('dragging')
-    //   }, 100)
-    htmx.process($('#fi-thumbnail-carousel-images').get(0))
-    $('#fi-preload-zone').empty()
-  }
 }
 
 export const gotoTimelinePosition = (delta) => {
@@ -505,9 +451,8 @@ export const timelineZipBackward = () => {
   if(timelineCrawlBackwardInterval == null) { // only zip if we're not already crawling
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
-    let $nextLi = $activeLi.nextAll().eq(numToZip)
-    gotoTimelinePosition(numToZip * -1)
-    // htmx.trigger($nextLi.find('a').get(0), 'manual')
+    let $nextLi = $activeLi.prevAll().eq(numToZip)
+    htmx.trigger($nextLi.find('a').get(0), 'click')
   }
   return false
 }
@@ -516,9 +461,9 @@ export const timelineZipForward = () => {
   if(timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
     let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
     let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
-    let $nextLi = $activeLi.prevAll().eq(numToZip)
+    let $nextLi = $activeLi.nextAll().eq(numToZip)
     //gotoTimelinePosition(numToZip)
-    // htmx.trigger($nextLi.find('a').get(0), 'manual')
+    htmx.trigger($nextLi.find('a').get(0), 'click')
   }
   return false
 }
@@ -531,8 +476,7 @@ export const timelineBackward = () => {
   gotoTimelinePosition(-1)
 }
 
-export const timelineCrawlForward = () => {
-  let self = this
+export const timelineCrawlForward = evt => {
   timelineCrawlForwardTimeout = setTimeout(() => {
     let currentPosition = $('#fi-thumbnail-carousel-images').position().left
     timelineCrawlForwardInterval = setInterval(() => {
@@ -556,6 +500,7 @@ export const timelineCrawlForwardRelease = () => {
   if(timelineCrawlForwardInterval) { // only execute when we're crawling
     clearInterval(timelineCrawlForwardInterval)
     dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
+    htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
     setTimeout(() => {
       timelineCrawlForwardInterval = null
     }, 750)
@@ -586,6 +531,7 @@ export const timelineCrawlBackwardRelease = () => {
   if(timelineCrawlBackwardInterval) { // only execute when we're crawling
     clearInterval(timelineCrawlBackwardInterval)
     dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
+    htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
     setTimeout(() => {
       timelineCrawlBackwardInterval = null
     }, 750)
@@ -638,36 +584,6 @@ export const toggleMenu = evt => {
 const toggleElement = el => {
     if (!el.classList.replace('hidden', 'gridden')) {
         el.classList.replace('gridden', 'hidden')
-    }
-}
-
-const moveMarker = (root, marker) => {
-    const markerYearElement = marker.querySelector('.marker-year');
-
-    // Update year text
-    const year = markerYearElement.textContent
-
-    // Show Marker (might not be necessary to do this display stuff)
-    marker.style.display = 'block';
-
-    // move marker to position of tick
-    let embedmargin = root.querySelector('.year-ticker').getBoundingClientRect().left;
-    let tick = root.querySelector(`.year-ticker svg a rect[data-year="${year}"]`);
-    let bounds = tick.getBoundingClientRect();
-    let markerStyle = window.getComputedStyle(marker);
-    let markerWidth = markerStyle.getPropertyValue('width').replace('px', ''); // trim off px for math
-    let offset = (bounds.x - (markerWidth / 2) - embedmargin); // calculate marker width offset for centering on tick
-    marker.style.transform = `translateX(${offset}px)`;
-}
-
-export const markerDnD = root => content => {
-    if (content.id == 'active-year-marker') {
-        moveMarker(root, content)
-        enableMarkerDnD(root)
-    }
-    for (const marker of content.querySelectorAll('.active-year-marker')) {
-        moveMarker(root, marker)
-        enableMarkerDnD(root)
     }
 }
 

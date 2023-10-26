@@ -11,31 +11,35 @@
 
 <div hx-swap-oob="delete:#grid-icon"></div>
 
-<div hx-swap-oob="innerHTML:.main-nav_center">
-    {% block searchbox %}
-    {% include "archive/search-box.html" %}
-    {% endblock %}
+<div hx-swap-oob="beforeend:.main-nav_center">
     {% block viewbuttons %}
 {% endblock %}
 </div>
 
-<ul hx-swap-oob="innerHTML:#fi-preload-zone">
+<ul hx-swap-oob="outerHTML:#fi-preload-zone" id="fi-preload-zone" data-slide-id="{{ photo.id }}">
     {% include "archive/thumbnails.html" %}
 </ul>
-
-<div hx-swap-oob="innerHTML:#download-popup .photo-menu-popup__wrapper">
-    {% include "archive/popup-download.html" %}
-</div>
 
 <div hx-swap-oob="innerHTML:#metadata-popup">
     {% block metadata %}
     {% endblock %}
 </div>
 
-<div hx-swap-oob="innerHTML:#fi-image-preload">
-{% block image %}
+{% block left_arrow %}
+{% endblock %}
+{% block right_arrow %}
+{% endblock %}
+<div hx-swap-oob="innerHTML:[data-back-arrows]">
+{% block back_arrows %}
 {% endblock %}
 </div>
+<div hx-swap-oob="innerHTML:[data-forward-arrows]">
+{% block forward_arrows %}
+{% endblock %}
+</div>
+
+{% block image %}
+{% endblock %}
 
 <div hx-swap-oob="innerHTML:#zoom-popup">
     {% block zoom_popup %}

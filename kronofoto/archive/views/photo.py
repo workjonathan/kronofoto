@@ -21,6 +21,7 @@ from ..forms import CarouselForm
 import random
 from itertools import cycle, chain, islice
 from dataclasses import dataclass
+import json
 
 class Thumbnail(TypedDict):
     url: str
@@ -35,6 +36,10 @@ class PhotoPlaceholder:
 
     def get_absolute_url(self, *args, **kwargs):
         return self.photo.get_absolute_url(*args, **kwargs)
+
+    @property
+    def id(self):
+        return self.photo.id
 
     @property
     def year(self):
@@ -99,6 +104,7 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
     def form_valid(self, form):
         queryset = self.object_list = self.get_queryset()
         object = get_object_or_404(self.model, pk=form.cleaned_data['id'])
+        offset = form.cleaned_data['offset']
         if form.cleaned_data['forward']:
             objects = queryset.photos_after(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
             objects_cycling = cycle(
@@ -123,7 +129,15 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
             objects_looping = chain(objects, objects_cycling)
             objects = list(islice(objects_looping, self.item_count))
             objects.reverse()
-        return self.render_to_response({'object_list': objects})
+            offset -= form.cleaned_data['width'] * (1 + self.item_count)
+        context = {
+            'object_list': objects,
+            'positioning': {
+                'width': form.cleaned_data['width'],
+                'offset': offset,
+            },
+        }
+        return self.render_to_response(context)
 
     def form_invalid(self, form):
         return HttpResponse("", status=400)
@@ -161,9 +175,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
             raise Http404("No photo with this accession number is in this collection.")
 
     def get_hx_context(self):
-        if self.request.headers.get('Hx-Target', None) == 'fi-preload-zone':
-            return {'base_template': 'archive/photo_partial_thumbnails.html'}
-        elif self.request.headers.get('gallery', None) == 'true':
+        if self.request.headers.get('Hx-Target', None) == 'fi-image':
             return {'base_template': 'archive/photo_partial.html'}
         else:
             return super().get_hx_context()
