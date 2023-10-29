@@ -13,15 +13,12 @@ import {
   initJQuery,
 }
   from "./lib.js"
+window.kfcontext = document
 import HTMX from "./htmx.js"
 
-window.toggleLogin = toggleLogin
 const htmx = HTMX(document)
-window.kfcontext = document
-window.kfcontext.htmx = htmx
 
 const init = () => {
-
   initJQuery(document.querySelector('#kfroot'))
   initHTMXListeners(htmx, document, $('body'))
   initFoundation(document)

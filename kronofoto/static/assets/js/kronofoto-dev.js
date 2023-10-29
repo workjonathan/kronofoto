@@ -1,7 +1,6 @@
 import {
   installButtons,
   markerDnD,
-  HTMX,
   initJQuery,
   initHTMXListeners,
   initEventHandlers,
@@ -11,6 +10,9 @@ import {
   initClipboardJS,
   initAutocomplete, initPopups, initDraggableThumbnails, initTimeline
 } from "./lib.js"
+
+import HTMX from "./htmx.js"
+
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -181,32 +183,16 @@ class FortepanViewer extends HTMLElement {
         const mode = 'cors'
         const headers = new Headers([['Embedded', '1'], ["Constraint", constraint]])
         const req = new Request(host, {mode, headers})
+        initJQuery(this.shadowRoot)
+        initFoundation(this.shadowRoot)
         fetch(req)
             .then(response => response.text())
             .then(response => {
-              this.document = this.shadow.querySelector("#app")
-              this.shadow.innerHTML = response
-              window.kfcontext = this.shadow
-
-              let css = this.shadow.querySelector("link")
-              if(css) {
-                css.onload = () => {
-
-                  initJQuery(this.shadow.querySelector('#kfroot'))
-                  let htmx = initHTMXListeners(this.shadow, this.shadow.querySelector("#kfroot"))
-                  window.kfcontext.htmx = htmx
-                  initFoundation(this.shadow.querySelector('#kfroot'))
-                  initGalleryNav(this.shadow)
-                  initClipboardJS(this.shadow.querySelector("#app"))
-                  initEventHandlers(this.shadow.querySelector("#app"))
-                  installButtons(this.shadow)(this.shadow.querySelector("#app"))
-                  initPopups(this.shadow)
-                  initDraggableThumbnails()
-
-                }
-              }
-
-
+                this.shadowRoot.innerHTML = response
+                this.htmx = HTMX(this.shadowRoot)
+                this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
+                //this.htmx.logAll()
+                initHTMXListeners(this.htmx, this.shadowRoot)
             })
     }
 }
