@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
+    'archive.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'kronofoto.urls'
@@ -71,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'archive.context_processors.kronofoto_context',
             ],
             #'builtins': ['archive.builtins'],
         },
@@ -139,6 +141,7 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_REDIRECT_URL = '/'
+
 
 CACHES = {
     'default': {

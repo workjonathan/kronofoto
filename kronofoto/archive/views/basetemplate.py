@@ -142,44 +142,26 @@ class BaseTemplateMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        photo_count = cache.get('photo_count:')
         context['get_params'] = self.get_params
         context['search-form'] = self.form
         context['constraint'] = json.dumps({'Constraint': self.constraint})
         context['url_kwargs'] = self.url_kwargs
         context.update(self.get_collection_name(self.expr))
         context.update(self.get_hx_context())
-
         context['push-url'] = True
-
-        if not photo_count:
-            photo_count = Photo.objects.filter(is_published=True).count()
-            cache.set('photo_count:', photo_count)
-        context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
-        context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
-        context['photo_count'] = photo_count
         context['timeline_url'] = '#'
-        context['theme'] = random.choice(THEME[self.kwargs['short_name'] if 'short_name' in self.kwargs else 'us'])
-        hxheaders = dict()
-        hxheaders['Constraint'] = self.request.headers.get('Constraint', None)
-        hxheaders['Embedded'] = self.request.headers.get('Embedded', 'false')
-        context['hxheaders'] = json.dumps(hxheaders)
         return context
 
     def dispatch(self, request, *args, **kwargs):
         if 'short_name' in self.kwargs and not Archive.objects.filter(slug=self.kwargs['short_name']).exists():
             raise Http404('archive not found')
-        response = super().dispatch(request, *args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
-        return response
+        return super().dispatch(request, *args, **kwargs)
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):
     def get_queryset(self):
         if self.form.is_valid():
             expr = self.final_expr
             qs = self.model.objects.filter(is_published=True, year__isnull=False)
-            print(self.url_kwargs)
             if 'short_name' in self.kwargs:
                 qs = qs.filter(archive__slug=self.kwargs['short_name'])
             if 'category' in self.url_kwargs:
