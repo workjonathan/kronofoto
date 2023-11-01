@@ -14,4 +14,3 @@ class CategoryList(BaseTemplateMixin, ListView):
                 raise Http404('archive not found')
             return Category.objects.filter(archive__slug=self.kwargs['short_name'])
         return Category.objects.all()
-

@@ -16,7 +16,8 @@ from ..models import Category
 from functools import reduce
 import operator
 from dataclasses import dataclass, replace
-from .base import ArchiveRequest
+from .base import ArchiveRequest, require_valid_archive
+from django.utils.decorators import method_decorator
 
 class ThemeDict(dict):
     def __missing__(self, key):
@@ -104,9 +105,8 @@ class BaseTemplateMixin:
         context.update(self.archive_request.common_context)
         return context
 
+    @method_decorator(require_valid_archive)
     def dispatch(self, request, *args, **kwargs):
-        if 'short_name' in self.kwargs and not Archive.objects.filter(slug=self.kwargs['short_name']).exists():
-            raise Http404('archive not found')
         return super().dispatch(request, *args, **kwargs)
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):

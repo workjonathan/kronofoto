@@ -1,17 +1,27 @@
-from ..models import Photo, Category
+from ..models import Photo, Category, Archive
 from django.core.exceptions import BadRequest
 from django.template.loader import select_template
-from functools import cached_property
+from functools import cached_property, wraps
 from ..search.expression import Expression
 from ..search.parser import Parser
 from django.db.models import QuerySet
 from django.contrib.auth.models import User, AnonymousUser
-from typing import Union, Optional, Dict, Any, Sequence
+from typing import Union, Optional, Dict, Any, Sequence, Callable, TypeVar
 from dataclasses import dataclass, field
 from ..forms import SearchForm
 from django.shortcuts import get_object_or_404
 from django.http import HttpRequest, QueryDict
 import json
+
+T = TypeVar('T')
+def require_valid_archive(func: Callable[..., T]) -> Callable[..., T]:
+    @wraps(func)
+    def validate_archive(*args: Any, short_name: Optional[int]=None, **kwargs: Any) -> T:
+        if short_name:
+            get_object_or_404(Archive.objects.all(), slug=short_name)
+        return func(*args, short_name=short_name, **kwargs)
+    return validate_archive
+
 
 @dataclass
 class ArchiveRequest:
