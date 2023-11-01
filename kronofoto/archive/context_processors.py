@@ -8,9 +8,6 @@ from django.core.cache import cache
 import json
 from .models import Photo
 
-def count_photos() -> int:
-    return Photo.objects.filter(is_published=True).count()
-
 def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> Dict[str, Any]:
     context: Dict[str, Any] = {}
     if 'kronofoto' in resolve(request.path_info).app_names:
@@ -21,5 +18,4 @@ def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> D
         context['theme'] = random.choice(THEME[short_name if short_name else 'us'])
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
-        context['photo_count'] = cache.get_or_set("photo_count", count_photos)
     return context

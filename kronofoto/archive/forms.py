@@ -77,11 +77,19 @@ class SearchForm(forms.Form):
         self.fields['state'].load_choices()
         self.fields['country'].load_choices()
 
-    def as_expression(self):
+    def clean(self):
+        cleaned_data = super().clean()
+        try:
+            cleaned_data['expr'] = self._as_expression(cleaned_data)
+        except NoExpression:
+            cleaned_data['expr'] = None
+        return cleaned_data
+
+    def _as_expression(self, cleaned_data):
         form_exprs = []
         year_exprs = []
         try:
-            parser = Parser.tokenize(self.cleaned_data['query'])
+            parser = Parser.tokenize(cleaned_data['query'])
             form_exprs.append(parser.parse().shakeout())
         except NoExpression:
             pass
@@ -90,32 +98,32 @@ class SearchForm(forms.Form):
                 form_exprs.append(parser.simple_parse().shakeout())
             except NoExpression:
                 pass
-        if self.cleaned_data['basic']:
+        if cleaned_data['basic']:
             try:
-                form_exprs.append(BasicParser.tokenize(self.cleaned_data['basic']).parse())
+                form_exprs.append(BasicParser.tokenize(cleaned_data['basic']).parse())
             except NoExpression:
                 pass
 
-        if self.cleaned_data['term']:
-            form_exprs.append(expression.TermExactly(self.cleaned_data['term']))
-        if self.cleaned_data['tag']:
-            form_exprs.append(expression.TagExactly(self.cleaned_data['tag']))
-        if self.cleaned_data['startYear']:
-            year_exprs.append(expression.YearGTE(self.cleaned_data['startYear']))
-        if self.cleaned_data['endYear']:
-            year_exprs.append(expression.YearLTE(self.cleaned_data['endYear']))
+        if cleaned_data['term']:
+            form_exprs.append(expression.TermExactly(cleaned_data['term']))
+        if cleaned_data['tag']:
+            form_exprs.append(expression.TagExactly(cleaned_data['tag']))
+        if cleaned_data['startYear']:
+            year_exprs.append(expression.YearGTE(cleaned_data['startYear']))
+        if cleaned_data['endYear']:
+            year_exprs.append(expression.YearLTE(cleaned_data['endYear']))
         if len(year_exprs) > 0:
             form_exprs.append(reduce(expression.And, year_exprs))
-        if self.cleaned_data['donor']:
-            form_exprs.append(expression.DonorExactly(self.cleaned_data['donor']))
-        if self.cleaned_data['city']:
-            form_exprs.append(expression.City(self.cleaned_data['city']))
-        if self.cleaned_data['county']:
-            form_exprs.append(expression.County(self.cleaned_data['county']))
-        if self.cleaned_data['state']:
-            form_exprs.append(expression.State(self.cleaned_data['state']))
-        if self.cleaned_data['country']:
-            form_exprs.append(expression.Country(self.cleaned_data['country']))
+        if cleaned_data['donor']:
+            form_exprs.append(expression.DonorExactly(cleaned_data['donor']))
+        if cleaned_data['city']:
+            form_exprs.append(expression.City(cleaned_data['city']))
+        if cleaned_data['county']:
+            form_exprs.append(expression.County(cleaned_data['county']))
+        if cleaned_data['state']:
+            form_exprs.append(expression.State(cleaned_data['state']))
+        if cleaned_data['country']:
+            form_exprs.append(expression.Country(cleaned_data['country']))
         if len(form_exprs):
             return reduce(expression.And, form_exprs)
         raise NoExpression

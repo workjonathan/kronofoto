@@ -16,6 +16,7 @@ from ..models import Category
 from functools import reduce
 import operator
 from dataclasses import dataclass, replace
+from .base import ArchiveRequest
 
 class ThemeDict(dict):
     def __missing__(self, key):
@@ -68,88 +69,39 @@ THEME = Theme.generate_themes()
 
 class BaseTemplateMixin:
     category = None
-    def set_request(self, request):
-        # By default, the request should not be globally available.
-        set_request(None)
-
-    def filter_params(self, params, removals=('id:lt', 'id:gt', 'page', 'year:gte', 'year:lte')):
-        get_params = params.copy()
-        for key in removals:
-            try:
-                get_params.pop(key)
-            except KeyError:
-                pass
-        return get_params
+    archive_request_class = ArchiveRequest
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.params = self.request.GET.copy()
-        self.form = SearchForm(self.request.GET)
-        self.url_kwargs = {'short_name': self.kwargs['short_name']} if 'short_name' in self.kwargs else {}
-        if 'category' in self.kwargs:
-            self.url_kwargs['category'] = self.kwargs['category']
         if self.category:
-            self.url_kwargs['category'] = self.category
-        self.expr = None
-        if self.form.is_valid():
-            try:
-                self.expr = self.form.as_expression()
-            except NoExpression:
-                pass
-        self.constraint = self.request.headers.get('Constraint', None)
-        constraint_expr = self.get_constraint_expr(self.constraint)
-        self.final_expr = self.get_final_expr(self.expr, constraint_expr)
-        self.get_params = self.filter_params(self.params) if not self.final_expr or self.final_expr.is_collection() else QueryDict()
+            kwargs['category'] = self.category
+        self.archive_request = self.archive_request_class(request=request, category=kwargs.get("category"), short_name=kwargs.get('short_name'))
 
-    def get_constraint_expr(self, constraint):
-        if constraint:
-            try:
-                return Parser.tokenize(constraint).parse().shakeout()
-            except:
-                raise BadRequest("invalid constraint")
-        return None
-
-    def get_final_expr(self, *exprs):
-        exprs = [expr for expr in exprs if expr]
-        if exprs:
-            return reduce(operator.__and__, exprs)
-        return None
-
-    def get_collection_name(self, expr):
-        context = {}
-        if expr:
-            if expr.is_collection():
-                context['collection_name'] = str(expr.description())
-            else:
-                context['collection_name'] = "Search Results"
-        else:
-            context['collection_name'] = 'All Photos'
-        return context
-
-    def get_hx_context(self):
-        context = {}
-        if self.request.headers.get('Hx-Request', 'false') == 'true':
-            context['base_template'] = 'archive/base_partial.html'
-        elif self.request.headers.get('Embedded', 'false') != 'false':
-            context['base_template'] = 'archive/embedded-base.html'
-        else:
-            templates = []
-            if 'short_name' in self.kwargs:
-                templates.append('archive/base/{}.html'.format(self.kwargs['short_name']))
-            templates.append('archive/base.html')
-            context['base_template'] = select_template(templates)
-        return context
+    @property
+    def params(self):
+        return self.archive_request.params
+    @property
+    def final_expr(self):
+        return self.archive_request.final_expr
+    @property
+    def expr(self):
+        return self.archive_request.expr
+    @property
+    def constraint(self):
+        return self.archive_request.constraint
+    @property
+    def form(self):
+        return self.archive_request.form
+    @property
+    def get_params(self):
+        return self.archive_request.get_params
+    @property
+    def url_kwargs(self):
+        return self.archive_request.url_kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['get_params'] = self.get_params
-        context['search-form'] = self.form
-        context['constraint'] = json.dumps({'Constraint': self.constraint})
-        context['url_kwargs'] = self.url_kwargs
-        context.update(self.get_collection_name(self.expr))
-        context.update(self.get_hx_context())
-        context['push-url'] = True
-        context['timeline_url'] = '#'
+        context.update(self.archive_request.common_context)
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -159,21 +111,4 @@ class BaseTemplateMixin:
 
 class BasePhotoTemplateMixin(BaseTemplateMixin):
     def get_queryset(self):
-        if self.form.is_valid():
-            expr = self.final_expr
-            qs = self.model.objects.filter(is_published=True, year__isnull=False)
-            if 'short_name' in self.kwargs:
-                qs = qs.filter(archive__slug=self.kwargs['short_name'])
-            if 'category' in self.url_kwargs:
-                category = get_object_or_404(Category.objects.all(), slug=self.url_kwargs['category'])
-                qs = qs.filter(category=category)
-            if expr is None:
-                return qs.order_by('year', 'id')
-
-            if expr.is_collection():
-                qs = expr.as_collection(qs, self.request.user)
-            else:
-                qs = expr.as_search(self.model.objects.filter(is_published=True), self.request.user)
-            return qs
-        else:
-            raise BadRequest('invalid search request')
+        return self.archive_request.get_photo_queryset()

@@ -15,6 +15,7 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
 from typing import final
+from .base import PhotoRequest
 
 NO_URLS = dict(url='#', json_url='#')
 
@@ -64,6 +65,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     pk_url_kwarg = 'photo'
     _queryset = None
     model = Photo
+    archive_request_class = PhotoRequest
 
     @property
     def queryset(self):
@@ -79,16 +81,8 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
         except queryset.model.DoesNotExist:
             raise Http404("No photo with this accession number is in this collection.")
 
-    def get_hx_context(self):
-        if self.request.headers.get('Hx-Target', None) == 'fi-image-tag':
-            return {'base_template': 'archive/photo_partial.html'}
-        else:
-            return super().get_hx_context()
-
-
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
-        self.params = self.request.GET.copy()
         object = self.object
         queryset = self.queryset
         year_range = queryset.year_range()
@@ -103,12 +97,10 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
     def render(self, context, **kwargs):
         response = super().render_to_response(context, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
         return response
 
     def render_to_response(self, context, **kwargs):
         return self.render(context, **kwargs)
-
 
 class TimelineSvg(TemplateView):
     template_name = "archive/timeline.svg"
