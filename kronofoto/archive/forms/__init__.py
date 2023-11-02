@@ -80,10 +80,12 @@ class SearchForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        try:
-            cleaned_data['expr'] = self._as_expression(cleaned_data)
-        except NoExpression:
-            cleaned_data['expr'] = None
+        cleaned_data['expr'] = None
+        if self.is_valid():
+            try:
+                cleaned_data['expr'] = self._as_expression(cleaned_data)
+            except NoExpression:
+                pass
         return cleaned_data
 
     def _as_expression(self, cleaned_data):
