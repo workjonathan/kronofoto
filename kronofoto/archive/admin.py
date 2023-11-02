@@ -15,7 +15,7 @@ from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.category import Category, ValidCategory
 from .models.csvrecord import ConnecticutRecord
-from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
+from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm
 from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey
 from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
@@ -556,23 +556,6 @@ class CSVRecordAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
 
-class PhotoBaseForm(forms.ModelForm):
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        instance : Optional[Photo] = kwargs.get('instance')
-        categoryfield = self.fields['category']
-        if hasattr(categoryfield, 'queryset'):
-            categoryfield.queryset = self.get_categories(instance)
-
-    def get_categories(self, instance: Optional[Photo]) -> QuerySet[Category]:
-        if not instance:
-            return Category.objects.none()
-        return instance.archive.categories.all()
-
-class SubmissionForm(PhotoBaseForm):
-    class Meta:
-        model = Submission
-        exclude : List[str] = []
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
     def get_urls(self) -> List[URLPattern]:
@@ -766,25 +749,6 @@ class SubmissionAdmin(PhotoBaseAdmin):
     def image_display(self, obj: Submission) -> str:
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.image.url, obj.image.width, obj.image.height))
 
-class PhotoForm(PhotoBaseForm):
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        termsfield = self.fields['terms']
-        instance : Optional[Photo] = kwargs.get('instance')
-        if hasattr(termsfield, 'queryset'):
-            termsfield.queryset = self.get_terms(instance)
-
-    def get_terms(self, instance: Optional[Photo]) -> QuerySet[Term]:
-        if not instance:
-            return Term.objects.none()
-        try:
-            return ValidCategory.objects.get(archive=instance.archive, category=instance.category).terms.order_by('term')
-        except:
-            return Term.objects.none()
-
-    class Meta:
-        model = Photo
-        exclude : List[str] = []
 
 @admin.register(Photo)
 class PhotoAdmin(PhotoBaseAdmin):

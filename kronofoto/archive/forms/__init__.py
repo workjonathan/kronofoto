@@ -1,13 +1,14 @@
 from django import forms
-from .models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
-from .search import expression
-from .search.parser import Parser, NoExpression, BasicParser
+from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
+from ..search import expression
+from ..search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
-from .widgets import HeadingWidget, PositioningWidget
-from .models.photosphere import IncompleteGPSInfo
-from .fields import RecaptchaField
+from ..widgets import HeadingWidget, PositioningWidget
+from ..models.photosphere import IncompleteGPSInfo
+from ..fields import RecaptchaField
+from .photobase import PhotoForm, SubmissionForm
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")

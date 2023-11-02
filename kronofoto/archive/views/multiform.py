@@ -37,6 +37,7 @@ class SessionDictionary:
 
 class MultiformView(TemplateView):
     initials = defaultdict(dict)
+    extra_form_params = defaultdict(dict)
     session_store = "multiform_store"
     storage = FileSystemStorage(location="/tmp/kf_tmp")
     def setup(self, request, *args, **kwargs):
@@ -44,6 +45,9 @@ class MultiformView(TemplateView):
         self.data_store = SessionDictionary(session_key=self.get_session_data_store(), session=request.session)
         self.completed_form_store = SessionDictionary(session_key=self.get_session_completed_form_store(), session=request.session)
         self.file_store = SessionDictionary(session_key=self.get_session_files_store(), session=request.session)
+
+    def get_extra_form_params(self, page):
+        return self.extra_form_params[page]
 
     def get_session_files_store(self):
         return self.session_store + "_files"
@@ -59,9 +63,9 @@ class MultiformView(TemplateView):
         form_class = self.form_classes[self.step]
         initial = self.data_store.get(self.step, None)
         if initial is None:
-            form_kwargs = {"initial": self.initials[self.step]}
+            form_kwargs = {"initial": self.initials[self.step], **self.get_extra_form_params(self.step)}
         else:
-            form_kwargs = {"data": initial, "files": self.load_files(self.step)}
+            form_kwargs = {"data": initial, "files": self.load_files(self.step), **self.get_extra_form_params(self.step)}
         context['form'] = form_class(**form_kwargs)
         context['step_form'] = StepForm(initial={'step': self.step})
 
@@ -127,6 +131,7 @@ class MultiformView(TemplateView):
                     self.completed_form_store.clear()
                     return resp
             else:
+                print(form.errors)
                 self.completed_form_store.set(self.step, None)
             context = self.get_context_data()
             return self.render_to_response(context)
