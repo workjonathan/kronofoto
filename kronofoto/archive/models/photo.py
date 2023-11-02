@@ -27,7 +27,6 @@ from .category import Category
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
-import deal
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
@@ -41,14 +40,11 @@ class PhotoQuerySet(models.QuerySet):
     def filter_photos(self, collection):
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
-    @deal.post(lambda result: result[:2].count() < 2 or result[0].id != result[1].id)
     def photos_before(self, *, year: int, id: int):
         photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by('-year', '-id')
         return photos
 
 
-    @deal.pre(lambda qs, *, year, id: 1800 <= year <= 2023 and id >= 0)
-    @deal.post(lambda result: result[:2].count() < 2 or result[0].id != result[1].id)
     def photos_after(self, *, year: int, id: int) -> "PhotoQuerySet":
         photos = self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by('year', 'id')
         return photos
@@ -221,7 +217,6 @@ class Photo(PhotoBase):
     def get_edit_url(self):
         return reverse('admin:archive_photo_change', args=(self.id,))
 
-    @deal.raises(TypeError)
     @staticmethod
     def format_url(**kwargs):
         return "{}?{}".format(
@@ -242,7 +237,6 @@ class Photo(PhotoBase):
         def index(self):
             return Photo.county_index()
 
-    @deal.raises(TypeError)
     @staticmethod
     def index_by_fields(*fields):
         return [
@@ -270,7 +264,6 @@ class Photo(PhotoBase):
     def __str__(self):
         return self.accession_number
 
-    @deal.raises(ValueError)
     @staticmethod
     def accession2id(accession):
         if not accession.startswith('FI'):
@@ -282,7 +275,6 @@ class Photo(PhotoBase):
     def accession_number(self):
         return 'FI' + str(self.id).zfill(7)
 
-    @deal.raises(TypeError, UnidentifiedImageError, ValueError, ZeroDivisionError)
     def save(self, *args, **kwargs):
         if not self.thumbnail:
             Image.MAX_IMAGE_PIXELS = 195670000

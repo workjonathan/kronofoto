@@ -14,7 +14,6 @@ from ..models.tag import Tag
 from ..models.term import Term
 from ..models.photosphere import PhotoSphere, PhotoSpherePair
 import re
-import deal
 import pytest
 
 
