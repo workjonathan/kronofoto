@@ -36,7 +36,7 @@ register_converter(AccessionNumberConverter, 'accession')
 app_name = 'kronofoto'
 urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('', views.RandomRedirect.as_view(), name='random-image'),
-    path('materials', views.CategoryList.as_view(), name='materials-list'),
+    path('materials', views.category_list, name='materials-list'),
     path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('timeline/<slug:category>/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
     path('original/<int:pk>/', views.DownloadPageView.as_view()),

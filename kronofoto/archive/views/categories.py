@@ -6,11 +6,21 @@ from typing import Optional
 from django.views.generic import ListView
 from .basetemplate import BaseTemplateMixin
 from django.db.models import QuerySet
+from .base import require_valid_archive, ArchiveRequest
 
-class CategoryList(BaseTemplateMixin, ListView):
-    def get_queryset(self) -> QuerySet[Category]:
-        if 'short_name' in self.kwargs:
-            if not Archive.objects.filter(slug=self.kwargs['short_name']).exists():
-                raise Http404('archive not found')
-            return Category.objects.filter(archive__slug=self.kwargs['short_name'])
-        return Category.objects.all()
+@require_valid_archive
+def category_list(request: HttpRequest, short_name: Optional[str]=None, category: Optional[str]=None) -> TemplateResponse:
+    archive_request = ArchiveRequest(request=request, short_name=short_name, category=category)
+    if short_name:
+        queryset = Category.objects.filter(archive__slug=short_name)
+    else:
+        queryset = Category.objects.all()
+    context = archive_request.common_context
+    context['object_list'] = queryset
+    return TemplateResponse(
+        request=request,
+        template='archive/category_list.html',
+        context=context,
+    )
+
+
