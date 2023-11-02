@@ -13,6 +13,7 @@ class PhotoBaseForm(forms.ModelForm):
         categoryfield = self.fields['category']
         if hasattr(categoryfield, 'choices'):
             categoryfield.choices = list(self.get_categories(instance, archive=force_archive).values_list("id", "name"))
+            categoryfield.choices.insert(0, (None, "---------"))
 
     def get_categories(self, instance: Optional[Photo]=None, archive: Optional[Archive]=None) -> QuerySet[Category]:
         if not archive and instance:
@@ -33,6 +34,7 @@ class PhotoForm(PhotoBaseForm):
         instance : Optional[Photo] = kwargs.get('instance')
         if hasattr(termsfield, 'choices'):
             termsfield.choices = list(self.get_terms(instance).values_list('id', 'term'))
+            termsfield.choices.insert(0, (None, "---------"))
 
     def get_terms(self, instance: Optional[Photo]) -> QuerySet[Term]:
         if not instance:
