@@ -15,7 +15,7 @@ def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> D
         hxheaders['Constraint'] = request.headers.get('Constraint', None)
         hxheaders['Embedded'] = request.headers.get('Embedded', 'false')
         context['hxheaders'] = json.dumps(hxheaders)
-        context['theme'] = random.choice(THEME[short_name if short_name else 'us'])
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
+    context['theme'] = random.choice(THEME[short_name if short_name else 'us'])
     return context
