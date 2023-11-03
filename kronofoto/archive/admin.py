@@ -13,8 +13,9 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.photosphere import MainStreetSet
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
+from .models.category import Category, ValidCategory
 from .models.csvrecord import ConnecticutRecord
-from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm
+from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm
 from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey
 from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
@@ -27,12 +28,14 @@ import operator
 from collections import defaultdict
 from .auth.forms import FortepanAuthenticationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, Tuple, TypedDict, Sequence, TYPE_CHECKING
+from django.template.response import TemplateResponse
+from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, Tuple, TypedDict, Sequence, TYPE_CHECKING, TypeVar
 from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.utils.html import format_html
+from django.shortcuts import get_object_or_404
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -155,9 +158,17 @@ class AgreementInline(admin.StackedInline):
     model = ArchiveAgreement
     extra = 0
 
+class CategoryInline(admin.TabularInline):
+    model = ValidCategory
+    extra = 0
+
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
-    inlines = (AgreementInline,)
+    inlines = (CategoryInline, AgreementInline)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    pass
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -546,10 +557,56 @@ class CSVRecordAdmin(admin.ModelAdmin):
         return qs.filter(photo__isnull=True)
 
 
+class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
+    def get_urls(self) -> List[URLPattern]:
+        from django.urls import path
+        def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
+            def wrapper(*args: Any, **kwargs: Any) -> HttpResponse:
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self # type: ignore
+            return update_wrapper(wrapper, view)
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        return [
+            path("categories", wrap(self.categories_view), name="{}_{}_categories".format(*info)),
+        ] + super().get_urls()
+
+    def categories_view(self, request: HttpRequest) -> HttpResponse:
+        if request.GET.get('archive', ""):
+            categories = Category.objects.filter(archive__id=int(request.GET['archive']))
+        else:
+            categories = Category.objects.none()
+        return TemplateResponse(request, "admin/widgets/categories.html", {'objects': categories})
+
+    def formfield_for_foreignkey(
+        self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
+    ) -> forms.ModelChoiceField:
+        if db_field.name == 'donor':
+            kwargs['queryset'] = Donor.objects.filter(is_contributor=True)
+        if db_field.name == 'photographer':
+            kwargs['queryset'] = Donor.objects.filter(is_photographer=True)
+        if db_field.name == 'scanner':
+            kwargs['queryset'] = Donor.objects.filter(is_scanner=True)
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'archive':
+            url = reverse('admin:archive_photo_categories')
+            field.widget.attrs.update({
+                'hx-get': url,
+                'hx-trigger': 'change',
+                'data-archive': '',
+                'hx-target': '[data-category]',
+            })
+        return field
+
 @admin.register(Submission)
-class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
+class SubmissionAdmin(PhotoBaseAdmin):
     change_form_template = 'admin/custom_changeform.html'
     readonly_fields = ["image_display"]
+    form = SubmissionForm
+
+    class Media:
+        js = ('https://unpkg.com/htmx.org@1.9.6',)
+
     class AcceptForm(forms.ModelForm):
         class Meta:
             model = Photo
@@ -560,6 +617,16 @@ class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
             self.fields['is_published'].label_suffix = ''
             self.fields['is_featured'].label_suffix = ''
 
+    def formfield_for_foreignkey(
+        self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
+    ) -> forms.ModelChoiceField:
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'category':
+            url = reverse('admin:archive_photo_terms')
+            field.widget.attrs.update({
+                'data-category': '',
+            })
+        return field
 
     def get_urls(self) -> List[URLPattern]:
         from django.urls import path
@@ -614,6 +681,7 @@ class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
             file.close()
             file.open()
             new_obj = target_model(
+                category=obj.category,
                 archive=obj.archive,
                 donor=obj.donor,
                 photographer=obj.photographer,
@@ -681,13 +749,15 @@ class SubmissionAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
     def image_display(self, obj: Submission) -> str:
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.image.url, obj.image.width, obj.image.height))
 
+
 @admin.register(Photo)
-class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
+class PhotoAdmin(PhotoBaseAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
     list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
+    form = PhotoForm
     search_fields = [
         'city',
         'state',
@@ -698,6 +768,9 @@ class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
         'year',
     ]
 
+    class Media:
+        js = ('https://unpkg.com/htmx.org@1.9.6',)
+
     def thumb_image(self, obj: Photo) -> str:
         return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
 
@@ -707,16 +780,54 @@ class PhotoAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
         else:
             return "-"
 
+    def get_urls(self) -> List[URLPattern]:
+        from django.urls import path
+        def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
+            def wrapper(*args: Any, **kwargs: Any) -> HttpResponse:
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self # type: ignore
+            return update_wrapper(wrapper, view)
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        return [
+            path("terms", wrap(self.terms_view), name="{}_{}_terms".format(*info)),
+        ] + super().get_urls()
+
+    def terms_view(self, request: HttpRequest) -> HttpResponse:
+        if request.GET.get('archive', "") and request.GET.get("category", ""):
+            vc = get_object_or_404(
+                ValidCategory.objects.all(),
+                archive__id=int(request.GET['archive']),
+                category__id=int(request.GET['category']),
+            )
+            terms = vc.terms.all()
+        else:
+            terms = Term.objects.none()
+        return TemplateResponse(request, "admin/widgets/terms.html", {'objects': terms })
+
+
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
     ) -> forms.ModelChoiceField:
-        if db_field.name == 'donor':
-            kwargs['queryset'] = Donor.objects.filter(is_contributor=True)
-        if db_field.name == 'photographer':
-            kwargs['queryset'] = Donor.objects.filter(is_photographer=True)
-        if db_field.name == 'scanner':
-            kwargs['queryset'] = Donor.objects.filter(is_scanner=True)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'category':
+            url = reverse('admin:archive_photo_terms')
+            field.widget.attrs.update({
+                'hx-get': url,
+                'hx-trigger': 'change',
+                'data-category': '',
+                'hx-include': '[data-archive]',
+                'hx-target': '[data-terms]',
+            })
+        return field
+
+    def formfield_for_manytomany(self, db_field: ManyToManyField, request: HttpRequest, **kwargs: Any) -> Optional[forms.ModelMultipleChoiceField]:
+        field = super().formfield_for_manytomany(db_field, request, **kwargs)
+        if db_field.name == 'terms' and field:
+            field.widget.attrs.update({
+                'data-terms': '',
+            })
+        return field
 
     def save_form(self, request: HttpRequest, form: Any, change: Any) -> Photo:
         photo = super().save_form(request, form, change)

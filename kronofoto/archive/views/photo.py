@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
-from .basetemplate import BasePhotoTemplateMixin, BasePermissiveCORSMixin
+from .basetemplate import BasePhotoTemplateMixin
 from .paginator import TimelinePaginator, EMPTY_PNG
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
@@ -15,6 +15,7 @@ from ..reverse import get_request, set_request, as_absolute
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
+from .base import PhotoRequest
 from typing import final, TypedDict
 from .basetemplate import THEME
 from ..forms import CarouselForm
@@ -144,13 +145,13 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.form = self.get_form()
 
     def get(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            return self.form_valid(self.form)
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
         else:
-            return self.form_invalid(self.form)
+            return self.form_invalid(form)
 
 
 
@@ -159,6 +160,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     pk_url_kwarg = 'photo'
     _queryset = None
     model = Photo
+    archive_request_class = PhotoRequest
 
     @property
     def queryset(self):
@@ -174,16 +176,8 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
         except queryset.model.DoesNotExist:
             raise Http404("No photo with this accession number is in this collection.")
 
-    def get_hx_context(self):
-        if self.request.headers.get('Hx-Target', None) == 'fi-image':
-            return {'base_template': 'archive/photo_partial.html'}
-        else:
-            return super().get_hx_context()
-
-
     def get_context_data(self, **kwargs):
         context = super(PhotoView, self).get_context_data(**kwargs)
-        self.params = self.request.GET.copy()
         object = self.object
         queryset = self.queryset
         year_range = queryset.year_range()
@@ -197,17 +191,17 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
     def render(self, context, **kwargs):
         response = super().render_to_response(context, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
         return response
 
     def render_to_response(self, context, **kwargs):
         return self.render(context, **kwargs)
 
-
 class TimelineSvg(TemplateView):
     template_name = "archive/timeline.svg"
-    def get_context_data(self, start, end, short_name=None, width=400):
+    def get_context_data(self, start, end, short_name=None, width=400, category=None):
         url_kwargs = {}
+        if category:
+            url_kwargs['category'] = category
         if short_name:
             url_kwargs['short_name'] = short_name
         context = {
@@ -267,7 +261,7 @@ class TimelineSvg(TemplateView):
 
 
 
-class LogoSvg(BasePermissiveCORSMixin, TemplateView):
+class LogoSvg(TemplateView):
     template_name = "archive/svg/logo.svg"
     def get_template_names(self):
         templates = []
@@ -288,12 +282,12 @@ class LogoSvg(BasePermissiveCORSMixin, TemplateView):
         response['Content-Type'] = 'image/svg+xml'
         return response
 
-class LogoSvgSmall(BasePermissiveCORSMixin, TemplateView):
+class LogoSvgSmall(TemplateView):
     template_name = "archive/svg/logo-small.svg"
     def get_template_names(self):
         templates = []
         if 'short_name' in self.kwargs:
-            templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
+            templates.append('archive/svg/logo-small/{}.svg'.format(self.kwargs['short_name']))
         templates.append(self.template_name)
         return templates
 

@@ -9,10 +9,11 @@ from .agreement import AnonymousAgreementCheck, UserAgreementCheck
 from ..fields import RecaptchaField, AutocompleteField
 from ..widgets import AutocompleteWidget
 from ..reverse import reverse_lazy
+from ..admin import SubmissionForm
 
 from django import forms
 
-class SubmissionDetailsForm(forms.ModelForm):
+class SubmissionDetailsForm(SubmissionForm):
     prefix = "submission"
 
     donor = AutocompleteField(
@@ -61,6 +62,10 @@ class BaseSubmissionFormView(BaseTemplateMixin, MultiformView):
         SubmissionDetailsForm,
         SubmissionImageForm,
     )
+    def get_extra_form_params(self, page):
+        if page == 0:
+            return {'force_archive': get_object_or_404(Archive.objects.all(), slug=self.kwargs['short_name'])}
+        return {}
     template_name = 'archive/submission_create.html'
     def forms_valid(self, forms):
         submission_args = {**forms[0].cleaned_data, **forms[1].cleaned_data}

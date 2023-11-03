@@ -5,6 +5,8 @@ from .urlify import URLifyExtension
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.core.cache import cache
+from ..models import Photo
 
 
 register = template.Library()
@@ -34,6 +36,13 @@ def page_links(formatter, page_obj, target=None):
         links=links,
         page_obj=page_obj
     )
+
+def count_photos() -> int:
+    return Photo.objects.filter(is_published=True).count()
+
+@register.simple_tag(takes_context=False)
+def photo_count() -> int:
+    return cache.get_or_set("photo_count", count_photos)
 
 @register.filter(is_safe=True)
 @stringfilter

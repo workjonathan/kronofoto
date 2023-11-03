@@ -1,11 +1,10 @@
 from django.views.generic import FormView
 from django.contrib.sites.models import Site
 from ..forms import WebComponentForm, SearchForm
-from .basetemplate import BasePermissiveCORSMixin
 from ..reverse import reverse
 from ..search.parser import NoExpression
 
-class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
+class WebComponentPopupView(FormView):
     template_name = 'archive/web-component.html'
     form_class = WebComponentForm
     def get_initial(self):
@@ -16,10 +15,7 @@ class WebComponentPopupView(BasePermissiveCORSMixin, FormView):
         form = context['form']
         searchForm = SearchForm(self.request.GET)
         if searchForm.is_valid():
-            try:
-                expression = str(searchForm.as_expression())
-            except NoExpression:
-                expression = None
+            expression = searchForm.cleaned_data['expr']
         context['expression'] = expression
         context['site'] = Site.objects.get_current().domain
         kwargs = self.kwargs.copy()

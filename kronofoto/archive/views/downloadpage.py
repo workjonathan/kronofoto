@@ -1,6 +1,6 @@
 from django.views.generic.detail import DetailView
 from django.conf import settings
-from .basetemplate import BaseTemplateMixin, BasePermissiveCORSMixin
+from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 
@@ -17,9 +17,9 @@ class BaseDownloadView(DetailView):
         return context
 
 
-class DownloadPageView(BaseTemplateMixin, BaseDownloadView):
+class DownloadPageView(BaseDownloadView):
     template_name = "archive/download-page.html"
 
 
-class DownloadPopupView(BasePermissiveCORSMixin, BaseDownloadView):
+class DownloadPopupView(BaseDownloadView):
     template_name = "archive/popup-download.html"

@@ -49,7 +49,9 @@ class Donor(Collectible, models.Model):
         return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
     def __str__(self) -> str:
-        return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+        if self.first_name or self.last_name:
+            return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+        return "Unnamed contributor"
 
     def encode_params(self, params: Any) -> Any:
         params['donor'] = self.id
