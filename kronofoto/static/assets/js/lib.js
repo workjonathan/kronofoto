@@ -32,12 +32,83 @@ export const initJQuery = (context) => {
   };
 }
 
-export const initHTMXListeners = (_htmx, context, root) => {
+export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
   htmx = _htmx
  
+  const addZoom = (container) => {
+    let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
+    imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+
+    let img = new Image();
+    let zoomOpened = false
+    let zoomed = false
+    let galleryElem = context.querySelector('.gallery')[0]
+    img.src = imgsrc;
+    img.onload = () => {
+
+
+      let ratio = img.naturalWidth / img.naturalHeight;
+
+      Object.assign(container.style, {
+        height: "calc(100vh)",
+        width: "calc(100vw)",
+        backgroundPosition: "top",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat"
+      });
+
+      let removeZoom = () => {
+        Object.assign(container.style, {
+          backgroundPosition: "top",
+          backgroundSize: "contain"
+        });
+      }
+
+      container.addEventListener('click', (e) => {
+        zoomed = !zoomed;
+
+        if(zoomed) {
+          galleryElem.classList.add('zoomed')
+        }
+        else {
+          galleryElem.classList.remove('zoomed')
+          removeZoom()
+        }
+      })
+
+      container.onmousemove = (e) => {
+        if(zoomed) {
+          let rect = e.target.getBoundingClientRect(),
+              xPos = e.clientX - rect.left,
+              yPos = e.clientY - rect.top,
+              xPercent = ((xPos / container.clientWidth) * 100) + "%",
+              yPercent = ((yPos / container.clientHeight) * 100) + "%";
+
+          Object.assign(container.style, {
+            backgroundPosition: xPercent + " " + yPercent,
+            backgroundSize: (window.innerWidth * 1.5) + "px"
+          });
+        }
+      };
+
+      // container.onmouseleave = removeZoom
+
+    }
+  }
   const slideToId = ({target, fi}) => {
     for (const targets of context.querySelectorAll(target)) {
-        const destination = targets.querySelector(`:scope [data-fi="${fi}"]`)
+        let destination, candidate = undefined
+        for (const elem of targets.querySelectorAll(`:scope [data-fi="${fi}"]`)) {
+            candidate = elem
+            for (const img of elem.querySelectorAll(":scope a img")) {
+                if (!img.classList.contains("empty")) {
+                    destination = candidate
+                }
+            }
+        }
+        if (!destination) {
+            destination = candidate
+        }
         const origin = targets.querySelector(`:scope [data-origin]`)
         if (destination && origin) {
             const children = [...targets.children]
@@ -47,8 +118,10 @@ export const initHTMXListeners = (_htmx, context, root) => {
     }
   }
 
-
-  htmx.onLoad(elem => {
+  const onLoad = elem => {
+    for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
+        addZoom(elem2)
+    }
     for (const elem2 of elem.querySelectorAll("#backward-zip")) {
         elem2.addEventListener("click", timelineZipBackward)
         elem2.addEventListener("mousedown", timelineCrawlBackward)
@@ -125,10 +198,11 @@ export const initHTMXListeners = (_htmx, context, root) => {
       }
     }
 */
-  })
-
-  return htmx
-
+  }
+  if (lateLoad) {
+    onLoad(context)
+  }
+  htmx.onLoad(onLoad)
 }
 export const initFoundation = (context) => {
 
@@ -397,7 +471,7 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
   //console.log({numThumbnails, currentPosition, preItemNum})
 
   if(drag && numThumbnails - currentPosition < 20) {
-    const form = document.querySelector('#fi-thumbnail-carousel-images').closest("form")
+    const form = $('#fi-thumbnail-carousel-images').closest("form").get(0)
     form.querySelector("[name='forward']").value = 1
     form.setAttribute("hx-swap", "beforeend")
 
@@ -414,7 +488,7 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
   }
   else if(drag && currentPosition < 20) {
     /* copy/pasted code */
-    const form = document.querySelector('#fi-thumbnail-carousel-images').closest("form")
+    const form = $('#fi-thumbnail-carousel-images').closest("form").get(0)
     form.setAttribute("hx-swap", "afterbegin")
     form.querySelector("[name='forward']").value = ""
     const child = form.querySelector("#fi-thumbnail-carousel-images li:first-child")

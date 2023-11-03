@@ -183,16 +183,16 @@ class FortepanViewer extends HTMLElement {
         const mode = 'cors'
         const headers = new Headers([['Embedded', '1'], ["Constraint", constraint]])
         const req = new Request(host, {mode, headers})
-        initJQuery(this.shadowRoot)
-        initFoundation(this.shadowRoot)
         fetch(req)
             .then(response => response.text())
             .then(response => {
                 this.shadowRoot.innerHTML = response
                 this.htmx = HTMX(this.shadowRoot)
+                initJQuery(this.shadowRoot.querySelector("#kfroot"))
+                initFoundation(this.shadowRoot.querySelector("#kfroot"))
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
-                //this.htmx.logAll()
-                initHTMXListeners(this.htmx, this.shadowRoot)
+                initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true})
+                
             })
     }
 }

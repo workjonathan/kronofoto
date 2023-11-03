@@ -540,7 +540,7 @@ export default function (document2) {
         }
 
         var scanForwardQuery = function(start, match) {
-            var results = getDocument().querySelectorAll(match);
+            var results = document2.querySelectorAll(match);
             for (var i = 0; i < results.length; i++) {
                 var elt = results[i];
                 if (elt.compareDocumentPosition(start) === Node.DOCUMENT_POSITION_PRECEDING) {
@@ -550,7 +550,7 @@ export default function (document2) {
         }
 
         var scanBackwardsQuery = function(start, match) {
-            var results = getDocument().querySelectorAll(match);
+            var results = document2.querySelectorAll(match);
             for (var i = results.length - 1; i >= 0; i--) {
                 var elt = results[i];
                 if (elt.compareDocumentPosition(start) === Node.DOCUMENT_POSITION_FOLLOWING) {

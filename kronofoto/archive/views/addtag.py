@@ -8,34 +8,10 @@ from .basetemplate import BaseTemplateMixin
 from ..models import Photo
 from django.http import HttpRequest, HttpResponse, QueryDict
 from django.template.response import TemplateResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.csrf import csrf_exempt
+from typing import Any
 
 
-#class AddTagView(BaseTemplateMixin, LoginRequiredMixin, FormView):
-#    template_name = 'archive/add_tag.html'
-#    form_class = TagForm
-#    success_url = '/'
-#
-#    def get_context_data(self, **kwargs):
-#        context = super().get_context_data(**kwargs)
-#        context['photo'] = self.photo
-#        context['tags'] = self.photo.get_accepted_tags(self.request.user)
-#        return context
-#
-#    def dispatch(self, request, photo, **kwargs):
-#        self.photo = get_object_or_404(Photo.objects.all(), id=photo)
-#        self.success_url = reverse('kronofoto:addtag', kwargs=dict(**self.url_kwargs, **{'photo': self.photo.id}))
-#        if request.GET:
-#            self.success_url += '?' + request.GET.urlencode()
-#        return super().dispatch(request, **kwargs)
-#
-#    def form_valid(self, form):
-#        form.add_tag(self.photo, user=self.request.user)
-#        return super().form_valid(form)
-
-
-def tags_view(request: HttpRequest, photo: int) -> HttpResponse:
+def tags_view(request: HttpRequest, photo: int, **kwargs: Any) -> HttpResponse:
     object = get_object_or_404(Photo.objects.all(), id=photo)
     if request.method and request.method.lower() == 'put':
         if request.user.is_anonymous:

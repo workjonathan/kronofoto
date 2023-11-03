@@ -40,7 +40,6 @@ class ArchiveRequest:
     @property
     def base_template(self) -> str:
         if self.is_hx_request:
-            print("reasera")
             return 'archive/base_partial.html'
         elif self.is_embedded:
             return 'archive/embedded-base.html'
@@ -61,6 +60,7 @@ class ArchiveRequest:
         context['base_template'] = self.base_template
         context['collection_name'] = self.collection_name
         context['timeline_url'] = '#'
+        context['push_url'] = not self.is_embedded
         return context
 
     @property

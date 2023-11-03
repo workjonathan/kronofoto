@@ -58,76 +58,6 @@
         <div id="zoom-popup" class="follow-zoom-popup">
             {% block zoom_popup %}
             <div style='background-image: url("{{ object.h700.url }}");' id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
-
-            <!-- script for follow zoom -->
-            <script type="text/javascript">
-              var addZoom = (target) => {
-
-                let container = window.kfcontext.getElementById(target),
-                    imgsrc = container.currentStyle || window.getComputedStyle(container, false);
-                imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
-
-                let img = new Image();
-                let zoomOpened = false
-                let zoomed = false
-                let galleryElem = window.kfcontext.querySelector('.gallery')[0]
-                img.src = imgsrc;
-                img.onload = () => {
-
-
-                  let ratio = img.naturalWidth / img.naturalHeight;
-
-                  Object.assign(container.style, {
-                    height: "calc(100vh)",
-                    width: "calc(100vw)",
-                    backgroundPosition: "top",
-                    backgroundSize: "contain",
-                    backgroundRepeat: "no-repeat"
-                  });
-
-                  let removeZoom = () => {
-                    Object.assign(container.style, {
-                      backgroundPosition: "top",
-                      backgroundSize: "contain"
-                    });
-                  }
-
-                  container.addEventListener('click', (e) => {
-                    zoomed = !zoomed;
-
-                    if(zoomed) {
-                      galleryElem.classList.add('zoomed')
-                    }
-                    else {
-                      galleryElem.classList.remove('zoomed')
-                      removeZoom()
-                    }
-                  })
-
-                  container.onmousemove = (e) => {
-                    if(zoomed) {
-                      let rect = e.target.getBoundingClientRect(),
-                          xPos = e.clientX - rect.left,
-                          yPos = e.clientY - rect.top,
-                          xPercent = ((xPos / container.clientWidth) * 100) + "%",
-                          yPercent = ((yPos / container.clientHeight) * 100) + "%";
-
-                      Object.assign(container.style, {
-                        backgroundPosition: xPercent + " " + yPercent,
-                        backgroundSize: (window.innerWidth * 1.5) + "px"
-                      });
-                    }
-                  };
-
-                  // container.onmouseleave = removeZoom
-
-                }
-              }
-
-              addZoom("follow-zoom-timeline-version");
-
-            </script>
-
             {% endblock zoom_popup %}
         </div>
 
@@ -226,7 +156,7 @@
         {% block thumbnails %}
 
         {% carousel_form %}
-        <div class="fi-thumbnail-carousel" hx-target="#fi-image" hx-push-url="true" hx-swap="innerHTML">
+        <div class="fi-thumbnail-carousel" hx-target="#fi-image" hx-push-url="{{ push_url|yesno:"true,false"}}" hx-swap="innerHTML">
             <div class="back-arrows" data-back-arrows>
                 {% block back_arrows %}
                 <a id="backward-zip"></a>

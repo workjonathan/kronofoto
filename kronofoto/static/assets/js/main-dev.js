@@ -19,8 +19,8 @@ import HTMX from "./htmx.js"
 const htmx = HTMX(document)
 
 const init = () => {
-  initJQuery(document.querySelector('#kfroot'))
-  initHTMXListeners(htmx, document, $('body'))
+  initJQuery(document)
+  initHTMXListeners(htmx, document)
   initFoundation(document)
   initClipboardJS(document)
 }
