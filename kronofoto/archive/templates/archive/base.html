@@ -79,9 +79,11 @@
             {% include "archive/search-box.html" %}
             {% endblock %}
 
-          {% block viewbuttons %}
-          {% include "archive/view-buttons.html" %}
-          {% endblock %}
+          <div class="view-buttons" data-view-buttons-target>
+            {% block viewbuttons %}
+            {% include "archive/view-buttons.html" %}
+            {% endblock %}
+          </div>
 
         </div>
           <!-- end nav center -->

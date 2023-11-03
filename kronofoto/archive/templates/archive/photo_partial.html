@@ -1,4 +1,5 @@
 {% load krono_urls %}
+{% load static %}
 <div hx-swap-oob="innerHTML:#navigation-menu">
   {% include "archive/navigation-menu.html" %}
 </div>
@@ -11,7 +12,7 @@
 
 <div hx-swap-oob="delete:#grid-icon"></div>
 
-<div hx-swap-oob="beforeend:.main-nav_center">
+<div hx-swap-oob="beforeend:[data-view-buttons-target]">
     {% block viewbuttons %}
     {% endblock %}
 </div>
@@ -22,6 +23,12 @@
 
 <div hx-swap-oob="innerHTML:#metadata-popup">
     {% block metadata %}
+    {% endblock %}
+</div>
+
+<div hx-swap-oob="innerHTML:[data-fpi-fpilink]">
+    {% block fpi_link %}
+    <a class="fpi-fpilink" href="{{ timeline_url }}"><img src="{% static "assets/images/01-fi-logo.svg" %}" alt="Fortepan Iowa icon" title="Fortepan Iowa"></a>
     {% endblock %}
 </div>
 
