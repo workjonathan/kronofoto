@@ -3,6 +3,7 @@ from django.conf import settings
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
+from .base import require_valid_archive, ArchiveRequest
 
 
 class BaseDownloadView(DetailView):
@@ -11,6 +12,9 @@ class BaseDownloadView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+
+        archive_request = ArchiveRequest(request=self.request, short_name=self.kwargs.get('short_name'), category=self.kwargs.get('category'))
+        context.update(archive_request.common_context)
         photo = context['object']
         context['citation_url'] = photo.get_absolute_url(params=None)
         context['grid_url'] = photo.get_grid_url()
