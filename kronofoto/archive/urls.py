@@ -12,7 +12,8 @@ from archive.views.tagsearch import ContributorSearchView
 from archive.views.donor import ContributorCreateView
 from archive.views import tags_view
 from django.conf import settings
-from typing import Sequence, Union, List
+from django.http.response import HttpResponseBase
+from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
 
 
 class NegativeIntConverter:
@@ -36,62 +37,75 @@ class AccessionNumberConverter:
 register_converter(NegativeIntConverter, 'negint')
 register_converter(AccessionNumberConverter, 'accession')
 
+def directory(
+        route: str,
+        view: Callable[..., HttpResponseBase],
+        kwargs: Optional[Dict[str, Any]] = None,
+        name: Optional[str] = None,
+        children: Optional[Tuple[Sequence[Union[URLResolver, URLPattern]], Optional[str], Optional[str]]]=None,
+    ) -> List[Union[URLPattern, URLResolver]]:
+    full_kwargs : Dict[str, Any] = {}
+    partial_kwargs : Dict[str, Any] = {}
+    if kwargs:
+        full_kwargs['kwargs'] = kwargs
+        partial_kwargs['kwargs'] = kwargs
+    if name:
+        full_kwargs['name'] = name
+    paths : List[Union[URLPattern, URLResolver]] = [
+        path(route, view, **full_kwargs),
+        path(route+"/", view, **partial_kwargs),
+    ]
+    if children:
+        paths.append(path(route+"/", children))
+    return paths
+
+def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict[str, Any]] = None) -> List[Union[URLPattern, URLResolver]]:
+    kwargs = kwargs or {}
+    if with_names:
+        get_kwargs : Callable[[str], Dict[str, Any]] = lambda x: {"kwargs": kwargs, "name": x}
+    else:
+        get_kwargs = lambda x: {"kwargs": kwargs}
+    return directory(route, views.GridView.as_view(), **get_kwargs("gridview"), children=include([
+        *directory('<accession:photo>', views.PhotoView.as_view(), **get_kwargs("photoview"), children=include([
+            path('original', views.DownloadPageView.as_view(pk_url_kwarg='pk'), **get_kwargs('download')),
+            *directory('list-members', collection.ListMembers.as_view(), **get_kwargs('popup-add-to-list'), children=include([
+                path('new-list', collection.NewList.as_view(), **get_kwargs('popup-new-list')),
+                path('edit', views.AddToList.as_view(), **get_kwargs('add-to-list')),
+            ])),
+            path('web-component', webcomponent.WebComponentPopupView.as_view(), **get_kwargs('popup-web-component')),
+            path('tag-members', tags_view, **get_kwargs('tags-view')),
+            path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
+        ])),
+        path('random', views.RandomRedirect.as_view(), **get_kwargs('random-image')),
+        path('carousel', CarouselListView.as_view(item_count=40), **get_kwargs('carousel')),
+        path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
+        path('year', YearRedirect.as_view(), **get_kwargs("year-redirect")),
+    ]))
+
 app_name = 'kronofoto'
 urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('', views.RandomRedirect.as_view(category="photos"), name='random-image'),
-    path('materials/<slug:category>/random', views.RandomRedirect.as_view(), name='random-image'),
-    path('materials', views.category_list, name='materials-list'),
-    path('timeline/<int:start>/<int:end>', TimelineSvg.as_view(), name='timelinesvg'),
+    *build_content_urls("photos", with_names=False, kwargs={"category": "photos"}),
+    *directory('categories', views.category_list, name="materials-list", children=include([
+        *build_content_urls("all", with_names=True, kwargs={}),
+        *build_content_urls("<slug:category>", with_names=True, kwargs={}),
+    ])),
+    *directory('materials', views.category_list, name="materials-list", children=include([
+        *build_content_urls("all", with_names=False, kwargs={}),
+        *build_content_urls("<slug:category>", with_names=False, kwargs={}),
+    ])),
     path('logo.svg/<str:theme>', LogoSvg.as_view(), name='logosvg'),
     path('logo-small.svg/<str:theme>', LogoSvgSmall.as_view(), name='logosvgsmall'),
-    path('original/<int:photo>/', views.DownloadPageView.as_view()),
-    path('photos/<accession:photo>/original', views.DownloadPageView.as_view(), name='download'),
-    path('materials/all/<accession:pk>/original', views.DownloadPageView.as_view(pk_url_kwarg='pk'), name='download'),
-    path('materials/<slug:category>/<accession:pk>/original', views.DownloadPageView.as_view(pk_url_kwarg='pk'), name='download'),
-    path('user/<str:username>/', views.Profile.as_view()),
-    path('keyframes/<negint:origin>/<int:difference>/<int:step>/<str:unit>.css', views.Keyframes.as_view(), name='keyframes'),
-    path('search/', views.GridView.as_view()),
-    path('collection/', views.CollectionCreate.as_view()),
-    path('collections', views.CollectionCreate.as_view(), name='collection-create'),
-    path('collections/<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
-    path('list/<str:photo>/', views.AddToList.as_view()),
-    path('materials/all/carousel', CarouselListView.as_view(item_count=40), name='carousel'),
-    path('materials/<slug:category>/carousel', CarouselListView.as_view(item_count=40), name='carousel'),
-    path('photos/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
-    path('materials/all/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
-    path('materials/<slug:category>/<accession:photo>/list-members/edit', views.AddToList.as_view(), name='add-to-list'),
-    path('photos/<accession:photo>/list-members', collection.ListMembers.as_view(), name='popup-add-to-list'),
-    path('photos/<accession:photo>/list-members/new-list', collection.NewList.as_view(), name='popup-new-list'),
-    path('photos/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view()),
-    path('materials/all/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
-    path('materials/<slug:category>/<accession:photo>/web-component', webcomponent.WebComponentPopupView.as_view(), name='popup-web-component'),
-    path('photos/<accession:photo>/download', downloadpage.DownloadPopupView.as_view(), name='popup-download'),
-    path('photo/<accession:photo>/', views.PhotoView.as_view()),
-    path('photos/<accession:photo>', views.PhotoView.as_view(category='photos', item_count=20)),
-    path('photo/<int:page>/<accession:photo>/', views.PhotoView.as_view()),
-    path('photos/<int:page>/<accession:photo>', views.PhotoView.as_view()),
-    path('photo/year:<int:year>/', YearRedirect.as_view(category="photos")),
-    path('photos/year', YearRedirect.as_view(category="photos")),
-    path('photos/year:<int:year>', YearRedirect.as_view(category="photos")),
-    path('materials/all/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
-    path('materials/<slug:category>/<accession:photo>', views.PhotoView.as_view(), name="photoview"),
-    path('materials/all/year', YearRedirect.as_view(), name="year-redirect"),
-    path('materials/<slug:category>/year', YearRedirect.as_view(), name="year-redirect"),
-    path('mainstreets', MainStreetList.as_view(), name='mainstreet-list'),
-    path('mainstreets/<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
-    path('mainstreets/<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
-    path('mainstreet360/<int:pk>/', PhotoSphereView.as_view()),
+    *directory('collections', views.CollectionCreate.as_view(), name='collection-create', children=include([
+        path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+    ])),
+    *directory('mainstreets', MainStreetList.as_view(), name='mainstreet-list', children=include([
+        path('<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
+        path('<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
+    ])),
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
-    path('photos/<accession:photo>/tag-members', tags_view, name='tags-view'),
-    path('materials/all/<accession:photo>/tag-members', tags_view, name='tags-view'),
-    path('materials/<slug:category>/<accession:photo>/tag-members', tags_view, name='tags-view'),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
-    path('photos', views.GridView.as_view(category="photos")),
-    path('materials/all', views.GridView.as_view(), name='gridview'),
-    path('materials/<slug:category>', views.GridView.as_view(), name='gridview'),
-    path('grid/<int:page>/', views.GridView.as_view()),
-    path('photos/<int:page>', views.GridView.as_view()),
 ]
 
 urlpatterns = urlpatterns + [
@@ -101,6 +115,7 @@ urlpatterns = urlpatterns + [
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
+    path('user/<str:username>/', views.Profile.as_view()),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(extra_context={"reason": "You must agree to terms before creating contributors."}), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="archive/contributor_created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
