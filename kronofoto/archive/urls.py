@@ -67,7 +67,7 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
         get_kwargs = lambda x: {"kwargs": kwargs}
     return directory(route, views.GridView.as_view(), **get_kwargs("gridview"), children=include([
         *directory('<accession:photo>', views.PhotoView.as_view(), **get_kwargs("photoview"), children=include([
-            path('original', views.DownloadPageView.as_view(pk_url_kwarg='pk'), **get_kwargs('download')),
+            path('original', views.DownloadPageView.as_view(pk_url_kwarg='photo'), **get_kwargs('download')),
             *directory('list-members', collection.ListMembers.as_view(), **get_kwargs('popup-add-to-list'), children=include([
                 path('new-list', collection.NewList.as_view(), **get_kwargs('popup-new-list')),
                 path('edit', views.AddToList.as_view(), **get_kwargs('add-to-list')),
