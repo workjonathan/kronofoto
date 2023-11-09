@@ -1,7 +1,6 @@
 import {
   installButtons,
   markerDnD,
-  initJQuery,
   initHTMXListeners,
   initEventHandlers,
   initGalleryNav,
@@ -188,12 +187,13 @@ class FortepanViewer extends HTMLElement {
             .then(response => {
                 this.shadowRoot.innerHTML = response
                 this.htmx = HTMX(this.shadowRoot)
-                initJQuery(this.shadowRoot.querySelector("#kfroot"))
                 initFoundation(this.shadowRoot.querySelector("#kfroot"))
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
                 initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true})
-                
             })
     }
 }
-customElements.define("fortepan-viewer", FortepanViewer)
+
+if (!customElements.get('fortepan-viewer')) {
+    customElements.define("fortepan-viewer", FortepanViewer)
+}

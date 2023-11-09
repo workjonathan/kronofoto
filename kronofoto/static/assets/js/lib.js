@@ -1,5 +1,6 @@
 "use strict";
 
+import {trigger} from "./utils"
 import timeline from "./timeline";
 import $ from "jquery"
 import ClipboardActionCopy from 'clipboard/src/actions/copy'
@@ -22,18 +23,8 @@ let timelineCrawlForwardTimeout = null
 let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
 var timelineInstance = null
-let htmx = undefined
-
-export const initJQuery = (context) => {
-  var initjQuery = $.fn.init;
-  $.fn.init = function(s,c,r) {
-    c = c || context;
-    return new initjQuery(s,c,r);
-  };
-}
 
 export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
-  htmx = _htmx
  
   const addZoom = (container) => {
     let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
@@ -113,49 +104,111 @@ export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
         if (destination && origin) {
             const children = [...targets.children]
             const delta = children.indexOf(destination) - children.indexOf(origin)
-            gotoTimelinePosition(delta, false)
+            gotoTimelinePosition(delta, {context})
         }
     }
   }
+  // context here means our root element
+  // necessary?
+  $(context).on('click', (e) => {
+    if (!$('.form--add-tag input').is(":focus")) {
+        let $form = $('.form--add-tag input').closest('form')
+        $form.removeClass('expanded')
+    }
+  })
+
+  // context here means our root element and this would probably be simpler with server side templates.
+  $(context).on('on.zf.toggler', function(e) {
+    if($(e.target).hasClass('gallery__popup')) {
+      $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
+    }
+  });
+
 
   const onLoad = elem => {
+    $(elem).find(".form--add-tag .link--icon").on('click', (e) => {
+        let $form = $(e.currentTarget).closest('form')
+        $form.addClass('expanded')
+        $('input[type=text]', $form).focus()
+    })
+    // this logic should not be client side
+    $(elem).find('[data-save-list]').on('submit', function(e) {
+        // Check if logged in
+        if ($('#login-btn', context).length) {
+            $('#login-btn', context).trigger('click')
+            showToast('You must login to continue')
+        } else {
+            showToast('Updated photo lists')
+        }
+    })
+    // the next three have some broken state.
+    $('#overlay', elem).on('click', (e) => {
+        htmx.trigger("#hamburger-button", "click")
+        $('#overlay', context).fadeOut()
+    })
+    $('#hamburger-menu', elem).on('off.zf.toggler', (e) => {
+        $('#login', context).addClass('collapse')
+        $('#overlay', context).fadeIn()
+    }).on('on.zf.toggler', (e) => {
+        if ($('#login', context).hasClass('collapse')) {
+            $('#overlay', context).fadeOut()
+        }
+    })
+    $('#login', elem).on('off.zf.toggler', (e) => {
+        $('#hamburger-menu', context).addClass('collapse')
+        $('#overlay', context).fadeIn()
+    }).on('on.zf.toggler', (e) => {
+        if ($('#hamburger-menu', context).hasClass('collapse')) {
+            $('#overlay', context).fadeOut()
+        }
+    })
+    $('#auto-play-image-control-button', elem).on('click', (e) => {
+        let $btn = e.currentTarget
+        $btn.classList.toggle('active')
+        if ($btn.classList.contains('active')) {
+            autoplayStart($btn)
+        } else {
+            autoplayStop()
+        }
+    })
+    $(elem).find(".image-control-button--toggle").on('click', (e) => {
+        let $btn = $(e.currentTarget)
+        $('img', $btn).toggleClass('hide')
+    })
     for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
         addZoom(elem2)
     }
     for (const elem2 of elem.querySelectorAll("#backward-zip")) {
-        elem2.addEventListener("click", timelineZipBackward)
-        elem2.addEventListener("mousedown", timelineCrawlBackward)
-        elem2.addEventListener("mouseup", timelineCrawlBackwardRelease)
+        elem2.addEventListener("click", timelineZipBackward(context))
+        elem2.addEventListener("mousedown", timelineCrawlBackward(context))
+        elem2.addEventListener("mouseup", timelineCrawlBackwardRelease(context))
     }
     if (elem.id == "backward-zip") {
-        elem.addEventListener("click", timelineZipBackward)
-        elem.addEventListener("mousedown", timelineCrawlBackward)
-        elem.addEventListener("mouseup", timelineCrawlBackwardRelease)
+        elem.addEventListener("click", timelineZipBackward(context))
+        elem.addEventListener("mousedown", timelineCrawlBackward(context))
+        elem.addEventListener("mouseup", timelineCrawlBackwardRelease(context))
     }
     for (const elem2 of elem.querySelectorAll("#forward-zip")) {
-        elem2.addEventListener("click", timelineZipForward)
-        elem2.addEventListener("mousedown", timelineCrawlForward)
-        elem2.addEventListener("mouseup", timelineCrawlForwardRelease)
+        elem2.addEventListener("click", timelineZipForward(context))
+        elem2.addEventListener("mousedown", timelineCrawlForward(context))
+        elem2.addEventListener("mouseup", timelineCrawlForwardRelease(context))
     }
     if (elem.id == "forward-zip") {
-        elem.addEventListener("click", timelineZipForward)
-        elem.addEventListener("mousedown", timelineCrawlForward)
-        elem.addEventListener("mouseup", timelineCrawlForwardRelease)
+        elem.addEventListener("click", timelineZipForward(context))
+        elem.addEventListener("mousedown", timelineCrawlForward(context))
+        elem.addEventListener("mouseup", timelineCrawlForwardRelease(context))
     }
     if (elem.querySelectorAll(".photos-timeline").length) {
         timelineInstance = undefined
         initTimeline(context)
     }
-    for (const thumbs of elem.querySelectorAll("#fi-thumbnail-carousel-images")) {
-        initDraggableThumbnails(thumbs)
-    }
+    initDraggableThumbnails(context, elem)
     initAutocomplete()
     initNavSearch(elem)
     initPopups(elem)
     if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
         st.initialize()
     }
-    initEventHandlers(elem)
     initGalleryNav(elem)
     /*
 
@@ -168,19 +221,18 @@ export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
         target: "[data-fi-thumbnail-carousel-images]",
       })
       setTimeout(() => {
-          let html = $('#fi-preload-zone').html()
+          let html = elem.innerHTML
           // let firstId = $(html).find('li:first-child span').attr('hx-get')
-          $('#fi-thumbnail-carousel-images').html(html)
-          // let $after = $('#fi-thumbnail-carousel-images li span[hx-get="'+firstId+'"]').nextAll()
-          // $('#fi-thumbnail-carousel-images').append($after)
-          $('#fi-thumbnail-carousel-images').addClass('dragging')
-          $('#fi-thumbnail-carousel-images').css('left', '0px')
+          const carouselImages = elem.parentNode.querySelector('#fi-thumbnail-carousel-images')
+          carouselImages.innerHTML = html
+          carouselImages.classList.add("dragging")
+          carouselImages.style.left = "0px"
           setTimeout(() => {
-            $('#fi-thumbnail-carousel-images').removeClass('dragging')
+            carouselImages.classList.remove('dragging')
           }, 100)
 
-          htmx.process($('#fi-thumbnail-carousel-images').get(0))
-          $('#fi-preload-zone').empty()
+          _htmx.process(carouselImages)
+          elem.replaceChildren()
       }, 250)
     }
 
@@ -202,7 +254,7 @@ export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
   if (lateLoad) {
     onLoad(context)
   }
-  htmx.onLoad(onLoad)
+  _htmx.onLoad(onLoad)
 }
 export const initFoundation = (context) => {
 
@@ -230,126 +282,7 @@ export const initTimeline = (context) => {
 
   return timelineInstance
 }
-export const initEventHandlers = (context) => {
 
-  $(context).on('click', '.form--add-tag .link--icon', (e) => {
-    let $form = $(e.currentTarget).closest('form')
-    $form.addClass('expanded')
-    $('input[type=text]', $form).focus()
-  })
-
-  $(context).on('click', (e) => {
-    if (!$('.form--add-tag input').is(":focus")) {
-        let $form = $('.form--add-tag input').closest('form')
-        $form.removeClass('expanded')
-        setTimeout(() => $('.form--add-tag input').val(''), 0)
-    }
-  })
-
-  $(context).on('change keydown paste input', 'input', (e) => {
-    if ($(e.currentTarget).closest('form')) {
-      $(e.currentTarget).closest('form').find('[data-enable-on-modify]').removeAttr('disabled')
-    }
-  })
-
-  $(context).on('on.zf.toggler', function(e) {
-    if($(e.target).hasClass('gallery__popup')) {
-      $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded');
-    }
-  });
-
-  $(context).on('submit', '#add-to-list-popup form', function(e) {
-    // Check if logged in
-    if ($('#login-btn').length) {
-      $('#login-btn').trigger('click')
-      showToast('You must login to continue')
-    } else {
-      showToast('Updated photo lists')
-    }
-  })
-
-  $('#overlay').on('click', (e) => {
-    $('#login').addClass('collapse')
-    $('#hamburger-menu').addClass('collapse')
-    $('#overlay').fadeOut()
-  })
-
-  $('#hamburger-menu').on('off.zf.toggler', (e) => {
-    $('#login').addClass('collapse')
-    $('#overlay').fadeIn()
-  }).on('on.zf.toggler', (e) => {
-    if ($('#login').hasClass('collapse')) {
-      $('#overlay').fadeOut()
-    }
-  })
-
-  $('#login').on('off.zf.toggler', (e) => {
-    $('#hamburger-menu').addClass('collapse')
-    $('#overlay').fadeIn()
-  }).on('on.zf.toggler', (e) => {
-    if ($('#hamburger-menu').hasClass('collapse')) {
-      $('#overlay').fadeOut()
-    }
-  })
-
-  // $(context).click(function(event) {
-  //
-  //   //~TESTING LINE
-  //   //console.log(event.target.className)
-  //
-  //   var classOfThingClickedOn = event.target.className
-  //
-  //   //~TESTING LINE
-  //   //console.log($('.search-form').find('*'))
-  //
-  //   //creates a jQuery collection of the components of the search menu EXCEPT for the menu itself
-  //   var $descendantsOfSearchForm = $('.search-form').find('*')
-  //
-  //   //---creates an array of all components of the search menu dropdown---
-  //   //adds the search menu itself to the array
-  //   var componentsOfSearchMenuArray = ['search-form']
-  //
-  //   //adds the class of all the components of the search menu to the array
-  //   $descendantsOfSearchForm.each(function(index) {
-  //     //checks to make sure the class isn't already in the array
-  //     if ($.inArray(this.className, componentsOfSearchMenuArray) == -1) {
-  //       //adds the class to the array
-  //       componentsOfSearchMenuArray.push(this.className)
-  //     }
-  //   })
-  //
-  //   //~TESTING LINES
-  //   //console.log(componentsOfSearchMenuArray)
-  //   //console.log('Class:'+'"'+classOfThingClickedOn+'"')
-  //   //console.log(componentsOfSearchMenuArray.includes(classOfThingClickedOn))
-  //
-  //   //if the search menu is open and the user clicks on something outside of the menu, close the menu
-  //   if ($(event.target).attr('id') != 'search-box' && $('.search-form').is(":visible") && (!(componentsOfSearchMenuArray.includes(classOfThingClickedOn)))) {
-  //     collapseNavSearch()
-  //   }
-  //   //if the user clicks on the carrot or the small invisible box behind it, toggle the menu
-  //   else if (classOfThingClickedOn == 'search-options' || classOfThingClickedOn == 'carrot') {
-  //     // $('.search-form').toggle()
-  //   }
-  // })
-
-
-  $('#auto-play-image-control-button').on('click', (e) => {
-    let $btn = $('#auto-play-image-control-button')
-    $btn.toggleClass('active')
-    if ($btn.hasClass('active')) {
-      autoplayStart()
-    } else {
-      autoplayStop()
-    }
-  })
-
-  $(context).on('click', '.image-control-button--toggle', (e) => {
-    let $btn = $(e.currentTarget)
-    $('img', $btn).toggleClass('hide')
-  })
-
-}
 export const initClipboardJS = (context) => {
   $(context).on('click', '.copy-button', (e) => {
     let target = $(e.currentTarget).attr('data-clipboard-target')
@@ -365,7 +298,7 @@ export const initAutocomplete = () => {
     minLength: 2,
   })
 }
-export const initDraggableThumbnails = context => {
+export const initDraggableThumbnails = (context, newElems) => {
   let elem = undefined
   let released = false
   const handler = evt => {
@@ -377,7 +310,7 @@ export const initDraggableThumbnails = context => {
         setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
     }
   }
-  $('#fi-thumbnail-carousel-images').draggable({
+  $('#fi-thumbnail-carousel-images', newElems).draggable({
     axis: 'x',
     drag: (event, ui) => {
       if (!elem) {
@@ -385,12 +318,14 @@ export const initDraggableThumbnails = context => {
           console.log("installing htmx:confirm handler", elem)
           elem.addEventListener("htmx:confirm", handler)
       }
-      moveTimelineCoin(ui.position.left, true)
+      moveTimelineCoin(ui.position.left, true, {context})
     },
     stop: (event, ui) => {
-      dropTimelineCoin(ui.position.left)
+      dropTimelineCoin(ui.position.left, {context})
       released = true
-      htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
+      for (const temp of context.querySelectorAll('#fi-thumbnail-carousel-images li[data-active] a')) {
+        trigger("click", {}, temp, true)
+      }
     }
   })
 }
@@ -445,33 +380,38 @@ export const showToast = (message) => {
   }, 5000)
 }
 
-export const autoplayStart = () => {
-  window.autoplayTimer = setInterval(() => {
-    htmx.trigger('#fi-arrow-right', 'click')
-  }, 5000)
+export const autoplayStart = (elem) => {
+  window.autoplayTimer = setInterval(elem => {
+    if (elem.isConnected) {
+        htmx.trigger('#fi-arrow-right', 'click')
+    } else {
+        clearInterval(window.autoplayTimer)
+    }
+  }, 5000, elem)
 }
 
 export const autoplayStop = () => {
   clearInterval(window.autoplayTimer)
 }
 
-export const moveTimelineCoin = (deltaX, drag = true) => {
+export const moveTimelineCoin = (deltaX, drag = true, {context=document} = {}) => {
   if(drag) {
-    $('#fi-thumbnail-carousel-images').addClass('dragging')
+    $('#fi-thumbnail-carousel-images', context).addClass('dragging')
   }
   else {
-    $('#fi-thumbnail-carousel-images').removeClass('dragging')
+    $('#fi-thumbnail-carousel-images', context).removeClass('dragging')
   }
-  let widthOfThumbnail = $('#fi-thumbnail-carousel-images li').outerWidth()
-  let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]').index()
+  let widthOfThumbnail = $('#fi-thumbnail-carousel-images li', context).outerWidth()
+  let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]', context).index()
   let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
+  console.log({widthOfThumbnail, preItemNum, quantizedPositionX})
   let currentPosition = preItemNum + quantizedPositionX + 1
 
-  let numThumbnails= $('#fi-thumbnail-carousel-images li').length
+  let numThumbnails= $('#fi-thumbnail-carousel-images li', context).length
   //console.log({numThumbnails, currentPosition, preItemNum})
 
   if(drag && numThumbnails - currentPosition < 20) {
-    const form = $('#fi-thumbnail-carousel-images').closest("form").get(0)
+    const form = $('#fi-thumbnail-carousel-images', context).closest("form").get(0)
     form.querySelector("[name='forward']").value = 1
     form.setAttribute("hx-swap", "beforeend")
 
@@ -484,11 +424,11 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
     form.querySelector("[name='width']").value = width
 
     form.querySelector("[name='id']").value = lastFI
-    htmx.trigger("#fi-thumbnail-carousel-images", "kronofoto:loadThumbnails")
+    trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", context).get(0), true)
   }
   else if(drag && currentPosition < 20) {
     /* copy/pasted code */
-    const form = $('#fi-thumbnail-carousel-images').closest("form").get(0)
+    const form = $('#fi-thumbnail-carousel-images', context).closest("form").get(0)
     form.setAttribute("hx-swap", "afterbegin")
     form.querySelector("[name='forward']").value = ""
     const child = form.querySelector("#fi-thumbnail-carousel-images li:first-child")
@@ -499,122 +439,115 @@ export const moveTimelineCoin = (deltaX, drag = true) => {
     form.querySelector("[name='offset']").value = offset
     form.querySelector("[name='width']").value = width
     form.querySelector("[name='id']").value = lastFI
-    htmx.trigger("#fi-thumbnail-carousel-images", "kronofoto:loadThumbnails")
+    trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", context).get(0), true)
   }
 
-  $('#fi-thumbnail-carousel-images li').removeAttr('data-active')
-  $('#fi-thumbnail-carousel-images li:nth-child('+ currentPosition +')').attr('data-active', '')
+  $('#fi-thumbnail-carousel-images li', context).removeAttr('data-active')
+  console.log({currentPosition, context})
+  $('#fi-thumbnail-carousel-images li:nth-child('+ currentPosition +')', context).attr('data-active', '')
 }
 
 let moreThumbnailsLoading = false
 
 
-export const dropTimelineCoin = (deltaX) => {
-  let width = $('#fi-thumbnail-carousel-images li').outerWidth()
+export const dropTimelineCoin = (deltaX, {context=document}={}) => {
+  let width = $('#fi-thumbnail-carousel-images li', context).outerWidth()
   let quantizedX = (Math.round(deltaX / width))
   let itemNum = quantizedX
-  $('#fi-thumbnail-carousel-images').css({left: itemNum * width})
+  $('#fi-thumbnail-carousel-images', context).css({left: itemNum * width})
 }
 
-export const gotoTimelinePosition = (delta) => {
-  let width = $('#fi-thumbnail-carousel-images li').outerWidth()
-  moveTimelineCoin(delta * -1 * width, false)
-  dropTimelineCoin(delta * -1 * width)
+export const gotoTimelinePosition = (delta, {context=document} = {}) => {
+  let width = $('#fi-thumbnail-carousel-images li', context).outerWidth()
+  moveTimelineCoin(delta * -1 * width, false, {context})
+  dropTimelineCoin(delta * -1 * width, {context})
 }
-export const timelineZipBackward = () => {
+export const timelineZipBackward = context => () => {
   if(timelineCrawlBackwardInterval == null) { // only zip if we're not already crawling
-    let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
-    let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
+    let numToZip = Math.floor((getNumVisibleTimelineTiles({context}) - 0.5))
+    let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', context)
     let $nextLi = $activeLi.prevAll().eq(numToZip)
-    htmx.trigger($nextLi.find('a').get(0), 'click')
+    trigger("click", {}, $nextLi.find('a').get(0), true)
   }
   return false
 }
 
-export const timelineZipForward = () => {
+export const timelineZipForward = context => () => {
   if(timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
-    let numToZip = Math.floor((getNumVisibleTimelineTiles() - 0.5))
-    let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]')
+    let numToZip = Math.floor((getNumVisibleTimelineTiles({context}) - 0.5))
+    let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', context)
     let $nextLi = $activeLi.nextAll().eq(numToZip)
     //gotoTimelinePosition(numToZip)
-    htmx.trigger($nextLi.find('a').get(0), 'click')
+    trigger("click", {}, $nextLi.find('a').get(0), true)
   }
   return false
 }
 
-export const timelineForward = () => {
-  gotoTimelinePosition(1)
-}
-
-export const timelineBackward = () => {
-  gotoTimelinePosition(-1)
-}
-
-export const timelineCrawlForward = evt => {
+export const timelineCrawlForward = context => evt => {
   timelineCrawlForwardTimeout = setTimeout(() => {
-    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
+    let currentPosition = $('#fi-thumbnail-carousel-images', context).position().left
     timelineCrawlForwardInterval = setInterval(() => {
-      if(canCrawlForward()) {
+      if(canCrawlForward({context})) {
         currentPosition -= 20
-        $('#fi-thumbnail-carousel-images').css('left', currentPosition)
-        moveTimelineCoin(currentPosition)
+        $('#fi-thumbnail-carousel-images', context).css('left', currentPosition)
+        moveTimelineCoin(currentPosition, true, {context})
       }
     }, 50)
   }, 500)
 }
 
-const canCrawlForward = () => {
-  let length = $('#fi-thumbnail-carousel-images [data-active]').nextAll().length
+const canCrawlForward = ({context=document} = {}) => {
+  let length = $('#fi-thumbnail-carousel-images [data-active]', context).nextAll().length
   return length > 10
 }
 
-export const timelineCrawlForwardRelease = () => {
+export const timelineCrawlForwardRelease = context => () => {
   clearTimeout(timelineCrawlForwardTimeout)
   timelineCrawlForwardTimeout = null
   if(timelineCrawlForwardInterval) { // only execute when we're crawling
     clearInterval(timelineCrawlForwardInterval)
-    dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
+    dropTimelineCoin($('#fi-thumbnail-carousel-images', context).position().left)
+    trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', context).get(0), true)
     setTimeout(() => {
       timelineCrawlForwardInterval = null
     }, 750)
   }
 }
 
-export const timelineCrawlBackward = () => {
+export const timelineCrawlBackward = context => () => {
   timelineCrawlBackwardTimeout = setTimeout(() => {
-    let currentPosition = $('#fi-thumbnail-carousel-images').position().left
+    let currentPosition = $('#fi-thumbnail-carousel-images', context).position().left
     timelineCrawlBackwardInterval = setInterval(() => {
-      if(canCrawlBackward()) {
+      if(canCrawlBackward({context})) {
         currentPosition += 20
-        $('#fi-thumbnail-carousel-images').css('left', currentPosition)
-        moveTimelineCoin(currentPosition)
+        $('#fi-thumbnail-carousel-images', context).css('left', currentPosition)
+        moveTimelineCoin(currentPosition, true, {context})
       }
     }, 50)
   }, 500)
 }
 
-const canCrawlBackward = () => {
-  let length = $('#fi-thumbnail-carousel-images [data-active]').prevAll().length
+const canCrawlBackward = ({context=document}={}) => {
+  let length = $('#fi-thumbnail-carousel-images [data-active]', context).prevAll().length
   return length > 10
 }
 
-export const timelineCrawlBackwardRelease = () => {
+export const timelineCrawlBackwardRelease = context => () => {
   clearTimeout(timelineCrawlBackwardTimeout)
   timelineCrawlBackwardTimeout = null
   if(timelineCrawlBackwardInterval) { // only execute when we're crawling
     clearInterval(timelineCrawlBackwardInterval)
-    dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
-    htmx.trigger('#fi-thumbnail-carousel-images li[data-active] a', "click")
+    dropTimelineCoin($('#fi-thumbnail-carousel-images', context).position().left)
+    trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', context).get(0), true)
     setTimeout(() => {
       timelineCrawlBackwardInterval = null
     }, 750)
   }
 }
 
-const getNumVisibleTimelineTiles = () => {
-  let widthOfTimeline = $('#fi-image').width() // assumes the timeline is the same width as gallery image
-  let $li = $('#fi-thumbnail-carousel-images li[data-active]')
+const getNumVisibleTimelineTiles = ({context=document}={}) => {
+  let widthOfTimeline = $('#fi-image', context).width() // assumes the timeline is the same width as gallery image
+  let $li = $('#fi-thumbnail-carousel-images li[data-active]', context)
   let widthOfTile = $li.outerWidth()
   return Math.floor(widthOfTimeline/widthOfTile)
 }

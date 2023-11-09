@@ -68,7 +68,7 @@ export default class {
     initTargets() {
         this.targets.forEach((target, index) => {
             let targets = [];
-            $('[data-timeline-target]').each(function(i,e) {
+            $('[data-timeline-target]', this.context).each(function(i,e) {
                 let items = $(e).attr('data-timeline-target');
                 items = items.split(' ')
                 for(let i in items) {
@@ -142,7 +142,7 @@ export default class {
         let yearDiffX = yearDiff * numberOfThumbnailsPerYear
         yearDiffX = this.yearOriginalX - yearDiffX
         yearDiffX = Math.floor(yearDiffX / 95) * 95
-        $('#fi-thumbnail-carousel-images').stop().animate(
+        $('#fi-thumbnail-carousel-images', this.context).stop().animate(
             {left: yearDiffX},
             800,
             'swing'

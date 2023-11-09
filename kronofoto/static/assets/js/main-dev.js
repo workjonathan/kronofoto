@@ -10,7 +10,6 @@ import {
   initClipboardJS,
   initFoundation,
   initHTMXListeners,
-  initJQuery,
 }
   from "./lib.js"
 window.kfcontext = document
@@ -19,7 +18,6 @@ import HTMX from "./htmx.js"
 const htmx = HTMX(document)
 
 const init = () => {
-  initJQuery(document)
   initHTMXListeners(htmx, document)
   initFoundation(document)
   initClipboardJS(document)
