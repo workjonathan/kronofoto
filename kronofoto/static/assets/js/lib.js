@@ -11,7 +11,6 @@ import { Foundation } from 'foundation-sites/js/foundation.core';
 import * as CoreUtils from 'foundation-sites/js/foundation.core.utils';
 import { Motion, Move } from 'foundation-sites/js/foundation.util.motion';
 import { Touch } from 'foundation-sites/js/foundation.util.touch';
-import { Triggers } from 'foundation-sites/js/foundation.util.triggers';
 import { Toggler } from 'foundation-sites/js/foundation.toggler';
 import { Tooltip } from 'foundation-sites/js/foundation.tooltip';
 import { Box } from 'foundation-sites/js/foundation.util.box';
@@ -24,6 +23,31 @@ let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
 var timelineInstance = null
 
+$.fn.extend({
+    trigger: function triggerHack(eventType, extraParameters) {
+        trigger(eventType, extraParameters, this.get(0), true)
+    }
+})
+
+const toggleListener = context => {
+    function toggleListenerImpl() {
+        let ids = $(this).data('toggle')
+        console.log(ids)
+        if (ids) {
+            ids.split(" ").forEach(id => {
+                const element = $(`#${id}`, context)
+                trigger("toggle.zf.trigger", [$(this)], element.get(0), true)
+            })
+        } else {
+            trigger("toggle.zf.trigger", {}, this, true)
+        }
+    }
+    return toggleListenerImpl
+}
+const addToggleListener = context => {
+    context.off("click.zf.trigger", toggleListener(context))
+    context.on("click.zf.trigger", '[data-toggle]', toggleListener(context))
+}
 export const initHTMXListeners = (_htmx, context, {lateLoad=false} = {}) => {
  
   const addZoom = (container) => {
@@ -263,7 +287,7 @@ export const initFoundation = (context) => {
   Foundation.MediaQuery = MediaQuery;
   Foundation.Motion = Motion;
   Foundation.Move = Move;
-  Triggers.Initializers.addToggleListener($(context));
+  addToggleListener($(context));
 
   Foundation.plugin(Toggler, 'Toggler');
   Foundation.plugin(Tooltip, 'Tooltip');
