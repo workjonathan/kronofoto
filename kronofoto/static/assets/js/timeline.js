@@ -27,7 +27,6 @@ export default class {
     connect(element, context) {
 
         this.context = context
-        this.range = 0
 
         // slider status
         this.sliderDragged = null
@@ -63,6 +62,7 @@ export default class {
         $('#app', this.context).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
         $('#app', this.context).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
 
+        new ResizeObserver(this.onResize.bind(this)).observe(this.sliderTarget)
     }
 
     initTargets() {
@@ -115,14 +115,13 @@ export default class {
                 this.year = this.yearStart
             }*/
 
-            this.setRange()
             this.fixSlider()
             this.setTimelineLabels()
         }
     }
 
-    setRange() {
-      this.range = this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
+    get range() {
+      return this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
     }
 
     getRange() {
@@ -391,8 +390,6 @@ export default class {
     }
 
     onResize() {
-        this.calcYear()
-        this.setRange()
         this.fixSlider()
         this.setTimelineLabels()
     }
