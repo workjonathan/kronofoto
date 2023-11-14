@@ -215,7 +215,7 @@ class KronofotoContext {
         if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
             st.initialize()
         }
-        initGalleryNav(elem)
+        this.initGalleryNav(elem)
 
         // Init gallery thumbnails
         if (elem.id == 'fi-preload-zone') {
@@ -348,7 +348,7 @@ class KronofotoContext {
         timelineCrawlForwardTimeout = null
         if (timelineCrawlForwardInterval) { // only execute when we're crawling
             clearInterval(timelineCrawlForwardInterval)
-            this.dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
+            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
             trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
             setTimeout(() => {
                 timelineCrawlForwardInterval = null
@@ -361,7 +361,7 @@ class KronofotoContext {
         timelineCrawlBackwardTimeout = null
         if (timelineCrawlBackwardInterval) { // only execute when we're crawling
             clearInterval(timelineCrawlBackwardInterval)
-            this.dropTimelineCoin($('#fi-thumbnail-carousel-images').position().left)
+            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
             trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
             setTimeout(() => {
                 timelineCrawlBackwardInterval = null
@@ -481,6 +481,24 @@ class KronofotoContext {
             left: itemNum * width
         })
     }
+    initGalleryNav(elem) {
+        // When the mouse moves
+        for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
+            let hideGalleryTimeout = null;
+            gallery.addEventListener('mousemove', () => {
+                this.showGalleryNav(this.context)
+                if (hideGalleryTimeout)
+                    clearTimeout(hideGalleryTimeout)
+                hideGalleryTimeout = setTimeout(this.hideGalleryNav.bind(this), 5000)
+            })
+        }
+    }
+    showGalleryNav() {
+        $(".gallery", this.context).removeClass('hide-nav')
+    }
+    hideGalleryNav() {
+        $(".gallery", this.context).addClass('hide-nav')
+    }
 }
 
 export const initHTMXListeners = (_htmx, context, {
@@ -586,28 +604,6 @@ export function showToast(message) {
 
 let moreThumbnailsLoading = false
 
-export function initGalleryNav(elem) {
-    // When the mouse moves
-    for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
-        let hideGalleryTimeout = null;
-        gallery.addEventListener('mousemove', () => {
-            showGalleryNav(elem)
-            if (hideGalleryTimeout)
-                clearTimeout(hideGalleryTimeout)
-            hideGalleryTimeout = setTimeout(hideGalleryNav(elem), 5000)
-        })
-    }
-}
-
-function hideGalleryNav(elem) {
-    return () => {
-        $(".gallery", elem).addClass('hide-nav')
-    }
-}
-
-function showGalleryNav(elem) {
-    $(".gallery", elem).removeClass('hide-nav')
-}
 
 export function toggleLogin(evt) {
     const el = document.querySelector('#login');
