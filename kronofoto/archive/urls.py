@@ -119,7 +119,9 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(extra_context={"reason": "You must agree to terms before creating contributors."}), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="archive/contributor_created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
-    path("<slug:short_name>/materials/contribute", SubmissionFormView.as_view(extra_context={"reason": "You must agree to terms before uploading."}), name="submission-create"),
-    path("<slug:short_name>/materials/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
+    path("<slug:short_name>/materials/contribute", SubmissionFormView.as_view(extra_context={"reason": "You must agree to terms before uploading."})),
+    path("<slug:short_name>/materials/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html")),
+    path("<slug:short_name>/contribute", SubmissionFormView.as_view(extra_context={"reason": "You must agree to terms before uploading."}), name="submission-create"),
+    path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
 ]
