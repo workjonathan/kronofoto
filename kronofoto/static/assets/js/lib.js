@@ -512,7 +512,6 @@ export const initHTMXListeners = (_htmx, context, {
     lateLoad = false
 } = {}) => {
 
-    initAutocomplete()
     // context here means our root element
     // necessary?
     $(context).on('click', (e) => {
@@ -558,12 +557,6 @@ export function initClipboardJS(context) {
         ClipboardActionCopy(text)
         $(target).select()
         $(target)[0].setSelectionRange(0, 999999)
-    })
-}
-export function initAutocomplete() {
-    $('#tag-search').autocomplete({
-        source: '/tags',
-        minLength: 2,
     })
 }
 export function collapseNavSearch(elem) {

@@ -9,6 +9,7 @@ from ..widgets import HeadingWidget, PositioningWidget
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm
+from ..reverse import reverse_lazy
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")
@@ -70,7 +71,8 @@ class SearchForm(forms.Form):
     tag = forms.CharField(required=False, label='')
     tag.group = 'TAG'
     tag.widget.attrs.update({
-        'id': 'tag-search',
+        'data-autocomplete-url': reverse_lazy("kronofoto:tag-search"),
+        'data-autocomplete-min-length': 3,
         'placeholder': 'Tag Search',
     })
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all())
