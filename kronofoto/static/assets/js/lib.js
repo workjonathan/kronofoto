@@ -142,6 +142,13 @@ class KronofotoContext {
         }
     }
     onLoad(elem) {
+        $("[data-autocomplete-url]", elem).each((_, input) => {
+            const $input = $(input)
+            $input.autocomplete({
+                source: $input.data("autocomplete-url"),
+                minLength: $input.data("autocomplete-min-length"),
+            })
+        })
         $(elem).find(".form--add-tag .link--icon").on('click', (e) => {
             let $form = $(e.currentTarget).closest('form')
             $form.addClass('expanded')
