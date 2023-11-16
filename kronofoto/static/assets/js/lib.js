@@ -11,27 +11,30 @@ import 'jquery-ui-pack'
 // Foundation
 import {
     Foundation
-} from 'foundation-sites/js/foundation.core';
-import * as CoreUtils from 'foundation-sites/js/foundation.core.utils';
+} from './foundation-sites/js/foundation.core';
+import * as CoreUtils from './foundation-sites/js/foundation.core.utils';
 import {
     Motion,
     Move
-} from 'foundation-sites/js/foundation.util.motion';
+} from './foundation-sites/js/foundation.util.motion';
 import {
     Touch
-} from 'foundation-sites/js/foundation.util.touch';
+} from './foundation-sites/js/foundation.util.touch';
 import {
     Toggler
-} from 'foundation-sites/js/foundation.toggler';
+} from './foundation-sites/js/foundation.toggler';
 import {
     Tooltip
-} from 'foundation-sites/js/foundation.tooltip';
+} from './foundation-sites/js/foundation.tooltip';
 import {
     Box
-} from 'foundation-sites/js/foundation.util.box';
+} from './foundation-sites/js/foundation.util.box';
 import {
     MediaQuery
-} from 'foundation-sites/js/foundation.util.mediaQuery';
+} from './foundation-sites/js/foundation.util.mediaQuery';
+import { 
+    Triggers 
+} from './foundation-sites/js/foundation.util.triggers';
 
 
 let timelineCrawlForwardInterval = null
@@ -40,31 +43,32 @@ let timelineCrawlBackwardInterval = null
 let timelineCrawlBackwardTimeout = null
 var timelineInstance = null
 
-$.fn.extend({
-    trigger: function triggerHack(eventType, extraParameters) {
-        trigger(eventType, extraParameters, this.get(0), true)
-    }
-})
+//$.fn.extend({
+//    trigger: function triggerHack(eventType, extraParameters) {
+//        trigger(eventType, extraParameters, this.get(0), true)
+//    },
+//})
 
-const toggleListener = context => {
-    function toggleListenerImpl() {
-        let ids = $(this).data('toggle')
-        console.log(ids)
-        if (ids) {
-            ids.split(" ").forEach(id => {
-                const element = $(`#${id}`, context)
-                trigger("toggle.zf.trigger", [$(this)], element.get(0), true)
-            })
-        } else {
-            trigger("toggle.zf.trigger", {}, this, true)
-        }
-    }
-    return toggleListenerImpl
-}
-const addToggleListener = context => {
-    context.off("click.zf.trigger", toggleListener(context))
-    context.on("click.zf.trigger", '[data-toggle]', toggleListener(context))
-}
+//const toggleListener = context => {
+//    function toggleListenerImpl() {
+//        let ids = $(this).data('toggle')
+//        console.log(ids)
+//        if (ids) {
+//            ids.split(" ").forEach(id => {
+//                const element = $(`#${id}`, context)
+//                console.log(element, context)
+//                trigger("toggle.zf.trigger", [$(this)], element.get(0), true)
+//            })
+//        } else {
+//            trigger("toggle.zf.trigger", {}, this, true)
+//        }
+//    }
+//    return toggleListenerImpl
+//}
+// const addToggleListener = context => {
+//     context.off("click.zf.trigger", toggleListener(context))
+//     context.on("click.zf.trigger", '[data-toggle]', toggleListener(context))
+// }
 
 function* querySelectorAll({node, selector}) {
     // This generator is like querySelectorAll except that it can also match the current node.
@@ -218,7 +222,10 @@ class KronofotoContext {
         }
         this.initDraggableThumbnails(elem)
         initNavSearch(elem)
-        $(elem).foundation()
+        // modified this foundation function to attach a "rootNode" variable to all plugin objects.
+        // The foundation function already accepts one optional argument, so undefined is passed to preserve
+        // the old behavior.
+        $(elem).foundation(undefined, this.context)
         if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
             st.initialize()
         }
@@ -245,6 +252,7 @@ class KronofotoContext {
                 elem.replaceChildren()
             }, 250)
         }
+        $("#fi-image", elem).on("click", () => console.log("clicked"))
 
         /*  disabled until different solution is tried (set attributes without replacing tag)
 
@@ -432,11 +440,6 @@ class KronofotoContext {
         let widthOfThumbnail = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
         let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]', this.context).index()
         let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
-        console.log({
-            widthOfThumbnail,
-            preItemNum,
-            quantizedPositionX
-        })
         let currentPosition = preItemNum + quantizedPositionX + 1
 
         let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
@@ -474,10 +477,6 @@ class KronofotoContext {
         }
 
         $('#fi-thumbnail-carousel-images li', this.context).removeAttr('data-active')
-        console.log({
-            currentPosition,
-            context: this.context
-        })
         $('#fi-thumbnail-carousel-images li:nth-child(' + currentPosition + ')', this.context).attr('data-active', '')
     }
     dropTimelineCoin(deltaX) {
@@ -493,7 +492,7 @@ class KronofotoContext {
         for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
             let hideGalleryTimeout = null;
             gallery.addEventListener('mousemove', () => {
-                this.showGalleryNav(this.context)
+                this.showGalleryNav()
                 if (hideGalleryTimeout)
                     clearTimeout(hideGalleryTimeout)
                 hideGalleryTimeout = setTimeout(this.hideGalleryNav.bind(this), 5000)
@@ -541,13 +540,10 @@ export function initFoundation(context) {
     Foundation.MediaQuery = MediaQuery;
     Foundation.Motion = Motion;
     Foundation.Move = Move;
-    addToggleListener($(context));
 
+    Triggers.Initializers.addToggleListener($(context))
     Foundation.plugin(Toggler, 'Toggler');
     Foundation.plugin(Tooltip, 'Tooltip');
-
-    $(context).foundation()
-
 }
 
 export function initClipboardJS(context) {

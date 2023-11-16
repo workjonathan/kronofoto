@@ -1,0 +1,3 @@
+[submodule "kronofoto/static/assets/js/foundation-sites"]
+	path = kronofoto/static/assets/js/foundation-sites
+	url = git@github.com:workjonathan/foundation-sites.git
