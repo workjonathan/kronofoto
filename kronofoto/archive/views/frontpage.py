@@ -7,6 +7,7 @@ from ..models.collectionquery import CollectionQuery
 from ..forms import SearchForm, TimelineForm
 from ..search.parser import NoExpression
 from django.core.exceptions import SuspiciousOperation
+from django.http import Http404
 
 
 class PhotoRedirectView(BasePhotoTemplateMixin, MultipleObjectMixin, RedirectView):
@@ -19,6 +20,8 @@ class PhotoRedirectView(BasePhotoTemplateMixin, MultipleObjectMixin, RedirectVie
 
     def get_object(self):
         qs = self.get_queryset().order_by(self.get_ordering())
+        if not qs.exists():
+            raise Http404("no objects found")
         return qs[0]
 
     def options(self, request, *args, **kwargs):
@@ -58,4 +61,6 @@ class YearRedirect(PhotoRedirectView):
             else:
                 raise SuspiciousOperation('Invalid request')
         qs = self.get_queryset().filter(year__gte=year).order_by(*self.ordering)
+        if not qs.exists():
+            raise Http404("no objects found")
         return qs[0]

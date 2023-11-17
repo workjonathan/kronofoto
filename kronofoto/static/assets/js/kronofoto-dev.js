@@ -19,7 +19,7 @@ class FortepanViewer extends HTMLElement {
         this.shadow = this.attachShadow({mode: "open"})
     }
     connectedCallback() {
-        const constraint = this.getAttribute("constraint")
+        const constraint = this.getAttribute("constraint") || ""
         const host = this.getAttribute("src") || "https://fortepan.us"
         const template = document.createElement("template")
         const body = document.querySelector("body")
@@ -180,7 +180,10 @@ class FortepanViewer extends HTMLElement {
 `
         body.appendChild(f)
         const mode = 'cors'
-        const headers = new Headers([['Embedded', '1'], ["Constraint", constraint]])
+        const headers = new Headers([['Embedded', '1']])
+        if (constraint) {
+            headers.append("Constraint", constraint)
+        }
         const req = new Request(host, {mode, headers})
         fetch(req)
             .then(response => response.text())
