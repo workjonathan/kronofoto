@@ -36,12 +36,225 @@ import {
     Triggers 
 } from './foundation-sites/js/foundation.util.triggers';
 
+class TimelineScroller {
+    constructor({context}) {
+        this.context = context
+    }
+    slideToId({target, fi}) {
+        for (const targets of this.context.querySelectorAll(target)) {
+            let destination, candidate = undefined
+            for (const elem of targets.querySelectorAll(`:scope > [data-fi="${fi}"]`)) {
+                candidate = elem
+                for (const img of elem.querySelectorAll(":scope a img")) {
+                    if (!img.classList.contains("empty")) {
+                        destination = candidate
+                    }
+                }
+            }
+            if (!destination) {
+                destination = candidate
+            }
+            const origin = targets.querySelector(`:scope [data-origin]`)
+            if (destination && origin) {
+                const children = [...targets.children]
+                const delta = children.indexOf(destination) - children.indexOf(origin)
+                this.gotoTimelinePosition(delta)
+            }
+        }
+    }
+    initDraggableThumbnails(newElems) {
+        let elem = undefined
+        let released = false
+        const handler = evt => {
+            if (!released || !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")) {
+                console.log("preventing", evt)
+                evt.preventDefault()
+            } else {
+                console.log("allowing", evt)
+                setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
+            }
+        }
+        $('#fi-thumbnail-carousel-images', newElems).draggable({
+            axis: 'x',
+            drag: (event, ui) => {
+                if (!elem) {
+                    elem = event.target
+                    console.log("installing htmx:confirm handler", elem)
+                    elem.addEventListener("htmx:confirm", handler)
+                }
+                this.moveTimelineCoin(ui.position.left, true)
+            },
+            stop: (event, ui) => {
+                this.dropTimelineCoin(ui.position.left)
+                released = true
+                for (const temp of this.context.querySelectorAll('#fi-thumbnail-carousel-images li[data-active] a')) {
+                    trigger("click", {}, temp, true)
+                }
+            }
+        })
+    }
+    moveTimelineCoin(deltaX, drag = true) {
+        if (drag) {
+            $('#fi-thumbnail-carousel-images', this.context).addClass('dragging')
+        } else {
+            $('#fi-thumbnail-carousel-images', this.context).removeClass('dragging')
+        }
+        let widthOfThumbnail = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
+        let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]', this.context).index()
+        let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
+        let currentPosition = preItemNum + quantizedPositionX + 1
 
-let timelineCrawlForwardInterval = null
-let timelineCrawlForwardTimeout = null
-let timelineCrawlBackwardInterval = null
-let timelineCrawlBackwardTimeout = null
-var timelineInstance = null
+        let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
+        let scroller = undefined
+        if (drag && numThumbnails - currentPosition < 20) {
+            scroller = new ForwardScroller({context: this.context})
+        } else if (drag && currentPosition < 20) {
+            scroller = new BackwardScroller({context: this.context})
+        }
+        if (scroller !== undefined) {
+            scroller.doThumbnailForm()
+        }
+        $('#fi-thumbnail-carousel-images li', this.context).removeAttr('data-active')
+        $('#fi-thumbnail-carousel-images li:nth-child(' + currentPosition + ')', this.context).attr('data-active', '')
+    }
+    gotoTimelinePosition(delta) {
+        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
+        this.moveTimelineCoin(delta * -1 * width, false)
+        this.dropTimelineCoin(delta * -1 * width)
+    }
+    dropTimelineCoin(deltaX) {
+        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
+        let quantizedX = (Math.round(deltaX / width))
+        let itemNum = quantizedX
+        $('#fi-thumbnail-carousel-images', this.context).css({
+            left: itemNum * width
+        })
+    }
+    getNumVisibleTimelineTiles() {
+        let widthOfTimeline = $('#fi-image', this.context).width() // assumes the timeline is the same width as gallery image
+        let $li = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
+        let widthOfTile = $li.outerWidth()
+        return Math.floor(widthOfTimeline / widthOfTile)
+    }
+}
+
+class DirectionalScroller extends TimelineScroller {
+    timelineZip() {
+        if (this.getTimelineCrawlInterval() === undefined) { // only zip if we're not already crawling
+            let numToZip = Math.floor((this.getNumVisibleTimelineTiles() - 0.5))
+            let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
+            let $nextLi = this.nextElements({active: $activeLi}).eq(numToZip)
+            trigger("click", {}, $nextLi.find('a').get(0), true)
+        }
+        return false
+    }
+    timelineCrawl() {
+        const id = setTimeout(() => {
+            let currentPosition = $('#fi-thumbnail-carousel-images', this.context).position().left
+            const intervalId = setInterval(() => {
+                if (this.canCrawl()) {
+                    currentPosition += this.getTimelineShiftPixels()
+                    $('#fi-thumbnail-carousel-images', this.context).css('left', currentPosition)
+                    this.moveTimelineCoin(currentPosition, true)
+                }
+            }, 50)
+            this.setTimelineCrawlInterval({id: intervalId})
+        }, 500)
+        this.setTimelineCrawlTimeout({id})
+    }
+    timelineCrawlRelease() {
+        clearTimeout(this.getTimelineCrawlTimeout())
+        this.setTimelineCrawlTimeout({id:undefined})
+        if (this.getTimelineCrawlInterval()) { // only execute when we're crawling
+            clearInterval(this.getTimelineCrawlInterval())
+            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
+            trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
+            setTimeout(() => {
+                this.setTimelineCrawlInterval({id: undefined})
+            }, 750)
+        }
+    }
+    doThumbnailForm() {
+        const form = $('#fi-thumbnail-carousel-images', this.context).closest("form").get(0)
+        form.querySelector("[name='forward']").value = this.isForward()
+        form.setAttribute("hx-swap", this.swapType())
+
+        const child = form.querySelector(this.lastChildSelector())
+        const lastFI = child.getAttribute("data-fi")
+        const offset = $(child).position().left
+        const width = $(child).outerWidth()
+
+        form.querySelector("[name='offset']").value = Math.round(offset)
+        form.querySelector("[name='width']").value = width
+
+        form.querySelector("[name='id']").value = lastFI
+        trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", this.context).get(0), true)
+    }
+    canCrawl() {
+        let length = this.nextElements({active: $('#fi-thumbnail-carousel-images [data-active]', this.context)}).length
+        return length > 10
+    }
+}
+
+class BackwardScroller extends DirectionalScroller {
+    nextElements({active}) {
+        return active.prevAll()
+    }
+    getTimelineCrawlInterval() {
+        return this.timelineCrawlBackwardInterval
+    }
+    setTimelineCrawlInterval({id}) {
+        this.timelineCrawlBackwardInterval = id
+    }
+    getTimelineShiftPixels() {
+        return 20
+    }
+    getTimelineCrawlTimeout() {
+        return this.timelineCrawlBackwardTimeout
+    }
+    setTimelineCrawlTimeout({id}) {
+        this.timelineCrawlBackwardTimeout = id
+    }
+    isForward() {
+        return false
+    }
+    lastChildSelector() {
+        return "#fi-thumbnail-carousel-images li:first-child"
+    }
+    swapType() {
+        return "afterbegin"
+    }
+}
+
+class ForwardScroller extends DirectionalScroller {
+    nextElements({active}) {
+        return active.nextAll()
+    }
+    getTimelineCrawlInterval() {
+        return this.timelineCrawlForwardInterval
+    }
+    setTimelineCrawlInterval({id}) {
+        this.timelineCrawlForwardInterval = id
+    }
+    getTimelineShiftPixels() {
+        return -20
+    }
+    getTimelineCrawlTimeout() {
+        return this.timelineCrawlForwardTimeout
+    }
+    setTimelineCrawlTimeout({id}) {
+        this.timelineCrawlForwardTimeout = id
+    }
+    isForward() {
+        return true
+    }
+    lastChildSelector() {
+        return "#fi-thumbnail-carousel-images li:last-child"
+    }
+    swapType() {
+        return "beforeend"
+    }
+}
 
 //$.fn.extend({
 //    trigger: function triggerHack(eventType, extraParameters) {
@@ -205,22 +418,23 @@ class KronofotoContext {
         for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
             this.addZoom(elem2)
         }
-
+        const backScroller = new BackwardScroller({context: this.context}) 
         for (const elem2 of querySelectorAll({node: elem, selector: "#backward-zip"})) {
-            elem2.addEventListener("click", this.timelineZipBackward.bind(this))
-            elem2.addEventListener("mousedown", this.timelineCrawlBackward.bind(this))
-            elem2.addEventListener("mouseup", this.timelineCrawlBackwardRelease.bind(this))
+            elem2.addEventListener("click", backScroller.timelineZip.bind(backScroller))
+            elem2.addEventListener("mousedown", backScroller.timelineCrawl.bind(backScroller))
+            elem2.addEventListener("mouseup", backScroller.timelineCrawlRelease.bind(backScroller))
         }
+        const forwardScroller = new ForwardScroller({context: this.context}) 
         for (const elem2 of querySelectorAll({node: elem, selector: "#forward-zip"})) {
-            elem2.addEventListener("click", this.timelineZipForward.bind(this))
-            elem2.addEventListener("mousedown", this.timelineCrawlForward.bind(this))
-            elem2.addEventListener("mouseup", this.timelineCrawlForwardRelease.bind(this))
+            elem2.addEventListener("click", forwardScroller.timelineZip.bind(forwardScroller))
+            elem2.addEventListener("mousedown", forwardScroller.timelineCrawl.bind(forwardScroller))
+            elem2.addEventListener("mouseup", forwardScroller.timelineCrawlRelease.bind(forwardScroller))
         }
         if (elem.querySelectorAll(".photos-timeline").length) {
-            timelineInstance = undefined
             this.initTimeline()
         }
-        this.initDraggableThumbnails(elem)
+        const dragScroller = new TimelineScroller({context: this.context})
+        dragScroller.initDraggableThumbnails(elem)
         initNavSearch(elem)
         // modified this foundation function to attach a "rootNode" variable to all plugin objects.
         // The foundation function already accepts one optional argument, so undefined is passed to preserve
@@ -233,7 +447,8 @@ class KronofotoContext {
 
         // Init gallery thumbnails
         if (elem.id == 'fi-preload-zone') {
-            this.slideToId({
+            const slideScroller = new TimelineScroller({context: this.context})
+            slideScroller.slideToId({
                 fi: elem.getAttribute("data-slide-id"),
                 target: "[data-fi-thumbnail-carousel-images]",
             })
@@ -269,127 +484,11 @@ class KronofotoContext {
             }
         */
     }
-    initDraggableThumbnails(newElems) {
-        let elem = undefined
-        let released = false
-        const handler = evt => {
-            if (!released || !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")) {
-                console.log("preventing", evt)
-                evt.preventDefault()
-            } else {
-                console.log("allowing", evt)
-                setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
-            }
-        }
-        $('#fi-thumbnail-carousel-images', newElems).draggable({
-            axis: 'x',
-            drag: (event, ui) => {
-                if (!elem) {
-                    elem = event.target
-                    console.log("installing htmx:confirm handler", elem)
-                    elem.addEventListener("htmx:confirm", handler)
-                }
-                this.moveTimelineCoin(ui.position.left, true)
-            },
-            stop: (event, ui) => {
-                this.dropTimelineCoin(ui.position.left)
-                released = true
-                for (const temp of this.context.querySelectorAll('#fi-thumbnail-carousel-images li[data-active] a')) {
-                    trigger("click", {}, temp, true)
-                }
-            }
-        })
-    }
     initTimeline() {
-        if (!timelineInstance) {
-            timelineInstance = new timeline();
-            $('.photos-timeline', this.context).each((i, e) => {
-                timelineInstance.connect(e, this.context);
-            })
-        }
-        return timelineInstance
-    }
-    getNumVisibleTimelineTiles() {
-        let widthOfTimeline = $('#fi-image', this.context).width() // assumes the timeline is the same width as gallery image
-        let $li = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
-        let widthOfTile = $li.outerWidth()
-        return Math.floor(widthOfTimeline / widthOfTile)
-    }
-    timelineZipForward() {
-        if (timelineCrawlForwardInterval == null) { // only zip if we're not already crawling
-            let numToZip = Math.floor((this.getNumVisibleTimelineTiles() - 0.5))
-            let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
-            let $nextLi = $activeLi.nextAll().eq(numToZip)
-            //gotoTimelinePosition(numToZip)
-            trigger("click", {}, $nextLi.find('a').get(0), true)
-        }
-        return false
-    }
-    timelineZipBackward() {
-        if (timelineCrawlBackwardInterval == null) { // only zip if we're not already crawling
-            let numToZip = Math.floor((this.getNumVisibleTimelineTiles() - 0.5))
-            let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
-            let $nextLi = $activeLi.prevAll().eq(numToZip)
-            trigger("click", {}, $nextLi.find('a').get(0), true)
-        }
-        return false
-    }
-    timelineCrawlForward() {
-        timelineCrawlForwardTimeout = setTimeout(() => {
-            let currentPosition = $('#fi-thumbnail-carousel-images', this.context).position().left
-            timelineCrawlForwardInterval = setInterval(() => {
-                if (this.canCrawlForward()) {
-                    currentPosition -= 20
-                    $('#fi-thumbnail-carousel-images', this.context).css('left', currentPosition)
-                    this.moveTimelineCoin(currentPosition, true)
-                }
-            }, 50)
-        }, 500)
-    }
-    timelineCrawlBackward() {
-        timelineCrawlBackwardTimeout = setTimeout(() => {
-            let currentPosition = $('#fi-thumbnail-carousel-images', this.context).position().left
-            timelineCrawlBackwardInterval = setInterval(() => {
-                if (this.canCrawlBackward()) {
-                    currentPosition += 20
-                    $('#fi-thumbnail-carousel-images', this.context).css('left', currentPosition)
-                    this.moveTimelineCoin(currentPosition, true)
-                }
-            }, 50)
-        }, 500)
-    }
-    timelineCrawlForwardRelease() {
-        clearTimeout(timelineCrawlForwardTimeout)
-        timelineCrawlForwardTimeout = null
-        if (timelineCrawlForwardInterval) { // only execute when we're crawling
-            clearInterval(timelineCrawlForwardInterval)
-            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
-            trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
-            setTimeout(() => {
-                timelineCrawlForwardInterval = null
-            }, 750)
-        }
-    }
-
-    timelineCrawlBackwardRelease() {
-        clearTimeout(timelineCrawlBackwardTimeout)
-        timelineCrawlBackwardTimeout = null
-        if (timelineCrawlBackwardInterval) { // only execute when we're crawling
-            clearInterval(timelineCrawlBackwardInterval)
-            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
-            trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
-            setTimeout(() => {
-                timelineCrawlBackwardInterval = null
-            }, 750)
-        }
-    }
-    canCrawlBackward() {
-        let length = $('#fi-thumbnail-carousel-images [data-active]', this.context).prevAll().length
-        return length > 10
-    }
-    canCrawlForward() {
-        let length = $('#fi-thumbnail-carousel-images [data-active]', this.context).nextAll().length
-        return length > 10
+        $('.photos-timeline', this.context).each((i, e) => {
+            const timelineInstance = new timeline();
+            timelineInstance.connect(e, this.context);
+        })
     }
     autoplayStart(elem) {
         // should change `window` to `this`
@@ -403,89 +502,6 @@ class KronofotoContext {
     }
     autoplayStop() {
         clearInterval(window.autoplayTimer)
-    }
-    slideToId({target, fi}) {
-        for (const targets of this.context.querySelectorAll(target)) {
-            let destination, candidate = undefined
-            for (const elem of targets.querySelectorAll(`:scope > [data-fi="${fi}"]`)) {
-                candidate = elem
-                for (const img of elem.querySelectorAll(":scope a img")) {
-                    if (!img.classList.contains("empty")) {
-                        destination = candidate
-                    }
-                }
-            }
-            if (!destination) {
-                destination = candidate
-            }
-            const origin = targets.querySelector(`:scope [data-origin]`)
-            if (destination && origin) {
-                const children = [...targets.children]
-                const delta = children.indexOf(destination) - children.indexOf(origin)
-                this.gotoTimelinePosition(delta)
-            }
-        }
-    }
-    gotoTimelinePosition(delta) {
-        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
-        this.moveTimelineCoin(delta * -1 * width, false)
-        this.dropTimelineCoin(delta * -1 * width)
-    }
-    moveTimelineCoin(deltaX, drag = true) {
-        if (drag) {
-            $('#fi-thumbnail-carousel-images', this.context).addClass('dragging')
-        } else {
-            $('#fi-thumbnail-carousel-images', this.context).removeClass('dragging')
-        }
-        let widthOfThumbnail = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
-        let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]', this.context).index()
-        let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
-        let currentPosition = preItemNum + quantizedPositionX + 1
-
-        let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
-        //console.log({numThumbnails, currentPosition, preItemNum})
-
-        if (drag && numThumbnails - currentPosition < 20) {
-            const form = $('#fi-thumbnail-carousel-images', this.context).closest("form").get(0)
-            form.querySelector("[name='forward']").value = 1
-            form.setAttribute("hx-swap", "beforeend")
-
-            const child = form.querySelector("#fi-thumbnail-carousel-images li:last-child")
-            const lastFI = child.getAttribute("data-fi")
-            const offset = $(child).position().left
-            const width = $(child).outerWidth()
-
-            form.querySelector("[name='offset']").value = offset
-            form.querySelector("[name='width']").value = width
-
-            form.querySelector("[name='id']").value = lastFI
-            trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", this.context).get(0), true)
-        } else if (drag && currentPosition < 20) {
-            /* copy/pasted code */
-            const form = $('#fi-thumbnail-carousel-images', this.context).closest("form").get(0)
-            form.setAttribute("hx-swap", "afterbegin")
-            form.querySelector("[name='forward']").value = ""
-            const child = form.querySelector("#fi-thumbnail-carousel-images li:first-child")
-            const lastFI = child.getAttribute("data-fi")
-            const offset = $(child).position().left
-            const width = $(child).outerWidth()
-
-            form.querySelector("[name='offset']").value = offset
-            form.querySelector("[name='width']").value = width
-            form.querySelector("[name='id']").value = lastFI
-            trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", this.context).get(0), true)
-        }
-
-        $('#fi-thumbnail-carousel-images li', this.context).removeAttr('data-active')
-        $('#fi-thumbnail-carousel-images li:nth-child(' + currentPosition + ')', this.context).attr('data-active', '')
-    }
-    dropTimelineCoin(deltaX) {
-        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
-        let quantizedX = (Math.round(deltaX / width))
-        let itemNum = quantizedX
-        $('#fi-thumbnail-carousel-images', this.context).css({
-            left: itemNum * width
-        })
     }
     initGalleryNav(elem) {
         // When the mouse moves
