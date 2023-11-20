@@ -1,7 +1,7 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from django.db import transaction
-from archive.models import Photo, Donor, PhotoTag
+from archive.models import Photo, Donor, PhotoTag, Category
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
@@ -67,14 +67,15 @@ searchTerms = st.deferred(lambda:
     | st.builds(expr.And, searchTerms, searchTerms)
 )
 
-terms = lambda **kwargs: from_model(Term, **kwargs)
-tags = lambda **kwargs: from_model(Tag, **kwargs)
-archives = lambda slug=None, **kwargs: from_model(Archive)
-donors = lambda archive=None, **kwargs: from_model(Donor, archive=archives(), **kwargs)
+terms = lambda **kwargs: from_model(Term, id=st.none(), **kwargs)
+tags = lambda **kwargs: from_model(Tag, id=st.none(), **kwargs)
+archives = lambda slug=None, id=st.none(), **kwargs: from_model(Archive)
+donors = lambda archive=None, id=st.none(), **kwargs: from_model(Donor, archive=archives(), **kwargs)
 
 def photos(*, archive=None, **kwargs):
     return from_model(
         Photo,
+        id=st.none(),
         original=st.builds(
             lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
         ),
@@ -85,6 +86,7 @@ def photos(*, archive=None, **kwargs):
             lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
         ),
         archive=archive if archive is not None else archives(),
+        category=from_model(Category, id=st.none()),
         **kwargs,
     )
 

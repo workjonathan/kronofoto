@@ -10,8 +10,8 @@ class PhotoBaseForm(forms.ModelForm):
         force_archive = kwargs.pop('force_archive', None)
         super().__init__(*args, **kwargs)
         instance : Optional[Photo] = kwargs.get('instance')
-        categoryfield = self.fields['category']
-        if hasattr(categoryfield, 'choices'):
+        categoryfield = self.fields.get('category')
+        if categoryfield and hasattr(categoryfield, 'choices'):
             categoryfield.choices = list(self.get_categories(instance, archive=force_archive).values_list("id", "name"))
             categoryfield.choices.insert(0, (None, "---------"))
 
@@ -30,9 +30,9 @@ class SubmissionForm(PhotoBaseForm):
 class PhotoForm(PhotoBaseForm):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        termsfield = self.fields['terms']
+        termsfield = self.fields.get('terms')
         instance : Optional[Photo] = kwargs.get('instance')
-        if hasattr(termsfield, 'choices'):
+        if termsfield and hasattr(termsfield, 'choices'):
             termsfield.choices = list(self.get_terms(instance).values_list('id', 'term'))
             termsfield.choices.insert(0, (None, "---------"))
 
