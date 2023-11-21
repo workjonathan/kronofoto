@@ -62,6 +62,9 @@ class TimelineScroller {
             }
         }
     }
+    install({elem}) {
+        this.initDraggableThumbnails(elem)
+    }
     initDraggableThumbnails(newElems) {
         let elem = undefined
         let released = false
@@ -194,9 +197,19 @@ class DirectionalScroller extends TimelineScroller {
         let length = this.nextElements({active: $('#fi-thumbnail-carousel-images [data-active]', this.context)}).length
         return length > 10
     }
+    install({elem}) {
+        for (const elem2 of querySelectorAll({node: elem, selector: this.elementSelector()})) {
+            elem2.addEventListener("click", this.timelineZip.bind(this))
+            elem2.addEventListener("mousedown", this.timelineCrawl.bind(this))
+            elem2.addEventListener("mouseup", this.timelineCrawlRelease.bind(this))
+        }
+    }
 }
 
 class BackwardScroller extends DirectionalScroller {
+    elementSelector() {
+        return "#backward-zip"
+    }
     nextElements({active}) {
         return active.prevAll()
     }
@@ -227,6 +240,9 @@ class BackwardScroller extends DirectionalScroller {
 }
 
 class ForwardScroller extends DirectionalScroller {
+    elementSelector() {
+        return "#forward-zip"
+    }
     nextElements({active}) {
         return active.nextAll()
     }
@@ -293,11 +309,42 @@ function* querySelectorAll({node, selector}) {
         yield match
     }
 }
-
-class KronofotoContext {
-    constructor({htmx, context}) {
-        this.htmx = htmx
+class Gallery {
+    constructor({context}) {
         this.context = context
+    }
+    install({elem}) {
+        this.initGalleryNav(elem)
+    }
+    initGalleryNav(elem) {
+        // When the mouse moves
+        for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
+            let hideGalleryTimeout = null;
+            gallery.addEventListener('mousemove', () => {
+                this.showGalleryNav()
+                if (hideGalleryTimeout)
+                    clearTimeout(hideGalleryTimeout)
+                hideGalleryTimeout = setTimeout(this.hideGalleryNav.bind(this), 5000)
+            })
+        }
+    }
+    showGalleryNav() {
+        $(".gallery", this.context).removeClass('hide-nav')
+    }
+    hideGalleryNav() {
+        $(".gallery", this.context).addClass('hide-nav')
+    }
+}
+
+class Zoom {
+    constructor({context}) {
+        this.context = context
+    }
+
+    install({elem}) {
+        for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
+            this.addZoom(elem2)
+        }
     }
     addZoom(container) {
         let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
@@ -306,7 +353,7 @@ class KronofotoContext {
         let img = new Image();
         let zoomOpened = false
         let zoomed = false
-        let galleryElem = this.context.querySelector('.gallery')[0]
+        let galleryElem = this.context.querySelector('.gallery')
         img.src = imgsrc;
         img.onload = () => {
 
@@ -357,6 +404,13 @@ class KronofotoContext {
             // container.onmouseleave = removeZoom
 
         }
+    }
+}
+
+class KronofotoContext {
+    constructor({htmx, context}) {
+        this.htmx = htmx
+        this.context = context
     }
     onLoad(elem) {
         $("[data-autocomplete-url]", elem).each((_, input) => {
@@ -415,26 +469,12 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
-            this.addZoom(elem2)
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery]
+        for (const cls of plugins) {
+            const plugin = new cls({context: this.context}) 
+            plugin.install({elem})
         }
-        const backScroller = new BackwardScroller({context: this.context}) 
-        for (const elem2 of querySelectorAll({node: elem, selector: "#backward-zip"})) {
-            elem2.addEventListener("click", backScroller.timelineZip.bind(backScroller))
-            elem2.addEventListener("mousedown", backScroller.timelineCrawl.bind(backScroller))
-            elem2.addEventListener("mouseup", backScroller.timelineCrawlRelease.bind(backScroller))
-        }
-        const forwardScroller = new ForwardScroller({context: this.context}) 
-        for (const elem2 of querySelectorAll({node: elem, selector: "#forward-zip"})) {
-            elem2.addEventListener("click", forwardScroller.timelineZip.bind(forwardScroller))
-            elem2.addEventListener("mousedown", forwardScroller.timelineCrawl.bind(forwardScroller))
-            elem2.addEventListener("mouseup", forwardScroller.timelineCrawlRelease.bind(forwardScroller))
-        }
-        if (elem.querySelectorAll(".photos-timeline").length) {
-            this.initTimeline()
-        }
-        const dragScroller = new TimelineScroller({context: this.context})
-        dragScroller.initDraggableThumbnails(elem)
+        
         initNavSearch(elem)
         // modified this foundation function to attach a "rootNode" variable to all plugin objects.
         // The foundation function already accepts one optional argument, so undefined is passed to preserve
@@ -443,7 +483,6 @@ class KronofotoContext {
         if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
             st.initialize()
         }
-        this.initGalleryNav(elem)
 
         // Init gallery thumbnails
         if (elem.id == 'fi-preload-zone') {
@@ -484,8 +523,8 @@ class KronofotoContext {
             }
         */
     }
-    initTimeline() {
-        $('.photos-timeline', this.context).each((i, e) => {
+    initTimeline(elem) {
+        $('.photos-timeline', elem).each((i, e) => {
             const timelineInstance = new timeline();
             timelineInstance.connect(e, this.context);
         })
@@ -503,26 +542,7 @@ class KronofotoContext {
     autoplayStop() {
         clearInterval(window.autoplayTimer)
     }
-    initGalleryNav(elem) {
-        // When the mouse moves
-        for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
-            let hideGalleryTimeout = null;
-            gallery.addEventListener('mousemove', () => {
-                this.showGalleryNav()
-                if (hideGalleryTimeout)
-                    clearTimeout(hideGalleryTimeout)
-                hideGalleryTimeout = setTimeout(this.hideGalleryNav.bind(this), 5000)
-            })
-        }
-    }
-    showGalleryNav() {
-        $(".gallery", this.context).removeClass('hide-nav')
-    }
-    hideGalleryNav() {
-        $(".gallery", this.context).addClass('hide-nav')
-    }
 }
-
 export const initHTMXListeners = (_htmx, context, {
     lateLoad = false
 } = {}) => {

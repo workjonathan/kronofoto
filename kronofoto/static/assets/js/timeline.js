@@ -6,6 +6,14 @@ import $ from "jquery"
 // import "jquery-ui-dist"
 
 export default class {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        $('.photos-timeline', elem).each((i, e) => {
+            this.connect(e)
+        })
+    }
     get targets() {
         return [
             "slider",
@@ -24,9 +32,8 @@ export default class {
         ]
     }
 
-    connect(element, context) {
+    connect(element) {
 
-        this.context = context
 
         // slider status
         this.sliderDragged = null
