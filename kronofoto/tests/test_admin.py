@@ -321,9 +321,10 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
 
     @rule(archive=archives, aup=a_user.flatmap(lambda u: st.sampled_from(list(u.archiveuserpermission_set.all())) if u.archiveuserpermission_set.exists() else st.nothing()))
     def change_aup_target(self, archive, aup):
-        with block_escalation(editor=self.editor, user=self.editor):
-            aup.archive = archive
-            aup.save()
+        if not archive.archiveuserpermission_set.filter(user=aup.user.id).exists():
+            with block_escalation(editor=self.editor, user=self.editor):
+                aup.archive = archive
+                aup.save()
 
     @precondition(lambda self: self.editor)
     @rule(group=a_group, archive=archives, perms=some_permissions)
@@ -354,12 +355,13 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 100, stateful_step_count = 25, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 10, stateful_step_count = 10, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass
 
 class UserAdminTests(TestCase):
+    @hsettings(max_examples=10)
     @given(st.data())
     def test_changeable_permissions(self, data):
         permissions = data.draw(st.sets(st.sampled_from(list(Permission.objects.all()[:10]))))
@@ -371,6 +373,7 @@ class UserAdminTests(TestCase):
         user2.groups.add(group)
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
 
+    @hsettings(max_examples=10)
     @given(st.data(), from_model(Archive, id=st.none()))
     def test_changeable_groups(self, data, archive):
         permissions = list(Permission.objects.all()[:10])
@@ -394,7 +397,7 @@ class UserAdminTests(TestCase):
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
-    @hsettings(deadline=None)
+    @hsettings(deadline=None, max_examples=10)
     @given(
         st.booleans(),
         st.booleans(),

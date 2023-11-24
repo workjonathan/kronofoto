@@ -4,7 +4,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.views.generic import TemplateView
 
 from django import forms
-from archive.views.agreement import AgreementDetailView, AgreementFormView, AnonymousAgreementCheck, UserAgreementCheck, BaseAgreementView
+from archive.views.agreement import AgreementDetailView, AgreementFormView, UserAgreementCheck, BaseAgreementView
 from .models import Agreement, UserAgreement
 from archive.models.archive import ArchiveAgreement, Archive
 from archive.views.submission import SubmissionFormView

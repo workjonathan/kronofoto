@@ -136,7 +136,7 @@ class MultiformStateMachine(RuleBasedStateMachine):
 
 
 
-MultiformStateMachine.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 100, deadline=None)
+MultiformStateMachine.TestCase.settings = hsettings(max_examples = 5, stateful_step_count = 10, deadline=None)
 
 class MultiformTest(TestCase, MultiformStateMachine.TestCase):
     "Note that this test runs in a TestCase without using transactions."

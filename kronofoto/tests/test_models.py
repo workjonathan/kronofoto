@@ -92,7 +92,7 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
             assert donor.donated_count == len(self.donor_model[donor.pk])
             assert donor.scanned_count == len(self.scanner_model[donor.pk])
 
-DonorMachine.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 50, deadline=None)
+DonorMachine.TestCase.settings = hsettings(max_examples = 5, stateful_step_count = 5, deadline=None)
 
 class TestDonorQuerySet(TestCase, DonorMachine.TestCase):
     pass

@@ -19,10 +19,22 @@ class Archive(models.Model):
     def __str__(self) -> str:
         return self.name
 
+
+class ArchiveAgreementQuerySet(models.QuerySet):
+    def object_for(self, slug: str) -> models.QuerySet["ArchiveAgreement"]:
+        return self.filter(archive__slug=slug)
+
 class ArchiveAgreement(models.Model):
     text = models.TextField(blank=False, null=False)
     version = models.DateTimeField(null=False, auto_now=True)
     archive = models.OneToOneField(Archive, on_delete=models.CASCADE)
+
+    objects = ArchiveAgreementQuerySet.as_manager()
+
+    @property
+    def session_key(self) -> str:
+        return "kf.agreement.{}.{}".format(self.pk, self.version)
+
 
     def __str__(self) -> str:
         return "{} agreement".format(self.archive.name)

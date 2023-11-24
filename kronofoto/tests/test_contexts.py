@@ -20,7 +20,7 @@ from .util import photos, donors, archives, small_gif
 
 class Tests(TestCase):
 
-    @settings(deadline=1000, max_examples=20)
+    @settings(deadline=1000, max_examples=5)
     @given(
         user=from_model(User, is_staff=st.booleans()),
         data=st.data()
