@@ -82,10 +82,7 @@ class BaseSubmissionFormView(BaseTemplateMixin, MultiformView):
 
 
 
-class SubmissionFormView(View):
-    view = BaseSubmissionFormView
-    extra_context = {}
+class SubmissionFormView(BaseSubmissionFormView):
     @method_decorator(require_agreement(extra_context={"reason": "You must agree to terms before uploading."}))
     def dispatch(self, request, *args, **kwargs):
-        view = self.view.as_view()
-        return view(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)

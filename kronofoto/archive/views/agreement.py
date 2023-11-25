@@ -110,6 +110,7 @@ class AgreementCheckFactory:
     session: "any"
     user: "User"
     redirect_view: callable = UserAgreementCheckRedirect.as_view()
+    user_agreement_queryset: QuerySet[UserAgreement] = UserAgreement.objects
 
     def post_session_check(self, agreed):
         if not agreed:
@@ -121,6 +122,7 @@ class AgreementCheckFactory:
                     agreement=self.agreement,
                     session=self.session,
                     factory_method=self.post_db_check,
+                    user_agreement_queryset=self.user_agreement_queryset,
                 )
         return BasicView(self.func)
 
@@ -138,7 +140,7 @@ class UserDbAgreementCheck:
     agreement: "any"
     session: "any"
     factory_method: callable
-    user_agreement_queryset: QuerySet[UserAgreement] = UserAgreement.objects
+    user_agreement_queryset: QuerySet[UserAgreement]
 
     @property
     def view(self):

@@ -11,6 +11,8 @@ class Agreement(models.Model):
     version = models.IntegerField(default=0)
     users = models.ManyToManyField(User, through=UserAgreement)
 
+    session_key = "session-key"
+
 
 class FakeDonor(models.Model):
     x = models.IntegerField()

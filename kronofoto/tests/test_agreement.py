@@ -4,7 +4,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.views.generic import TemplateView
 
 from django import forms
-from archive.views.agreement import AgreementDetailView, AgreementFormView, UserAgreementCheck, BaseAgreementView
+from archive.views.agreement import AgreementDetailView, AgreementFormView, UserAgreementCheck, BaseAgreementView, AgreementCheckFactory
 from .models import Agreement, UserAgreement
 from archive.models.archive import ArchiveAgreement, Archive
 from archive.views.submission import SubmissionFormView
@@ -50,91 +50,84 @@ class TestAgreement(TestCase):
         self.assertRedirects(resp, '/success', fetch_redirect_response=False)
 
     def test_anonymous_check(self):
-        archive = Archive.objects.create(slug="any-slug")
-        agreement = ArchiveAgreement.objects.create(archive=archive)
-        view = SubmissionFormView()
-        kwargs = {'short_name': archive.slug}
-        request = RequestFactory().get('/', kwargs=kwargs)
-        request.user = AnonymousUser
-        request.session = {}
-        view.setup(request, **kwargs)
-        resp = view.dispatch(request, **kwargs)
-        self.assertIn("archive/anonymous_agreement.html", resp.template_name)
+        class AgreementFake:
+            id=1
+            session_key="session-key"
+            version=2
 
-        agreementview = BaseAgreementView(form_class=AgreementForm)
-        request = RequestFactory().post('/?next=/success', kwargs=kwargs, data={"agree": False})
-        request.user = AnonymousUser
-        request.session = {}
-        agreementview.setup(request, **kwargs)
-        resp = agreementview.dispatch(request, **kwargs)
-        self.assertEqual(200, resp.status_code)
-
-        agreementview = BaseAgreementView(form_class=AgreementForm)
-        request = RequestFactory().post('/?next=/success', kwargs=kwargs, data={"agree": True})
-        request.user = AnonymousUser
-        request.session = {}
-        agreementview.setup(request, **kwargs)
-        resp = agreementview.dispatch(request, **kwargs)
-        self.assertEqual(302, resp.status_code)
-
-        session = request.session
-        class TestTemplateView(TemplateView):
-            template_name = 'anything.html'
-
-        view = SubmissionFormView(view=TestTemplateView)
-        request = RequestFactory().get('/', kwargs=kwargs)
-        request.session = session
-        request.user = AnonymousUser
-        view.setup(request, **kwargs)
-        resp = view.dispatch(request, **kwargs)
-        self.assertIn("anything.html", resp.template_name)
+        self.assertEqual(3,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={},
+                user=AnonymousUser,
+                agreement=AgreementFake(),
+            ).get_agreement_checker().view
+        )
+        self.assertEqual(5,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={'session-key': True},
+                user=AnonymousUser,
+                agreement=AgreementFake(),
+            ).get_agreement_checker().view
+        )
 
     def test_user_check(self):
-        archive = Archive.objects.create(slug="any-slug")
-        agreement = ArchiveAgreement.objects.create(archive=archive)
-        class TestTemplateView(TemplateView):
-            template_name = 'anything.html'
-        view = SubmissionFormView(view=TestTemplateView)
+        agreement = Agreement.objects.create()
+        class AgreementFake:
+            id = 1
+            session_key = "session-key"
+            version=2
+
         user = User.objects.create_user("test", "test", "test")
-
-        kwargs = {'short_name': archive.slug}
-        request = RequestFactory().get('/', kwargs=kwargs)
-        request.user = user
-        request.session = {}
-        view.setup(request, **kwargs)
-        resp = view.dispatch(request, **kwargs)
-        self.assertEqual(302, resp.status_code)
-
-        agreementview = BaseAgreementView(form_class=AgreementForm)
-        request = RequestFactory().post('/?next=/success', kwargs=kwargs, data={"agree": False})
-        request.user = user
-        request.session = {}
-        agreementview.setup(request, **kwargs)
-        resp = agreementview.dispatch(request, **kwargs)
-        self.assertEqual(resp.status_code, 200)
-
-        agreementview = BaseAgreementView(form_class=AgreementForm)
-        request = RequestFactory().post('/?next=/success', kwargs=kwargs, data={"agree": True})
-        request.user = user
-        request.session = {}
-        agreementview.setup(request, **kwargs)
-        resp = agreementview.dispatch(request, **kwargs)
-        self.assertEqual(resp.status_code, 302)
-
-        session = request.session
-
-        view = SubmissionFormView(view=TestTemplateView)
-        request = RequestFactory().get('/', kwargs=kwargs)
-        request.session = session
-        request.user = user
-        view.setup(request, **kwargs)
-        resp = view.dispatch(request, **kwargs)
-        self.assertIn("anything.html", resp.template_name)
-
-        view = SubmissionFormView(view=TestTemplateView)
-        request = RequestFactory().get('/', kwargs=kwargs)
-        request.session = {} # no session, should still render our top secret template
-        request.user = user
-        view.setup(request, **kwargs)
-        resp = view.dispatch(request, **kwargs)
-        self.assertIn("anything.html", resp.template_name)
+        self.assertEqual(4,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={},
+                user=user,
+                agreement=agreement,
+                user_agreement_queryset=UserAgreement.objects.all(),
+            ).get_agreement_checker().view
+        )
+        self.assertEqual(5,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={'session-key': True},
+                user=user,
+                agreement=agreement,
+                user_agreement_queryset=UserAgreement.objects.all(),
+            ).get_agreement_checker().view
+        )
+        UserAgreement.objects.create(version=0, user=user, agreement=agreement)
+        self.assertEqual(5,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={},
+                user=user,
+                agreement=agreement,
+                user_agreement_queryset=UserAgreement.objects.all(),
+            ).get_agreement_checker().view
+        )
+        agreement.version = 1
+        agreement.save()
+        self.assertEqual(4,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={},
+                user=user,
+                agreement=agreement,
+                user_agreement_queryset=UserAgreement.objects.all(),
+            ).get_agreement_checker().view
+        )
