@@ -1,5 +1,5 @@
 from hypothesis.extra.django import from_model, register_field_strategy, TestCase
-from django.test import Client, RequestFactory
+from django.test import Client, RequestFactory, SimpleTestCase
 from django.contrib.auth.models import AnonymousUser, User
 from django.views.generic import TemplateView
 
@@ -11,6 +11,10 @@ from archive.views.submission import SubmissionFormView
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms.")
+
+class AgreementFake:
+    session_key="session-key"
+    version=2
 
 
 class TestAgreement(TestCase):
@@ -49,40 +53,8 @@ class TestAgreement(TestCase):
         self.assertTrue(client.session['kf.agreement.{}.{}'.format(agreement.pk, agreement.version)])
         self.assertRedirects(resp, '/success', fetch_redirect_response=False)
 
-    def test_anonymous_check(self):
-        class AgreementFake:
-            id=1
-            session_key="session-key"
-            version=2
-
-        self.assertEqual(3,
-            AgreementCheckFactory(
-                view=3,
-                redirect_view=4,
-                func=5,
-                session={},
-                user=AnonymousUser,
-                agreement=AgreementFake(),
-            ).get_agreement_checker().view
-        )
-        self.assertEqual(5,
-            AgreementCheckFactory(
-                view=3,
-                redirect_view=4,
-                func=5,
-                session={'session-key': True},
-                user=AnonymousUser,
-                agreement=AgreementFake(),
-            ).get_agreement_checker().view
-        )
-
     def test_user_check(self):
         agreement = Agreement.objects.create()
-        class AgreementFake:
-            id = 1
-            session_key = "session-key"
-            version=2
-
         user = User.objects.create_user("test", "test", "test")
         self.assertEqual(4,
             AgreementCheckFactory(
@@ -129,5 +101,29 @@ class TestAgreement(TestCase):
                 user=user,
                 agreement=agreement,
                 user_agreement_queryset=UserAgreement.objects.all(),
+            ).get_agreement_checker().view
+        )
+
+class SimpleAgreementTestCase(SimpleTestCase):
+
+    def test_anonymous_check(self):
+        agreement = AgreementFake()
+        self.assertEqual(3,
+            AgreementCheckFactory(view=3,
+                redirect_view=4,
+                func=5,
+                session={},
+                user=AnonymousUser,
+                agreement=agreement,
+            ).get_agreement_checker().view
+        )
+        self.assertEqual(5,
+            AgreementCheckFactory(
+                view=3,
+                redirect_view=4,
+                func=5,
+                session={'session-key': True},
+                user=AnonymousUser,
+                agreement=agreement,
             ).get_agreement_checker().view
         )
