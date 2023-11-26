@@ -7,7 +7,7 @@ from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg, CarouselListView
 from archive.views.photo import LogoSvg, LogoSvgSmall
 from archive.views.agreement import AgreementView
-from archive.views.submission import SubmissionFormView, KronofotoTemplateView
+from archive.views.submission import submission, KronofotoTemplateView
 from archive.views.tagsearch import ContributorSearchView
 from archive.views.donor import ContributorCreateView
 from archive.views import tags_view
@@ -119,9 +119,9 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="archive/contributor_created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
-    path("<slug:short_name>/materials/contribute", SubmissionFormView.as_view()),
+    path("<slug:short_name>/materials/contribute", submission),
     path("<slug:short_name>/materials/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html")),
-    path("<slug:short_name>/contribute", SubmissionFormView.as_view(), name="submission-create"),
+    path("<slug:short_name>/contribute", submission, name="submission-create"),
     path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
 ]

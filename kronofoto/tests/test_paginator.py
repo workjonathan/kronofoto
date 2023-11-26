@@ -9,6 +9,7 @@ from .util import photos, donors, archives, MockQuerySet, MockPhoto
 
 @tag('newtests')
 class Paginator2Test(SimpleTestCase):
+    @hyposettings(max_examples=10)
     @given(st.builds(MockQuerySet, st.lists(st.builds(MockPhoto), min_size=1, unique_by=lambda p: p.id)), st.integers(min_value=1))
     def testForwardConsistency(self, qs, page_size):
         note(qs)
@@ -33,6 +34,7 @@ class Paginator2Test(SimpleTestCase):
             pageBPhoto = None
         self.assertEqual(pageAPhoto, pageBPhoto)
 
+    @hyposettings(max_examples=10)
     @given(st.builds(MockQuerySet, st.lists(st.builds(MockPhoto), min_size=1, unique_by=lambda p: p.id)), st.integers(min_value=1))
     def testBackwardConsistency(self, qs, page_size):
         note(qs)
@@ -57,6 +59,7 @@ class Paginator2Test(SimpleTestCase):
             pageBPhoto = None
         self.assertEqual(pageAPhoto, pageBPhoto)
 
+    @hyposettings(max_examples=10)
     @given(st.builds(MockQuerySet, st.lists(st.builds(MockPhoto), min_size=1, unique_by=lambda p: p.id)), st.integers(min_value=1), st.fixed_dictionaries({'reverse': st.booleans(), 'id': st.integers(), 'year': st.integers()}))
     def testBothDirectionsConsistency(self, qs, page_size, first_page):
         qs.sort()

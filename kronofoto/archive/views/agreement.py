@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 from ..forms import AgreementForm
 from dataclasses import dataclass
 from .basetemplate import BaseTemplateMixin
+from typing import Dict
 
 class AgreementDetailView(DetailView):
     form_class = None
@@ -161,7 +162,7 @@ class SessionCheck:
 
 @dataclass
 class require_agreement:
-    extra_context: str
+    extra_context: Dict[str, str]
     agreement_queryset: ArchiveAgreementQuerySet = ArchiveAgreement.objects
 
     def __call__(self, func):

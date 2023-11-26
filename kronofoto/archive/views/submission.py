@@ -1,6 +1,9 @@
 from .multiform import MultiformView
-from .basetemplate import BaseTemplateMixin
+from .base import ArchiveRequest
+from django.contrib.auth.models import User, AnonymousUser
+from django.http import HttpResponse, HttpRequest
 from django.views.generic.base import TemplateView, View
+from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404
 from archive.models.donor import Donor
 from archive.models.photo import Submission
@@ -11,7 +14,9 @@ from ..widgets import AutocompleteWidget
 from ..reverse import reverse_lazy
 from ..admin import SubmissionForm
 from django.utils.decorators import method_decorator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Dict, Any, Optional, Union, Protocol, Type
+from abc import ABCMeta, abstractmethod
 
 from django import forms
 
@@ -49,40 +54,79 @@ class SubmissionDetailsForm(SubmissionForm):
     class Meta:
         model = Submission
         exclude = (
-            'uuid',
+            #'uuid',
             'archive',
             'uploader',
-            'image',
         )
         labels = {"donor": "Contributor"}
 
 class SubmissionImageForm(forms.Form):
     image = forms.ImageField()
 
-class BaseSubmissionFormView(BaseTemplateMixin, MultiformView):
-    form_classes = (
-        SubmissionDetailsForm,
-        SubmissionImageForm,
-    )
-    def get_extra_form_params(self, page):
-        if page == 0:
-            return {'force_archive': get_object_or_404(Archive.objects.all(), slug=self.kwargs['short_name'])}
-        return {}
-    template_name = 'archive/submission_create.html'
-    def forms_valid(self, forms):
-        submission_args = {**forms[0].cleaned_data, **forms[1].cleaned_data}
-        if not self.request.user.is_anonymous:
-            submission_args['uploader'] = self.request.user
+class HasResponse(Protocol):
+    def get_response(self) -> HttpResponse:
+        ...
 
-        Submission.objects.create(
-            archive=Archive.objects.get(slug=self.kwargs['short_name']),
-            **submission_args,
-        )
-        return redirect("kronofoto:submission-done", **self.kwargs)
+@dataclass
+class SubmissionFactory:
+    request: HttpRequest
+    user: Union[User, AnonymousUser]
+    archive: Archive
+    context: Dict[str, Any]
+    extra_form_kwargs: Dict[str, Any] = field(default_factory=dict)
+    form_class: Type[SubmissionForm] = SubmissionDetailsForm
+
+    def get_post_response(self, form: forms.ModelForm) -> HasResponse:
+        if form.is_valid():
+            return ValidSubmission(
+                form,
+                archive=self.archive,
+                uploader=self.user if not self.user.is_anonymous else None
+            )
+        else:
+            return DisplayForm(request=self.request, form=form, context=self.context)
+
+    def get_handler(self) -> HasResponse:
+        if self.request.method and self.request.method.lower() == "post":
+            return self.get_post_response(
+                self.form_class(self.request.POST, files=self.request.FILES, **self.extra_form_kwargs)
+            )
+        else:
+            return DisplayForm(
+                request=self.request, form=self.form_class(**self.extra_form_kwargs), context=self.context
+            )
+
+    def get_response(self) -> HttpResponse:
+        return self.get_handler().get_response()
+
+@dataclass
+class ValidSubmission:
+    form: forms.ModelForm
+    archive: Archive
+    uploader: Optional[User]
+
+    def get_response(self) -> HttpResponse:
+        submission = self.form.save(commit=False)
+        submission.archive = self.archive
+        submission.uploader = self.uploader
+        submission.save()
+        return redirect("kronofoto:submission-done", short_name=self.archive.slug)
+
+
+@dataclass
+class DisplayForm:
+    request: HttpRequest
+    context: Dict[str, Any]
+    form: forms.ModelForm
+
+    def get_response(self) -> HttpResponse:
+        self.context['form'] = self.form
+        return TemplateResponse(self.request, "archive/submission_create.html", self.context)
 
 
 
-class SubmissionFormView(BaseSubmissionFormView):
-    @method_decorator(require_agreement(extra_context={"reason": "You must agree to terms before uploading."}))
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+@require_agreement(extra_context={"reason": "You must agree to terms before uploading."})
+def submission(request: HttpRequest, short_name: str) -> HttpResponse:
+    context = ArchiveRequest(request, short_name=short_name).common_context
+    archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+    return SubmissionFactory(request, request.user, archive, context, extra_form_kwargs={"force_archive": archive}).get_response()

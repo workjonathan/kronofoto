@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from archive.models.donor import DonorQuerySet
+from archive.models.archive import Archive
 
 class UserAgreement(models.Model):
     version = models.IntegerField()
@@ -12,6 +13,11 @@ class Agreement(models.Model):
     users = models.ManyToManyField(User, through=UserAgreement)
 
     session_key = "session-key"
+
+class FakeSubmission(models.Model):
+    x = models.IntegerField()
+    uploader = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
 class FakeDonor(models.Model):

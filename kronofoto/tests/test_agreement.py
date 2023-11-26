@@ -7,7 +7,6 @@ from django import forms
 from archive.views.agreement import AgreementDetailView, AgreementFormView, UserAgreementCheck, BaseAgreementView, AgreementCheckFactory
 from .models import Agreement, UserAgreement
 from archive.models.archive import ArchiveAgreement, Archive
-from archive.views.submission import SubmissionFormView
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms.")
