@@ -651,7 +651,7 @@ class SingleWordTerm(Expression):
 
     def annotations1(self, prefix=''):
         self.field = prefix + 'TE_{}'.format(hash(self.value))
-        return {self.field: Case(When(wordcount__word__icontains=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
+        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
     def scoreF(self, negated):
         if negated:
