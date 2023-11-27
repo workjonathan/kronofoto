@@ -18,7 +18,7 @@ def require_valid_archive(func: Callable[..., T]) -> Callable[..., T]:
     @wraps(func)
     def validate_archive(*args: Any, **kwargs: Any) -> T:
         if 'short_name' in kwargs:
-            short_name = kwargs['short_name']
+            short_name = kwargs.pop('short_name')
             get_object_or_404(Archive.objects.all(), slug=short_name)
             return func(*args, short_name=short_name, **kwargs)
         else:
