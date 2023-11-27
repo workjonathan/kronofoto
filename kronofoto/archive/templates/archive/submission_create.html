@@ -9,9 +9,7 @@
 <main class="container-center">
     <form enctype="multipart/form-data" method="post">
     {% csrf_token %}
-    {{ step_form }}
     {{ form.as_p }}
-    <ul data-term-definitions></ul>
     <input type="submit" value="OK">
     </form>
 </main>

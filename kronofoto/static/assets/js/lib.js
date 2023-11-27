@@ -272,6 +272,29 @@ class ForwardScroller extends DirectionalScroller {
     }
 }
 
+class ImagePreviewInput {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const elem2 of elem.querySelectorAll("[data-image-input]")) {
+            elem2.addEventListener("change", this.imageChange.bind(this))
+        }
+    }
+    imageChange(evt) {
+        let img = evt.target
+        while (img.tagName !== "IMG" && img) {
+            img = img.previousElementSibling
+        }
+        if (img && evt.target.files && evt.target.files[0]) {
+            const reader = new FileReader()
+            reader.onload = loadEvt => {
+                img.src = loadEvt.target.result
+            }
+            reader.readAsDataURL(evt.target.files[0])
+        }
+    }
+}
 //$.fn.extend({
 //    trigger: function triggerHack(eventType, extraParameters) {
 //        trigger(eventType, extraParameters, this.get(0), true)
@@ -469,7 +492,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context}) 
             plugin.install({elem})

@@ -1,0 +1,2 @@
+{% include "django/forms/widgets/select.html" %}
+<ul {% for name, value in ul_attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}></ul>

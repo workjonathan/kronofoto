@@ -12,7 +12,7 @@ from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive, ArchiveAgreementQuerySet
 from .agreement import UserAgreementCheck, require_agreement, KronofotoTemplateView
 from ..fields import RecaptchaField, AutocompleteField
-from ..widgets import AutocompleteWidget
+from ..widgets import AutocompleteWidget, SelectMultipleTerms, ImagePreviewClearableFileInput
 from ..reverse import reverse_lazy
 from ..admin import SubmissionForm
 from django.utils.decorators import method_decorator
@@ -91,6 +91,10 @@ class SubmissionDetailsForm(SubmissionForm):
             "country",
             "caption",
         )
+        widgets = {
+            'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
+            'terms': SelectMultipleTerms(ul_attrs={"data-term-definitions": ""}),
+        }
         labels = {"donor": "Contributor"}
 
 class SubmissionImageForm(forms.Form):

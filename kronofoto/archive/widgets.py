@@ -1,5 +1,29 @@
-from django.forms.widgets import NumberInput, Widget
+from django.forms.widgets import NumberInput, Widget, SelectMultiple, ClearableFileInput
 from django.forms import MultiWidget, HiddenInput
+
+class ImagePreviewClearableFileInput(ClearableFileInput):
+    template_name = "archive/widgets/image_preview_clearable_file_input.html"
+
+    def __init__(self, *args, img_attrs=None, **kwargs):
+        self.img_attrs = img_attrs or {}
+        super().__init__(*args, **kwargs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['img_attrs'] = self.img_attrs
+        return context
+
+class SelectMultipleTerms(SelectMultiple):
+    template_name = "archive/widgets/selectmultipleterms.html"
+
+    def __init__(self, *args, ul_attrs=None, **kwargs):
+        self.ul_attrs = ul_attrs or {}
+        super().__init__(*args, **kwargs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['ul_attrs'] = self.ul_attrs
+        return context
 
 class AutocompleteWidget(Widget):
     template_name = "archive/widgets/autocomplete.html"
