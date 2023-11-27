@@ -271,7 +271,24 @@ class ForwardScroller extends DirectionalScroller {
         return "beforeend"
     }
 }
-
+class ImageLoader {
+    constructor({img, file, reader=FileReader}) {
+        this.img = img
+        this.file = file
+        this.reader = reader
+    }
+    loadImage() {
+        const reader = new this.reader()
+        reader.onload = this.setImage.bind(this)
+        reader.readAsDataURL(this.file)
+    }
+    setImage(evt) {
+        this.img.src = evt.target.result
+    }
+}
+class NullLoader {
+    loadImage() {}
+}
 class ImagePreviewInput {
     constructor({context}) {
         this.context = context
@@ -282,16 +299,21 @@ class ImagePreviewInput {
         }
     }
     imageChange(evt) {
-        let img = evt.target
-        while (img.tagName !== "IMG" && img) {
-            img = img.previousElementSibling
+        const img = this.getPrevious({elem: evt.target, tagName: "IMG"}) 
+        this.selectLoader({img, input: evt.target}).loadImage()
+    }
+    getPrevious({elem, tagName}) {
+        while (elem.tagName !== tagName && elem) {
+            elem = elem.previousElementSibling
         }
-        if (img && evt.target.files && evt.target.files[0]) {
-            const reader = new FileReader()
-            reader.onload = loadEvt => {
-                img.src = loadEvt.target.result
-            }
-            reader.readAsDataURL(evt.target.files[0])
+        return elem
+    }
+    selectLoader({img, input}) {
+        if (img && input.files && input.files[0]) {
+            return new ImageLoader({img, file: input.files[0]})
+        }
+        else {
+            return new NullLoader()
         }
     }
 }
