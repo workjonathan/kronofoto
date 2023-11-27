@@ -3,10 +3,15 @@ from django.db.models import Count
 from django.utils.text import slugify
 from .collectible import Collectible
 
+class TermQuerySet(models.QuerySet):
+    def objects_for(self, archive: "Archive", category: int) -> models.QuerySet["Term"]:
+        return self.filter(validcategory__archive=archive, validcategory__category=category).order_by("term")
 
 class Term(Collectible, models.Model):
     term = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
+    description = models.TextField(blank=True)
+    objects = TermQuerySet.as_manager()
 
     def save(self, *args, **kwargs):
         if not self.slug:

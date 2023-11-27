@@ -119,9 +119,11 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="archive/contributor_created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
-    path("<slug:short_name>/materials/contribute", submission),
+    path("<slug:short_name>/materials/contribute", views.submission),
     path("<slug:short_name>/materials/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html")),
-    path("<slug:short_name>/contribute", submission, name="submission-create"),
+    path("<slug:short_name>/contribute", views.submission, name="submission-create"),
+    path("<slug:short_name>/contribute/terms", views.list_terms, name="term-list"),
+    path("<slug:short_name>/contribute/terms/define", views.define_terms, name="define-terms"),
     path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
 ]

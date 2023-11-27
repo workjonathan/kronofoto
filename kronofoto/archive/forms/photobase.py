@@ -9,7 +9,11 @@ class PhotoBaseForm(forms.ModelForm):
     def __init__(self, *args: Any, **kwargs: Any):
         force_archive = kwargs.pop('force_archive', None)
         super().__init__(*args, **kwargs)
+        termsfield = self.fields.get('terms')
         instance : Optional[Photo] = kwargs.get('instance')
+        if termsfield and hasattr(termsfield, 'choices'):
+            termsfield.choices = list(self.get_terms(instance).values_list('id', 'term'))
+            termsfield.choices.insert(0, (None, "---------"))
         categoryfield = self.fields.get('category')
         if categoryfield and hasattr(categoryfield, 'choices'):
             categoryfield.choices = list(self.get_categories(instance, archive=force_archive).values_list("id", "name"))
@@ -22,20 +26,6 @@ class PhotoBaseForm(forms.ModelForm):
             return Category.objects.none()
         return archive.categories.all()
 
-class SubmissionForm(PhotoBaseForm):
-    class Meta:
-        model = Submission
-        exclude : List[str] = []
-
-class PhotoForm(PhotoBaseForm):
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        termsfield = self.fields.get('terms')
-        instance : Optional[Photo] = kwargs.get('instance')
-        if termsfield and hasattr(termsfield, 'choices'):
-            termsfield.choices = list(self.get_terms(instance).values_list('id', 'term'))
-            termsfield.choices.insert(0, (None, "---------"))
-
     def get_terms(self, instance: Optional[Photo]) -> QuerySet[Term]:
         if not instance:
             return Term.objects.none()
@@ -44,6 +34,12 @@ class PhotoForm(PhotoBaseForm):
         except:
             return Term.objects.none()
 
+class SubmissionForm(PhotoBaseForm):
+    class Meta:
+        model = Submission
+        exclude : List[str] = []
+
+class PhotoForm(PhotoBaseForm):
     class Meta:
         model = Photo
         exclude : List[str] = []

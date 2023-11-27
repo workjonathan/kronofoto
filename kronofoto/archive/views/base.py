@@ -16,10 +16,13 @@ import json
 T = TypeVar('T')
 def require_valid_archive(func: Callable[..., T]) -> Callable[..., T]:
     @wraps(func)
-    def validate_archive(*args: Any, short_name: Optional[int]=None, **kwargs: Any) -> T:
-        if short_name:
+    def validate_archive(*args: Any, **kwargs: Any) -> T:
+        if 'short_name' in kwargs:
+            short_name = kwargs['short_name']
             get_object_or_404(Archive.objects.all(), slug=short_name)
-        return func(*args, short_name=short_name, **kwargs)
+            return func(*args, short_name=short_name, **kwargs)
+        else:
+            return func(*args, **kwargs)
     return validate_archive
 
 

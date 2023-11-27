@@ -100,6 +100,7 @@ class PhotoBase(models.Model):
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
+    terms = models.ManyToManyField(Term, blank=True)
     photographer = models.ForeignKey(
         Donor, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_photographed",
 
@@ -157,7 +158,6 @@ class Photo(PhotoBase):
     h700 = models.ImageField(null=True, editable=False)
     thumbnail = models.ImageField(null=True, editable=False)
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
-    terms = models.ManyToManyField(Term, blank=True)
     location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)

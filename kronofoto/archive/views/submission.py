@@ -1,10 +1,12 @@
 from .multiform import MultiformView
 from .base import ArchiveRequest
+from django.db.models import QuerySet, Manager
 from django.contrib.auth.models import User, AnonymousUser
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse, HttpRequest, QueryDict
 from django.views.generic.base import TemplateView, View
 from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404
+from archive.models.term import Term, TermQuerySet
 from archive.models.donor import Donor
 from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive, ArchiveAgreementQuerySet
@@ -15,13 +17,33 @@ from ..reverse import reverse_lazy
 from ..admin import SubmissionForm
 from django.utils.decorators import method_decorator
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, Union, Protocol, Type
+from typing import Dict, Any, Optional, Union, Protocol, Type, List
 from abc import ABCMeta, abstractmethod
 
 from django import forms
 
 class SubmissionDetailsForm(SubmissionForm):
     prefix = "submission"
+    def __init__(self, *args: Any, force_archive: Archive, **kwargs: Any):
+        super().__init__(*args, force_archive=force_archive, **kwargs)
+        category = self.fields.get('category')
+        if category:
+            category.widget.attrs.update({
+                'hx-get': reverse_lazy("kronofoto:term-list", kwargs={'short_name': force_archive.slug}),
+                'hx-trigger': "change",
+                "hx-target": '[data-terms]',
+                "hx-push-url": "false",
+            })
+        terms = self.fields.get('terms')
+        if terms:
+            terms.widget.attrs.update({
+                'data-terms': "",
+                'hx-get': reverse_lazy("kronofoto:define-terms", kwargs={'short_name': force_archive.slug}),
+                'hx-trigger': "change",
+                "hx-target": '[data-term-definitions]',
+                "hx-swap": "innerHTML",
+                "hx-push-url": "false",
+            })
 
     donor = AutocompleteField(
         queryset=Donor.objects.all(),
@@ -53,10 +75,21 @@ class SubmissionDetailsForm(SubmissionForm):
 
     class Meta:
         model = Submission
-        exclude = (
-            #'uuid',
-            'archive',
-            'uploader',
+        exclude = None
+        fields = (
+            "category",
+            "donor",
+            "image",
+            "year",
+            "circa",
+            "photographer",
+            "terms",
+            "address",
+            "city",
+            "county",
+            "state",
+            "country",
+            "caption",
         )
         labels = {"donor": "Contributor"}
 
@@ -65,6 +98,10 @@ class SubmissionImageForm(forms.Form):
 
 class HasResponse(Protocol):
     def get_response(self) -> HttpResponse:
+        ...
+
+class HasTerms(Protocol):
+    def get_terms(self) -> QuerySet:
         ...
 
 @dataclass
@@ -123,6 +160,62 @@ class DisplayForm:
         self.context['form'] = self.form
         return TemplateResponse(self.request, "archive/submission_create.html", self.context)
 
+@dataclass
+class NoCategory:
+    terms: TermQuerySet
+    def get_terms(self) -> QuerySet[Term]:
+        return self.terms.none()
+
+@dataclass
+class CategoryTerms:
+    terms: TermQuerySet
+    archive: Archive
+    category: int
+    def get_terms(self) -> QuerySet[Term]:
+        return self.terms.objects_for(archive=self.archive, category=self.category).order_by('term')
+
+class TermRequestForm(forms.Form):
+    prefix = "submission"
+    category = forms.IntegerField()
+
+@dataclass
+class TermListFactory:
+    terms: Any = Term.objects
+
+    def get_term_lister(self, data: Dict[str, str], archive: Archive) -> HasTerms:
+        form = TermRequestForm(data)
+        if form.is_valid():
+            return CategoryTerms(self.terms, archive, form.cleaned_data['category'])
+        else:
+            return NoCategory(self.terms)
+
+    def get_terms(self, data: Dict[str, str], archive: Archive) -> QuerySet[Term]:
+        return self.get_term_lister(data, archive).get_terms()
+
+def list_terms(request: HttpRequest, short_name: str) -> HttpResponse:
+    archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+    terms = TermListFactory().get_terms(request.GET, archive)
+    return TemplateResponse(request, 'admin/widgets/terms.html', {'objects': terms})
+
+@dataclass
+class TermDefiner:
+    terms: Any = Term.objects
+
+    def get_term_ids(self, data: QueryDict, key: str="submission-terms") -> List[int]:
+        terms = []
+        for term in data.getlist(key):
+            try:
+                terms.append(int(term))
+            except ValueError:
+                pass
+        return terms
+
+    def get_response(self, request: HttpRequest, data: QueryDict) -> HttpResponse:
+        terms = self.get_term_ids(data)
+        return TemplateResponse(request, "archive/widgets/define_terms.html", {"objects": self.terms.filter(id__in=terms)})
+
+def define_terms(request: HttpRequest, **kwargs: Any) -> HttpResponse:
+    return TermDefiner().get_response(request, request.GET)
 
 
 @require_agreement(extra_context={"reason": "You must agree to terms before uploading."})
