@@ -162,7 +162,7 @@ class Photo(PhotoBase):
     location_point = models.PointField(null=True, srid=4326, blank=True)
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     is_featured = models.BooleanField(default=False)
-    is_published = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=False, db_index=True)
     local_context_id = models.CharField(
         max_length=64,
         null=True,
@@ -176,6 +176,9 @@ class Photo(PhotoBase):
     class Meta:
         constraints = [
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
+        ]
+        index_together = [
+            ['year', 'is_published'],
         ]
 
     def page_number(self):
