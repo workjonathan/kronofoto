@@ -446,7 +446,7 @@ class Donor(Expression):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         lastname_minusval = Cast(Length(Replace(Lower(F('donor__last_name')), Value(self.value))), FloatField())
         lastnamelen = Cast(Greatest(1.0, Length('donor__last_name'), output_field=FloatField()), FloatField())
         lastnamebadness = lastname_minusval / lastnamelen
@@ -487,7 +487,7 @@ class AccessionNumber(Expression):
         q = Q(id=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(id=self.value, then=1), default=0, output_field=FloatField())
         else:
@@ -842,7 +842,7 @@ class State(Expression):
         q = Q(state__icontains=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(state__icontains=self.value, then=1), default=0, output_field=FloatField())
         else:
@@ -871,7 +871,7 @@ class Country(Expression):
         q = Q(country__icontains=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(country__icontains=self.value, then=1), default=0, output_field=FloatField())
         else:
@@ -900,7 +900,7 @@ class County(Expression):
         q = Q(county__iexact=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(county__iexact=self.value, then=1), default=0, output_field=FloatField())
         else:
@@ -929,7 +929,7 @@ class City(Expression):
         q = Q(city__iexact=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(city__iexact=self.value, then=1), default=0, output_field=FloatField())
         else:
@@ -959,7 +959,7 @@ class YearLTE(Expression):
         q = Q(year__lte=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(year__lte=self.value, then=1.0), default=0.0, output_field=FloatField())
         else:
@@ -986,7 +986,7 @@ class YearGTE(Expression):
         q = Q(year__gte=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(year__gte=self.value, then=1.0), default=0.0, output_field=FloatField())
         else:
@@ -1013,7 +1013,7 @@ class YearEquals(Expression):
         q = Q(year=self.value)
         return q
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(year=self.value, then=1.0), default=0.0, output_field=FloatField())
         else:
@@ -1115,10 +1115,10 @@ class Maximum(BinaryOperator):
     def __str__(self):
         return '({}) | ({})'.format(self.left, self.right)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if negated:
-            return Least(self.left.scoreF(negated), self.right.scoreF(negated))
-        return Greatest(self.left.scoreF(negated), self.right.scoreF(negated))
+            return Least(self.left.scoreF(negated, user), self.right.scoreF(negated, user))
+        return Greatest(self.left.scoreF(negated, user), self.right.scoreF(negated, user))
 
     def score(self, photo, negated):
         if negated:
