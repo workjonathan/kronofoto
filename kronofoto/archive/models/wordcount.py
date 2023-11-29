@@ -14,8 +14,11 @@ class WordCount(models.Model):
     count = models.FloatField()
 
     class Meta:
+        unique_together = [
+            ('word', 'field', 'photo')
+        ]
         index_together = [
-            ('word', 'field')
+            ('word', 'field', 'photo')
         ]
 
 

@@ -1,5 +1,6 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField, Value
 from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
+from django.db.models import Subquery, Exists, OuterRef
 from .. import models
 
 from functools import reduce
@@ -126,6 +127,8 @@ class Description:
             return YearFilterReporter()
         if group == 'location':
             return LocationFilterReporter()
+        if group == 'caption':
+            return GenericFilterReporter('captioned with')
         if group == 'term':
             return GenericFilterReporter('termed with')
         if group == 'tag':
@@ -204,10 +207,14 @@ class Expression:
         )
 
     def as_collection(self, qs, user):
-        return self._filter(qs, user).order_by('year', 'id')
+        q = self.filter(user)
+        r = qs.filter(q).order_by('year', 'id')
+        return r
 
     def as_search(self, qs, user):
-        return self._filter(qs, user).order_by('-relevance', 'year', 'id')
+        q = self.filter(user)
+        r = qs.filter(q).annotate(relevance=self.scoreF(False, user)).order_by('-relevance', 'year', 'id')
+        return r
 
     def description(self):
         return Description([self])
@@ -228,6 +235,13 @@ class UserCollection(Expression):
     def __str__(self):
         return 'collection:{}'.format(self.value)
 
+    def filter(self, user):
+        uuid_filter = Q(uuid=self.value, photos=OuterRef('pk'))
+        visibility_filter = ~Q(visibility='PR')
+        if user.is_authenticated:
+            visibility_filter |= Q(owner=user)
+        return Q(Exists(models.Collection.objects.filter(uuid_filter & visibility_filter)))
+
     def filter2(self, user):
         uuid_filter = Q(collection__uuid=self.value)
         visibility_filter = ~Q(collection__visibility='PR')
@@ -235,11 +249,16 @@ class UserCollection(Expression):
             visibility_filter |= Q(collection__owner=user)
         return uuid_filter & visibility_filter
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        uuid_filter = Q(uuid=self.value, photos=OuterRef('pk'))
+        visibility_filter = ~Q(visibility='PR')
+        if user.is_authenticated:
+            visibility_filter |= Q(owner=user)
+        existence = Exists(models.Collection.objects.filter(uuid_filter & visibility_filter))
         if not negated:
-            return Case(When(collection__uuid=self.value, then=1), default=0, output_field=FloatField())
+            return Case(When(existence, then=1), default=0, output_field=FloatField())
         else:
-            return Case(When(collection__uuid=self.value, then=0), default=1, output_field=FloatField())
+            return Case(When(~existence, then=0), default=1, output_field=FloatField())
 
     @property
     def object(self):
@@ -271,6 +290,15 @@ class IsNew(Expression):
     def __str__(self):
         return 'is_new:{}'.format(self.value).lower()
 
+    def filter(self, user):
+        if models.NewCutoff.objects.exists():
+            cutoff = models.NewCutoff.objects.all()[0].date
+            if self.value:
+                return Q(created__gte=cutoff)
+            else:
+                return Q(created__lt=cutoff)
+        return Q()
+
     def filter1(self, user):
         if models.NewCutoff.objects.exists():
             cutoff = models.NewCutoff.objects.all()[0].date
@@ -280,7 +308,7 @@ class IsNew(Expression):
                 return Q(created__lt=cutoff)
         return Q()
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if models.NewCutoff.objects.exists():
             cutoff = models.NewCutoff.objects.all()[0].date
             if (not negated) ^ (not self.value):
@@ -306,18 +334,28 @@ class IsNew(Expression):
 class TermExactly(Expression):
     def __init__(self, value):
         self.value = value
+        if not hasattr(value, "id"):
+            try:
+                self.value = models.Term.objects.get(term__iexact=value)
+            except (ValueError, models.Term.DoesNotExist):
+                self.value = None
 
     def __str__(self):
         return 'term_exact:{}'.format(self.value)
 
+    def filter(self, user):
+        return Q(Exists(models.Term.objects.filter(id=self.value.id, photo=OuterRef('pk'))))
+
     def filter1(self, user):
         return Q(terms__id=self.value.id)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        existence = Exists(models.Term.objects.filter(id=self.value.id, photo=OuterRef('pk')))
+
         if not negated:
-            return Case(When(terms__id=self.value.id, then=1), default=0, output_field=FloatField())
+            return Case(When(existence, then=1), default=0, output_field=FloatField())
         else:
-            return Case(When(terms__id=self.value.id, then=0), default=1, output_field=FloatField())
+            return Case(When(~existence, then=0), default=1, output_field=FloatField())
 
     def is_collection(self):
         return True
@@ -340,10 +378,10 @@ class PhotographerExactly(Expression):
     def __str__(self):
         return 'photographer_exact:{}'.format(self.value.id)
 
-    def filter1(self, user):
+    def filter(self, user):
         return Q(photographer__id=self.value.id)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if not negated:
             return Case(When(photographer__id=self.value.id, then=1), default=0, output_field=FloatField())
         else:
@@ -374,10 +412,11 @@ class DonorExactly(Expression):
     def __str__(self):
         return 'contributor_exact:{}'.format(self.value.id)
 
-    def filter1(self, user):
+    def filter(self, user):
         return Q(donor__id=self.value.id)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+
         if not negated:
             return Case(When(donor__id=self.value.id, then=1), default=0, output_field=FloatField())
         else:
@@ -403,7 +442,7 @@ class Donor(Expression):
     def __str__(self):
         return 'contributor:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
         return q
 
@@ -467,8 +506,22 @@ class MultiWordTag(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
+    def is_collection(self):
+        return True
+
+    def description(self):
+        return Description([self])
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def group(self):
+        return "tag"
     def __str__(self):
         return 'tag:"{}"'.format(self.value)
+
+    def filter(self, user):
+        return Q(Exists(models.PhotoTag.objects.filter(tag__tag__icontains=self.value, accepted=True, photo__id=OuterRef('pk'))))
 
     def filter2(self, user):
         return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
@@ -483,10 +536,16 @@ class MultiWordTag(Expression):
         return {self.field: Case(When(phototag__tag__tag__isnull=False, then=1-tag_minusval/taglen), default=0, output_field=FloatField())}
 
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        attachedtags = models.PhotoTag.objects.filter(accepted=True, photo__id=OuterRef('pk')).values('photo__id')
+        attachedtags = attachedtags.annotate(
+            removed=Sum(Length(Replace(Lower(F('tag__tag')), Value(self.value)))),
+            total=Sum(Length(F('tag__tag'))),
+            perc=F('removed')*1.0/F('total'),
+        )
         if not negated:
-            return F(self.field)
-        return 1 - F(self.field)
+            return 1 - Subquery(attachedtags.values('perc'))
+        return Subquery(attachedtags.values('perc'))
 
 class BasicTag(MultiWordTag):
     def __init__(self, *args, **kwargs):
@@ -516,6 +575,13 @@ class TagExactly(Expression):
     def __str__(self):
         return 'tag_exact:"{}"'.format(self.value)
 
+    def filter(self, user):
+        if self.object:
+            return Q(Exists(models.PhotoTag.objects.filter(tag__id=self.object.id, accepted=True, photo__id=OuterRef('pk'))))
+        else:
+            # nothing should match
+            return Q(id__in=[])
+
     def filter2(self, user):
         if self.object:
             return Q(phototag__tag__id=self.object.id) & Q(phototag__accepted=True)
@@ -538,11 +604,16 @@ class TagExactly(Expression):
                 self.field: Value(0)
             }
 
-    def scoreF(self, negated):
-        if negated:
-            return 1 - F(self.field)
+    def scoreF(self, negated, user):
+        if self.object:
+            q = Exists(models.PhotoTag.objects.filter(tag__id=self.object.id, accepted=True, photo__id=OuterRef('pk')))
         else:
-            return F(self.field)
+            # nothing should match
+            q = ~Q()
+        if negated:
+            return Case(When(q, 1), default=0)
+        else:
+            return Case(When(~q, 0), default=1)
 
     def is_collection(self):
         return True
@@ -564,18 +635,20 @@ class SingleWordTag(Expression):
     def __str__(self):
         return 'tag:{}'.format(self.value)
 
-    def filter2(self, user):
-        return Q(wordcount__word__icontains=self.value, wordcount__field='TA')
+    def filter(self, user):
+        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='TA', photo__id=OuterRef('pk'))))
 
     def annotations1(self, prefix=''):
         self.field = prefix + 'TA_{}'.format(hash(self.value))
         return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        percentage = models.WordCount.objects.filter(word=self.value, field='TA', photo__id=OuterRef('pk'))
+        score = percentage.annotate(total=Sum('count')).values('total')
         if negated:
-            return 1 - F(self.field)
+            return 1 - Subquery(score)
         else:
-            return F(self.field)
+            return Subquery(score)
 
     def score(self, photo, negated):
         scores = []
@@ -609,8 +682,8 @@ class MultiWordTerm(Expression):
     def __str__(self):
         return 'term:"{}"'.format(self.value)
 
-    def filter1(self, user):
-        return Q(terms__term__icontains=self.value)
+    def filter(self, user):
+        return Q(Exists(models.Term.objects.filter(term__icontains=self.value, photo__id=OuterRef('pk'))))
 
     def annotations1(self, prefix=''):
         self.field = prefix + 'TE_{}'.format(hash(self.value))
@@ -621,10 +694,16 @@ class MultiWordTerm(Expression):
         return {self.field: Case(When(terms__term__isnull=False, then=1 - term_minusval/termlen), default=0.0, output_field=FloatField())}
 
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        attachedterms = models.Term.objects.filter(photo__id=OuterRef('pk')).values('photo__id')
+        attachedterms = attachedterms.annotate(
+            removed=Sum(Length(Replace(Lower(F('term')), Value(self.value)))),
+            total=Sum(Length(F('term'))),
+            perc=F('removed')*1.0/F('total'),
+        )
         if not negated:
-            return F(self.field)
-        return 1 - F(self.field)
+            return 1 - Subquery(attachedterms.values('perc'))
+        return Subquery(attachedterms.values('perc'))
 
     def short_label(self):
         return "Term: {}".format(self.value)
@@ -646,6 +725,9 @@ class SingleWordTerm(Expression):
     def __str__(self):
         return 'term:{}'.format(self.value)
 
+    def filter(self, user):
+        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='TE', photo__id=OuterRef('pk'))))
+
     def filter2(self, user):
         return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
 
@@ -653,11 +735,14 @@ class SingleWordTerm(Expression):
         self.field = prefix + 'TE_{}'.format(hash(self.value))
         return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
+        percentage = models.WordCount.objects.filter(word=self.value, field='TE', photo__id=OuterRef('pk'))
+        score = percentage.annotate(total=Sum('count')).values('total')
+
         if negated:
-            return 1 - F(self.field)
+            return 1 - Subquery(score)
         else:
-            return F(self.field)
+            return Subquery(score)
 
     def score(self, photo, negated):
         scores = []
@@ -691,10 +776,10 @@ class MultiWordCaption(Expression):
     def __str__(self):
         return 'caption:"{}"'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         return Q(caption__icontains=self.value)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         score = self.caption_minusval / self.captionlen
 
         if not negated:
@@ -705,6 +790,8 @@ class SingleWordCaption(Expression):
     def __init__(self, value):
         self.value = value.lower()
 
+    def description(self):
+        return Description([self])
     def __str__(self):
         return 'caption:{}'.format(self.value)
 
@@ -713,6 +800,9 @@ class SingleWordCaption(Expression):
             return None
         return self
 
+    def filter(self, user):
+        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='CA', photo__id=OuterRef('pk'))))
+
     def filter2(self, user):
         return Q(wordcount__word=self.value, wordcount__field='CA')
 
@@ -720,12 +810,18 @@ class SingleWordCaption(Expression):
         self.field = prefix + "CA_{}".format(hash(self.value))
         return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
 
-    def scoreF(self, negated):
-        if negated:
-            return 1 - F(self.field)
-        else:
-            return F(self.field)
+    def scoreF(self, negated, user):
+        percentage = models.WordCount.objects.filter(word=self.value, field='CA', photo__id=OuterRef('pk'))
+        score = percentage.annotate(total=Sum('count')).values('total')
 
+        if negated:
+            return 1 - Subquery(score)
+        else:
+            return Subquery(score)
+
+
+    def group(self):
+        return "caption"
 
     def score(self, photo, negated):
         words = [w.lower() for w in re.split(r'\W+', photo.caption)]
@@ -742,7 +838,7 @@ class State(Expression):
     def __str__(self):
         return 'state:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(state__icontains=self.value)
         return q
 
@@ -771,7 +867,7 @@ class Country(Expression):
     def __str__(self):
         return 'country:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(country__icontains=self.value)
         return q
 
@@ -800,7 +896,7 @@ class County(Expression):
     def __str__(self):
         return 'county:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(county__iexact=self.value)
         return q
 
@@ -829,7 +925,7 @@ class City(Expression):
     def __str__(self):
         return 'city:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(city__iexact=self.value)
         return q
 
@@ -859,7 +955,7 @@ class YearLTE(Expression):
     def __str__(self):
         return 'year:{}-'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(year__lte=self.value)
         return q
 
@@ -886,7 +982,7 @@ class YearGTE(Expression):
     def __str__(self):
         return 'year:{}+'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(year__gte=self.value)
         return q
 
@@ -913,7 +1009,7 @@ class YearEquals(Expression):
     def __str__(self):
         return 'year:{}'.format(self.value)
 
-    def filter1(self, user):
+    def filter(self, user):
         q = Q(year=self.value)
         return q
 
@@ -944,9 +1040,18 @@ class Not(Expression):
     def __str__(self):
         return '-({})'.format(self.value)
 
-    def filter1(self, user):
-        v = self.value.filter1(user)
+    def is_collection(self):
+        return self.value.is_collection()
+
+    def description(self):
+        return self.value.description()
+
+    def short_label(self):
+        raise NotImplementedError
+    def filter(self, user):
+        v = self.value.filter(user)
         return ~v if v else v
+
 
     def filter2(self, user):
         v = self.value.filter2(user)
@@ -955,8 +1060,8 @@ class Not(Expression):
     def annotations1(self, prefix=''):
         return self.value.annotations1(prefix=prefix+"NOT_")
 
-    def scoreF(self, negated):
-        return self.value.scoreF(not negated)
+    def scoreF(self, negated, user):
+        return self.value.scoreF(not negated, user)
 
     def score(self, photo, negated):
         return self.value.score(photo, not negated)
@@ -1000,9 +1105,9 @@ class BinaryOperator(Expression):
 
 
 class Maximum(BinaryOperator):
-    def filter1(self, user):
-        l = self.left.filter1(user)
-        r = self.right.filter1(user)
+    def filter(self, user):
+        l = self.left.filter(user)
+        r = self.right.filter(user)
         if l and r:
             return l | r
         return l if l else r
@@ -1031,20 +1136,20 @@ class Maximum(BinaryOperator):
 
 
 class And(BinaryOperator):
-    def filter1(self, user):
-        l = self.left.filter1(user)
-        r = self.right.filter1(user)
+    def filter(self, user):
+        l = self.left.filter(user)
+        r = self.right.filter(user)
         if l and r:
             return l & r
-        return l if l else r
+        return l or r
 
     def __str__(self):
         return '({}) AND ({})'.format(self.left, self.right)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if negated:
-            return self.left.scoreF(negated) + self.right.scoreF(negated)
-        return self.left.scoreF(negated) * self.right.scoreF(negated)
+            return self.left.scoreF(negated, user) + self.right.scoreF(negated, user)
+        return self.left.scoreF(negated, user) * self.right.scoreF(negated, user)
 
     def score(self, photo, negated):
         if negated:
@@ -1061,20 +1166,20 @@ class And(BinaryOperator):
         raise NotImplementedError
 
 class Or(BinaryOperator):
-    def filter1(self, user):
-        l = self.left.filter1(user)
-        r = self.right.filter1(user)
+    def filter(self, user):
+        l = self.left.filter(user)
+        r = self.right.filter(user)
         if l and r:
             return l | r
-        return l if l else r
+        return l or r
 
     def __str__(self):
         return '{} OR {}'.format(self.left, self.right)
 
-    def scoreF(self, negated):
+    def scoreF(self, negated, user):
         if negated:
-            return self.left.scoreF(negated) * self.right.scoreF(negated)
-        return self.left.scoreF(negated) + self.right.scoreF(negated)
+            return self.left.scoreF(negated, user) * self.right.scoreF(negated, user)
+        return self.left.scoreF(negated, user) + self.right.scoreF(negated, user)
 
     def score(self, photo, negated):
         if not negated:
