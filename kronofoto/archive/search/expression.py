@@ -1109,8 +1109,8 @@ class Maximum(BinaryOperator):
         l = self.left.filter(user)
         r = self.right.filter(user)
         if l and r:
-            return l | r
-        return l if l else r
+            return l & r
+        return l or r
 
     def __str__(self):
         return '({}) | ({})'.format(self.left, self.right)
