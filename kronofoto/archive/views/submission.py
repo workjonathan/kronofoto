@@ -104,19 +104,19 @@ class SubmissionDetailsForm(SubmissionForm):
         model = Submission
         exclude = None
         fields = (
-            "category",
             "donor",
-            "image",
+            "category",
             "year",
             "circa",
             "photographer",
-            "terms",
             "address",
             "city",
             "county",
             "state",
             "country",
+            "terms",
             "caption",
+            "image",
         )
         widgets = {
             'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
