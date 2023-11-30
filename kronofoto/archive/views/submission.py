@@ -28,6 +28,7 @@ class SubmissionDetailsForm(SubmissionForm):
         super().__init__(*args, force_archive=force_archive, **kwargs)
         category = self.fields.get('category')
         if category:
+            category.help_text = 'Choose one term  from the list to indicate what kind of an item this is.'
             category.widget.attrs.update({
                 'hx-get': reverse_lazy("kronofoto:term-list", kwargs={'short_name': force_archive.slug}),
                 'hx-trigger': "change",
@@ -43,13 +44,38 @@ class SubmissionDetailsForm(SubmissionForm):
                 "hx-target": '[data-term-definitions]',
                 "hx-swap": "innerHTML",
                 "hx-push-url": "false",
+                "style": "height: 80px",
             })
+            terms.help_text = 'Select as many terms as you like to indicate what the item is about. You will be able to create your own terms later.'
+        field = self.fields.get('year')
+        if field:
+            field.help_text = 'The year that the item was created, if you are unsure, put in an approximate date and click the "Approximate date" box.'
+        field = self.fields.get('address')
+        if field:
+            field.help_text = 'If relevant, and you know the exact address (street name or street name and number) of the location of the events depicted in the item you are submitting,  enter it here.'
+        field = self.fields.get('city')
+        if field:
+            field.help_text = 'The city or town where the item was created. Choose from the list, if an item covers multiple towns pick the one that is most represented.'
+        field = self.fields.get('county')
+        if field:
+            field.help_text = 'The county where the item was created if known.'
+        field = self.fields.get('state')
+        if field:
+            field.help_text = 'The State where the item was created.'
+        field = self.fields.get('country')
+        if field:
+            field.help_text = 'The country where the item was created.'
+        field = self.fields.get('caption')
+        if field:
+            field.help_text = 'Is there anything else you would like to share about this photo? Tell us in your own words and language.'
+
 
     donor = AutocompleteField(
         queryset=Donor.objects.all(),
         to_field_name="id",
         widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
         label="Contributor",
+        help_text="The person who is contributing this item to MTMS. Choose your name from the list.",
     )
     donor.widget.attrs.update({
         "placeholder": "Enter name...",
@@ -59,19 +85,20 @@ class SubmissionDetailsForm(SubmissionForm):
         to_field_name="id",
         widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
         required=False,
+        help_text='The name of the person who created the item you are submitting.',
     )
     photographer.widget.attrs.update({
         "placeholder": "Enter name...",
     })
-    scanner = AutocompleteField(
-        queryset=Donor.objects.all(),
-        to_field_name="id",
-        widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
-        required=False,
-    )
-    scanner.widget.attrs.update({
-        "placeholder": "Enter name...",
-    })
+    #scanner = AutocompleteField(
+    #    queryset=Donor.objects.all(),
+    #    to_field_name="id",
+    #    widget=AutocompleteWidget(url=reverse_lazy("kronofoto:contributor-search")),
+    #    required=False,
+    #)
+    #scanner.widget.attrs.update({
+    #    "placeholder": "Enter name...",
+    #})
 
     class Meta:
         model = Submission
@@ -95,7 +122,17 @@ class SubmissionDetailsForm(SubmissionForm):
             'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
             'terms': SelectMultipleTerms(ul_attrs={"data-term-definitions": ""}),
         }
-        labels = {"donor": "Contributor"}
+        labels = {
+            "donor": "Contributor",
+            "image": "Upload",
+            "circa": "Approximate date",
+            "address": "Location, Street Address",
+            "city": "Location, City",
+            "county": "Location, County",
+            "state": "Location, State",
+            "country": "Location, Country",
+        }
+
 
 class SubmissionImageForm(forms.Form):
     image = forms.ImageField()
