@@ -1,7 +1,11 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField, Value
 from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
 from django.db.models import Subquery, Exists, OuterRef
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from functools import cached_property
 from .. import models
+from dataclasses import dataclass
+from typing import Any
 
 from functools import reduce
 import operator
@@ -36,17 +40,17 @@ class YearFilterReporter:
     def describe(self, exprs):
         gt_year = lt_year = None
         for expr in exprs:
-            if isinstance(expr, YearGTE):
-                if not gt_year or expr.value > gt_year:
-                    gt_year = expr.value
-            elif isinstance(expr, YearEquals):
-                if not gt_year or expr.value > gt_year:
-                    gt_year = expr.value
-                if not lt_year or expr.value < lt_year:
-                    lt_year = expr.value
+            if isinstance(expr._value, YearGTEValue):
+                if not gt_year or expr._value.value > gt_year:
+                    gt_year = expr._value.value
+            elif isinstance(expr._value, YearEqualsValue):
+                if not gt_year or expr._value.value > gt_year:
+                    gt_year = expr._value.value
+                if not lt_year or expr._value.value < lt_year:
+                    lt_year = expr._value.value
             else:
-                if not lt_year or expr.value < lt_year:
-                    lt_year = expr.value
+                if not lt_year or expr._value.value < lt_year:
+                    lt_year = expr._value.value
         if gt_year and lt_year:
             if gt_year == lt_year:
                 return 'from {}'.format(gt_year)
@@ -62,17 +66,18 @@ class DonorFilterReporter:
     def __init__(self, verb):
         self.verb = verb
     def describe(self, exprs):
-        words = [str(expr.value.display_format()) for expr in exprs]
+        words = [str(expr.object.display_format()) for expr in exprs]
         if len(words) == 1:
             clauses = words[0]
         else:
             clauses = ' and '.join([', '.join(words[:-1]), words[-1]])
         return "{verb} {clauses}".format(verb=self.verb, clauses=clauses)
+
 class GenericFilterReporter:
     def __init__(self, verb):
         self.verb = verb
     def describe(self, exprs):
-        words = [str(expr.str if hasattr(expr, "str") else expr.value) for expr in exprs]
+        words = [str(expr.str if hasattr(expr, "str") else expr._value.value) for expr in exprs]
         if len(words) == 1:
             clauses = words[0]
         else:
@@ -83,14 +88,14 @@ class LocationFilterReporter:
     def describe(self, exprs):
         location = {}
         for expr in exprs:
-            if isinstance(expr, County):
-                location['county'] = expr.value
-            elif isinstance(expr, City):
-                location['city'] = expr.value
-            elif isinstance(expr, State):
-                location['state'] = expr.value
-            elif isinstance(expr, Country):
-                location['country'] = expr.value
+            if isinstance(expr._value, CountyValue):
+                location['county'] = expr._value.value
+            elif isinstance(expr._value, CityValue):
+                location['city'] = expr._value.value
+            elif isinstance(expr._value, StateValue):
+                location['state'] = expr._value.value
+            elif isinstance(expr._value, CountryValue):
+                location['country'] = expr._value.value
         return 'from ' + models.format_location(**location)
 
 class MaxReporter:
@@ -100,7 +105,7 @@ class MaxReporter:
         if isinstance(expr, Maximum):
             return self.describe_(expr.left)
         else:
-            return expr.str if hasattr(expr, 'str') else str(expr.value)
+            return expr.str if hasattr(expr, 'str') else str(expr._value.value)
 
 class CollectionReporter:
     def describe(self, exprs):
@@ -108,7 +113,7 @@ class CollectionReporter:
 
 class NewPhotosReporter:
     def describe(self, exprs):
-        return "new" if exprs[0].value else 'not new'
+        return "new" if exprs[0]._value.value else 'not new'
 
 class Description:
     def __init__(self, values):
@@ -131,6 +136,8 @@ class Description:
             return GenericFilterReporter('captioned with')
         if group == 'term':
             return GenericFilterReporter('termed with')
+        if group == 'donor_lastname':
+            return GenericFilterReporter('donor has last name')
         if group == 'tag':
             return GenericFilterReporter('tagged with')
         if group == 'photographer':
@@ -155,8 +162,10 @@ class Description:
             return group_descriptions[0]
         return '; and '.join(['; '.join(group_descriptions[:-1]), group_descriptions[-1]])
 
-
+@dataclass
 class Expression:
+    _value: Any = None
+
     def __or__(self, obj):
         return Or(self, obj)
 
@@ -166,45 +175,44 @@ class Expression:
     def __invert__(self):
         return Not(self)
 
-    def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, repr(self.value))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.value == other.value
-
     def __str__(self):
-        raise NotImplementedError
+        return self._value.serialize()
 
     def shakeout(self):
+        if self._value.shakeout():
+            return None
         return self
 
-    def filter1(self, user):
-        return None
+    def is_collection(self):
+        return self._value.is_collection()
 
-    def filter2(self, user):
-        return None
+    @property
+    def object(self):
+        return self._value.object
 
-    def annotations1(self, prefix=''):
-        "This should copy data from wordcount_count to something like ca_dog. So {'ca_dog': When(etc)}"
+    def select_related(self, user=None):
+        return self._value.matching_photos(queryset=self._value.get_related_queryset())
+
+    def get_search_args(self, user=None):
+        return []
+
+    def select_objects(self, user=None):
+        return self._value.filter_related(related=self.select_related(user=user))
+
+    def filter(self, user=None):
+        return Q(*self.get_search_args(user=user), **self.get_search_kwargs())
+
+    def get_search_kwargs(self):
         return {}
 
-    def is_collection(self):
-        return False
+    def get_score(self, user=None):
+        return Case(When(self.filter(user), then=1), default=0, output_field=FloatField())
 
-    def buildQ(self, *, user):
-        f2 = self.filter2(user)
-        f1 = self.filter1(user)
-        return (f1 | f2) if f1 and f2 else f1 if f1 else f2
-
-    def _filter(self, qs, user):
-        q = self.buildQ(user=user)
-
-        return (qs.filter(q)
-            .annotate(**{k: Sum(v, output_field=FloatField()) for (k, v) in self.annotations1().items()})
-            .defer(*(f.name for f in models.Photo._meta.fields))
-            .annotate(relevance=self.scoreF(False))
-            .filter(relevance__gt=0)
-        )
+    def scoreF(self, negated, user):
+        score = self.get_score(user=user)
+        if negated:
+            return 1 - score
+        return score
 
     def as_collection(self, qs, user):
         q = self.filter(user)
@@ -220,818 +228,560 @@ class Expression:
         return Description([self])
 
     def short_label(self):
-        raise NotImplementedError
+        return self._value.short_label()
 
     def group(self):
-        raise NotImplementedError
-
-
-
-class UserCollection(Expression):
-    def __init__(self, value):
-        self.value = value
-        self._object = None
-
-    def __str__(self):
-        return 'collection:{}'.format(self.value)
-
-    def filter(self, user):
-        uuid_filter = Q(uuid=self.value, photos=OuterRef('pk'))
-        visibility_filter = ~Q(visibility='PR')
-        if user.is_authenticated:
-            visibility_filter |= Q(owner=user)
-        return Q(Exists(models.Collection.objects.filter(uuid_filter & visibility_filter)))
-
-    def filter2(self, user):
-        uuid_filter = Q(collection__uuid=self.value)
-        visibility_filter = ~Q(collection__visibility='PR')
-        if user.is_authenticated:
-            visibility_filter |= Q(collection__owner=user)
-        return uuid_filter & visibility_filter
-
-    def scoreF(self, negated, user):
-        uuid_filter = Q(uuid=self.value, photos=OuterRef('pk'))
-        visibility_filter = ~Q(visibility='PR')
-        if user.is_authenticated:
-            visibility_filter |= Q(owner=user)
-        existence = Exists(models.Collection.objects.filter(uuid_filter & visibility_filter))
-        if not negated:
-            return Case(When(existence, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(~existence, then=0), default=1, output_field=FloatField())
-
-    @property
-    def object(self):
-        if not self._object:
-            self._object = models.Collection.objects.get(uuid=self.value)
-        return self._object
+        return self._value.group()
 
     @property
     def name(self):
+        return self._value.name()
+
+class SubqueryExpression(Expression):
+    def get_search_args(self, user=None):
+        return [Exists(self.select_objects(user=user))]
+
+    def get_score(self, user=None):
+        return self._value.get_subquery(query=self.select_objects(user=user))
+
+class SimpleExpression(Expression):
+    def get_search_kwargs(self):
+        return {self._value.get_search_field(): self._value.get_search_value()}
+
+class MultiWordCaptionExpression(SimpleExpression):
+    def get_score(self, user=None):
+        return self._value.get_score(user=user)
+
+class IsNewExpression(Expression):
+    def get_search_kwargs(self):
+        if not models.NewCutoff.objects.exists():
+            return {}
+        return {self._value.get_search_field(): self._value.get_search_value()}
+
+class ExactMatchExpression(Expression):
+    def get_search_args(self, user=None):
+        if self.object:
+            return [Exists(self.select_objects(user=user))]
+        return []
+
+    def get_search_kwargs(self):
+        if self.object:
+            return {}
+        return {self._value.get_search_field(): self._value.get_search_value()}
+
+class ValueBase:
+    def shakeout(self):
+        return False
+
+    def is_collection(self):
+        return True
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(photo__id=OuterRef('pk'))
+
+    @cached_property
+    def object(self):
+        if not hasattr(self.value, "id"):
+            try:
+                return self.get_exact_object()
+            except (ValidationError, ValueError, ObjectDoesNotExist):
+                return None
+        return self.value
+
+    def name(self):
         return self.object.name
 
-    def is_collection(self):
-        return True
+@dataclass
+class SingleWordValueBase(ValueBase):
+    value: str
 
-    def description(self):
-        return Description([self])
+    def get_subquery(self, *, query):
+        return Subquery(query.annotate(total=Sum('count')).values('total'))
+
+    def filter_related(self, *, related):
+        return related.filter(word=self.value, field=self.wordcount_field())
+
+    def get_related_queryset(self, *, user=None):
+        return models.WordCount.objects.all()
+
+class SingleWordTagValue(SingleWordValueBase):
+    def serialize(self):
+        return 'tag:{}'.format(self.value)
 
     def short_label(self):
-        return 'Collection: {}'.format(self.name)
+        return "Tag: {}".format(self.value.lower())
+
+    def wordcount_field(self):
+        return 'TA'
 
     def group(self):
-        return 'user-collection'
+        return "tag"
 
-
-class IsNew(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'is_new:{}'.format(self.value).lower()
-
-    def filter(self, user):
-        if models.NewCutoff.objects.exists():
-            cutoff = models.NewCutoff.objects.all()[0].date
-            if self.value:
-                return Q(created__gte=cutoff)
-            else:
-                return Q(created__lt=cutoff)
-        return Q()
-
-    def filter1(self, user):
-        if models.NewCutoff.objects.exists():
-            cutoff = models.NewCutoff.objects.all()[0].date
-            if self.value:
-                return Q(created__gte=cutoff)
-            else:
-                return Q(created__lt=cutoff)
-        return Q()
-
-    def scoreF(self, negated, user):
-        if models.NewCutoff.objects.exists():
-            cutoff = models.NewCutoff.objects.all()[0].date
-            if (not negated) ^ (not self.value):
-                return Case(When(created__gte=cutoff, then=1), default=0, output_field=FloatField())
-            else:
-                return Case(When(created__lt=cutoff, then=1), default=0, output_field=FloatField())
-        else:
-            return 1
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
+class SingleWordTermValue(SingleWordValueBase):
+    def serialize(self):
+        return 'term:{}'.format(self.value)
 
     def short_label(self):
-        return "New: {}".format(self.value.term.lower())
+        return "Term: {}".format(self.value.lower())
+
+    def wordcount_field(self):
+        return 'TE'
+
+    def group(self):
+        return "term"
+
+class SingleWordCaptionValue(SingleWordValueBase):
+    def serialize(self):
+        return 'caption:{}'.format(self.value)
+
+    def shakeout(self):
+        return self.value in STOPWORDS
+
+    def is_collection(self):
+        return False
+
+    def wordcount_field(self):
+        return 'CA'
+
+class MultiWordValueBase(ValueBase):
+    def get_subquery(self, *, query):
+        field = self.get_annotation_match_field()
+        return Subquery(
+            query.values('photo__id').annotate(
+                removed=Sum(Length(Replace(Lower(F(field)), Value(self.value)))),
+                total=Sum(Length(F(field))),
+                perc=F('removed')*1.0/F('total'),
+            ).values('perc'))
+
+@dataclass
+class MultiWordTagValue(MultiWordValueBase):
+    value: str
+    def serialize(self):
+        return 'tag:"{}"'.format(self.value)
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def get_annotation_match_field(self):
+        return "tag__tag"
+
+    def filter_related(self, *, related=None):
+        return related.filter(tag__tag__icontains=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        return models.PhotoTag.objects.filter(accepted=True)
+
+    def group(self):
+        return "tag"
+
+@dataclass
+class MultiWordTermValue(MultiWordValueBase):
+    value: str
+
+    def serialize(self):
+        return 'term:"{}"'.format(self.value)
+
+    def short_label(self):
+        return "Term: {}".format(self.value.lower())
+
+    def get_annotation_match_field(self):
+        return "term"
+
+    def filter_related(self, *, related):
+        return related.filter(term__icontains=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        return models.Term.objects.all()
+
+    def group(self):
+        return "term"
+
+@dataclass
+class MultiWordCaptionValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'caption:"{}"'.format(self.value)
+
+    def get_score(self, *, user):
+        caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
+        captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
+        return caption_minusval / captionlen
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "caption__icontains"
+
+    def is_collection(self):
+        return False
+
+
+@dataclass
+class TagExactlyValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'tag_exact:"{}"'.format(self.value)
+
+    def short_label(self):
+        return "Tag: {}".format(self.value.lower())
+
+    def get_search_value(self):
+        return []
+
+    def get_search_field(self):
+        return "id__in"
+
+    def filter_related(self, *, related):
+        return related.filter(tag__id=self.object.id)
+
+    def get_exact_object(self):
+        return models.Tag.objects.get(tag__iexact=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        return models.PhotoTag.objects.filter(accepted=True)
+
+    def group(self):
+        return "tag"
+
+@dataclass
+class TermExactlyValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'term_exact:{}'.format(self.value)
+
+    def short_label(self):
+        return "Term: {}".format(self.value.lower())
+
+    def get_search_value(self):
+        return []
+
+    def get_search_field(self):
+        return "id__in"
+
+    def filter_related(self, *, related):
+        return related.filter(id=self.object.id)
+
+    def get_exact_object(self):
+        return models.Term.objects.get(term__iexact=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        return models.Term.objects.all()
+
+    def group(self):
+        return "term"
+
+@dataclass
+class PhotographerExactlyValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'photographer_exact:{}'.format(self.value.id)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "photographer__id"
+
+    def get_exact_object(self):
+        return models.Donor.objects.get(id=self.value)
+
+    def group(self):
+        return 'photographer'
+
+@dataclass
+class DonorValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'contributor:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "donor__last_name__iexact"
+
+    def group(self):
+        return 'donor_lastname'
+
+@dataclass
+class AccessionValue(ValueBase):
+    value: int
+
+    def serialize(self):
+        return 'FI{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "id"
+
+@dataclass
+class StateValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'state:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "state__icontains"
+
+    def group(self):
+        return 'location'
+
+@dataclass
+class CountyValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'county:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "county__iexact"
+
+    def group(self):
+        return 'location'
+
+@dataclass
+class CountryValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'country:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "country__iexact"
+
+    def group(self):
+        return 'location'
+
+@dataclass
+class CityValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'city:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "city__iexact"
+
+    def group(self):
+        return 'location'
+
+@dataclass
+class YearEqualsValue(ValueBase):
+    value: int
+
+    def serialize(self):
+        return 'year:{}'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "year"
+
+    def group(self):
+        return 'year'
+
+@dataclass
+class YearGTEValue(ValueBase):
+    value: int
+
+    def serialize(self):
+        return 'year:{}+'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "year__gte"
+
+    def group(self):
+        return 'year'
+@dataclass
+class YearLTEValue(ValueBase):
+    value: int
+
+    def serialize(self):
+        return 'year:{}-'.format(self.value)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "year__lte"
+
+    def group(self):
+        return 'year'
+
+@dataclass
+class DonorExactlyValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return 'contributor_exact:{}'.format(self.value.id)
+
+    def get_search_value(self):
+        return self.value
+
+    def get_search_field(self):
+        return "donor"
+
+    def get_exact_object(self):
+        return models.Donor.objects.get(pk=int(self.value))
+
+    def group(self):
+        return 'donor'
+
+@dataclass
+class UserCollectionValue(ValueBase):
+    value: str
+    def serialize(self):
+        return 'collection:{}'.format(self.value)
+
+    def name(self):
+        if not self.object:
+            return ""
+        return self.object.name
+
+    def short_label(self):
+        return 'Collection: {}'.format(self.name())
+
+    def get_search_value(self):
+        return []
+
+    def get_search_field(self):
+        return "id__in"
+
+    def filter_related(self, *, related):
+        return related.filter(uuid=self.value)
+
+    def get_exact_object(self):
+        return models.Collection.objects.get(uuid=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        visibility_filter = ~Q(visibility='PR')
+        if user.is_authenticated:
+            visibility_filter |= Q(owner=user)
+        return models.Collection.objects.filter(visibility_filter)
+
+    def group(self):
+        return "user-collection"
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(photos=OuterRef('pk'))
+
+@dataclass
+class IsNewValue(ValueBase):
+    value: bool
+
+    def serialize(self):
+        return 'is_new:{}'.format(self.value).lower()
+
+    def short_label(self):
+            return "New: {}".format(self.value)
+
+    def get_search_value(self):
+        return models.NewCutoff.objects.all()[0].date
+
+    def get_search_field(self):
+        if self.value:
+            return "created__gte"
+        else:
+            return "created__lte"
 
     def group(self):
         return "new"
 
 
-class TermExactly(Expression):
-    def __init__(self, value):
-        self.value = value
-        if not hasattr(value, "id"):
-            try:
-                self.value = models.Term.objects.get(term__iexact=value)
-            except (ValueError, models.Term.DoesNotExist):
-                self.value = None
+def UserCollection(value):
+    return ExactMatchExpression(_value=UserCollectionValue(value))
 
-    def __str__(self):
-        return 'term_exact:{}'.format(self.value)
+def IsNew(value):
+    return IsNewExpression(_value=IsNewValue(value))
 
-    def filter(self, user):
-        return Q(Exists(models.Term.objects.filter(id=self.value.id, photo=OuterRef('pk'))))
+def TermExactly(value):
+    return ExactMatchExpression(_value=TermExactlyValue(value))
 
-    def filter1(self, user):
-        return Q(terms__id=self.value.id)
+def PhotographerExactly(value):
+    return SimpleExpression(_value=PhotographerExactlyValue(value))
 
-    def scoreF(self, negated, user):
-        existence = Exists(models.Term.objects.filter(id=self.value.id, photo=OuterRef('pk')))
+def DonorExactly(value):
+    return SimpleExpression(_value=DonorExactlyValue(value))
 
-        if not negated:
-            return Case(When(existence, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(~existence, then=0), default=1, output_field=FloatField())
+def Donor(value):
+    return SimpleExpression(_value=DonorValue(value.lower()))
 
-    def is_collection(self):
-        return True
+def AccessionNumber(value):
+    return SimpleExpression(_value=AccessionValue(value))
 
-    def description(self):
-        return Description([self])
+def MultiWordTag(value):
+    return SubqueryExpression(_value=MultiWordTagValue(value.lower()))
 
-    def short_label(self):
-        return "Term: {}".format(self.value.term.lower())
+def TagExactly(value):
+    return ExactMatchExpression(_value=TagExactlyValue(value))
 
-    def group(self):
-        return "term"
-
-
-class PhotographerExactly(Expression):
-    def __init__(self, value):
-        value = models.Donor.objects.get(pk=int(value))
-        self.value = value
-
-    def __str__(self):
-        return 'photographer_exact:{}'.format(self.value.id)
-
-    def filter(self, user):
-        return Q(photographer__id=self.value.id)
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(photographer__id=self.value.id, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(photographer__id=self.value.id, then=0), default=1, output_field=FloatField())
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Photographer: {}".format(self.value)
-
-    def group(self):
-        return "photographer"
-
-class DonorExactly(Expression):
-    def __init__(self, value):
-        try:
-            value = models.Donor.objects.get(pk=int(value))
-        except ValueError:
-            pass
-        except TypeError:
-            pass
-        self.value = value
-
-    def __str__(self):
-        return 'contributor_exact:{}'.format(self.value.id)
-
-    def filter(self, user):
-        return Q(donor__id=self.value.id)
-
-    def scoreF(self, negated, user):
-
-        if not negated:
-            return Case(When(donor__id=self.value.id, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(donor__id=self.value.id, then=0), default=1, output_field=FloatField())
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Contributor: {}".format(self.value)
-
-    def group(self):
-        return "donor"
-
-
-class Donor(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def __str__(self):
-        return 'contributor:{}'.format(self.value)
-
-    def filter(self, user):
-        q = Q(donor__last_name__icontains=self.value) | Q(donor__first_name__icontains=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        lastname_minusval = Cast(Length(Replace(Lower(F('donor__last_name')), Value(self.value))), FloatField())
-        lastnamelen = Cast(Greatest(1.0, Length('donor__last_name'), output_field=FloatField()), FloatField())
-        lastnamebadness = lastname_minusval / lastnamelen
-        firstname_minusval = Cast(Length(Replace(Lower(F('donor__first_name')), Value(self.value))), FloatField())
-        firstnamelen = Cast(Greatest(1, Length('donor__first_name'), output_field=FloatField()), FloatField())
-        firstnamebadness = firstname_minusval / firstnamelen
-
-        if negated:
-            score = firstnamebadness * lastnamebadness
-        else:
-            score = 2 - firstnamebadness - lastnamebadness
-        return score ** 4.0 # raising to fourth power pushes the score down unless the name is very close to an exact match.
-
-    def score(self, photo, negated):
-        ln = fn = 0
-        if not negated:
-            if self.value in photo.donor.last_name.lower():
-                ln = 1
-            if self.value in photo.donor.first_name.lower():
-                fn = 1
-            return ln + fn
-        else:
-            if photo.donor.last_name != self.value:
-                ln = 1
-            if photo.donor.first_name != self.value:
-                fn = 1
-            return ln * fn
-
-
-class AccessionNumber(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'FI{}'.format(self.value)
-
-    def filter1(self, user):
-        q = Q(id=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(id=self.value, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(id=self.value, then=0), default=1, output_field=FloatField())
-
-    def score(self, photo, negated):
-        if negated and photo.id != self.value:
-            return 1
-        elif photo.id == self.value:
-            return 1
-        else:
-            return 0
-
-
-class MultiWordTag(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Tag: {}".format(self.value.lower())
-
-    def group(self):
-        return "tag"
-    def __str__(self):
-        return 'tag:"{}"'.format(self.value)
-
-    def filter(self, user):
-        return Q(Exists(models.PhotoTag.objects.filter(tag__tag__icontains=self.value, accepted=True, photo__id=OuterRef('pk'))))
-
-    def filter2(self, user):
-        return Q(phototag__tag__tag__icontains=self.value) & Q(phototag__accepted=True)
-
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + "TA_{}".format(hash(self.value))
-        tag_minusval = Cast(
-            Length(Replace(Lower(F('phototag__tag__tag')), Value(self.value))), FloatField()
-        )
-        taglen = Cast(Greatest(1.0, Length('phototag__tag__tag')), FloatField())
-        return {self.field: Case(When(phototag__tag__tag__isnull=False, then=1-tag_minusval/taglen), default=0, output_field=FloatField())}
-
-
-    def scoreF(self, negated, user):
-        attachedtags = models.PhotoTag.objects.filter(accepted=True, photo__id=OuterRef('pk')).values('photo__id')
-        attachedtags = attachedtags.annotate(
-            removed=Sum(Length(Replace(Lower(F('tag__tag')), Value(self.value)))),
-            total=Sum(Length(F('tag__tag'))),
-            perc=F('removed')*1.0/F('total'),
-        )
-        if not negated:
-            return 1 - Subquery(attachedtags.values('perc'))
-        return Subquery(attachedtags.values('perc'))
-
-class BasicTag(MultiWordTag):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.field = 'B' + self.field
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Tag: {}".format(self.value.lower())
-
-    def group(self):
-        return "tag"
-
-class TagExactly(Expression):
-    def __init__(self, value):
-        self.value = value
-        try:
-            self.object = models.Tag.objects.get(tag__iexact=value)
-        except (ValueError, models.Tag.DoesNotExist):
-            self.object = None
-
-    def __str__(self):
-        return 'tag_exact:"{}"'.format(self.value)
-
-    def filter(self, user):
-        if self.object:
-            return Q(Exists(models.PhotoTag.objects.filter(tag__id=self.object.id, accepted=True, photo__id=OuterRef('pk'))))
-        else:
-            # nothing should match
-            return Q(id__in=[])
-
-    def filter2(self, user):
-        if self.object:
-            return Q(phototag__tag__id=self.object.id) & Q(phototag__accepted=True)
-        else:
-            # nothing should match
-            return Q(phototag__accepted=True) & Q(phototag__accepted=False)
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + 'TAE_{}'.format(hash(self.object))
-        if self.object:
-            return {
-                self.field: Case(
-                    When(phototag__tag__id=self.object.id, then=1),
-                    default=0,
-                    output_field=FloatField(),
-                )
-            }
-        else:
-            return {
-                self.field: Value(0)
-            }
-
-    def scoreF(self, negated, user):
-        if self.object:
-            q = Exists(models.PhotoTag.objects.filter(tag__id=self.object.id, accepted=True, photo__id=OuterRef('pk')))
-        else:
-            # nothing should match
-            q = ~Q()
-        if negated:
-            return Case(When(q, 1), default=0)
-        else:
-            return Case(When(~q, 0), default=1)
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Tag: {}".format(self.object.lower())
-
-    def group(self):
-        return "tag"
-
-
-class SingleWordTag(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def __str__(self):
-        return 'tag:{}'.format(self.value)
-
-    def filter(self, user):
-        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='TA', photo__id=OuterRef('pk'))))
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + 'TA_{}'.format(hash(self.value))
-        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
-
-    def scoreF(self, negated, user):
-        percentage = models.WordCount.objects.filter(word=self.value, field='TA', photo__id=OuterRef('pk'))
-        score = percentage.annotate(total=Sum('count')).values('total')
-        if negated:
-            return 1 - Subquery(score)
-        else:
-            return Subquery(score)
-
-    def score(self, photo, negated):
-        scores = []
-        for tag in photo.tags.filter(phototag__accepted=True):
-            words = [w.lower() for w in tag.tag.split()]
-            scores.append(sum(1 for w in words if not negated and self.value == w or negated and self.value != w)/len(words))
-        if not negated:
-            return sum(scores)
-        return reduce(operator.mul, scores, 1)
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-    def short_label(self):
-        return "Tag: {}".format(self.value.lower())
-
-    def group(self):
-        return "tag"
+def SingleWordTag(value):
+    return SubqueryExpression(_value=SingleWordTagValue(value))
 
 Tag = lambda s: MultiWordTag(s) if len(s.split()) > 1 else SingleWordTag(s)
-CollectionTag = lambda s: BasicTag(s) if len(s.split()) > 1 else SingleWordTag(s)
+CollectionTag = lambda s: MultiWordTag(s) if len(s.split()) > 1 else SingleWordTag(s)
 
+def MultiWordTerm(value):
+    return SubqueryExpression(_value=MultiWordTermValue(value.lower()))
 
-class MultiWordTerm(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def __str__(self):
-        return 'term:"{}"'.format(self.value)
-
-    def filter(self, user):
-        return Q(Exists(models.Term.objects.filter(term__icontains=self.value, photo__id=OuterRef('pk'))))
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + 'TE_{}'.format(hash(self.value))
-        term_minusval = Cast(
-            Length(Replace(Lower(F('terms__term')), Value(self.value))), FloatField()
-        )
-        termlen = Cast(Greatest(1.0, Length('terms__term')), FloatField())
-        return {self.field: Case(When(terms__term__isnull=False, then=1 - term_minusval/termlen), default=0.0, output_field=FloatField())}
-
-
-    def scoreF(self, negated, user):
-        attachedterms = models.Term.objects.filter(photo__id=OuterRef('pk')).values('photo__id')
-        attachedterms = attachedterms.annotate(
-            removed=Sum(Length(Replace(Lower(F('term')), Value(self.value)))),
-            total=Sum(Length(F('term'))),
-            perc=F('removed')*1.0/F('total'),
-        )
-        if not negated:
-            return 1 - Subquery(attachedterms.values('perc'))
-        return Subquery(attachedterms.values('perc'))
-
-    def short_label(self):
-        return "Term: {}".format(self.value)
-
-    def group(self):
-        return "term"
-
-    def is_collection(self):
-        return True
-
-    def description(self):
-        return Description([self])
-
-
-class SingleWordTerm(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def __str__(self):
-        return 'term:{}'.format(self.value)
-
-    def filter(self, user):
-        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='TE', photo__id=OuterRef('pk'))))
-
-    def filter2(self, user):
-        return Q(wordcount__word__icontains=self.value, wordcount__field='TE')
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + 'TE_{}'.format(hash(self.value))
-        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
-
-    def scoreF(self, negated, user):
-        percentage = models.WordCount.objects.filter(word=self.value, field='TE', photo__id=OuterRef('pk'))
-        score = percentage.annotate(total=Sum('count')).values('total')
-
-        if negated:
-            return 1 - Subquery(score)
-        else:
-            return Subquery(score)
-
-    def score(self, photo, negated):
-        scores = []
-        for term in photo.terms.filter(term__icontains=self.value):
-            words = [w.lower() for w in term.term.split()]
-            scores.append(sum(1 for w in words if not negated and self.value == w or negated and self.value != w)/len(words))
-        if not negated:
-            return sum(scores)
-        return reduce(operator.mul, scores, 1)
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "Term: {}".format(self.value)
-
-    def group(self):
-        return "term"
-
-    def description(self):
-        return Description([self])
+def SingleWordTerm(value):
+    return SubqueryExpression(_value=SingleWordTermValue(value.lower()))
 
 Term = lambda s: MultiWordTerm(s) if len(s.split()) > 1 else SingleWordTerm(s)
 
-class MultiWordCaption(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-        self.caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
-        self.captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
+def MultiWordCaption(value):
+    return MultiWordCaptionExpression(_value=MultiWordCaptionValue(value.lower()))
 
-    def __str__(self):
-        return 'caption:"{}"'.format(self.value)
-
-    def filter(self, user):
-        return Q(caption__icontains=self.value)
-
-    def scoreF(self, negated, user):
-        score = self.caption_minusval / self.captionlen
-
-        if not negated:
-            score = 1 - score
-        return score
-
-class SingleWordCaption(Expression):
-    def __init__(self, value):
-        self.value = value.lower()
-
-    def description(self):
-        return Description([self])
-    def __str__(self):
-        return 'caption:{}'.format(self.value)
-
-    def shakeout(self):
-        if self.value in STOPWORDS:
-            return None
-        return self
-
-    def filter(self, user):
-        return Q(Exists(models.WordCount.objects.filter(word=self.value, field='CA', photo__id=OuterRef('pk'))))
-
-    def filter2(self, user):
-        return Q(wordcount__word=self.value, wordcount__field='CA')
-
-    def annotations1(self, prefix=''):
-        self.field = prefix + "CA_{}".format(hash(self.value))
-        return {self.field: Case(When(wordcount__word=self.value, then=F('wordcount__count')), default=0.0, output_field=FloatField())}
-
-    def scoreF(self, negated, user):
-        percentage = models.WordCount.objects.filter(word=self.value, field='CA', photo__id=OuterRef('pk'))
-        score = percentage.annotate(total=Sum('count')).values('total')
-
-        if negated:
-            return 1 - Subquery(score)
-        else:
-            return Subquery(score)
-
-
-    def group(self):
-        return "caption"
-
-    def score(self, photo, negated):
-        words = [w.lower() for w in re.split(r'\W+', photo.caption)]
-        if len(words) == 0:
-            return 0 if not negated else 1
-        return sum(1 for word in words if (not negated and word == self.value) or (negated and word != self.value))/len(words)
+def SingleWordCaption(value):
+    return SubqueryExpression(_value=SingleWordCaptionValue(value.lower()))
 
 Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCaption(s)
 
-class State(Expression):
-    def __init__(self, value):
-        self.value = value
+def State(value):
+    return SimpleExpression(_value=StateValue(value))
 
-    def __str__(self):
-        return 'state:{}'.format(self.value)
+def Country(value):
+    return SimpleExpression(_value=CountryValue(value))
 
-    def filter(self, user):
-        q = Q(state__icontains=self.value)
-        return q
+def County(value):
+    return SimpleExpression(_value=CountyValue(value))
 
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(state__icontains=self.value, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(state__icontains=self.value, then=0), default=1, output_field=FloatField())
+def City(value):
+    return SimpleExpression(_value=CityValue(value))
 
-    def score(self, photo, negated):
-        return 1 if not negated and photo.state == self.value or negated and photo.state != self.value else 0
+def YearLTE(value):
+    return SimpleExpression(_value=YearLTEValue(value))
 
-    def is_collection(self):
-        return True
+def YearGTE(value):
+    return SimpleExpression(_value=YearGTEValue(value))
 
-    def short_label(self):
-        return "State: {}".format(self.value)
-
-    def group(self):
-        return "location"
-
-class Country(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'country:{}'.format(self.value)
-
-    def filter(self, user):
-        q = Q(country__icontains=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(country__icontains=self.value, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(country__icontains=self.value, then=0), default=1, output_field=FloatField())
-
-    def score(self, photo, negated):
-        return 1 if not negated and photo.country == self.value or negated and photo.country != self.value else 0
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "Country: {}".format(self.value)
-
-    def group(self):
-        return "location"
-
-class County(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'county:{}'.format(self.value)
-
-    def filter(self, user):
-        q = Q(county__iexact=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(county__iexact=self.value, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(county__iexact=self.value, then=0), default=1, output_field=FloatField())
-
-    def score(self, photo, negated):
-        return 1 if not negated and photo.county == self.value or negated and photo.county != self.value else 0
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "County: {}".format(self.value)
-
-    def group(self):
-        return "location"
-
-class City(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'city:{}'.format(self.value)
-
-    def filter(self, user):
-        q = Q(city__iexact=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(city__iexact=self.value, then=1), default=0, output_field=FloatField())
-        else:
-            return Case(When(city__iexact=self.value, then=0), default=1, output_field=FloatField())
-
-    def score(self, photo, negated):
-        return 1 if not negated and photo.city == self.value or negated and photo.city != self.value else 0
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "City: {}".format(self.value)
-
-    def group(self):
-        return "location"
-
-
-class YearLTE(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'year:{}-'.format(self.value)
-
-    def filter(self, user):
-        q = Q(year__lte=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(year__lte=self.value, then=1.0), default=0.0, output_field=FloatField())
-        else:
-            return Case(When(year__lte=self.value, then=0.0), default=1.0, output_field=FloatField())
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "Year: {}-".format(self.value)
-
-    def group(self):
-        return "year"
-
-
-class YearGTE(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'year:{}+'.format(self.value)
-
-    def filter(self, user):
-        q = Q(year__gte=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(year__gte=self.value, then=1.0), default=0.0, output_field=FloatField())
-        else:
-            return Case(When(year__gte=self.value, then=0.0), default=1.0, output_field=FloatField())
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "Year: {}+".format(self.value)
-
-    def group(self):
-        return "year"
-
-
-class YearEquals(Expression):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'year:{}'.format(self.value)
-
-    def filter(self, user):
-        q = Q(year=self.value)
-        return q
-
-    def scoreF(self, negated, user):
-        if not negated:
-            return Case(When(year=self.value, then=1.0), default=0.0, output_field=FloatField())
-        else:
-            return Case(When(year=self.value, then=0.0), default=1.0, output_field=FloatField())
-
-    def score(self, photo, negated):
-        return 1 if not negated and photo.year == self.value or negated and photo.year != self.value else 0
-
-    def is_collection(self):
-        return True
-
-    def short_label(self):
-        return "Year: {}".format(self.value)
-
-    def group(self):
-        return "year"
-
-
+def YearEquals(value):
+    return SimpleExpression(_value=YearEqualsValue(value))
 
 class Not(Expression):
     def __init__(self, value):
@@ -1180,6 +930,9 @@ class Or(BinaryOperator):
         if negated:
             return self.left.scoreF(negated, user) * self.right.scoreF(negated, user)
         return self.left.scoreF(negated, user) + self.right.scoreF(negated, user)
+
+    def is_collection(self):
+        return False
 
     def score(self, photo, negated):
         if not negated:
