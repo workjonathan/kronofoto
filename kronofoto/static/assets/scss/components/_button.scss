@@ -31,9 +31,14 @@
   cursor: pointer;
   font-weight: bold;
 }
+
 a.button, button.button {
   @include button--round;
   display: inline-block;
+}
+
+input[type="submit"] {
+  @include button--round;
 }
 
 a.button, input[type="submit"] {
