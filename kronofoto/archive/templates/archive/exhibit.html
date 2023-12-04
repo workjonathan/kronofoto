@@ -1,8 +1,10 @@
 {% extends base_template %}
 
+{% load widgets %}
+
 {% block content %}
     {% for photo in photos %}
         <img src="{{ photo.h700.url }}">
-        <div>{{ photo.caption }}</div>
+        <div>{{ photo.caption | markdown }}</div>
     {% endfor %}
 {% endblock %}
