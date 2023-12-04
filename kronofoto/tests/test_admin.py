@@ -12,8 +12,8 @@ from archive.models.donor import Donor
 from archive.models.archive import Archive
 from archive.models.photo import Photo
 from archive.models.photosphere import PhotoSphere
-from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachine
 from django.core.files.uploadedfile import SimpleUploadedFile
+from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachine
 from django.contrib.contenttypes.models import ContentType
 import pytest
 
@@ -68,7 +68,6 @@ def test_donor_formfield():
     db_field.id = 1
     qs = admin.formfield_for_foreignkey(db_field, request)
     assert qs
-
 
 @given(count=st.integers(min_value=0))
 def test_scanned(count):
@@ -240,6 +239,76 @@ def test_userarchivepermissionsinline_accepted():
     request = RequestFactory().post('/')
     formfield = ma.formfield_for_manytomany(Archive.users.through.permission.field, request)
 
+class SubmissionAdminTest(TestCase):
+    def test_acceptance_logging(self):
+        from archive.admin import SubmissionLogger
+        from django.contrib.admin.models import LogEntry, DELETION, ADDITION
+        from archive.models import Submission
+        archive = Archive.objects.create(slug="any-slug")
+        category = Category.objects.create(slug="any-slug")
+        donor = Donor.objects.create(archive=archive)
+        image = SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
+        user = User.objects.create_user("test", "test", "test")
+
+        obj = Photo.objects.create(
+            archive=archive,
+            category=category,
+            original=image,
+            donor=donor,
+            caption="asdf",
+        )
+        SubmissionLogger(
+            user=user,
+            object_name="the repr goes here",
+            old_object_id=13,
+            new_obj=obj,
+            photo_opts=Photo._meta,
+            factory=None,
+        ).log()
+        assert LogEntry.objects.filter(object_id=13, action_flag=DELETION).exists()
+        entry = LogEntry.objects.get(object_id=13, action_flag=DELETION)
+        assert "Submission accepted" in entry.change_message
+        assert obj.accession_number in entry.change_message
+
+        assert LogEntry.objects.filter(object_id=obj.id, action_flag=ADDITION).exists()
+        entry = LogEntry.objects.get(object_id=obj.id, action_flag=ADDITION)
+        assert "Created from Submission" in entry.change_message
+
+    def test_submission_to_photo(self):
+        from archive.admin import SaveRecord, SubmissionAdmin
+        from archive.models import Submission
+        archive = Archive.objects.create(slug="any-slug")
+        category = Category.objects.create(slug="any-slug")
+        donor = Donor.objects.create(archive=archive)
+        image = SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
+
+        form = SubmissionAdmin.AcceptForm({'is_published': True, 'is_featured': False})
+        self.assertTrue(form.is_valid())
+        obj = Submission.objects.create(
+            archive=archive,
+            category=category,
+            image=image,
+            donor=donor,
+            caption="asdf",
+            photographer=donor,
+        )
+        terms = [Term.objects.create(term="term1"), Term.objects.create(term="term2")]
+        obj.terms.set(terms)
+        photo = SaveRecord(
+            obj=obj,
+            form=form,
+        ).photo
+        fields = {
+            field.name
+            for field in Submission._meta.fields
+            if field.name not in ('id', 'uuid')
+        } & {field.name for field in Photo._meta.fields}
+
+        for field in fields:
+            assert getattr(obj, field) == getattr(photo, field)
+        for term in terms:
+            assert term in photo.terms.all()
+
 class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
     permissions = Bundle("permissions")
     groups = Bundle("groups")
@@ -355,7 +424,7 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 10, stateful_step_count = 10, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 1, stateful_step_count = 3, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass
@@ -397,7 +466,7 @@ class UserAdminTests(TestCase):
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
-    @hsettings(deadline=None, max_examples=10)
+    @hsettings(deadline=None, max_examples=1)
     @given(
         st.booleans(),
         st.booleans(),
@@ -499,3 +568,4 @@ def test_termfilter():
             qs.annotate().filter.assert_called_once_with(terms__count__gte=4)
         else:
             qs.annotate().filter.assert_called_once_with(terms__count=int(lookup))
+

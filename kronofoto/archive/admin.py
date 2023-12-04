@@ -4,9 +4,10 @@ from django.contrib import admin as base_admin
 from django.contrib.admin.utils import quote
 from django.core.files.base import ContentFile
 from django.contrib.auth.models import User, Permission, Group
-from django.contrib.admin.models import LogEntry
+from django.contrib.admin.models import LogEntry, ADDITION, DELETION
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth import get_permission_codename
+from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
@@ -16,26 +17,28 @@ from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.category import Category, ValidCategory
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm
-from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey
+from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey, Model
 from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
+from django.db.models.options import Options
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
 from django.contrib import messages
 from django import forms
-from functools import reduce, update_wrapper
+from functools import reduce, update_wrapper, cached_property
 import operator
 from collections import defaultdict
 from .auth.forms import FortepanAuthenticationForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, Tuple, TypedDict, Sequence, TYPE_CHECKING, TypeVar
+from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, Tuple, TypedDict, Sequence, TYPE_CHECKING, TypeVar, Protocol
 from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.utils.html import format_html
 from django.shortcuts import get_object_or_404
+from dataclasses import dataclass
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -598,6 +601,159 @@ class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
             })
         return field
 
+class AdminCommunication(Protocol):
+    @property
+    def response(self) -> HttpResponse:
+        ...
+    @property
+    def message(self) -> str:
+        ...
+    @property
+    def message_level(self) -> int:
+        ...
+class NotifyFactory(Protocol):
+    def notify_action(self, *, new_obj: Photo) -> AdminCommunication:
+        ...
+@dataclass
+class AcceptanceFactory:
+    current_app: str
+    request: HttpRequest
+    object_id: int
+    admin: admin.ModelAdmin
+    user: User
+    opts: "Options[Submission]" = Submission._meta
+    photo_opts: "Options[Photo]" = Photo._meta
+    def notify_action(self, *, new_obj: Photo) -> AdminCommunication:
+        if '_accept' in self.request.POST:
+            return SubmissionAdmin.AcceptAction(photo_opts=self.photo_opts, app_label=self.opts.app_label, model_name=self.opts.model_name, current_app=self.current_app, new_obj=new_obj)
+        else:
+            return SubmissionAdmin.ContinueEditAction(photo_opts=self.photo_opts, current_app=self.current_app, new_obj=new_obj)
+
+    def saver(self, *, obj: Submission, form: "SubmissionAdmin.AcceptForm", codename_add: str) -> "SaveRecord":
+        if not self.admin.has_delete_permission(self.request, obj) or not self.user.has_perm('{}.archive.{}.{}'.format(self.photo_opts.app_label, obj.archive.slug, codename_add)) and not self.user.has_perm('{}.any.{}'.format(self.photo_opts.app_label, codename_add)):
+            raise PermissionDenied
+        else:
+            return SaveRecord(obj=obj, form=form)
+
+    def get_obj_responder(self, *, obj: Optional[Submission], form: "SubmissionAdmin.AcceptForm", codename_add: str) -> AdminCommunication:
+        if not obj:
+            return SubmissionAdmin.SubmissionDoesNotExist(opts=self.opts, object_id=self.object_id, current_app=self.current_app)
+        else:
+            return SubmissionAdmin.SubmissionExists(
+                factory=LogFactory(base_factory=self, object_name=str(obj)),
+                saver=self.saver(obj=obj, form=form, codename_add=codename_add)
+            )
+
+    def get_form_responder(self, *, model: Type[Model] = Submission) -> AdminCommunication:
+        form = SubmissionAdmin.AcceptForm(self.request.POST)
+        if not form.is_valid():
+            return SubmissionAdmin.SubmissionFormInvalidResponse(app_label=self.opts.app_label, model_name=self.opts.model_name, object_id=self.object_id, current_app=self.current_app)
+        else:
+            return SubmissionAdmin.SubmissionFormValidResponse(admin=self.admin, request=self.request, model=model, factory=self, form=form, object_id=self.object_id, photo_opts=self.photo_opts)
+
+@dataclass
+class LogFactory:
+    base_factory: AcceptanceFactory
+    object_name: str
+
+    def notify_action(self, *, new_obj: Photo) -> AdminCommunication:
+        return SubmissionLogger(
+            old_object_id=self.base_factory.object_id,
+            new_obj=new_obj,
+            user=self.base_factory.user,
+            object_name=self.object_name,
+            photo_opts=self.base_factory.photo_opts,
+            factory=self.base_factory,
+        )
+
+@dataclass
+class SubmissionLogger:
+    old_object_id: int
+    new_obj: Photo
+    user: User
+    object_name: str
+    photo_opts: "Options[Photo]"
+    factory: AcceptanceFactory
+
+    old_model: Type[Model] = Submission
+    new_model: Type[Model] = Photo
+
+    def log(self) -> None:
+        LogEntry.objects.log_action(
+            user_id=self.user.id,
+            content_type_id=ContentType.objects.get_for_model(self.old_model).id,
+            object_repr=self.object_name,
+            object_id=self.old_object_id,
+            action_flag=DELETION,
+            change_message='Submission accepted as <a href="{href}">{name}</a>.'.format(
+                href=reverse("admin:{app_label}_{model_name}_change".format(
+                    app_label=self.photo_opts.app_label,
+                    model_name=self.photo_opts.model_name
+                ), kwargs={"object_id": self.new_obj.id}),
+                name=str(self.new_obj),
+            )
+        ) # type: ignore
+        LogEntry.objects.log_action(
+            user_id=self.user.id,
+            content_type_id=ContentType.objects.get_for_model(self.new_model).id,
+            object_repr=repr(self.new_obj),
+            object_id=self.new_obj.id,
+            action_flag=ADDITION,
+            change_message='Created from Submission',
+        ) # type: ignore
+
+    @property
+    def message_level(self) -> int:
+        return self.action.message_level
+
+    @property
+    def message(self) -> str:
+        return self.action.message
+
+    @cached_property
+    def action(self) -> AdminCommunication:
+        self.log()
+        return self.factory.notify_action(new_obj=self.new_obj)
+
+    @property
+    def response(self) -> HttpResponse:
+        return self.action.response
+
+@dataclass
+class SaveRecord:
+    obj: Submission
+    form: "SubmissionAdmin.AcceptForm"
+
+    @property
+    def photo(self) -> Photo:
+        file = ContentFile(self.obj.image.read())
+        file.name = "submittedphoto"
+        file.close()
+        file.open()
+        new_obj = Photo(
+            category=self.obj.category,
+            archive=self.obj.archive,
+            donor=self.obj.donor,
+            photographer=self.obj.photographer,
+            address=self.obj.address,
+            city=self.obj.city,
+            county=self.obj.county,
+            state=self.obj.state,
+            country=self.obj.country,
+            year=self.obj.year,
+            circa=self.obj.circa,
+            caption=self.obj.caption,
+            scanner=self.obj.scanner,
+            original=file,
+            is_published=self.form.cleaned_data['is_published'],
+            is_featured=self.form.cleaned_data['is_featured'],
+        )
+        new_obj.save()
+        new_obj.terms.set(self.obj.terms.all())
+        self.obj.image.delete(save=False)
+        self.obj.delete()
+        return new_obj
+
 @admin.register(Submission)
 class SubmissionAdmin(PhotoBaseAdmin):
     change_form_template = 'admin/custom_changeform.html'
@@ -639,88 +795,181 @@ class SubmissionAdmin(PhotoBaseAdmin):
         info = self.model._meta.app_label, self.model._meta.model_name
         return [path("<int:object_id>/accept/", wrap(self.accept_view), name="{}_{}_accept".format(*info))] + super().get_urls()
 
-    def accept_view(self, request: HttpRequest, object_id: int, form_url: str='', extra_context: Optional[Dict[Any, Any]]=None) -> HttpResponse:
+    def accept_view(self, request: HttpRequest, object_id: int, form_url: str='', extra_context: Optional[Dict[Any, Any]]=None, *, factory_class: Type[AcceptanceFactory]=AcceptanceFactory) -> HttpResponse:
+        assert not request.user.is_anonymous
+        factory = factory_class(
+            current_app=self.admin_site.name,
+            request=request,
+            object_id=object_id,
+            admin=self,
+            user=request.user,
+        )
         extra_context = extra_context or {}
-        form_class = self.AcceptForm
         model = self.model
         opts = model._meta
+        obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
         if not request.method or request.method.lower() != 'post':
-            obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
             return HttpResponseRedirect(obj_url)
+        else:
+            responder = factory.get_form_responder()
+            self.message_user(request, responder.message, responder.message_level)
+            return responder.response
 
-        form = form_class(request.POST)
-        if not form.is_valid():
-            # form invalid. Should probably render form by itself at this point.
-            # although there is no way for this form to be invalid.
-            # For now, message user.
-            self.message_user(request, "The accept submission form was invalid.", messages.ERROR)
-            obj_url = reverse("admin:{}_{}_change".format(opts.app_label, opts.model_name), args=[object_id], current_app=self.admin_site.name)
-            return HttpResponseRedirect(obj_url)
+    @dataclass
+    class SubmissionFormInvalidResponse:
+        app_label: str
+        model_name: Optional[str]
+        object_id: int
+        current_app: str
+        @property
+        def message(self) -> str:
+            return "The accept submission form was invalid."
 
-        target_model = Photo
-        photo_opts = target_model._meta
-        codename_add = get_permission_codename('add', photo_opts)
-        with transaction.atomic(using=router.db_for_write(model)):
-            obj: Optional[Submission] = self.get_object(request, quote(str(object_id)))
-            user = request.user
-            assert not user.is_anonymous
-            if not obj:
-                msg = '{name} with ID “{key}” doesn’t exist. Perhaps it was deleted?'.format(
-                    name=opts.verbose_name,
-                    key=object_id,
+        @property
+        def message_level(self) -> int:
+            return messages.ERROR
+
+        @property
+        def redirect_url(self) -> str:
+            return reverse("admin:{}_{}_change".format(self.app_label, self.model_name), args=[self.object_id], current_app=self.current_app)
+
+        @property
+        def response(self) -> HttpResponse:
+            return HttpResponseRedirect(self.redirect_url)
+
+    @dataclass
+    class SubmissionFormValidResponse:
+        admin: admin.ModelAdmin
+        model: Type[Model]
+        request: HttpRequest
+        object_id: int
+        factory: AcceptanceFactory
+        form: "SubmissionAdmin.AcceptForm"
+        photo_opts: "Options[Photo]"
+
+        @cached_property
+        def responder(self) -> AdminCommunication:
+            codename_add = get_permission_codename('add', self.photo_opts)
+            with transaction.atomic(using=router.db_for_write(self.model)):
+                obj: Optional[Submission] = self.admin.get_object(self.request, quote(str(self.object_id)))
+
+                return self.factory.get_obj_responder(
+                    obj=obj,
+                    form=self.form,
+                    codename_add=codename_add,
                 )
-                self.message_user(request, msg, messages.WARNING)
-                url = reverse('admin:index', current_app=self.admin_site.name)
-                return HttpResponseRedirect(url)
 
-            if not self.has_delete_permission(request, obj) or not user.has_perm('{}.archive.{}.{}'.format(photo_opts.app_label, obj.archive.slug, codename_add)) and not user.has_perm('{}.any.{}'.format(photo_opts.app_label, codename_add)):
-                raise PermissionDenied
+        @property
+        def message_level(self) -> int:
+            return self.responder.message_level
 
-            file = ContentFile(obj.image.read())
-            file.name = "submittedphoto"
-            file.close()
-            file.open()
-            new_obj = target_model(
-                category=obj.category,
-                archive=obj.archive,
-                donor=obj.donor,
-                photographer=obj.photographer,
-                address=obj.address,
-                city=obj.city,
-                county=obj.county,
-                state=obj.state,
-                country=obj.country,
-                year=obj.year,
-                circa=obj.circa,
-                caption=obj.caption,
-                scanner=obj.scanner,
-                original=file,
-                is_published=form.cleaned_data['is_published'],
-                is_featured=form.cleaned_data['is_featured'],
+        @property
+        def message(self) -> str:
+            return self.responder.message
+
+        @property
+        def response(self) -> HttpResponse:
+            return self.responder.response
+
+    @dataclass
+    class SubmissionDoesNotExist:
+        opts: "Options[Submission]"
+        object_id: int
+        current_app: str
+        @property
+        def message_level(self) -> int:
+            return messages.WARNING
+
+        @property
+        def message(self) -> str:
+            return '{name} with ID “{key}” doesn’t exist. Perhaps it was deleted?'.format(
+                name=self.opts.verbose_name,
+                key=self.object_id,
             )
-            if obj.donor:
-                obj.donor.is_contributor = True
-                obj.donor.save()
-            if obj.scanner:
-                obj.scanner.is_scanner = True
-                obj.scanner.save()
-            if obj.photographer:
-                obj.photographer.is_photographer = True
-                obj.photographer.save()
-            new_obj.save()
-            new_obj_url = reverse("admin:{}_{}_change".format(photo_opts.app_label, photo_opts.model_name), args=[new_obj.pk], current_app=self.admin_site.name)
-            msg_list = [photo_opts.verbose_name, format_html('<a href="{}">{}</a>', new_obj_url, str(new_obj))]
-            msg_continue = format_html('The {} "{}" was accepted successfully. You may edit it below.', *msg_list)
-            msg_accept = format_html('The {} "{}" was accepted successfully. You may accept or edit other submissions below', *msg_list)
-            obj.image.delete(save=False)
-            obj.delete()
-            if '_accept' in request.POST:
-                url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name), current_app=self.admin_site.name)
-                self.message_user(request, msg_accept, messages.SUCCESS)
-                return HttpResponseRedirect(url)
-            else:
-                self.message_user(request, msg_continue, messages.SUCCESS)
-                return HttpResponseRedirect(new_obj_url)
+
+        @property
+        def redirect_url(self) -> str:
+            return reverse('admin:index', current_app=self.current_app)
+
+        @property
+        def response(self) -> HttpResponse:
+            return HttpResponseRedirect(self.redirect_url)
+
+    @dataclass
+    class SubmissionExists:
+        saver: SaveRecord
+        factory: NotifyFactory
+
+        @property
+        def message_level(self) -> int:
+            return self.action.message_level
+
+        @property
+        def message(self) -> str:
+            return self.action.message
+
+        @cached_property
+        def action(self) -> AdminCommunication:
+            new_obj = self.saver.photo
+            return self.factory.notify_action(new_obj=new_obj)
+
+        @property
+        def response(self) -> HttpResponse:
+            return self.action.response
+
+
+    @dataclass
+    class SaveAction:
+        photo_opts: "Options[Photo]"
+        current_app: str
+        new_obj: Photo
+
+        @property
+        def message_level(self) -> int:
+            return messages.SUCCESS
+
+        @property
+        def new_obj_url(self) -> str:
+            return reverse("admin:{}_{}_change".format(self.photo_opts.app_label, self.photo_opts.model_name), args=[self.new_obj.pk], current_app=self.current_app)
+
+        @property
+        def message(self) -> str:
+            msg_list = [self.photo_opts.verbose_name, format_html('<a href="{}">{}</a>', self.new_obj_url, str(self.new_obj))]
+            return format_html(self.saved_message_format, *msg_list)
+
+        @property
+        def response(self) -> HttpResponse:
+            return HttpResponseRedirect(self.redirect_url)
+
+        @property
+        def saved_message_format(self) -> str:
+            raise NotImplementedError
+
+        @property
+        def redirect_url(self) -> str:
+            raise NotImplementedError
+
+    @dataclass
+    class AcceptAction(SaveAction):
+        app_label: str
+        model_name: Optional[str]
+        @property
+        def saved_message_format(self) -> str:
+            return 'The {} "{}" was accepted successfully. You may accept or edit other submissions below'
+
+        @property
+        def redirect_url(self) -> str:
+            return reverse("admin:{}_{}_changelist".format(self.app_label, self.model_name), current_app=self.current_app)
+
+    @dataclass
+    class ContinueEditAction(SaveAction):
+        @property
+        def saved_message_format(self) -> str:
+            return 'The {} "{}" was accepted successfully. You may edit it below.'
+
+        @property
+        def redirect_url(self) -> str:
+            return self.new_obj_url
 
     def change_view(self, request: HttpRequest, object_id: str, form_url: str='', extra_context: Optional[Dict[Any, Any]]=None) -> HttpResponse:
         obj: Optional[Submission] = self.get_object(request, object_id)
@@ -1121,7 +1370,26 @@ class LogEntryAdmin(base_admin.ModelAdmin):
         'user',
         'content_type',
         'action_flag',
+        "description",
+        "view",
     ]
+
+    def view(self, object: LogEntry) -> Optional[str]:
+        if object.action_flag != DELETION and ContentType.objects.get_for_model(Photo).id == object.content_type_id:
+            return mark_safe('<a href="{}">View</a>'.format(
+                reverse(
+                    "admin:{}_{}_change".format(Photo._meta.app_label, Photo._meta.model_name),
+                    kwargs={"object_id": object.object_id},
+                )
+            ))
+        else:
+            return None
+
+    def description(self, object: LogEntry) -> str:
+        if ContentType.objects.get_for_model(Submission).id == object.content_type_id:
+            return mark_safe(object.change_message)
+        else:
+            return object.get_change_message()
 
     def has_add_permission(self, *args: Any, **kwargs: Any) -> bool:
         return False

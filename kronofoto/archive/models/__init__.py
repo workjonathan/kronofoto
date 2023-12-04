@@ -8,7 +8,7 @@ from .collectible import Collectible
 from .collectionquery import CollectionQuery
 from .location import Location
 from .csvrecord import CSVRecord, ConnecticutRecord
-from .photo import Photo, get_original_path, format_location, PhotoTag
+from .photo import Photo, get_original_path, format_location, PhotoTag, Submission
 from .wordcount import WordCount
 from .cutoff import NewCutoff
 from .photosphere import PhotoSphere, PhotoSpherePair, get_photosphere_path
