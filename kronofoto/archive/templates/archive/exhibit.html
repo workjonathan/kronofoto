@@ -1,0 +1,8 @@
+{% extends base_template %}
+
+{% block content %}
+    {% for photo in photos %}
+        <img src="{{ photo.h700.url }}">
+        <div>{{ photo.caption }}</div>
+    {% endfor %}
+{% endblock %}

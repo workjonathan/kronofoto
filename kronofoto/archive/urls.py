@@ -126,4 +126,5 @@ urlpatterns = urlpatterns + [
     path("<slug:short_name>/contribute/terms/define", views.define_terms, name="define-terms"),
     path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
+    path("exhibit-test", views.exhibit),
 ]
