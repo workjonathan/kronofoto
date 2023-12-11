@@ -191,7 +191,7 @@ class Expression:
         return self._value.object
 
     def select_related(self, user=None):
-        return self._value.matching_photos(queryset=self._value.get_related_queryset())
+        return self._value.matching_photos(queryset=self._value.get_related_queryset(user=user))
 
     def get_search_args(self, user=None):
         return []
