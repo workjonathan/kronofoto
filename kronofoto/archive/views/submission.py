@@ -27,8 +27,8 @@ from django import forms
 class TermChoices:
     items: Iterable[Term]
 
-    def choices(self) -> List[Tuple[str, List[Tuple[int, str]]]]:
-        term_groups: Dict[str, List[Tuple[int, str]]] = {}
+    def choices(self) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
+        term_groups: Dict[Optional[str], List[Tuple[int, str]]] = {}
         other = []
         for term in self.items:
             if term.group:
@@ -37,7 +37,9 @@ class TermChoices:
             else:
                 other.append((term.id, term.term))
         choices = sorted(term_groups.items())
-        if len(other) > 0:
+        if len(term_groups) == 0:
+            choices.append((None, other))
+        elif len(other) > 0:
             choices.append(("Other", other))
         return choices
 
@@ -167,7 +169,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         }
 
 
-    def get_term_choices(self, queryset: QuerySet, grouper: Type[TermChoices] = TermChoices) -> List[Tuple[str, List[Tuple[int, str]]]]:
+    def get_term_choices(self, queryset: QuerySet, grouper: Type[TermChoices] = TermChoices) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
         return grouper(queryset).choices()
 
 class SubmissionImageForm(forms.Form):
@@ -276,11 +278,11 @@ class TermListFactory:
     def get_terms(self) -> QuerySet[Term]:
         return self.get_term_lister().get_terms()
 
-    def get_term_choices(self) -> List[Tuple[str, List[Tuple[int, str]]]]:
+    def get_term_choices(self) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
         terms = self.get_terms()
         return self.get_term_grouper(terms).choices()
 
-    def get_term_widget(self, *, choices: List[Tuple[str, List[Tuple[int, str]]]]) -> forms.Widget:
+    def get_term_widget(self, *, choices: List[Tuple[Optional[str], List[Tuple[int, str]]]]) -> forms.Widget:
         return forms.CheckboxSelectMultiple(
             choices=choices,
             attrs=SubmissionFormAttrs(self.archive).term_attrs(),

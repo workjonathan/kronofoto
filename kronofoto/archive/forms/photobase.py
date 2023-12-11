@@ -16,7 +16,7 @@ class PhotoBaseForm(forms.ModelForm):
         if categoryfield and hasattr(categoryfield, 'choices'):
             categoryfield.choices = self.get_category_choices(self.get_categories(instance))
 
-    def get_term_choices(self, queryset: QuerySet) -> Union[List[Tuple[str, List[Tuple[int, str]]]], List[Tuple[Optional[int], str]]]:
+    def get_term_choices(self, queryset: QuerySet) -> Union[List[Tuple[Optional[str], List[Tuple[int, str]]]], List[Tuple[Optional[int], str]]]:
         choices: List[Tuple[Optional[int], str]] = list(queryset.values_list("id", "term"))
         choices.insert(0, (None, "---------"))
         return choices
