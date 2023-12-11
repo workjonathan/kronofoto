@@ -133,7 +133,7 @@ simpleExpr = negate(
 @parsy.generate
 def simple_parse():
     exprs = yield (
-        negate(parsy.test_item(isinstance(Expression), 'expression')).map(singleton) | parsy.test_item(const(True), 'ignore').map(const([]))
+        negate(parsy.test_item(is_instance(Expression), 'expression')).map(singleton) | parsy.test_item(const(True), 'ignore').map(const([]))
     ).many()
     exprs = sum(exprs, [])
     try:
