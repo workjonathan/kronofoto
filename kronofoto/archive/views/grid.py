@@ -54,25 +54,24 @@ class GridView(BasePhotoTemplateMixin, ListView):
             paginator = self.create_keyset_paginator(queryset, page_size)
             form = PageForwardForm(self.params)
             if form.is_valid():
-                self.params.pop('year:gte', None)
-                self.params.pop('year:gt', None)
                 page = paginator.get_page({
                     "year": form.cleaned_data['year:gte'],
                     "id": form.cleaned_data['id:gt'] or 0,
                     "reverse": False,
                 })
+                if len(page) == 0:
+                    page = paginator.get_page(paginator.num_pages)
+
             else:
                 form = PageBackwardForm(self.params)
                 if form.is_valid():
-                    self.params.pop('year:lte', None)
-                    self.params.pop('year:lt', None)
                     page = paginator.get_page({
                         "year": form.cleaned_data['year:lte'],
                         "id": form.cleaned_data['id:lt'] or 9999999,
                         "reverse": True,
                     })
                     if len(page) == 0:
-                        return paginator, page, queryset, True
+                        page = paginator.get_page({})
                     elif len(page) < page_size:
                         page = paginator.get_page({
                             "year": page[0].year,
@@ -81,6 +80,10 @@ class GridView(BasePhotoTemplateMixin, ListView):
                         })
                 else:
                     page = paginator.get_page({})
+            self.params.pop('year:gte', None)
+            self.params.pop('id:gt', None)
+            self.params.pop('year:lte', None)
+            self.params.pop('id:lt', None)
             return paginator, page, queryset, True
 
     def get_no_objects_queryset(self):
