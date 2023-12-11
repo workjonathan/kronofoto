@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, BadRequest
 from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404
 from ..reverse import reverse
@@ -20,6 +20,8 @@ def tags_view(request: HttpRequest, photo: int, **kwargs: Any) -> HttpResponse:
         form = TagForm(data=put_data)
         if form.is_valid():
             form.add_tag(object, user=request.user)
+        else:
+            raise BadRequest
     return TemplateResponse(
         request,
         "archive/snippets/tags.html",

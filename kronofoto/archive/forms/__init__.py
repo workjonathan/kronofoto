@@ -173,14 +173,15 @@ class TimelineForm(SearchForm):
 
 
 class TagForm(forms.Form):
-    tag = forms.CharField()
+    tag = forms.CharField(strip=True, min_length=2, required=True)
 
     def clean(self):
         data = super().clean()
-        data['tag'] = [s.strip() for s in data['tag'].split(', ')]
-        for text in data['tag']:
-            if Term.objects.filter(slug=slugify(text)).exists():
-                self.add_error('tag', 'Tags which are already categories are not allowed: {}'.format(text))
+        if 'tag' in data:
+            data['tag'] = [s.strip() for s in data['tag'].split(', ')]
+            for text in data['tag']:
+                if Term.objects.filter(slug=slugify(text)).exists():
+                    self.add_error('tag', 'Tags which are already categories are not allowed: {}'.format(text))
         return data
 
 
