@@ -6,7 +6,7 @@ from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 from ..forms import SearchForm, TimelineForm
 from ..search.parser import NoExpression
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import BadRequest
 from django.http import Http404
 
 
@@ -59,7 +59,7 @@ class YearRedirect(PhotoRedirectView):
             if form.is_valid():
                 year = form.cleaned_data['year']
             else:
-                raise SuspiciousOperation('Invalid request')
+                raise BadRequest('Invalid request')
         qs = self.get_queryset().filter(year__gte=year).order_by(*self.ordering)
         if not qs.exists():
             raise Http404("no objects found")
