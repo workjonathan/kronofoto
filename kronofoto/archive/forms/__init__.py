@@ -8,7 +8,7 @@ from django.core.cache import cache
 from ..widgets import HeadingWidget, PositioningWidget
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
-from .photobase import PhotoForm, SubmissionForm
+from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
 
 class AgreementForm(forms.Form):

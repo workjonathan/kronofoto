@@ -237,6 +237,9 @@ class Expression:
     def name(self):
         return self._value.name()
 
+    def short_label(self):
+        return self._value.short_label()
+
 class SubqueryExpression(Expression):
     def get_search_args(self, user=None):
         return [Exists(self.select_objects(user=user))]
@@ -538,6 +541,9 @@ class StateValue(ValueBase):
     def group(self):
         return 'location'
 
+    def short_label(self):
+        return 'State: {}'.format(self.value)
+
 @dataclass
 class CountyValue(ValueBase):
     value: str
@@ -553,6 +559,9 @@ class CountyValue(ValueBase):
 
     def group(self):
         return 'location'
+
+    def short_label(self):
+        return 'County: {}'.format(self.value)
 
 @dataclass
 class CountryValue(ValueBase):
@@ -570,6 +579,8 @@ class CountryValue(ValueBase):
     def group(self):
         return 'location'
 
+    def short_label(self):
+        return 'Country: {}'.format(self.value)
 @dataclass
 class CityValue(ValueBase):
     value: str
@@ -585,6 +596,9 @@ class CityValue(ValueBase):
 
     def group(self):
         return 'location'
+
+    def short_label(self):
+        return 'City: {}'.format(self.value)
 
 @dataclass
 class YearEqualsValue(ValueBase):
@@ -602,6 +616,9 @@ class YearEqualsValue(ValueBase):
     def group(self):
         return 'year'
 
+    def short_label(self):
+        return 'Year: {}'.format(self.value)
+
 @dataclass
 class YearGTEValue(ValueBase):
     value: int
@@ -617,6 +634,9 @@ class YearGTEValue(ValueBase):
 
     def group(self):
         return 'year'
+
+    def short_label(self):
+        return 'Year: {}+'.format(self.value)
 @dataclass
 class YearLTEValue(ValueBase):
     value: int
@@ -632,6 +652,9 @@ class YearLTEValue(ValueBase):
 
     def group(self):
         return 'year'
+
+    def short_label(self):
+        return 'Year: {}-'.format(self.value)
 
 @dataclass
 class DonorExactlyValue(ValueBase):
@@ -879,7 +902,7 @@ class Maximum(BinaryOperator):
         return self.left.is_collection() and self.right.is_collection()
 
     def short_label(self):
-        return self.left.value
+        return self.left._value.value
 
     def group(self):
         return "max"

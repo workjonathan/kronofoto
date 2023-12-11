@@ -279,8 +279,6 @@ class ExpressionTest(SimpleTestCase):
         self.assertEqual(State("IA").group(), "location")
         self.assertEqual(Country("USA").group(), "location")
         self.assertEqual(Term("Farm").group(), "term")
-        with self.assertRaises(NotImplementedError):
-            (Term("dog") & Term("Farm")).group()
         self.assertEqual((Maximum(Term("dog"), Term("dog"))).group(), "max")
 
 

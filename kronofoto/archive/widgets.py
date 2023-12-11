@@ -1,4 +1,4 @@
-from django.forms.widgets import NumberInput, Widget, SelectMultiple, ClearableFileInput
+from django.forms.widgets import NumberInput, Widget, SelectMultiple, ClearableFileInput, CheckboxSelectMultiple
 from django.forms import MultiWidget, HiddenInput
 
 class ImagePreviewClearableFileInput(ClearableFileInput):
@@ -13,7 +13,7 @@ class ImagePreviewClearableFileInput(ClearableFileInput):
         context['img_attrs'] = self.img_attrs
         return context
 
-class SelectMultipleTerms(SelectMultiple):
+class SelectMultipleTerms(CheckboxSelectMultiple):
     template_name = "archive/widgets/selectmultipleterms.html"
 
     def __init__(self, *args, ul_attrs=None, **kwargs):

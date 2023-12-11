@@ -2,7 +2,7 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from .donor import Donor
 from .tag import Tag, LowerCaseCharField
-from .term import Term
+from .term import Term, TermGroup
 from .collection import Collection
 from .collectible import Collectible
 from .collectionquery import CollectionQuery

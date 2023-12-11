@@ -10,7 +10,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord
+from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup
 from .models.photosphere import MainStreetSet
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
@@ -465,6 +465,9 @@ def unpublish_photos(modeladmin: Any, request: Any, queryset: QuerySet[Photo]) -
     queryset.update(is_published=False)
 unpublish_photos.short_description = 'Unpublish photos' # type: ignore
 
+@admin.register(TermGroup)
+class TermGroupAdmin(base_admin.ModelAdmin):
+    pass
 @admin.register(MainStreetSet)
 class MainStreetSetAdmin(base_admin.ModelAdmin):
     pass

@@ -8,44 +8,77 @@ from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404
 from archive.models.term import Term, TermQuerySet
 from archive.models.donor import Donor
+from archive.models import Photo
 from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive, ArchiveAgreementQuerySet
 from .agreement import UserAgreementCheck, require_agreement, KronofotoTemplateView
 from ..fields import RecaptchaField, AutocompleteField
 from ..widgets import AutocompleteWidget, SelectMultipleTerms, ImagePreviewClearableFileInput
 from ..reverse import reverse_lazy
-from ..admin import SubmissionForm
+from ..forms import ArchiveSubmissionForm
 from django.utils.decorators import method_decorator
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, Union, Protocol, Type, List
+from typing import Dict, Any, Optional, Union, Protocol, Type, List, Tuple, Iterable
 from abc import ABCMeta, abstractmethod
 
 from django import forms
 
-class SubmissionDetailsForm(SubmissionForm):
+@dataclass
+class TermChoices:
+    items: Iterable[Term]
+
+    def choices(self) -> List[Tuple[str, List[Tuple[int, str]]]]:
+        term_groups: Dict[str, List[Tuple[int, str]]] = {}
+        other = []
+        for term in self.items:
+            if term.group:
+                term_groups.setdefault(term.group.name, [])
+                term_groups[term.group.name].append((term.id, term.term))
+            else:
+                other.append((term.id, term.term))
+        choices = sorted(term_groups.items())
+        if len(other) > 0:
+            choices.append(("Other", other))
+        return choices
+
+@dataclass
+class SubmissionFormAttrs:
+    archive: Archive
+
+    def term_attrs(self) -> Dict[str, str]:
+        return {
+            'data-terms': "",
+            'class': "data-terms",
+            'hx-get': reverse_lazy("kronofoto:define-terms", kwargs={'short_name': self.archive.slug}),
+            'hx-trigger': "change",
+            "hx-target": '[data-term-definitions]',
+            "hx-swap": "innerHTML",
+            "hx-push-url": "false",
+            "hx-include": "[data-terms]",
+        }
+
+
+
+
+
+class SubmissionDetailsForm(ArchiveSubmissionForm):
     prefix = "submission"
-    def __init__(self, *args: Any, force_archive: Archive, **kwargs: Any):
+    def __init__(self, *args: Any, force_archive: Archive, submission_form_attrs: Type[SubmissionFormAttrs] = SubmissionFormAttrs, **kwargs: Any):
         super().__init__(*args, force_archive=force_archive, **kwargs)
+        form_attrs = submission_form_attrs(force_archive)
+
         category = self.fields.get('category')
         if category:
             category.help_text = 'Choose one term  from the list to indicate what kind of an item this is.'
             category.widget.attrs.update({
                 'hx-get': reverse_lazy("kronofoto:term-list", kwargs={'short_name': force_archive.slug}),
                 'hx-trigger': "change",
-                "hx-target": '[data-terms]',
+                "hx-target": '.data-terms',
                 "hx-push-url": "false",
             })
         terms = self.fields.get('terms')
         if terms:
-            terms.widget.attrs.update({
-                'data-terms': "",
-                'hx-get': reverse_lazy("kronofoto:define-terms", kwargs={'short_name': force_archive.slug}),
-                'hx-trigger': "change",
-                "hx-target": '[data-term-definitions]',
-                "hx-swap": "innerHTML",
-                "hx-push-url": "false",
-                "style": "height: 80px",
-            })
+            terms.widget.attrs.update(form_attrs.term_attrs())
             terms.help_text = 'Select as many terms as you like to indicate what the item is about. You will be able to create your own terms later.'
         field = self.fields.get('year')
         if field:
@@ -134,6 +167,9 @@ class SubmissionDetailsForm(SubmissionForm):
         }
 
 
+    def get_term_choices(self, queryset: QuerySet, grouper: Type[TermChoices] = TermChoices) -> List[Tuple[str, List[Tuple[int, str]]]]:
+        return grouper(queryset).choices()
+
 class SubmissionImageForm(forms.Form):
     image = forms.ImageField()
 
@@ -152,7 +188,7 @@ class SubmissionFactory:
     archive: Archive
     context: Dict[str, Any]
     extra_form_kwargs: Dict[str, Any] = field(default_factory=dict)
-    form_class: Type[SubmissionForm] = SubmissionDetailsForm
+    form_class: Type[ArchiveSubmissionForm] = SubmissionDetailsForm
 
     def get_post_response(self, form: forms.ModelForm) -> HasResponse:
         if form.is_valid():
@@ -188,6 +224,7 @@ class ValidSubmission:
         submission.archive = self.archive
         submission.uploader = self.uploader
         submission.save()
+        self.form.save_m2m()
         return redirect("kronofoto:submission-done", short_name=self.archive.slug)
 
 
@@ -219,24 +256,41 @@ class TermRequestForm(forms.Form):
     prefix = "submission"
     category = forms.IntegerField()
 
+
 @dataclass
 class TermListFactory:
+    archive: Archive
+    data: Dict[str, str]
     terms: Any = Term.objects
 
-    def get_term_lister(self, data: Dict[str, str], archive: Archive) -> HasTerms:
-        form = TermRequestForm(data)
+    def get_term_grouper(self, items: Iterable[Term]) -> TermChoices:
+        return TermChoices(items)
+
+    def get_term_lister(self) -> HasTerms:
+        form = TermRequestForm(self.data)
         if form.is_valid():
-            return CategoryTerms(self.terms, archive, form.cleaned_data['category'])
+            return CategoryTerms(self.terms, self.archive, form.cleaned_data['category'])
         else:
             return NoCategory(self.terms)
 
-    def get_terms(self, data: Dict[str, str], archive: Archive) -> QuerySet[Term]:
-        return self.get_term_lister(data, archive).get_terms()
+    def get_terms(self) -> QuerySet[Term]:
+        return self.get_term_lister().get_terms()
+
+    def get_term_choices(self) -> List[Tuple[str, List[Tuple[int, str]]]]:
+        terms = self.get_terms()
+        return self.get_term_grouper(terms).choices()
+
+    def get_term_widget(self, *, choices: List[Tuple[str, List[Tuple[int, str]]]]) -> forms.Widget:
+        return forms.CheckboxSelectMultiple(
+            choices=choices,
+            attrs=SubmissionFormAttrs(self.archive).term_attrs(),
+        )
 
 def list_terms(request: HttpRequest, short_name: str) -> HttpResponse:
     archive = get_object_or_404(Archive.objects.all(), slug=short_name)
-    terms = TermListFactory().get_terms(request.GET, archive)
-    return TemplateResponse(request, 'admin/widgets/terms.html', {'objects': terms})
+    factory = TermListFactory(archive=archive, data=request.GET)
+    terms = factory.get_term_choices()
+    return HttpResponse(factory.get_term_widget(choices=terms).render("submission-terms", None))
 
 @dataclass
 class TermDefiner:
