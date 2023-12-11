@@ -11,6 +11,15 @@ from django.core.exceptions import MultipleObjectsReturned
 from .basetemplate import BasePhotoTemplateMixin
 from ..models import Photo, CollectionQuery
 import json
+from django import forms
+
+class PageForwardForm(forms.Form):
+    locals()["year:gte"] = forms.IntegerField(required=True)
+    locals()["id:gt"] = forms.IntegerField(required=False)
+
+class PageBackwardForm(forms.Form):
+    locals()["year:lte"] = forms.IntegerField(required=True)
+    locals()["id:lt"] = forms.IntegerField(required=False)
 
 
 class Redirect(Exception):
@@ -42,30 +51,35 @@ class GridView(BasePhotoTemplateMixin, ListView):
         if self.final_expr and not self.final_expr.is_collection():
             return super().paginate_queryset(queryset, page_size)
         else:
-            try:
-                page = self.kwargs['page']
-            except KeyError:
-                try:
-                    page = int(self.params.pop('page')[0])
-                except KeyError:
-                    page = None
-            if page:
-                first_photo = queryset[page_size*(page-1)]
-                self.params['year:gte'] = first_photo.year
-                self.params['id:gt'] = first_photo.id
-
             paginator = self.create_keyset_paginator(queryset, page_size)
-            try:
-                # probably should handle no id
-                page = paginator.get_page(dict(year=int(self.params.pop('year:gte')[0]), id=int(self.params.pop('id:gt')[0]), reverse=False))
-            except KeyError:
-                try:
-                    page = paginator.get_page(dict(year=int(self.params.pop('year:lte')[0]), id=int(self.params.pop('id:lt')[0]), reverse=True))
+            form = PageForwardForm(self.params)
+            if form.is_valid():
+                self.params.pop('year:gte', None)
+                self.params.pop('year:gt', None)
+                page = paginator.get_page({
+                    "year": form.cleaned_data['year:gte'],
+                    "id": form.cleaned_data['id:gt'] or 0,
+                    "reverse": False,
+                })
+            else:
+                form = PageBackwardForm(self.params)
+                if form.is_valid():
+                    self.params.pop('year:lte', None)
+                    self.params.pop('year:lt', None)
+                    page = paginator.get_page({
+                        "year": form.cleaned_data['year:lte'],
+                        "id": form.cleaned_data['id:lt'] or 9999999,
+                        "reverse": True,
+                    })
                     if len(page) == 0:
                         return paginator, page, queryset, True
                     elif len(page) < page_size:
-                        page = paginator.get_page(dict(year=page[0].year, id=page[0].id-1, reverse=False))
-                except KeyError:
+                        page = paginator.get_page({
+                            "year": page[0].year,
+                            "id": page[0].id-1,
+                            "reverse": False,
+                        })
+                else:
                     page = paginator.get_page({})
             return paginator, page, queryset, True
 
