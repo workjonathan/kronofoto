@@ -35,9 +35,6 @@ class Donor(Collectible, models.Model):
     state = models.CharField(max_length=256, blank=True)
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
-    is_contributor = models.BooleanField(default=False)
-    is_scanner = models.BooleanField(default=False)
-    is_photographer = models.BooleanField(default=False)
 
     objects = DonorQuerySet.as_manager()
 

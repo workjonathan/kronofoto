@@ -564,6 +564,7 @@ class CSVRecordAdmin(admin.ModelAdmin):
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
+    autocomplete_fields = ['donor', 'scanner', 'photographer']
     def get_urls(self) -> List[URLPattern]:
         from django.urls import path
         def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
@@ -587,12 +588,6 @@ class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
     ) -> forms.ModelChoiceField:
-        if db_field.name == 'donor':
-            kwargs['queryset'] = Donor.objects.filter(is_contributor=True)
-        if db_field.name == 'photographer':
-            kwargs['queryset'] = Donor.objects.filter(is_photographer=True)
-        if db_field.name == 'scanner':
-            kwargs['queryset'] = Donor.objects.filter(is_scanner=True)
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == 'archive':
             url = reverse('admin:archive_photo_categories')
