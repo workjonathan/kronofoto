@@ -14,6 +14,8 @@ id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
 class ContributorSearchView(JSONResponseMixin, BaseListView):
     def get_queryset(self):
+        if term not in self.request.GET:
+            return Donor.objects.none()
         txt = self.request.GET['term']
         clauses = []
         snip = 999999
@@ -51,9 +53,11 @@ class ContributorSearchView(JSONResponseMixin, BaseListView):
 
 class TagSearchView(JSONResponseMixin, BaseListView):
     def get_queryset(self):
-        return Tag.objects.filter(
-            tag__icontains=self.request.GET['term'], phototag__accepted=True
-        ).values('tag', 'id').distinct()[:10]
+        if 'term' in self.request.GET:
+            return Tag.objects.filter(
+                tag__icontains=self.request.GET['term'], phototag__accepted=True
+            ).values('tag', 'id').distinct()[:10]
+        return Tag.objects.none()
 
     def get_data(self, context):
         return [
