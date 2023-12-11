@@ -68,7 +68,7 @@ class SubmissionTest(TestCase):
         vc2.terms.set([term3])
         vc2.terms.set([term4])
 
-        terms = TermListFactory().get_term_lister({"submission-category": f"{category1.id}"}, archive1).get_terms()
+        terms = TermListFactory(archive=archive1, data={"submission-category": f"{category1.id}"}).get_terms()
         self.assertIn(term1, terms)
         self.assertIn(term2, terms)
         self.assertNotIn(term3, terms)

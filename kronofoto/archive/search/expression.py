@@ -206,7 +206,11 @@ class Expression:
         return {}
 
     def get_score(self, user=None):
-        return Case(When(self.filter(user), then=1), default=0, output_field=FloatField())
+        filter = self.filter(user)
+        if filter != Q():
+            return Case(When(self.filter(user), then=1), default=0, output_field=FloatField())
+        else:
+            return Value(1)
 
     def scoreF(self, negated, user):
         score = self.get_score(user=user)
@@ -409,7 +413,7 @@ class MultiWordCaptionValue(ValueBase):
     def get_score(self, *, user):
         caption_minusval = Cast(Length(Replace(Lower(F('caption')), Value(self.value))), FloatField())
         captionlen = Cast(Greatest(1.0, Length('caption')), FloatField())
-        return caption_minusval / captionlen
+        return 1 - caption_minusval / captionlen
 
     def get_search_value(self):
         return self.value

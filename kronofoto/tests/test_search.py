@@ -7,8 +7,178 @@ from hypothesis import given, strategies, note
 from archive.search import expression, evaluate, parser
 from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
 from archive.search.expression import (
-    And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly
+    And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly, SingleWordTag, MultiWordCaption, IsNew
 )
+from django.core.files.uploadedfile import SimpleUploadedFile
+from archive.models import Photo, Archive, Donor as DonorModel, Category, Tag as TagModel, PhotoTag, NewCutoff, Term as TermModel
+from .util import small_gif
+import datetime
+
+class ExpressionTests(TestCase):
+    def test_subquery_expression(self):
+        expression = SingleWordTag("test")
+        archive = Archive.objects.create()
+        donor = DonorModel.objects.create(archive=archive)
+        category = Category.objects.create()
+        matchphoto = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+        )
+        testtag = TagModel.objects.create(tag="test")
+        PhotoTag.objects.create(tag=testtag, accepted=True, photo=matchphoto)
+        PhotoTag.objects.create(tag=TagModel.objects.create(tag="car"), accepted=True, photo=matchphoto)
+        matchphoto2 = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+        )
+        PhotoTag.objects.create(tag=testtag, accepted=True, photo=matchphoto2)
+        photo = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+        )
+        PhotoTag.objects.create(tag=TagModel.objects.create(tag="other"), accepted=True, photo=photo)
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertIn(matchphoto2, photos)
+        self.assertNotIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertEqual(matchphoto2.id, photos[0].id)
+
+    def test_multiword_caption(self):
+        expression = MultiWordCaption("a comment")
+        archive = Archive.objects.create()
+        donor = DonorModel.objects.create(archive=archive)
+        category = Category.objects.create()
+        matchphoto = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            caption="this is a comment",
+        )
+        matchphoto2 = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            caption="this is a comment and some other text",
+        )
+        photo = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            caption="this is a car",
+        )
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertEqual(2, photos.count())
+        self.assertEqual(matchphoto.id, photos[0].id)
+        self.assertEqual(matchphoto2.id, photos[1].id)
+
+    def test_isnew(self):
+        expression = IsNew(True)
+        archive = Archive.objects.create()
+        donor = DonorModel.objects.create(archive=archive)
+        category = Category.objects.create()
+        matchphoto = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+        )
+        matchphoto.created = "2000-01-01 0:00:00"
+        matchphoto.save()
+        photo = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+        )
+        photo.created = "1990-01-01 0:00:00"
+        photo.save()
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertIn(photo, photos)
+        NewCutoff.objects.create(date=datetime.datetime(1995, 1, 1, 0, 0, 0))
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+
+    def test_year_equals(self):
+        expression = YearEquals(1950)
+        archive = Archive.objects.create()
+        donor = DonorModel.objects.create(archive=archive)
+        category = Category.objects.create()
+        matchphoto = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            year=1950,
+        )
+        photo = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            caption=1951,
+        )
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+
+    def test_term_exactly(self):
+        archive = Archive.objects.create()
+        donor = DonorModel.objects.create(archive=archive)
+        term = TermModel.objects.create(term="term1")
+        expression = TermExactly(term)
+        category = Category.objects.create()
+        matchphoto = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            year=1950,
+        )
+        matchphoto.terms.set([term])
+        donor2 = DonorModel.objects.create(archive=archive)
+        photo = Photo.objects.create(
+            original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'),
+            archive=archive,
+            donor=donor,
+            category=category,
+            caption=1951,
+        )
+        photo.terms.set([TermModel.objects.create(term="term2")])
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+        expression = TermExactly(99999)
+        photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
+        self.assertNotIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+        photos = expression.as_search(Photo.objects.all(), user=AnonymousUser())
+        self.assertNotIn(matchphoto, photos)
+        self.assertNotIn(photo, photos)
+
 
 @strategies.composite
 def tokens(draw):
@@ -206,20 +376,20 @@ class ParserTest(SimpleTestCase):
 
 
 @tag("fast")
-class ExpressionTest(TestCase):
+class ExpressionTest1(TestCase):
     @given(strategies.integers())
     def testShouldSupportNegation(self, year):
-        q = (~YearEquals(year)).buildQ(user=AnonymousUser())
+        q = (~YearEquals(year)).filter(user=AnonymousUser())
         self.assertEqual(q, ~Q(year=year))
 
     @given(strategies.integers(), strategies.integers())
     def testShouldSupportBooleanAnd(self, year1, year2):
-        q = (YearEquals(year1) & YearEquals(year2)).buildQ(user=AnonymousUser())
+        q = (YearEquals(year1) & YearEquals(year2)).filter(user=AnonymousUser())
         self.assertEqual(q, Q(year=year1) & Q(year=year2))
 
     @given(strategies.integers(), strategies.integers())
     def testShouldSupportBooleanOr(self, year1, year2):
-        q = (YearEquals(year1) | YearEquals(year2)).buildQ(user=AnonymousUser())
+        q = (YearEquals(year1) | YearEquals(year2)).filter(user=AnonymousUser())
         self.assertEqual(q, Q(year=year1) | Q(year=year2))
 
 @tag("fast")
