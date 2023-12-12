@@ -310,7 +310,7 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("term", "group")
 
 
 class TagInline(ArchivePermissionMixin, admin.TabularInline):
