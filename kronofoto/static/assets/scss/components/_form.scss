@@ -95,6 +95,12 @@ $switch-background-active: var(--fp-main-color);
   }
 }
 
+.form--submission {
+    label.required::after {
+        content: "*"
+    }
+}
+
 .form--add-tag {
 
   button {

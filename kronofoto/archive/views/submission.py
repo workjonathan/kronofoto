@@ -65,8 +65,9 @@ class SubmissionFormAttrs:
 
 class SubmissionDetailsForm(ArchiveSubmissionForm):
     prefix = "submission"
+    required_css_class = "required"
     def __init__(self, *args: Any, force_archive: Archive, submission_form_attrs: Type[SubmissionFormAttrs] = SubmissionFormAttrs, **kwargs: Any):
-        super().__init__(*args, force_archive=force_archive, **kwargs)
+        super().__init__(*args, force_archive=force_archive, label_suffix="", **kwargs)
         form_attrs = submission_form_attrs(force_archive)
 
         category = self.fields.get('category')
@@ -81,7 +82,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         terms = self.fields.get('terms')
         if terms:
             terms.widget.attrs.update(form_attrs.term_attrs())
-            terms.help_text = 'Select as many terms as you like to indicate what the item is about. You will be able to create your own terms later.'
+            terms.help_text = 'Select as many terms as you like to indicate what the item is about.'
         field = self.fields.get('year')
         if field:
             field.help_text = 'The year that the item was created, if you are unsure, put in an approximate date and click the "Approximate date" box.'
