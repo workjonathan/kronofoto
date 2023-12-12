@@ -78,6 +78,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
                 'hx-trigger': "change",
                 "hx-target": '.data-terms',
                 "hx-push-url": "false",
+                "autocomplete": "false",
             })
         terms = self.fields.get('terms')
         if terms:
