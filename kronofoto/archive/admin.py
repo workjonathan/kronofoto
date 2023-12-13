@@ -10,7 +10,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup
+from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place
 from .models.photosphere import MainStreetSet
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
@@ -561,6 +561,19 @@ class CSVRecordAdmin(admin.ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[CSVRecord]:
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
+
+
+
+@admin.register(Place)
+class PlaceAdmin(admin.OSMGeoAdmin):
+    search_fields = ['name']
+    readonly_fields = ['parent']
+    list_display = ['name', 'parentname']
+    def parentname(self, obj):
+        if obj.parent:
+            return obj.parent.name
+        else:
+            return None
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):

@@ -14,3 +14,4 @@ from .cutoff import NewCutoff
 from .photosphere import PhotoSphere, PhotoSpherePair, get_photosphere_path
 from .archive import Archive, ArchiveAgreement
 from .category import Category, ValidCategory
+from .place import Place, PlaceType
