@@ -7,8 +7,8 @@
     <div class="columns large-4" hx-target="#app">
         <div>
             <h1><a 
-                href="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place.get_query }}"
-                hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place.get_query }}"
+                href="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place_query }}"
+                hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}?query={{ photo.place_query }}"
             >{{ photo.location }}</a></h1>
         </div>
 

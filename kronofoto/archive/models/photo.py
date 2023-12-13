@@ -23,6 +23,7 @@ from .tag import Tag
 from .term import Term
 from .archive import Archive
 from .category import Category
+from .place import Place
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
@@ -110,6 +111,10 @@ class PhotoBase(models.Model):
     county = models.CharField(max_length=128, blank=True, db_index=True)
     state = models.CharField(max_length=64, blank=True, db_index=True)
     country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    place = models.ForeignKey(
+        Place, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_place",
+
+    )
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True, verbose_name="comment")
@@ -127,7 +132,9 @@ class PhotoBase(models.Model):
             country=self.country,
         )
 
-    place = property(get_place)
+    @property
+    def place_query(self):
+        return self.get_place().get_query()
 
     def location(self, with_address=False, force_country=False):
         kwargs = dict(
