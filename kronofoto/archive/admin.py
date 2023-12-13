@@ -578,6 +578,7 @@ class PlaceAdmin(admin.OSMGeoAdmin):
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
     autocomplete_fields = ['donor', 'scanner', 'photographer']
+    raw_id_fields = ['place']
     def get_urls(self) -> List[URLPattern]:
         from django.urls import path
         def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
@@ -768,7 +769,7 @@ class SaveRecord:
 @admin.register(Submission)
 class SubmissionAdmin(PhotoBaseAdmin):
     change_form_template = 'admin/custom_changeform.html'
-    readonly_fields = ["image_display"]
+    readonly_fields = ["image_display", "uploader"]
     form = SubmissionForm
 
     class Media:
