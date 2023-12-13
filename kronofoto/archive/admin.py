@@ -366,6 +366,24 @@ class StandardSimpleListFilter(base_admin.SimpleListFilter):
                 return queryset.filter(**{self.field: value}).distinct() # type: ignore
         return queryset
 
+class HasPlaceFilter(base_admin.SimpleListFilter):
+    title = "place status"
+    parameter_name = "place__isnull"
+
+    def lookups(self, request: HttpRequest, model_admin: "admin.ModelAdmin[Any]") -> Tuple[Tuple[str, str], ...]:
+        return (
+            ("has place", "has place"),
+            ("has no place", "has no place"),
+        )
+
+    def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
+        value = self.value()
+        if value  == "has place":
+            return queryset.filter(place__isnull=False)
+        elif value == "has no place":
+            return queryset.filter(place__isnull=True)
+        else:
+            return queryset
 
 class TagFilter(StandardSimpleListFilter):
     title = "tag status"
@@ -568,7 +586,7 @@ class CSVRecordAdmin(admin.ModelAdmin):
 class PlaceAdmin(admin.OSMGeoAdmin):
     search_fields = ['name']
     readonly_fields = ['parent']
-    list_display = ['name', 'parentname']
+    list_display = ['name', 'parentname', "place_type"]
     def parentname(self, obj):
         if obj.parent:
             return obj.parent.name
@@ -1015,7 +1033,7 @@ class SubmissionAdmin(PhotoBaseAdmin):
 class PhotoAdmin(PhotoBaseAdmin):
     readonly_fields = ["h700_image"]
     inlines = (TagInline,)
-    list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter)
+    list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter, HasPlaceFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
     form = PhotoForm
