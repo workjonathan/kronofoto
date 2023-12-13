@@ -31,7 +31,7 @@ class Command(BaseCommand):
             records = []
             for feature in data['features']:
                 properties = feature['properties']
-                parent = Place.objects.get(name=properties['state_NAME'], place_type__name="US State")
+                parent = Place.objects.get(name=properties['state_STUSPS'], place_type__name="US State")
                 name = properties['NAME']
                 if feature['geometry']['type'] == "Polygon":
                     polygons = [Polygon(*feature['geometry']['coordinates'])]
