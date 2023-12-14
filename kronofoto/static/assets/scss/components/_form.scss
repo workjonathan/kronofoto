@@ -106,6 +106,9 @@ $switch-background-active: var(--fp-main-color);
     .term-definition {
         margin-left: 0.5rem;
     }
+    .term-label {
+        flex-shrink: 0;
+    }
 }
 
 .form--add-tag {
