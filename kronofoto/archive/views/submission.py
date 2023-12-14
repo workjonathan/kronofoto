@@ -20,6 +20,7 @@ from django.utils.decorators import method_decorator
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, Union, Protocol, Type, List, Tuple, Iterable
 from abc import ABCMeta, abstractmethod
+from django.utils.html import format_html
 
 from django import forms
 
@@ -29,13 +30,18 @@ class TermChoices:
 
     def choices(self) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
         term_groups: Dict[Optional[str], List[Tuple[int, str]]] = {}
-        other = []
+        other: List[Tuple[int, str]] = []
         for term in self.items:
             if term.group:
                 term_groups.setdefault(term.group.name, [])
-                term_groups[term.group.name].append((term.id, term.term))
+                group = term_groups[term.group.name]
             else:
-                other.append((term.id, term.term))
+                group = other
+            if term.description:
+                definition_part = f": {term.description}"
+            else:
+                definition_part = ""
+            group.append((term.id, format_html("{}{}", term.term, definition_part)))
         choices = sorted(term_groups.items())
         if len(term_groups) == 0:
             choices.append((None, other))
@@ -51,12 +57,6 @@ class SubmissionFormAttrs:
         return {
             'data-terms': "",
             'class': "data-terms",
-            'hx-get': reverse_lazy("kronofoto:define-terms", kwargs={'short_name': self.archive.slug}),
-            'hx-trigger': "change",
-            "hx-target": '[data-term-definitions]',
-            "hx-swap": "innerHTML",
-            "hx-push-url": "false",
-            "hx-include": "[data-terms]",
         }
 
 
@@ -157,7 +157,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         )
         widgets = {
             'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
-            'terms': SelectMultipleTerms(ul_attrs={"data-term-definitions": ""}),
+            'terms': forms.CheckboxSelectMultiple(),
         }
         labels = {
             "donor": "Contributor",

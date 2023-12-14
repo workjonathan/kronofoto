@@ -587,7 +587,7 @@ class PlaceAdmin(admin.OSMGeoAdmin):
     search_fields = ['name']
     readonly_fields = ['parent']
     list_display = ['name', 'parentname', "place_type"]
-    def parentname(self, obj):
+    def parentname(self, obj: Place) -> Optional[str]:
         if obj.parent:
             return obj.parent.name
         else:

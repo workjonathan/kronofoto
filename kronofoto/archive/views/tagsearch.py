@@ -14,7 +14,7 @@ id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
 class ContributorSearchView(JSONResponseMixin, BaseListView):
     def get_queryset(self):
-        if term not in self.request.GET:
+        if 'term' not in self.request.GET:
             return Donor.objects.none()
         txt = self.request.GET['term']
         clauses = []
