@@ -38,10 +38,11 @@ class TermChoices:
             else:
                 group = other
             if term.description:
-                definition_part = f": {term.description}"
+                definition_part = term.description
             else:
                 definition_part = ""
-            group.append((term.id, format_html("{}{}", term.term, definition_part)))
+            #group.append((term.id, format_html('<span class="term-left">{}</span><span class="term-right">{}</span>', term.term, definition_part)))
+            group.append((term.id, term))
         choices = sorted(term_groups.items())
         if len(term_groups) == 0:
             choices.append((None, other))
@@ -56,12 +57,7 @@ class SubmissionFormAttrs:
     def term_attrs(self) -> Dict[str, str]:
         return {
             'data-terms': "",
-            'class': "data-terms",
         }
-
-
-
-
 
 class SubmissionDetailsForm(ArchiveSubmissionForm):
     prefix = "submission"
@@ -76,7 +72,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
             category.widget.attrs.update({
                 'hx-get': reverse_lazy("kronofoto:term-list", kwargs={'short_name': force_archive.slug}),
                 'hx-trigger': "change",
-                "hx-target": '.data-terms',
+                "hx-target": '[data-terms]',
                 "hx-push-url": "false",
                 "autocomplete": "false",
             })
@@ -157,7 +153,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         )
         widgets = {
             'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
-            'terms': forms.CheckboxSelectMultiple(),
+            'terms': SelectMultipleTerms(),
         }
         labels = {
             "donor": "Contributor",
@@ -285,7 +281,7 @@ class TermListFactory:
         return self.get_term_grouper(terms).choices()
 
     def get_term_widget(self, *, choices: List[Tuple[Optional[str], List[Tuple[int, str]]]]) -> forms.Widget:
-        return forms.CheckboxSelectMultiple(
+        return SelectMultipleTerms(
             choices=choices,
             attrs=SubmissionFormAttrs(self.archive).term_attrs(),
         )

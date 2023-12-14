@@ -16,15 +16,6 @@ class ImagePreviewClearableFileInput(ClearableFileInput):
 class SelectMultipleTerms(CheckboxSelectMultiple):
     template_name = "archive/widgets/selectmultipleterms.html"
 
-    def __init__(self, *args, ul_attrs=None, **kwargs):
-        self.ul_attrs = ul_attrs or {}
-        super().__init__(*args, **kwargs)
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context['ul_attrs'] = self.ul_attrs
-        return context
-
 class AutocompleteWidget(Widget):
     template_name = "archive/widgets/autocomplete.html"
 
