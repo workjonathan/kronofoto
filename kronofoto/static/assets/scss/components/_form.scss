@@ -99,16 +99,6 @@ $switch-background-active: var(--fp-main-color);
     label.required::after {
         content: "*"
     }
-    .two-column-list {
-        display: flex;
-        justify-content: space-between;
-    }
-    .term-definition {
-        margin-left: 0.5rem;
-    }
-    .term-label {
-        flex-shrink: 0;
-    }
 }
 
 .form--add-tag {
