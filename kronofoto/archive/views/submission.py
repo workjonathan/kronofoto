@@ -24,6 +24,7 @@ from django.utils.html import format_html
 
 from django import forms
 
+
 @dataclass
 class TermChoices:
     items: Iterable[Term]

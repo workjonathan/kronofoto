@@ -314,6 +314,48 @@ class Photo(PhotoBase):
     def accession_number(self):
         return 'FI' + str(self.id).zfill(7)
 
+    def crop_image(self, *, resize_type, image, original_height, original_width):
+        resize_type, args = resize_type
+        if resize_type == "FIXED":
+            output_width, output_height = args
+            original_origin_x = original_width / 2
+            original_origin_y = original_height / 4
+            output_ratio = output_width/output_height
+            adjusted_output_width = min(output_width, output_height * output_ratio)
+            adjusted_output_height = min(output_height, output_width / output_ratio)
+            adjusted_origin_x = adjusted_output_width / 2
+            adjusted_origin_y = adjusted_output_height / 4
+            xoff = original_origin_x - adjusted_origin_x
+            yoff = original_origin_y - adjusted_origin_y
+            return image.crop((xoff, yoff, xoff+output_width, yoff+output_height))
+        else:
+            return image
+
+    def output_height(self, *, original_height, original_width, resize_type):
+        resize_type, args = resize_type
+        if resize_type == "FIXED":
+            output_width, output_height = args
+            return output_height
+        if resize_type == "FIXED_WIDTH":
+            output_width, *rest = args
+            return round(original_height * output_width / original_width)
+        if resize_type == "FIXED_HEIGHT":
+            output_height, *rest = args
+            return output_height
+
+
+    def output_width(self, *, original_height, original_width, resize_type):
+        resize_type, args = resize_type
+        if resize_type == "FIXED":
+            output_width, output_height = args
+            return output_height
+        if resize_type == "FIXED_WIDTH":
+            output_width, *rest = args
+            return output_width
+        if resize_type == "FIXED_HEIGHT":
+            output_height, *rest = args
+            return round(original_width * output_height / original_height)
+
     def save(self, *args, **kwargs):
         if not self.thumbnail:
             Image.MAX_IMAGE_PIXELS = 195670000
@@ -325,33 +367,32 @@ class Photo(PhotoBase):
             # runtime errors in tests and in the admin backend.
             # self.original.close()
             with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-                dims = ((75, 75), (None, 700))
-                results = []
+                dims = (((75, 75), "thumb/{}.jpg", "thumbnail"), ((None, 700), "h700/{}.jpg", "h700"))
                 w,h = image.size
-                xoff = yoff = 0
                 size = min(w, h)
-                for dim in dims:
-                    if any(dim):
-                        img = image
-                        if all(dim):
-                            if w > h:
-                                xoff = round((w-h)/2)
-                            elif h > w:
-                                yoff = round((h-w)/4)
-                            img = img.crop((xoff, yoff, xoff+size, yoff+size))
-                        if dim[0] and not dim[1]:
-                            dim = (dim[0], round(h/w*dim[0]))
-                        elif dim[1] and not dim[0]:
-                            dim = (round(w/h*dim[1]), dim[1])
-                        img = img.resize(dim, Image.LANCZOS)
-                        results.append(img)
-                thumb, h700 = results
-                fname = 'thumb/{}.jpg'.format(self.uuid)
-                thumb.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-                self.thumbnail.name = fname
-                fname = 'h700/{}.jpg'.format(self.uuid)
-                h700.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-                self.h700.name = fname
+                for (dim, format_path, prop_name) in dims:
+                    if dim[0] and not dim[1]:
+                        resize_type = ("FIXED_WIDTH", (dim[0],))
+                    elif dim[1] and not dim[0]:
+                        resize_type = ("FIXED_HEIGHT", (dim[1],))
+                    else:
+                        resize_type = ("FIXED", (dim[0], dim[1]))
+
+                    img = self.crop_image(resize_type=resize_type, image=image, original_height=w, original_width=w)
+                    img = img.resize(
+                        (
+                            self.output_width(
+                                original_height=h, original_width=w, resize_type=resize_type
+                            ),
+                            self.output_height(
+                                original_height=h, original_width=w, resize_type=resize_type
+                            ),
+                        ),
+                        Image.LANCZOS,
+                    )
+                    fname = format_path.format(self.uuid)
+                    img.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+                    getattr(self, prop_name).name = fname
         super().save(*args, **kwargs)
 
 
