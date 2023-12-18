@@ -1,11 +1,14 @@
 from django.contrib.gis.db import models
 from django.http import QueryDict
+from django.db import transaction
 from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.db.models.functions import Lower
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from ..reverse import reverse
 from django.utils.http import urlencode
 from datetime import datetime
@@ -157,6 +160,79 @@ class Submission(PhotoBase):
             return "{} - {}".format(self.year, location)
         return location
 
+class ResizerBase:
+
+    def resize(self, *, image):
+        img = self.crop_image(image=image)
+        return img.resize(
+            (self.output_width, self.output_height),
+            Image.LANCZOS,
+        )
+
+@dataclass
+class FixedHeightResizer(ResizerBase):
+    height: int
+    original_width: int
+    original_height: int
+
+    def crop_image(self, *, image):
+        return image
+
+    @property
+    def output_height(self):
+        return self.height
+
+    @property
+    def output_width(self):
+        return round(self.original_width * self.height / self.original_height)
+
+@dataclass
+class FixedWidthResizer(ResizerBase):
+    width: int
+    original_width: int
+    original_height: int
+
+    def crop_image(self, *, image):
+        return image
+
+    @property
+    def output_height(self):
+        return round(self.original_height * self.width / self.original_width)
+
+    @property
+    def output_width(self):
+        return self.width
+
+@dataclass
+class FixedResizer(ResizerBase):
+    width: int
+    height: int
+    original_width: int
+    original_height: int
+
+    @property
+    def crop_coords(self):
+        original_origin_x = self.original_width / 2
+        original_origin_y = self.original_height / 4
+        output_ratio = self.width/self.height
+        adjusted_output_width = min(self.width, self.height * output_ratio)
+        adjusted_output_height = min(self.height, self.width / output_ratio)
+        adjusted_origin_x = adjusted_output_width / 2
+        adjusted_origin_y = adjusted_output_height / 4
+        xoff = original_origin_x - adjusted_origin_x
+        yoff = original_origin_y - adjusted_origin_y
+        return (xoff, yoff, xoff+self.width, yoff+self.height)
+
+    def crop_image(self, *, image):
+        return image.crop(self.crop_coords)
+
+    @property
+    def output_height(self):
+        return self.height
+
+    @property
+    def output_width(self):
+        return self.width
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
@@ -314,47 +390,31 @@ class Photo(PhotoBase):
     def accession_number(self):
         return 'FI' + str(self.id).zfill(7)
 
-    def crop_image(self, *, resize_type, image, original_height, original_width):
-        resize_type, args = resize_type
-        if resize_type == "FIXED":
-            output_width, output_height = args
-            original_origin_x = original_width / 2
-            original_origin_y = original_height / 4
-            output_ratio = output_width/output_height
-            adjusted_output_width = min(output_width, output_height * output_ratio)
-            adjusted_output_height = min(output_height, output_width / output_ratio)
-            adjusted_origin_x = adjusted_output_width / 2
-            adjusted_origin_y = adjusted_output_height / 4
-            xoff = original_origin_x - adjusted_origin_x
-            yoff = original_origin_y - adjusted_origin_y
-            return image.crop((xoff, yoff, xoff+output_width, yoff+output_height))
-        else:
-            return image
+    def resizer(self, *, size, original_width, original_height):
+        if size == 'thumbnail':
+            return FixedResizer(width=75, height=75, original_width=original_width, original_height=original_height)
+        elif size == 'h700':
+            return FixedHeightResizer(height=700, original_width=original_width, original_height=original_height)
 
-    def output_height(self, *, original_height, original_width, resize_type):
-        resize_type, args = resize_type
-        if resize_type == "FIXED":
-            output_width, output_height = args
-            return output_height
-        if resize_type == "FIXED_WIDTH":
-            output_width, *rest = args
-            return round(original_height * output_width / original_width)
-        if resize_type == "FIXED_HEIGHT":
-            output_height, *rest = args
-            return output_height
+    @dataclass
+    class Saver:
+        uuid: uuid
+        path: str
+
+        def save(self, *, image):
+            fname = self.format_path()
+            image.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
+            return fname
+
+        def format_path(self):
+            return self.path.format(self.uuid)
 
 
-    def output_width(self, *, original_height, original_width, resize_type):
-        resize_type, args = resize_type
-        if resize_type == "FIXED":
-            output_width, output_height = args
-            return output_height
-        if resize_type == "FIXED_WIDTH":
-            output_width, *rest = args
-            return output_width
-        if resize_type == "FIXED_HEIGHT":
-            output_height, *rest = args
-            return round(original_width * output_height / original_height)
+    def saver(self, *, size, uuid):
+        if size == 'thumbnail':
+            return Photo.Saver(uuid=uuid, path='thumb/{}.jpg')
+        elif size == 'h700':
+            return Photo.Saver(uuid=uuid, path="h700/{}.jpg")
 
     def save(self, *args, **kwargs):
         if not self.thumbnail:
@@ -367,32 +427,14 @@ class Photo(PhotoBase):
             # runtime errors in tests and in the admin backend.
             # self.original.close()
             with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-                dims = (((75, 75), "thumb/{}.jpg", "thumbnail"), ((None, 700), "h700/{}.jpg", "h700"))
-                w,h = image.size
-                size = min(w, h)
-                for (dim, format_path, prop_name) in dims:
-                    if dim[0] and not dim[1]:
-                        resize_type = ("FIXED_WIDTH", (dim[0],))
-                    elif dim[1] and not dim[0]:
-                        resize_type = ("FIXED_HEIGHT", (dim[1],))
-                    else:
-                        resize_type = ("FIXED", (dim[0], dim[1]))
+                w, h = image.size
+                sizes = ["thumbnail", "h700"]
+                for size in sizes:
+                    resizer = self.resizer(size=size, original_height=h, original_width=w)
+                    img = resizer.resize(image=image)
 
-                    img = self.crop_image(resize_type=resize_type, image=image, original_height=w, original_width=w)
-                    img = img.resize(
-                        (
-                            self.output_width(
-                                original_height=h, original_width=w, resize_type=resize_type
-                            ),
-                            self.output_height(
-                                original_height=h, original_width=w, resize_type=resize_type
-                            ),
-                        ),
-                        Image.LANCZOS,
-                    )
-                    fname = format_path.format(self.uuid)
-                    img.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
-                    getattr(self, prop_name).name = fname
+                    saver = self.saver(size=size, uuid=self.uuid)
+                    getattr(self, size).name = saver.save(image=image)
         super().save(*args, **kwargs)
 
 
@@ -422,6 +464,61 @@ class Photo(PhotoBase):
             else:
                 return []
         return cache.get_or_set(self.local_context_id, _, timeout=24*60*60)
+
+def get_resized_path(instance, filename):
+    return path.join('resized', '{}_{}_{}.jpg'.format(instance.width, instance.height, instance.photo.uuid))
+
+class SizedPhotoQuerySet(models.QuerySet):
+    def get_or_create_fixed_height(self, *, photo, height):
+        with transaction.atomic():
+            try:
+                return self.get(photo=photo, height=height, cropped=False), False
+            except ObjectDoesNotExist:
+                Image.MAX_IMAGE_PIXELS = 195670000
+                filedata = photo.original.read()
+                with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
+                    (w, h) = image.size
+                    resizer = FixedHeightResizer(height=height, original_width=w, original_height=h)
+                    img = resizer.resize(image=image)
+                    fp = BytesIO()
+                    img.save(fp, "JPEG")
+                    file = InMemoryUploadedFile(fp, None, f"fixed_height_{photo.id}", "image/jpeg", fp.getbuffer().nbytes, None, None)
+                    return self.update_or_create(photo=photo, width=resizer.output_width, height=resizer.output_height, defaults={"cropped": False, "image":file})
+
+    def get_or_create_thumb(self, *, photo, width, height):
+        with transaction.atomic():
+            try:
+                return self.get(photo=photo, width=width, height=height), False
+            except ObjectDoesNotExist:
+                Image.MAX_IMAGE_PIXELS = 195670000
+                filedata = photo.original.read()
+                with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
+                    (w, h) = image.size
+                    resizer = FixedResizer(width=width, height=height, original_width=w, original_height=h)
+                    img = resizer.resize(image=image)
+                    fp = BytesIO()
+                    img.save(fp, "JPEG")
+                    file = InMemoryUploadedFile(fp, None, f"thumb_{photo.id}", "image/jpeg", fp.getbuffer().nbytes, None, None)
+                    return self.create(photo=photo, width=resizer.output_width, height=resizer.output_height, cropped=True, image=file), True
+
+
+class SizedPhoto(models.Model):
+    photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
+    width = models.IntegerField()
+    height = models.IntegerField()
+    cropped = models.BooleanField()
+    image = models.ImageField(upload_to=get_resized_path)
+
+    objects = SizedPhotoQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['photo', 'width', 'height'], name='unique_photo_size'),
+        ]
+        indexes = [
+            models.Index(fields=['photo', 'width', 'height']),
+            models.Index(fields=['photo', 'width', 'cropped']),
+        ]
 
 
 @dataclass
