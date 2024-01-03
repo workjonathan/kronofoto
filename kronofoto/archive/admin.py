@@ -581,17 +581,13 @@ class CSVRecordAdmin(admin.ModelAdmin):
         return qs.filter(photo__isnull=True)
 
 
+from mptt.admin import MPTTModelAdmin
 
-@admin.register(Place)
-class PlaceAdmin(admin.OSMGeoAdmin):
+@base_admin.register(Place)
+class PlaceAdmin(MPTTModelAdmin):
     search_fields = ['name']
-    readonly_fields = ['parent']
-    list_display = ['name', 'parentname', "place_type"]
-    def parentname(self, obj: Place) -> Optional[str]:
-        if obj.parent:
-            return obj.parent.name
-        else:
-            return None
+    raw_id_fields = ["parent"]
+    list_display = ['name', "place_type"]
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):

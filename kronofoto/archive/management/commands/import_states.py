@@ -26,14 +26,15 @@ class Command(BaseCommand):
         with open(geojson, 'r') as inf:
             data = json.load(inf)
             placetype, _ = PlaceType.objects.get_or_create(name='US State')
-            Place.objects.filter(place_type=placetype).delete()
-            usa = Place.objects.get(name="United States")
-            for feature in data['features']:
-                properties = feature['properties']
-                name = properties['STUSPS']
-                if feature['geometry']['type'] == "Polygon":
-                    polygons = [Polygon(*feature['geometry']['coordinates'])]
-                else:
-                    polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
-                geom = MultiPolygon(*polygons)
-                record = Place.objects.create(place_type=placetype, name=name, parent=usa, geom=geom.wkt)
+            with Place.objects.disable_mptt_updates():
+                Place.objects.filter(place_type=placetype).delete()
+                usa = Place.objects.get(name="United States")
+                for feature in data['features']:
+                    properties = feature['properties']
+                    name = properties['STUSPS']
+                    if feature['geometry']['type'] == "Polygon":
+                        polygons = [Polygon(*feature['geometry']['coordinates'])]
+                    else:
+                        polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
+                    geom = MultiPolygon(*polygons)
+                    record = Place.objects.create(parent=usa, place_type=placetype, name=name, geom=geom.wkt)

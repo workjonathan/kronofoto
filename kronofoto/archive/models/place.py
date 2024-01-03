@@ -1,4 +1,6 @@
 from django.contrib.gis.db import models
+from mptt.models import MPTTModel, TreeForeignKey
+
 
 class PlaceType(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
@@ -9,11 +11,15 @@ class PlaceType(models.Model):
             models.Index(fields=['name']),
         )
 
-class Place(models.Model):
+class Place(MPTTModel):
     place_type = models.ForeignKey(PlaceType, null=False, on_delete=models.PROTECT)
     name = models.CharField(max_length=64, null=False, blank=False)
-    parent = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
-    geom = models.MultiPolygonField(null=True, srid=4326, blank=False)
+    geom = models.GeometryField(null=True, srid=4326, blank=False)
+    parent = TreeForeignKey('self', related_name='children', null=True, db_index=True, on_delete=models.PROTECT)
+
+    class MPTTMeta:
+        order_insertion_by = ['place_type', 'name']
+
     def __str__(self):
         return self.name
 
@@ -33,5 +39,6 @@ class Place(models.Model):
     class Meta:
         indexes = (
             models.Index(fields=['name']),
-            models.Index(fields=['place_type', 'name', 'parent']),
+            models.Index(fields=['place_type', 'name', "parent"]),
+            #models.Index(fields=['tree_id', 'id', "lft"]),
         )

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'gtm',
     'djgeojson',
+    'mptt',
 ]
 
 MIDDLEWARE = [

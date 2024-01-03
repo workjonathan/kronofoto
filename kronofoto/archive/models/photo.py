@@ -104,7 +104,6 @@ class PhotoBase(models.Model):
     terms = models.ManyToManyField(Term, blank=True)
     photographer = models.ForeignKey(
         Donor, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_photographed",
-
     )
     address = models.CharField(max_length=128, blank=True, db_index=True)
     city = models.CharField(max_length=128, blank=True, db_index=True)
@@ -112,8 +111,7 @@ class PhotoBase(models.Model):
     state = models.CharField(max_length=64, blank=True, db_index=True)
     country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     place = models.ForeignKey(
-        Place, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_place",
-
+        Place, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_place"
     )
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)

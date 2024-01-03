@@ -26,18 +26,20 @@ class Command(BaseCommand):
         with open(geojson, 'r') as inf:
             data = json.load(inf)
             placetype, _ = PlaceType.objects.get_or_create(name='Country')
-            Place.objects.all().delete()
-            for feature in data['features']:
-                properties = feature['properties']
-                name = properties['COUNTRY']
-                print(name)
-                if feature['geometry']['type'] == "Polygon":
-                    polygons = [Polygon(*feature['geometry']['coordinates'])]
-                else:
-                    polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
-                geom = MultiPolygon(*polygons)
-                record = Place.objects.create(place_type=placetype, name=name, parent=None, geom=geom.wkt)
-                record.refresh_from_db()
+            with Place.objects.disable_mptt_updates():
+                Place.objects.all().delete()
+                for feature in data['features']:
+                    properties = feature['properties']
+                    name = properties['COUNTRY']
+                    print(name)
+                    if feature['geometry']['type'] == "Polygon":
+                        polygons = [Polygon(*feature['geometry']['coordinates'])]
+                    else:
+                        polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
+                    geom = MultiPolygon(*polygons)
+                    Place.objects.create(place_type=placetype, name=name, geom=geom.wkt, parent=None)
+                #record = Place.objects.create(place_type=placetype, name=name, parent=None, geom=geom.wkt)
+                #record.refresh_from_db()
                 # certain shapes will not go into sqlite. I am hoping this is sqlite specific.
                 #if record.geom == None:
                 #    #record.geom = geom.wkt
