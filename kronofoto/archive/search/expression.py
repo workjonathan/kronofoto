@@ -486,7 +486,7 @@ class PhotographerExactlyValue(ValueBase):
     value: str
 
     def serialize(self):
-        return 'photographer_exact:{}'.format(self.value.id)
+        return 'photographer_exact:{}'.format(self.value)
 
     def get_search_value(self):
         return self.value
