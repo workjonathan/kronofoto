@@ -1,11 +1,30 @@
 from django.contrib.gis.db import models
+from django.db.models.functions import Concat
 from mptt.models import MPTTModel, TreeForeignKey
 
 
 class PlaceType(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
+
+    def name_places(self):
+        if self.name == "Country":
+            self.place_set.all().update(fullname=models.F("name"))
+        elif self.name == "US State":
+            self.place_set.all().update(fullname=Concat("name", models.Value(", USA")))
+        elif self.name == "US County":
+            updates = list(self.place_set.all().annotate(newfullname=Concat("name", models.Value(" County, "), "parent__name")))
+            for place in updates:
+                place.fullname = place.newfullname
+            Place.objects.bulk_update(updates, ['fullname'])
+        elif self.name == "US Town":
+            updates = list(self.place_set.all().annotate(newfullname=Concat("name", models.Value(", "), "parent__name")))
+            for place in updates:
+                place.fullname = place.newfullname
+            Place.objects.bulk_update(updates, ['fullname'])
+
     def __str__(self):
         return self.name
+
     class Meta:
         indexes = (
             models.Index(fields=['name']),
@@ -16,6 +35,7 @@ class Place(MPTTModel):
     name = models.CharField(max_length=64, null=False, blank=False)
     geom = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey('self', related_name='children', null=True, db_index=True, on_delete=models.PROTECT)
+    fullname = models.CharField(max_length=128, null=False, default="")
 
     class MPTTMeta:
         order_insertion_by = ['place_type', 'name']
@@ -39,6 +59,7 @@ class Place(MPTTModel):
     class Meta:
         indexes = (
             models.Index(fields=['name']),
+            models.Index(fields=['fullname']),
             models.Index(fields=['place_type', 'name', "parent"]),
             #models.Index(fields=['tree_id', 'id', "lft"]),
         )
