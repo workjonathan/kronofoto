@@ -268,6 +268,7 @@ class LogoSvg(TemplateView):
         if 'short_name' in self.kwargs:
             templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
         templates.append(self.template_name)
+        print(templates)
         return templates
 
     def get_context_data(self, theme='skyblue', short_name='us'):

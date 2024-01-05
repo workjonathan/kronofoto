@@ -11,6 +11,7 @@ from .models import Photo
 def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> Dict[str, Any]:
     context: Dict[str, Any] = {}
     if 'kronofoto' in resolve(request.path_info).app_names:
+        short_name = resolve(request.path_info).kwargs.get('short_name') # theme should go in base.py.
         hxheaders = dict()
         hxheaders['Constraint'] = request.headers.get('Constraint', None)
         hxheaders['Embedded'] = request.headers.get('Embedded', 'false')
