@@ -94,8 +94,10 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
         *build_content_urls("all", with_names=False, kwargs={}),
         *build_content_urls("<slug:category>", with_names=False, kwargs={}),
     ])),
-    path('logo.svg/<str:theme>', LogoSvg.as_view(), name='logosvg'),
-    path('logo-small.svg/<str:theme>', LogoSvgSmall.as_view(), name='logosvgsmall'),
+    path('logo.svg/<str:theme>', LogoSvg.as_view()),
+    path('logo-small.svg/<str:theme>', LogoSvgSmall.as_view()),
+    path('<str:theme>/logo.svg', LogoSvg.as_view(), name='logosvg'),
+    path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
     *directory('collections', views.CollectionCreate.as_view(), name='collection-create', children=include([
         path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     ])),
