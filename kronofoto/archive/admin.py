@@ -3,6 +3,7 @@ from urllib.parse import quote as urlquote
 from django.contrib import admin as base_admin
 from django.contrib.admin.utils import quote
 from django.core.files.base import ContentFile
+from mptt.admin import MPTTModelAdmin # type: ignore
 from django.contrib.auth.models import User, Permission, Group
 from django.contrib.admin.models import LogEntry, ADDITION, DELETION
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
@@ -581,7 +582,6 @@ class CSVRecordAdmin(admin.ModelAdmin):
         return qs.filter(photo__isnull=True)
 
 
-from mptt.admin import MPTTModelAdmin
 
 @base_admin.register(Place)
 class PlaceAdmin(MPTTModelAdmin):

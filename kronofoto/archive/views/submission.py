@@ -28,9 +28,9 @@ from django import forms
 class TermChoices:
     items: Iterable[Term]
 
-    def choices(self) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
-        term_groups: Dict[Optional[str], List[Tuple[int, str]]] = {}
-        other: List[Tuple[int, str]] = []
+    def choices(self) -> List[Tuple[Optional[str], List[Tuple[int, Term]]]]:
+        term_groups: Dict[Optional[str], List[Tuple[int, Term]]] = {}
+        other: List[Tuple[int, Term]] = []
         for term in self.items:
             if term.group:
                 term_groups.setdefault(term.group.name, [])
@@ -63,6 +63,7 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
     prefix = "submission"
     required_css_class = "required"
     def __init__(self, *args: Any, force_archive: Archive, submission_form_attrs: Type[SubmissionFormAttrs] = SubmissionFormAttrs, **kwargs: Any):
+        self.grouper = TermChoices
         super().__init__(*args, force_archive=force_archive, label_suffix="", **kwargs)
         form_attrs = submission_form_attrs(force_archive)
 
@@ -167,8 +168,8 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         }
 
 
-    def get_term_choices(self, queryset: QuerySet, grouper: Type[TermChoices] = TermChoices) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
-        return grouper(queryset).choices()
+    def get_term_choices(self, queryset: QuerySet) -> List[Tuple[Optional[str], List[Tuple[int, Term]]]]:
+        return self.grouper(queryset).choices()
 
 class SubmissionImageForm(forms.Form):
     image = forms.ImageField()
@@ -276,11 +277,11 @@ class TermListFactory:
     def get_terms(self) -> QuerySet[Term]:
         return self.get_term_lister().get_terms()
 
-    def get_term_choices(self) -> List[Tuple[Optional[str], List[Tuple[int, str]]]]:
+    def get_term_choices(self) -> List[Tuple[Optional[str], List[Tuple[int, Term]]]]:
         terms = self.get_terms()
         return self.get_term_grouper(terms).choices()
 
-    def get_term_widget(self, *, choices: List[Tuple[Optional[str], List[Tuple[int, str]]]]) -> forms.Widget:
+    def get_term_widget(self, *, choices: List[Tuple[Optional[str], List[Tuple[int, Term]]]]) -> forms.Widget:
         return SelectMultipleTerms(
             choices=choices,
             attrs=SubmissionFormAttrs(self.archive).term_attrs(),
