@@ -215,13 +215,13 @@ class FixedResizer(ResizerBase):
         original_origin_x = self.original_width / 2
         original_origin_y = self.original_height / 4
         output_ratio = self.width/self.height
-        adjusted_output_width = min(self.width, self.height * output_ratio)
-        adjusted_output_height = min(self.height, self.width / output_ratio)
+        adjusted_output_width = min(self.original_width, self.original_height * output_ratio)
+        adjusted_output_height = min(self.original_height, self.original_width / output_ratio)
         adjusted_origin_x = adjusted_output_width / 2
         adjusted_origin_y = adjusted_output_height / 4
         xoff = original_origin_x - adjusted_origin_x
         yoff = original_origin_y - adjusted_origin_y
-        return (xoff, yoff, xoff+self.width, yoff+self.height)
+        return (xoff, yoff, xoff+adjusted_output_width, yoff+adjusted_output_height)
 
     def crop_image(self, *, image):
         return image.crop(self.crop_coords)
