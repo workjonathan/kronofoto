@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from django.forms import widgets
 from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place
 from .models.photosphere import MainStreetSet
+from mptt.admin import MPTTModelAdmin # type: ignore
 from .models.photo import Submission
 from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
 from .models.category import Category, ValidCategory
