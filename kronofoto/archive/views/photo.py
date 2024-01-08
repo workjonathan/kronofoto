@@ -278,9 +278,11 @@ class LogoSvg(TemplateView):
         return context
 
     @cache_control(max_age=60*60, public=True)
+    @vary_on_headers()
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
         response['Content-Type'] = 'image/svg+xml'
+        response.override_vary = ""
         return response
 
 class LogoSvgSmall(TemplateView):
