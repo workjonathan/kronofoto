@@ -23,6 +23,7 @@ import random
 from itertools import cycle, chain, islice
 from dataclasses import dataclass
 import json
+from django.utils.cache import patch_vary_headers
 
 class Thumbnail(TypedDict):
     url: str
@@ -191,6 +192,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
     def render(self, context, **kwargs):
         response = super().render_to_response(context, **kwargs)
+        patch_vary_headers(response, ['hx-target'])
         return response
 
     def render_to_response(self, context, **kwargs):
