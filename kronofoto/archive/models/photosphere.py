@@ -11,6 +11,7 @@ from PIL.Image import Exif
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.geos import Point
 from typing import Tuple
+from .photo import Photo
 
 class IncompleteGPSInfo(Exception):
     pass
@@ -38,7 +39,7 @@ class PhotoSphere(models.Model):
         default=0,
         validators=[MinValueValidator(limit_value=-180), MaxValueValidator(limit_value=180)],
     )
-    photos = models.ManyToManyField("Photo", through="PhotoSpherePair")
+    photos = models.ManyToManyField(Photo, through="archive.PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
     mainstreetset = models.ForeignKey(MainStreetSet, default=None, null=True, on_delete=models.SET_NULL)
     links = models.ManyToManyField("self", symmetrical=True, blank=True)

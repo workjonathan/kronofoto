@@ -182,9 +182,9 @@ class Photo(PhotoBase):
         constraints = [
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
-        index_together = [
-            ['year', 'is_published'],
-        ]
+        indexes = (
+            models.Index(fields=['year', 'is_published']),
+        )
 
     def page_number(self):
         return {'year:gte': self.year, 'id:gt': self.id-1}

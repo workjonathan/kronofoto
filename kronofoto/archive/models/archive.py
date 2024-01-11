@@ -12,8 +12,8 @@ class Archive(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False)
     cms_root = models.CharField(max_length=16, null=False, blank=False)
     slug = models.SlugField(unique=True, blank=False)
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="ArchiveUserPermission")
-    groups = models.ManyToManyField(Group, through="ArchiveGroupPermission")
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="archive.ArchiveUserPermission")
+    groups = models.ManyToManyField(Group, through="archive.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
 
     def __str__(self) -> str:

@@ -17,9 +17,3 @@ class WordCount(models.Model):
         unique_together = [
             ('word', 'field', 'photo')
         ]
-        index_together = [
-            ('word', 'field', 'photo')
-        ]
-
-
-

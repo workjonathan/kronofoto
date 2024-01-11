@@ -24,6 +24,7 @@ from itertools import cycle, chain, islice
 from dataclasses import dataclass
 import json
 from django.utils.cache import patch_vary_headers
+from django.utils.decorators import method_decorator
 
 class Thumbnail(TypedDict):
     url: str
@@ -253,7 +254,7 @@ class TimelineSvg(TemplateView):
         response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
         return response
 
-    @cache_control(max_age=60*60, public=True)
+    @method_decorator(cache_control(max_age=60*60, public=True))
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
         response['Vary'] = 'Constraint'
@@ -279,7 +280,7 @@ class LogoSvg(TemplateView):
         }
         return context
 
-    @cache_control(max_age=60*60, public=True)
+    @method_decorator(cache_control(max_age=60*60, public=True))
     @vary_on_headers()
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
@@ -302,7 +303,7 @@ class LogoSvgSmall(TemplateView):
         }
         return context
 
-    @cache_control(max_age=60*60, public=True)
+    @method_decorator(cache_control(max_age=60*60, public=True))
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
         response['Content-Type'] = 'image/svg+xml'

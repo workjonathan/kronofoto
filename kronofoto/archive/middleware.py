@@ -13,7 +13,7 @@ class CorsMiddleware:
         if 'kronofoto' in resolve(request.path_info).app_names:
             response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
-            patch_vary_headers(response, ['embedded', 'constraint', 'hx-request'])
+            patch_vary_headers(response, ['embedded', 'constraint', 'hx-request']) # type: ignore
         return response
 
 class OverrideVaryMiddleware:

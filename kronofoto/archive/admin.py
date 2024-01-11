@@ -178,10 +178,10 @@ class CategoryAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     search_fields = ['tag']
 
-    def get_readonly_fields(self, request: HttpRequest, obj: Optional[Tag]=None) -> Sequence[str]:
-        fields = super().get_readonly_fields(request, obj)
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional[Tag]=None) -> List[str]:
+        fields = list(super().get_readonly_fields(request, obj))
         if obj:
-            fields = list(fields) + ['tag']
+            fields = fields + ['tag']
         return fields
 
 
@@ -511,7 +511,7 @@ class MainstreetSetIsSetFilter(StandardSimpleListFilter):
 
 
 @admin.register(PhotoSphere)
-class PhotoSphereAdmin(admin.OSMGeoAdmin):
+class PhotoSphereAdmin(admin.GISModelAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
     list_filter = (MainstreetSetIsSetFilter,) # should be deleted when db constraint is enabled
@@ -590,7 +590,7 @@ class PlaceAdmin(MPTTModelAdmin):
     list_display = ['name', "place_type"]
 
 
-class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.OSMGeoAdmin):
+class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.GISModelAdmin):
     autocomplete_fields = ['donor', 'scanner', 'photographer']
     raw_id_fields = ['place']
     def get_urls(self) -> List[URLPattern]:
@@ -1256,7 +1256,7 @@ class block_group_escalation:
 
     def __enter__(self) -> None:
         self.changeable_archive_permissions = self.editor.get_archive_permissions()
-        self.old_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all())
+        self.old_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all()) # type: ignore
         self.old_archive_permissions = self.group_analyst.get_archive_permissions()
 
         self.old_perms = set(self.group.permissions.all())
@@ -1266,14 +1266,14 @@ class block_group_escalation:
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         new_perms = set(self.group.permissions.all())
         self.group.permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
-        new_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all())
+        new_archives = set(agp.archive for agp in self.group.archivegrouppermission_set.all()) # type: ignore
 
         new_archive_permissions = self.group_analyst.get_archive_permissions()
         changed_archive_perms = self.old_archives | new_archives
         for related in changed_archive_perms:
             assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
             try:
-                obj = self.group.archivegrouppermission_set.get(archive__id=related.id)
+                obj = self.group.archivegrouppermission_set.get(archive__id=related.id) # type: ignore
                 if len(assign) == 0:
                     obj.delete()
                 else:

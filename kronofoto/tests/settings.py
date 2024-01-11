@@ -69,3 +69,4 @@ AUTHENTICATION_BACKENDS = ['archive.auth.backends.ArchiveBackend']
 KF_URL_SCHEME = ""
 GOOGLE_RECAPTCHA3_SITE_KEY = 'google_test_key'
 GOOGLE_RECAPTCHA3_SECRET_KEY = 'google_secret_key'
+USE_TZ = True

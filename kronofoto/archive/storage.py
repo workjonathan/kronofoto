@@ -1,6 +1,6 @@
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import DefaultStorage
 
-class OverwriteStorage(get_storage_class()):
+class OverwriteStorage(DefaultStorage):
     def _save(self, name, contents):
         self.delete(name)
         return super()._save(name, contents)

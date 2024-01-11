@@ -440,7 +440,7 @@ class UserAdminTests(TestCase):
         group = Group.objects.create(name='groupname')
         group.permissions.add(*permissions)
         user2.groups.add(group)
-        self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
+        self.assertQuerySetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
 
     @hsettings(max_examples=10)
     @given(st.data(), from_model(Archive, id=st.none()))
@@ -464,7 +464,7 @@ class UserAdminTests(TestCase):
         through = user2.archive_set.through.objects.create(archive=archive, user=user2)
         through.permission.set(perms3)
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
-        self.assertQuerysetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
+        self.assertQuerySetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
     @hsettings(deadline=None, max_examples=1)
     @given(
