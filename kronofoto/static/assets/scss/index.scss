@@ -4,28 +4,43 @@
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
 @use 'components/timeline' as timeline;
-
 @use 'typography' as typography;
 
+body, #kfroot {
+  container-type: inline-size;
+}
+
+#kfroot {
+  aspect-ratio: 4 / 3;
+}
+
+#kfroot #app.zoom-opened {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0px;
+  left: 0px;
+}
+
 // Foundation Dependencies
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/true';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/contain';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/purge';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/remove';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/replace';
-@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/to-list';
+@import 'foundation/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+@import 'foundation/_vendor/sassy-lists/stylesheets/helpers/true';
+@import 'foundation/_vendor/sassy-lists/stylesheets/functions/contain';
+@import 'foundation/_vendor/sassy-lists/stylesheets/functions/purge';
+@import 'foundation/_vendor/sassy-lists/stylesheets/functions/remove';
+@import 'foundation/_vendor/sassy-lists/stylesheets/functions/replace';
+@import 'foundation/_vendor/sassy-lists/stylesheets/functions/to-list';
 
 // Foundation Utilities
-@import 'foundation-sites/scss/util/util';
+@import 'foundation/scss/util/util';
 
 // Foundation Global styles
-@import 'foundation-sites/scss/global';
-@import 'foundation-sites/scss/typography/typography';
+@import 'foundation/scss/global';
+@import 'foundation/scss/typography/typography';
 
 // Foundation Grids
-@import 'foundation-sites/scss/grid/grid';
-@import 'foundation-sites/scss/xy-grid/xy-grid';
+@import 'foundation/scss/grid/grid';
+@import 'foundation/scss/xy-grid/xy-grid';
 
 @import 'kronofoto';
 @include typography.styles;
@@ -47,15 +62,15 @@
 @import 'components/search';
 
 // Foundation Components
-@import 'foundation-sites/scss/components/switch';
-@import 'foundation-sites/scss/components/tooltip';
-@import 'foundation-sites/scss/components/callout';
+@import 'foundation/scss/components/switch';
+@import 'foundation/scss/components/tooltip';
+@import 'foundation/scss/components/callout';
 
 // Foundation Helpers
-@import 'foundation-sites/scss/components/float';
-@import 'foundation-sites/scss/components/visibility';
-@import 'foundation-sites/scss/prototype/prototype';
-@import 'foundation-sites/scss/components/flex';
+@import 'foundation/scss/components/float';
+@import 'foundation/scss/components/visibility';
+@import 'foundation/scss/prototype/prototype';
+@import 'foundation/scss/components/flex';
 
 @include foundation-switch;
 @include foundation-tooltip;
@@ -74,6 +89,13 @@
   font-family: var(--fp-main-font);
 }
 
+html, body {
+  height: 100%;
+}
+
+#app {
+  height: calc(100% - 80px);
+}
 
 img {
   /*max-height: calc(100vh - 278px);*/
@@ -81,6 +103,7 @@ img {
 
 main {
   overflow-x: hidden;
+  height: 100%;
 }
 
 body {
@@ -133,11 +156,23 @@ select {
 }
 
 .sticky-parent {
-  position: sticky;
-  bottom: 0px;
-  left: 100%;
+  @include breakpoint(large up) {
+    position: sticky;
+    bottom: 0px;
+    left: 100%;
+  }
 }
 
 .foundation-mq {
   font-family: "small=0em&medium=40em&large=64em&xlarge=75em&xxlarge=90em";
+}
+
+@include breakpoint(small only) {
+  .small-12:not[first-child] {
+    margin-top: 20px;
+  }
+}
+
+#kfroot {
+  position: relative;
 }
