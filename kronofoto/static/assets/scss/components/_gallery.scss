@@ -1,5 +1,6 @@
 //@use 'timeline' as timeline;
 //@use 'header' as header;
+@import'foundation/scss/global';
 
 // TODO: move to peer @use
 $thumbnailsHeight: 90px;
@@ -10,8 +11,8 @@ $headerHeight: 80px;
 $galleryBg: #4C4C4C;
 $gallerySidesBg: #666666;
 $gallerySidesSize: 260px;
-$galleryWidth: calc(100vw - 25%);
-$galleryHeight: calc(100vh - $thumbnailsHeight - $timelineHeight - $headerHeight);
+$galleryWidth: calc(100% - 25%);
+$galleryHeight: calc(100% - $thumbnailsHeight - $timelineHeight);
 $thumbnailsHeight: 120px;
 $timelineHeight: 65px;
 $headerHeight: 80px;
@@ -27,7 +28,10 @@ $headerHeight: 80px;
 
     &__image {
       height: 100%;
-      width: $galleryWidth;
+      width: 100%;
+      @include breakpoint(large up) {
+        width: $galleryWidth;
+      }
       background: $galleryBg;
       figure {
         width: 100%;
@@ -47,13 +51,15 @@ $headerHeight: 80px;
     }
 
     &.hide-nav .control {
-      opacity: 0 !important;
+      @include breakpoint(large up) {
+        opacity: 0 !important;
+      }
     }
 
     .control {
       position: absolute;
       height: 100%;
-      width: 50vw;
+      width: 50%;
       top: 0px;
       z-index: 1;
     }
@@ -86,7 +92,10 @@ $headerHeight: 80px;
       position: absolute;
       top: 0px;
       left: 50%;
-      width: $galleryWidth;
+      width: 100%;
+      @include breakpoint(large) {
+        width: $galleryWidth;
+      }
       height: 50px;
       display: flex;
       justify-content: flex-end;
@@ -111,8 +120,10 @@ $headerHeight: 80px;
 
     &__controls-top {
       background: transparent linear-gradient(180deg, #0000004D 0%, #00000000 100%) 0% 0% no-repeat padding-box;
-      .hide-nav & {
-        top: -50px !important;
+      @include breakpoint(large) {
+        .hide-nav & {
+          top: -50px !important;
+        }
       }
     }
 
@@ -121,13 +132,18 @@ $headerHeight: 80px;
       top: auto;
       bottom: 0px;
       z-index: 200;
-      .hide-nav & {
-        bottom: -50px !important;
+      @include breakpoint(large) {
+        .hide-nav & {
+          bottom: -50px !important;
+        }
       }
     }
 
     &__popups {
-      width: $galleryWidth;
+      width: 100%;
+      @include breakpoint(large up) {
+        width: $galleryWidth;
+      }
       position: absolute;
       bottom: 0px;
       left: 50%;
@@ -157,7 +173,7 @@ $headerHeight: 80px;
     .control {
       position: fixed;
       z-index: 9999999;
-      width: 12.5vw;
+      width: 12.5%;
       cursor: pointer;
       transform: translateY(-50%);
       top: 50%;
@@ -237,8 +253,8 @@ $headerHeight: 80px;
     left: 0px;
     z-index: 999999;
     background-color: #000 !important;
-    height: calc(100vh);
-    width: calc(100vw);
+    height: calc(100%);
+    width: calc(100%);
     background-repeat: no-repeat;
     background-position: center top;
     background-size: contain;

@@ -169,7 +169,7 @@
   }
 }
 
-.main-nav_left {
+.main-nav__left {
   flex-grow: 1;
   margin-right: 10px;
   @include breakpoint(large up) {
@@ -177,7 +177,22 @@
   }
 }
 
-.main-nav_right {
+.main-nav__title {
+  font-size: 16px;
+  font-weight: $font-weight-regular;
+  color: #666;
+  margin-bottom: 0px;
+}
+
+#kfroot {
+  .main-nav__left, .main-nav__right {
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-basis: 25%;
+  }
+}
+
+.main-nav__right {
   justify-content: flex-end;
   @include breakpoint(medium up) {
     flex-grow: 1;
@@ -201,12 +216,13 @@
   }
 }
 
-.main-nav_left, .main-nav_right {
+.main-nav__left, .main-nav__right {
   display: flex;
   align-items: center;
 }
 
-.main-nav_center {
+.main-nav__center {
+
 
   @include breakpoint(small up) {
 
@@ -215,7 +231,7 @@
     width: 347px;
   }
   @include breakpoint(large up) {
-    width: 28vw;
+    width: 28%;
   }
   position: relative;
   display: flex;
