@@ -13,3 +13,4 @@ from .grid import GridView
 from .categories import category_list
 from .submission import submission, list_terms, define_terms
 from .exhibit import exhibit
+from .images import resize_image

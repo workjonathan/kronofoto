@@ -1,5 +1,8 @@
 from django.contrib.gis.db import models
+import base64
+import json
 from django.http import QueryDict
+from django.core.signing import Signer
 from django.db import transaction
 from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
 from django.db.models.functions import Lower
@@ -73,7 +76,14 @@ def format_location(force_country=False, **kwargs):
 
 
 def get_original_path(instance, filename):
-    return path.join('original', '{}.jpg'.format(instance.uuid))
+    created = datetime.now() if instance.created is None else instance.created
+    return path.join(
+        'original',
+        str(created.year),
+        str(created.month),
+        str(created.day),
+        '{}.jpg'.format(instance.uuid)
+    )
 
 def get_submission_path(instance, filename):
     return path.join('submissions', '{}.jpg'.format(instance.uuid))
@@ -234,10 +244,48 @@ class FixedResizer(ResizerBase):
     def output_width(self):
         return self.width
 
+@dataclass
+class ImageData:
+    height: int
+    width: int
+    url: str
+    name: str
+
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
     h700 = models.ImageField(null=True, editable=False)
+    @property
+    def h700(self):
+        block1 = self.id & 255
+        block2 = (self.id >> 8) & 255
+        signer = Signer(salt="{}/{}".format(block1, block2))
+        profile = signer.sign_object({
+            "height": 700,
+            "path": self.original.name,
+        })
+        return ImageData(
+            height=700,
+            width=round(self.original.width*700/self.original.height),
+            url=reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': profile.split(':')[0], 'profile2': profile.split(":")[1]}),
+            name="thumbnail",
+        )
     thumbnail = models.ImageField(null=True, editable=False)
+    @property
+    def thumbnail(self):
+        block1 = self.id & 255
+        block2 = (self.id >> 8) & 255
+        signer = Signer(salt="{}/{}".format(block1, block2))
+        profile = signer.sign_object({
+            "height": 75,
+            "width": 75,
+            "path": self.original.name,
+        })
+        return ImageData(
+            height=75,
+            width=75,
+            url=reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': profile.split(':')[0], 'profile2': profile.split(":")[1]}),
+            name="thumbnail",
+    )
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
@@ -416,26 +464,26 @@ class Photo(PhotoBase):
         elif size == 'h700':
             return Photo.Saver(uuid=uuid, path="h700/{}.jpg")
 
-    def save(self, *args, **kwargs):
-        if not self.thumbnail:
-            Image.MAX_IMAGE_PIXELS = 195670000
-            filedata = self.original.read()
-            # TODO: when inevitably getting "too many files open" errors during
-            # imports in the future, closing the file here, as commented out
-            # below, is not the correct fix. It must either be closed during the
-            # import script or this must be reworked. Closing it here results in
-            # runtime errors in tests and in the admin backend.
-            # self.original.close()
-            with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-                w, h = image.size
-                sizes = ["thumbnail", "h700"]
-                for size in sizes:
-                    resizer = self.resizer(size=size, original_height=h, original_width=w)
-                    img = resizer.resize(image=image)
+    #def save(self, *args, **kwargs):
+    #    if not self.thumbnail:
+    #        Image.MAX_IMAGE_PIXELS = 195670000
+    #        filedata = self.original.read()
+    #        # TODO: when inevitably getting "too many files open" errors during
+    #        # imports in the future, closing the file here, as commented out
+    #        # below, is not the correct fix. It must either be closed during the
+    #        # import script or this must be reworked. Closing it here results in
+    #        # runtime errors in tests and in the admin backend.
+    #        # self.original.close()
+    #        with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
+    #            w, h = image.size
+    #            sizes = ["thumbnail", "h700"]
+    #            for size in sizes:
+    #                resizer = self.resizer(size=size, original_height=h, original_width=w)
+    #                img = resizer.resize(image=image)
 
-                    saver = self.saver(size=size, uuid=self.uuid)
-                    getattr(self, size).name = saver.save(image=image)
-        super().save(*args, **kwargs)
+    #                saver = self.saver(size=size, uuid=self.uuid)
+    #                getattr(self, size).name = saver.save(image=img)
+    #    super().save(*args, **kwargs)
 
 
     def describe(self, user=None):

@@ -22,7 +22,7 @@
 
 <ul class="photo-grid">
     {% for photo in page_obj %}
-    <li><a href="{% object_url photo url_kwargs get_params %}" hx-target="#app" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{{ photo.h700.url }}"/></a></li>
+    <li><a href="{% object_url photo url_kwargs get_params %}" hx-target="#app" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}"/></a></li>
     {% endfor %}
 </ul>
 
