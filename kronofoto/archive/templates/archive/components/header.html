@@ -4,7 +4,7 @@
 <header>
   <nav aria-label="Main navigation">
     <div class="main-nav">
-      <div class="main-nav_left">
+      <div class="main-nav__left">
         <div id="logo">
           <a href="{% url "kronofoto:random-image" %}">
             <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Iowa Logo">
@@ -20,8 +20,8 @@
 
       </div> <!-- end nav left -->
 
-      <div class="main-nav_center">
-          
+      <div class="main-nav__center">
+
           {% block searchbox %}
           {% include "archive/search-box.html" %}
           {% endblock %}
@@ -35,7 +35,7 @@
       </div>
         <!-- end nav center -->
 
-      <div class="main-nav_right">
+      <div class="main-nav__right">
 
           <div id="new-label_container" class="new-label_container show-for-medium" data-tooltip title="New" data-position="bottom" data-alignment="center">
               <a href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=is_new%3Atrue">
@@ -59,7 +59,7 @@
         <li>Auto</li>
         -->
       {% endcomment %}
-        <div class="login-container show-for-medium" data-tooltip title="Account" data-position="bottom" data-alignment="center">
+        <div class="login-container" data-tooltip title="Account" data-position="bottom" data-alignment="center">
           {% make_login %}
         </div>
         <div class="hamburger-container">
