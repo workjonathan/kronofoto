@@ -1,11 +1,11 @@
 {% load static %}
 
 <div class="row">
-    <div class="columns large-3">
+    <div class="columns small-12 medium-12 large-3">
         <h1 class="h1">ID#: {{ object.accession_number }}</h1>
         <a class="button" href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg">Download</a>
     </div>
-    <div class="columns large-4">
+    <div class="columns small-12 medium-12 large-4">
         <h4 class="h4">License</h4>
         <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
             <img alt="Creative Commons License" src="{% static "assets/images/Creative-Commons-Icons.svg" %}" style="width: 190px; height: auto; border-width: 0px" />
@@ -13,7 +13,7 @@
         <p>&nbsp;</p>
         <p><a href="https://creativecommons.org/licenses/by-sa/4.0/"><strong>Attribution-ShareAlike 4.0<br/>International (CC-BY-SA 4.0)</strong></a></p>
     </div>
-    <div class="columns large-5">
+    <div class="columns small-12 medium-12 large-5">
         <div class="form">
             <h4 class="h4">Attribution</h4>
             <textarea rows="4" id="attribution-input">“{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ citation_url }},” CC-BY-SA 4.0</textarea>
