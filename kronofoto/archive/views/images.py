@@ -6,9 +6,10 @@ from io import BytesIO
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str, profile2: str) -> HttpResponse:
+def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) -> HttpResponse:
     signer = Signer(salt=f"{block1}/{block2}")
-    profile = f"{profile1}:{profile2}"
+    spec = request.GET.get('i')
+    profile = f"{spec}:{profile1}"
     try:
         decoded = signer.unsign_object(profile)
         Image.MAX_IMAGE_PIXELS = 195670000
@@ -25,7 +26,7 @@ def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str, 
         bytes = BytesIO()
         img.save(bytes, format="JPEG", quality=60)
         content = bytes.getvalue()
-        name = "images/{}/{}/{}/{}.jpg".format(block1, block2, profile1, profile2)
+        name = "images/{}/{}/{}.jpg".format(block1, block2, profile1)
         if not default_storage.exists(name):
             default_storage.save(
                 name,

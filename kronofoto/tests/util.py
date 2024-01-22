@@ -79,12 +79,6 @@ def photos(*, archive=None, **kwargs):
         original=st.builds(
             lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
         ),
-        h700=st.builds(
-            lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
-        ),
-        thumbnail=st.builds(
-            lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')
-        ),
         archive=archive if archive is not None else archives(),
         category=from_model(Category, id=st.none()),
         **kwargs,

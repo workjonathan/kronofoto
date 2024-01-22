@@ -253,37 +253,35 @@ class ImageData:
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
-    h700 = models.ImageField(null=True, editable=False)
     @property
     def h700(self):
         block1 = self.id & 255
         block2 = (self.id >> 8) & 255
         signer = Signer(salt="{}/{}".format(block1, block2))
-        profile = signer.sign_object({
+        content, sig = signer.sign_object({
             "height": 700,
             "path": self.original.name,
-        })
+        }).split(':')
         return ImageData(
             height=700,
             width=round(self.original.width*700/self.original.height),
-            url=reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': profile.split(':')[0], 'profile2': profile.split(":")[1]}),
+            url="{}?i={}".format(reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content),
             name="thumbnail",
         )
-    thumbnail = models.ImageField(null=True, editable=False)
     @property
     def thumbnail(self):
         block1 = self.id & 255
         block2 = (self.id >> 8) & 255
         signer = Signer(salt="{}/{}".format(block1, block2))
-        profile = signer.sign_object({
+        content, sig = signer.sign_object({
             "height": 75,
             "width": 75,
             "path": self.original.name,
-        })
+        }).split(":")
         return ImageData(
             height=75,
             width=75,
-            url=reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': profile.split(':')[0], 'profile2': profile.split(":")[1]}),
+            url="{}?i={}".format(reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content),
             name="thumbnail",
     )
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
@@ -515,58 +513,6 @@ class Photo(PhotoBase):
 
 def get_resized_path(instance, filename):
     return path.join('resized', '{}_{}_{}.jpg'.format(instance.width, instance.height, instance.photo.uuid))
-
-class SizedPhotoQuerySet(models.QuerySet):
-    def get_or_create_fixed_height(self, *, photo, height):
-        with transaction.atomic():
-            try:
-                return self.get(photo=photo, height=height, cropped=False), False
-            except ObjectDoesNotExist:
-                Image.MAX_IMAGE_PIXELS = 195670000
-                filedata = photo.original.read()
-                with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-                    (w, h) = image.size
-                    resizer = FixedHeightResizer(height=height, original_width=w, original_height=h)
-                    img = resizer.resize(image=image)
-                    fp = BytesIO()
-                    img.save(fp, "JPEG")
-                    file = InMemoryUploadedFile(fp, None, f"fixed_height_{photo.id}", "image/jpeg", fp.getbuffer().nbytes, None, None)
-                    return self.update_or_create(photo=photo, width=resizer.output_width, height=resizer.output_height, defaults={"cropped": False, "image":file})
-
-    def get_or_create_thumb(self, *, photo, width, height):
-        with transaction.atomic():
-            try:
-                return self.get(photo=photo, width=width, height=height), False
-            except ObjectDoesNotExist:
-                Image.MAX_IMAGE_PIXELS = 195670000
-                filedata = photo.original.read()
-                with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-                    (w, h) = image.size
-                    resizer = FixedResizer(width=width, height=height, original_width=w, original_height=h)
-                    img = resizer.resize(image=image)
-                    fp = BytesIO()
-                    img.save(fp, "JPEG")
-                    file = InMemoryUploadedFile(fp, None, f"thumb_{photo.id}", "image/jpeg", fp.getbuffer().nbytes, None, None)
-                    return self.create(photo=photo, width=resizer.output_width, height=resizer.output_height, cropped=True, image=file), True
-
-
-class SizedPhoto(models.Model):
-    photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
-    width = models.IntegerField()
-    height = models.IntegerField()
-    cropped = models.BooleanField()
-    image = models.ImageField(upload_to=get_resized_path)
-
-    objects = SizedPhotoQuerySet.as_manager()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['photo', 'width', 'height'], name='unique_photo_size'),
-        ]
-        indexes = [
-            models.Index(fields=['photo', 'width', 'height']),
-            models.Index(fields=['photo', 'width', 'cropped']),
-        ]
 
 
 @dataclass

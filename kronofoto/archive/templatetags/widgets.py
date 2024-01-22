@@ -48,8 +48,10 @@ def image_url(*, id, path, width=None, height=None):
         profile_args['width'] = width
     if height:
         profile_args['height'] = width
-    profile = signer.sign_object(profile_args)
-    return reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': profile.split(':')[0], 'profile2': profile.split(":")[1]})
+    content, sig = signer.sign_object(profile_args).split(':')
+    return "{}?i={}".format(
+        reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content
+    )
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()

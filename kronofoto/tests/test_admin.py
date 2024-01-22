@@ -172,13 +172,19 @@ def test_photosphere_form():
     assert ['title', 'description', 'image'] == list(ma.get_form(request, obj=None).base_fields)
     assert ['title', 'description', 'image', 'heading', 'location', "mainstreetset", "links"] == list(ma.get_form(request, obj=PhotoSphere()).base_fields)
 
+class Photo2:
+    def __init__(self):
+        self.thumbnail = Mock(spec=['url', 'width', 'height'])
+        self.thumbnail.url = 'url'
+        self.thumbnail.width = 123
+        self.thumbnail.height = 456
+        self.h700 = Mock(spec=['url', 'width', 'height'])
+        self.h700.url = 'url'
+        self.h700.width = 123
+        self.h700.height = 456
 def test_photoadmin_thumb():
     ma = PhotoAdmin(model=Photo, admin_site=AdminSite())
-    photo = Photo()
-    photo.thumbnail = Mock(spec=['url', 'width', 'height'])
-    photo.thumbnail.url = 'url'
-    photo.thumbnail.width = 123
-    photo.thumbnail.height = 456
+    photo = Photo2()
     tag = ma.thumb_image(photo)
     assert 'src="url"' in tag
     assert 'width="123"' in tag
@@ -186,11 +192,7 @@ def test_photoadmin_thumb():
 
 def test_photoadmin_h700():
     ma = PhotoAdmin(model=Photo, admin_site=AdminSite())
-    photo = Photo()
-    photo.h700 = Mock(spec=['url', 'width', 'height'])
-    photo.h700.url = 'url'
-    photo.h700.width = 123
-    photo.h700.height = 456
+    photo = Photo2()
     tag = ma.h700_image(photo)
     assert 'src="url"' in tag
     assert 'width="123"' in tag
@@ -199,7 +201,6 @@ def test_photoadmin_h700():
     assert '-' == ma.h700_image(photo)
 
 def test_photoadmin_save_form():
-    #model = Mock()
     ma = PhotoAdmin(model=Photo, admin_site=AdminSite())
     img = BytesIO(small_gif)
     img.name = "small.gif"

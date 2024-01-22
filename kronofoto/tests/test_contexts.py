@@ -29,7 +29,7 @@ class Tests(TestCase):
         archive = Archive.objects.create()
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
-        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'), h700=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'), thumbnail=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
+        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
         permissions = data.draw(st.lists(st.sampled_from(list(Permission.objects.all().order_by('id')))))
         user.user_permissions.add(*permissions)
         from archive.templatetags.permissions import has_view_or_change_permission
