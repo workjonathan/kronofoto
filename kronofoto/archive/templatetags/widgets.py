@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
 from ..models import Photo
+from ..imageutil import ImageSigner
 
 
 register = template.Library()
@@ -40,18 +41,7 @@ def page_links(formatter, page_obj, target=None):
 
 @register.simple_tag(takes_context=False)
 def image_url(*, id, path, width=None, height=None):
-    block1 = id & 255
-    block2 = (id >> 8) & 255
-    signer = Signer(salt="{}/{}".format(block1, block2))
-    profile_args = {"path": path}
-    if width:
-        profile_args['width'] = width
-    if height:
-        profile_args['height'] = width
-    content, sig = signer.sign_object(profile_args).split(':')
-    return "{}?i={}".format(
-        reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content
-    )
+    return ImageSigner(id=id, path=path, width=width, height=height).url
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()
