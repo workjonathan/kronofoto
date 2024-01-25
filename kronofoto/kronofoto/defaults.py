@@ -158,3 +158,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 LOCAL_CONTEXTS = 'https://localcontextshub.org/api/v1/'
 GOOGLE_RECAPTCHA3_SITE_KEY = ''
 GOOGLE_RECAPTCHA3_SECRET_KEY = ''
+IMAGE_CACHE_URL_PREFIX = ""

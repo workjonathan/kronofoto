@@ -128,6 +128,6 @@ urlpatterns = urlpatterns + [
     path("<slug:short_name>/contribute/terms/define", views.define_terms, name="define-terms"),
     path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="archive/submission_received.html"), name="submission-done"),
     path("<slug:short_name>/", include(urlpatterns)),
-    path("images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
+    path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
     path("exhibit-test", views.exhibit),
 ]
