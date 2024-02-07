@@ -9,14 +9,14 @@ def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) 
     spec = request.GET.get('i')
     profile = f"{spec}:{profile1}"
     try:
-        decoded = signer.unsign_object(profile)
+        path, width, height = signer.unsign_object(profile)
         cacher = ImageCacher(
             block1=block1,
             block2=block2,
-            path=decoded['path'],
+            path=path,
             sig=profile1,
-            width=decoded.get('width'),
-            height=decoded.get('height')
+            width=width,
+            height=height,
         )
         return HttpResponse(cacher.precache(), content_type="image/jpeg")
     except BadSignature:

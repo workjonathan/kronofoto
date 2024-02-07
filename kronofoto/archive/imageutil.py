@@ -1,10 +1,10 @@
 from django.core.signing import Signer, BadSignature
 from .models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
-from PIL import Image, ImageOps
+from pyvips import Image, Size, Interesting, Intent, FailOn # type: ignore
 from io import BytesIO
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from typing import Optional, Any, Dict, Union, List
+from typing import Optional, Any, Dict, Union, List, Tuple
 from dataclasses import dataclass
 from functools import cached_property
 from .reverse import reverse
@@ -19,20 +19,15 @@ class ImageCacher:
     height: Optional[int]
 
     def precache(self) -> bytes:
-        Image.MAX_IMAGE_PIXELS = 195670000
-        with default_storage.open(self.path) as infile:
-            image = ImageOps.exif_transpose(Image.open(infile))
-        w, h = image.size
-        if self.width is not None and self.height is not None:
-            resizer: ResizerBase = FixedResizer(width=self.width, height=self.height, original_height=h, original_width=w)
-        elif self.height is not None:
-            resizer = FixedHeightResizer(height=self.height, original_height=h, original_width=w)
-        elif self.width is not None:
-            resizer = FixedWidthResizer(width=self.width, original_height=h, original_width=w)
-        img = resizer.resize(image=image)
-        bytes = BytesIO()
-        img.save(bytes, format="JPEG", quality=60)
-        img_data = bytes.getvalue()
+        img_data = Image.thumbnail(
+            default_storage.path(self.path),
+            self.width,
+            height=self.height,
+            size=Size.BOTH,
+            no_rotate=False,
+            crop=Interesting.ATTENTION,
+            linear=True
+        ).jpegsave_buffer()
         name = "images/{}/{}/{}.jpg".format(self.block1, self.block2, self.sig)
         if not default_storage.exists(name):
             default_storage.save(
@@ -45,8 +40,8 @@ class ImageCacher:
 class ImageSigner:
     id: int
     path: str
-    width: Optional[int]=None
-    height: Optional[int]=None
+    width: int
+    height: int
 
     @property
     def block1(self) -> int:
@@ -73,12 +68,8 @@ class ImageSigner:
         return Signer(salt="{}/{}".format(self.block1, self.block2))
 
     @property
-    def profile_args(self) -> Dict[str, Union[int, str]]:
-        profile_args: Dict[str, Union[int, str]] = {"path": self.path}
-        if self.width:
-            profile_args['width'] = self.width
-        if self.height:
-            profile_args['height'] = self.height
+    def profile_args(self) -> Tuple[str, int, int]:
+        profile_args = (self.path, self.width, self.height)
         return profile_args
 
     @property

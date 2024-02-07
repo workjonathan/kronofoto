@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 import base64
 import json
+from django.core.files.storage import default_storage
 from django.http import QueryDict
 from django.core.signing import Signer
 from django.db import transaction
@@ -255,35 +256,30 @@ class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
     @property
     def h700(self):
-        block1 = self.id & 255
-        block2 = (self.id >> 8) & 255
-        signer = Signer(salt="{}/{}".format(block1, block2))
-        content, sig = signer.sign_object({
-            "height": 700,
-            "path": self.original.name,
-        }).split(':')
+        from ..imageutil import ImageSigner
+        Image.MAX_IMAGE_PIXELS = 195670000
+        with default_storage.open(self.original.name) as infile:
+            image = ImageOps.exif_transpose(Image.open(infile))
+        w, h = image.size
+        sizer = FixedHeightResizer(height=700, original_height=h, original_width=w)
+        signer = ImageSigner(id=self.id, path=self.original.name, width=sizer.output_width, height=sizer.output_height)
         return ImageData(
             height=700,
-            width=round(self.original.width*700/self.original.height),
-            url="{}?i={}".format(reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content),
-            name="thumbnail",
+            width=signer.width,
+            url=signer.url,
+            name="h700",
         )
     @property
     def thumbnail(self):
-        block1 = self.id & 255
-        block2 = (self.id >> 8) & 255
-        signer = Signer(salt="{}/{}".format(block1, block2))
-        content, sig = signer.sign_object({
-            "height": 75,
-            "width": 75,
-            "path": self.original.name,
-        }).split(":")
+        from ..imageutil import ImageSigner
+        signer = ImageSigner(id=self.id, path=self.original.name, width=75, height=75)
         return ImageData(
             height=75,
             width=75,
-            url="{}?i={}".format(reverse("kronofoto:resize-image", kwargs={'block1': block1, 'block2': block2, 'profile1': sig}), content),
+            url=signer.url,
             name="thumbnail",
-    )
+        )
+
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     location_from_google = models.BooleanField(editable=False, default=False)
     location_point = models.PointField(null=True, srid=4326, blank=True)
