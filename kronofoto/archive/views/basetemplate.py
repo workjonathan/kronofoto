@@ -79,7 +79,7 @@ class Theme:
                 name: replace(theme, archive=archive)
                 for name, theme in colors.items()
             }
-            for archive in ('ia', 'ct')
+            for archive in ('ia', 'ct', 'ak')
         }
         themes['us'] = colors
         return ThemeDict(themes)
