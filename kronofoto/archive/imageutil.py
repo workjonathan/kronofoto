@@ -25,7 +25,7 @@ class ImageCacher:
             height=self.height,
             size=Size.BOTH,
             no_rotate=False,
-            crop=Interesting.ATTENTION,
+            crop=Interesting.LOW,
             linear=True
         ).jpegsave_buffer()
         name = "images/{}/{}/{}.jpg".format(self.block1, self.block2, self.sig)

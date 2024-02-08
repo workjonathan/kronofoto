@@ -9,7 +9,13 @@ def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) 
     spec = request.GET.get('i')
     profile = f"{spec}:{profile1}"
     try:
-        path, width, height = signer.unsign_object(profile)
+        unsigned = signer.unsign_object(profile)
+        try:
+            path = unsigned[0]
+            width = unsigned[1]
+            height = unsigned[2]
+        except:
+            return HttpResponse("Not found", status=404)
         cacher = ImageCacher(
             block1=block1,
             block2=block2,

@@ -257,11 +257,7 @@ class Photo(PhotoBase):
     @property
     def h700(self):
         from ..imageutil import ImageSigner
-        Image.MAX_IMAGE_PIXELS = 195670000
-        with default_storage.open(self.original.name) as infile:
-            image = ImageOps.exif_transpose(Image.open(infile))
-        w, h = image.size
-        sizer = FixedHeightResizer(height=700, original_height=h, original_width=w)
+        sizer = FixedHeightResizer(height=700, original_height=self.original.height, original_width=self.original.width)
         signer = ImageSigner(id=self.id, path=self.original.name, width=sizer.output_width, height=sizer.output_height)
         return ImageData(
             height=700,
