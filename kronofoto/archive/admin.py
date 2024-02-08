@@ -1105,13 +1105,6 @@ class PhotoAdmin(PhotoBaseAdmin):
             })
         return field
 
-    def save_form(self, request: HttpRequest, form: Any, change: Any) -> Photo:
-        photo = super().save_form(request, form, change)
-        if len(request.FILES):
-            photo.thumbnail = None
-            photo.h700 = None
-        return photo
-
 class UserTagInline(admin.TabularInline):
     model = PhotoTag.creator.through
     extra = 0

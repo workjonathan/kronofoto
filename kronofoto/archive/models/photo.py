@@ -254,14 +254,22 @@ class ImageData:
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
+    original_height = models.IntegerField(default=0, editable=False)
+    original_width = models.IntegerField(default=0, editable=False)
     @property
     def h700(self):
         from ..imageutil import ImageSigner
-        Image.MAX_IMAGE_PIXELS = 195670000
-        with default_storage.open(self.original.name) as infile:
-            image = ImageOps.exif_transpose(Image.open(infile))
-        w, h = image.size
-        sizer = FixedHeightResizer(height=700, original_height=h, original_width=w)
+        if not self.original:
+            return None
+        if self.original_height == 0 or self.original_width == 0:
+            Image.MAX_IMAGE_PIXELS = 195670000
+            with default_storage.open(self.original.name) as infile:
+                image = ImageOps.exif_transpose(Image.open(infile))
+            w, h = image.size
+            self.original_height = h
+            self.original_width = w
+            self.save()
+        sizer = FixedHeightResizer(height=700, original_height=self.original_height, original_width=self.original_width)
         signer = ImageSigner(id=self.id, path=self.original.name, width=sizer.output_width, height=sizer.output_height)
         return ImageData(
             height=700,
@@ -271,6 +279,8 @@ class Photo(PhotoBase):
         )
     @property
     def thumbnail(self):
+        if not self.original:
+            return None
         from ..imageutil import ImageSigner
         signer = ImageSigner(id=self.id, path=self.original.name, width=75, height=75)
         return ImageData(
