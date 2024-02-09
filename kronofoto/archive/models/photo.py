@@ -174,8 +174,8 @@ class Submission(PhotoBase):
 class ResizerBase:
 
     def resize(self, *, image):
-        img = self.crop_image(image=image)
-        return img.resize(
+        image = self.crop_image(image=image)
+        return image.resize(
             (self.output_width, self.output_height),
             Image.LANCZOS,
         )
@@ -261,19 +261,10 @@ class Photo(PhotoBase):
         from ..imageutil import ImageSigner
         if not self.original:
             return None
-        if self.original_height == 0 or self.original_width == 0:
-            Image.MAX_IMAGE_PIXELS = 195670000
-            with default_storage.open(self.original.name) as infile:
-                image = ImageOps.exif_transpose(Image.open(infile))
-            w, h = image.size
-            self.original_height = h
-            self.original_width = w
-            self.save()
-        sizer = FixedHeightResizer(height=700, original_height=self.original_height, original_width=self.original_width)
-        signer = ImageSigner(id=self.id, path=self.original.name, width=sizer.output_width, height=sizer.output_height)
+        signer = ImageSigner(id=self.id, path=self.original.name, width=0, height=700)
         return ImageData(
             height=700,
-            width=signer.width,
+            width=None,
             url=signer.url,
             name="h700",
         )

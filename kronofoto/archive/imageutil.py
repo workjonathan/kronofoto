@@ -1,6 +1,6 @@
 from django.core.signing import Signer, BadSignature
 from .models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
-from pyvips import Image, Size, Interesting, Intent, FailOn # type: ignore
+from PIL import Image, ImageOps
 from io import BytesIO
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -19,15 +19,20 @@ class ImageCacher:
     height: Optional[int]
 
     def precache(self) -> bytes:
-        img_data = Image.thumbnail(
-            default_storage.path(self.path),
-            self.width,
-            height=self.height,
-            size=Size.BOTH,
-            no_rotate=False,
-            crop=Interesting.ENTROPY,
-            linear=True
-        ).jpegsave_buffer()
+        Image.MAX_IMAGE_PIXELS = 195670000
+        with default_storage.open(self.path) as infile:
+            image = ImageOps.exif_transpose(Image.open(infile))
+        w, h = image.size
+        if self.width and self.height:
+            resizer: ResizerBase = FixedResizer(width=self.width, height=self.height, original_height=h, original_width=w)
+        elif self.height:
+            resizer = FixedHeightResizer(height=self.height, original_height=h, original_width=w)
+        elif self.width:
+            resizer = FixedWidthResizer(width=self.width, original_height=h, original_width=w)
+        img = resizer.resize(image=image)
+        bytes = BytesIO()
+        img.save(bytes, format="JPEG", quality=60)
+        img_data = bytes.getvalue()
         name = "images/{}/{}/{}.jpg".format(self.block1, self.block2, self.sig)
         if not default_storage.exists(name):
             default_storage.save(
