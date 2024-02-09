@@ -1,5 +1,5 @@
 Django>=4.2.*,<5.0.0
-Pillow==10.0.*
+Pillow==10.2.*
 parsy==1.4.0
 django-google-tag-manager==0.0.5
 markdown==3.4.*
@@ -11,3 +11,4 @@ django-stubs-ext>=4.2.2,<4.3.0
 typing-extensions>=4.4.0,<4.5.0
 django-geojson==4.0.*
 django-mptt==0.14.*
+django-select2==8.1.*

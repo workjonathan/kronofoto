@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'gtm',
     'djgeojson',
     'mptt',
+    'django_select2',
 ]
 
 MIDDLEWARE = [

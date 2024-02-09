@@ -62,6 +62,8 @@ class LocationChoiceField(forms.ChoiceField):
 
 
 
+import django_select2.forms
+
 class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
     basic.group = 'BASIC'
@@ -83,8 +85,11 @@ class SearchForm(forms.Form):
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
     endYear.group = 'DATE RANGE'
 
-    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated().order_by('last_name', 'first_name'))
+    donor = forms.ModelChoiceField(required=False, label='',
+        widget=django_select2.forms.Select2Widget(), queryset=Donor.objects.filter_donated())
     donor.group = "CONTRIBUTOR"
+
+
 
     city = LocationChoiceField(required=False, label='', field='city')
     city.group = 'LOCATION'
