@@ -10,6 +10,8 @@ from django.http import QueryDict
 class TermQuerySet(models.QuerySet):
     def objects_for(self, archive: "Archive", category: int) -> models.QuerySet["Term"]:
         return self.filter(validcategory__archive=archive, validcategory__category=category).order_by("term")
+    def get_by_natural_key(self, name):
+        return self.get(term=name)
 
 class TermGroup(models.Model):
     name = models.CharField(max_length=64, unique=True)
@@ -23,6 +25,10 @@ class Term(Collectible, models.Model):
     description = models.TextField(blank=True)
     group = models.ForeignKey(TermGroup, null=True, on_delete=models.PROTECT, related_name="%(app_label)s_%(class)s_terms")
     objects = TermQuerySet.as_manager()
+
+    def natural_key(self):
+        return self.term
+
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if not self.slug:
