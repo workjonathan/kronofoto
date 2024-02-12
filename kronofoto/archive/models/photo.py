@@ -264,7 +264,7 @@ class Photo(PhotoBase):
         signer = ImageSigner(id=self.id, path=self.original.name, width=0, height=700)
         return ImageData(
             height=700,
-            width=None,
+            width=self.original.width/self.original.height*700,
             url=signer.url,
             name="h700",
         )
