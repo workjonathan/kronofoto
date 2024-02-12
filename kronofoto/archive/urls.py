@@ -76,6 +76,7 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
             path('tag-members', tags_view, **get_kwargs('tags-view')),
             path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
         ])),
+        path('data.json', views.datadump, **get_kwargs('data-dump')),
         path('random', views.RandomRedirect.as_view(), **get_kwargs('random-image')),
         path('carousel', CarouselListView.as_view(item_count=40), **get_kwargs('carousel')),
         path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
