@@ -1048,11 +1048,13 @@ class PhotoAdmin(PhotoBaseAdmin):
         js = ('https://unpkg.com/htmx.org@1.9.6',)
 
     def thumb_image(self, obj: Photo) -> str:
-        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.thumbnail.url, obj.thumbnail.width, obj.thumbnail.height))
+        thumbnail = obj.thumbnail
+        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(thumbnail.url, thumbnail.width, thumbnail.height))
 
     def h700_image(self, obj: Photo) -> str:
-        if obj.h700:
-            return mark_safe('<img src="{}" width="{}" height="{}" />'.format(obj.h700.url, obj.h700.width, obj.h700.height))
+        h700 = obj.h700
+        if h700:
+            return mark_safe('<img src="{}" width="{}" height="{}" />'.format(h700.url, h700.width, h700.height))
         else:
             return "-"
 
