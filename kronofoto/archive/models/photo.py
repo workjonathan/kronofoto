@@ -270,7 +270,7 @@ class Photo(PhotoBase):
         )
     @property
     def thumbnail(self):
-        if not self.original or self.id:
+        if not self.original or not self.id:
             return None
         from ..imageutil import ImageSigner
         signer = ImageSigner(id=self.id, path=self.original.name, width=75, height=75)
