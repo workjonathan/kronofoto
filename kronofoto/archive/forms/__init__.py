@@ -61,9 +61,6 @@ class LocationChoiceField(forms.ChoiceField):
         yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
 
 
-
-import django_select2.forms
-
 class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
     basic.group = 'BASIC'
@@ -85,8 +82,11 @@ class SearchForm(forms.Form):
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
     endYear.group = 'DATE RANGE'
 
-    donor = forms.ModelChoiceField(required=False, label='',
-        widget=django_select2.forms.Select2Widget(), queryset=Donor.objects.filter_donated())
+    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.none())
+    donor.widget.attrs.update({
+        'data-select2-url': reverse_lazy("kronofoto:contributor-search2"),
+        "placeholder": "Contributor search",
+    })
     donor.group = "CONTRIBUTOR"
 
 
@@ -106,12 +106,16 @@ class SearchForm(forms.Form):
     })
     query.group = "ADVANCED SEARCH"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
         self.fields['city'].load_choices()
         self.fields['county'].load_choices()
         self.fields['state'].load_choices()
         self.fields['country'].load_choices()
+        if data:
+            donor_id = data.get('donor', '')
+            if donor_id:
+                self.fields['donor'].queryset = Donor.objects.filter(id=donor_id)
 
     def clean(self):
         cleaned_data = super().clean()

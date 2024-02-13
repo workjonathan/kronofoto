@@ -19,8 +19,10 @@ class DonorQuerySet(models.QuerySet):
     def annotate_donatedcount(self) -> Self:
         return self.annotate(donated_count=Count('photo', distinct=True))
 
-    def filter_donated(self, at_least: int=1) -> Self:
-        return self.annotate_donatedcount().filter(donated_count__gte=at_least)
+    def filter_donated(self) -> Self:
+        from .photo import Photo
+        q = Photo.objects.filter(donor__id=OuterRef('pk'), is_published=True, year__isnull=False)
+        return self.filter(Exists(q))
 
 
 class Donor(Collectible, models.Model):
