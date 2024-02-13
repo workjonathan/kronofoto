@@ -1,11 +1,11 @@
 from django import forms
-from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
+from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair, Place
 from ..search import expression
 from ..search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
-from ..widgets import HeadingWidget, PositioningWidget
+from ..widgets import HeadingWidget, PositioningWidget, Select2
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
@@ -82,7 +82,7 @@ class SearchForm(forms.Form):
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
     endYear.group = 'DATE RANGE'
 
-    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.none())
+    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.all(), widget=Select2(queryset=Donor.objects.all()))
     donor.widget.attrs.update({
         'data-select2-url': reverse_lazy("kronofoto:contributor-search2"),
         "placeholder": "Contributor search",
@@ -112,10 +112,6 @@ class SearchForm(forms.Form):
         self.fields['county'].load_choices()
         self.fields['state'].load_choices()
         self.fields['country'].load_choices()
-        if data:
-            donor_id = data.get('donor', '')
-            if donor_id:
-                self.fields['donor'].queryset = Donor.objects.filter(id=donor_id)
 
     def clean(self):
         cleaned_data = super().clean()

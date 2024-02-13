@@ -467,13 +467,8 @@ class KronofotoContext {
                 minLength: $input.data("autocomplete-min-length"),
             })
         })
-        $("#id_donor", elem).each((_, input) => {
+        $("[data-select2-url]", elem).each((_, input) => {
             const $input = $(input)
-            $("option", $input).each((_, option) => {
-                if (option.getAttribute('value')) {
-                    option.setAttribute('selected', 'selected')
-                }
-            })
             $input.select2({
                 width: "300px",
                 minimumInputLength: 2,
