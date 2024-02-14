@@ -84,6 +84,10 @@ class GenericFilterReporter:
             clauses = ' and '.join([', '.join(words[:-1]), words[-1]])
         return "{verb} {clauses}".format(verb=self.verb, clauses=clauses)
 
+class PlaceFilterReporter:
+    def describe(self, exprs):
+        return 'from ' + ', '.join(expr.object.fullname for expr in exprs)
+
 class LocationFilterReporter:
     def describe(self, exprs):
         location = {}
@@ -130,6 +134,8 @@ class Description:
             return MaxReporter()
         if group == 'year':
             return YearFilterReporter()
+        if group == 'place':
+            return PlaceFilterReporter()
         if group == 'location':
             return LocationFilterReporter()
         if group == 'caption':
@@ -250,6 +256,10 @@ class SubqueryExpression(Expression):
 
     def get_score(self, user=None):
         return self._value.get_subquery(query=self.select_objects(user=user))
+
+class PlaceExpression(Expression):
+    def get_search_args(self, user=None):
+        return [Exists(self.select_objects(user=user)) | Q(location_point__within=self.object.geom)]
 
 class SimpleExpression(Expression):
     def get_search_kwargs(self):
@@ -775,17 +785,17 @@ class PlaceValue(ValueBase):
 
     def get_related_queryset(self, *, user=None):
         if self.object:
-            return self.object.get_descendants(include_self=True)
+            return self.object.get_descendants(include_self=True) | models.Place.objects.filter(geom__within=self.object.geom)
         return models.Place.objects.none()
 
     def matching_photos(self, *, queryset):
         return queryset.filter(archive_photo_place=OuterRef('pk'))
 
     def group(self):
-        return "location"
+        return "place"
 
 def PlaceExactly(value):
-    return SubqueryExpression(_value=PlaceValue(value))
+    return PlaceExpression(_value=PlaceValue(value))
 
 def TagExactly(value):
     return ExactMatchExpression(_value=TagExactlyValue(value))
