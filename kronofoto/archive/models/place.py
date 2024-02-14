@@ -41,7 +41,7 @@ class Place(MPTTModel):
         order_insertion_by = ['place_type', 'name']
 
     def __str__(self):
-        return self.name
+        return self.fullname
 
     def collect_and_place_photos(self):
         from .photo import Photo

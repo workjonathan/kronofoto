@@ -471,7 +471,9 @@ class KronofotoContext {
             const $input = $(input)
             $input.select2({
                 width: "300px",
+                allowClear: true,
                 minimumInputLength: 2,
+                placeholder: $input.attr('placeholder'),
                 ajax: {
                     delay: 250,
                     url: $input.data('select2-url'),

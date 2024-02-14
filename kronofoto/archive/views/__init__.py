@@ -6,7 +6,7 @@ from .paginator import TimelinePaginator, EMPTY_PNG, FAKE_PHOTO, FakeTimelinePag
 from .photo import PhotoView
 from .embedstylesheet import EmbedStyleSheet
 from .downloadpage import DownloadPageView
-from .tagsearch import TagSearchView, contributor_search
+from .tagsearch import TagSearchView, contributor_search, place_search
 from .directory import DirectoryView
 from .collection import AddToList, CollectionCreate, CollectionDelete, Profile
 from .grid import GridView

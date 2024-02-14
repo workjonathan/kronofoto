@@ -89,6 +89,13 @@ class SearchForm(forms.Form):
     })
     donor.group = "CONTRIBUTOR"
 
+    place = forms.ModelChoiceField(required=False, label='', queryset=Place.objects.all(), widget=Select2(queryset=Place.objects.all()))
+    place.widget.attrs.update({
+        'data-select2-url': reverse_lazy("kronofoto:place-search"),
+        "placeholder": "Place search",
+    })
+    place.group = "LOCATION"
+
 
 
     city = LocationChoiceField(required=False, label='', field='city')
@@ -160,6 +167,8 @@ class SearchForm(forms.Form):
             form_exprs.append(expression.County(cleaned_data['county']))
         if cleaned_data['state']:
             form_exprs.append(expression.State(cleaned_data['state']))
+        if cleaned_data['place']:
+            form_exprs.append(expression.PlaceExactly(cleaned_data['place']))
         if cleaned_data['country']:
             form_exprs.append(expression.Country(cleaned_data['country']))
         if len(form_exprs):

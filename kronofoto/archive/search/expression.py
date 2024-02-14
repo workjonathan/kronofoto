@@ -764,6 +764,29 @@ def AccessionNumber(value):
 def MultiWordTag(value):
     return SubqueryExpression(_value=MultiWordTagValue(value.lower()))
 
+@dataclass
+class PlaceValue(ValueBase):
+    value: int
+    def filter_related(self, *, related):
+        return related
+
+    def get_exact_object(self):
+        return models.Place.objects.get(id=self.value)
+
+    def get_related_queryset(self, *, user=None):
+        if self.object:
+            return self.object.get_descendants(include_self=True)
+        return models.Place.objects.none()
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(archive_photo_place=OuterRef('pk'))
+
+    def group(self):
+        return "location"
+
+def PlaceExactly(value):
+    return SubqueryExpression(_value=PlaceValue(value))
+
 def TagExactly(value):
     return ExactMatchExpression(_value=TagExactlyValue(value))
 

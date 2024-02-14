@@ -3,6 +3,7 @@ from .jsonresponse import JSONResponseMixin
 import json
 from ..models.tag import Tag
 from ..models.donor import Donor
+from ..models import Place
 from django.db.models import Q
 from django.http import HttpResponse
 import re
@@ -14,7 +15,6 @@ archive_id_tag = re.compile(r"\[\s*([^\[\]]*[^\[\]\s]+)\s*-\s*(\d+)\s*\]")
 id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
 def contributor_search(request):
-    txts = re.split(SPLIT, request.GET.get('q', ""))
     txts = request.GET.get('q', '').split(', ')
     donors = Donor.objects.all()
     for s in txts:
@@ -22,6 +22,15 @@ def contributor_search(request):
             donors = donors.filter(Q(first_name__istartswith=s) | Q(last_name__istartswith=s))
     donors = donors.filter_donated()
     results = [{'id': donor.id, 'text': str(donor)} for donor in donors[:20]]
+    response = HttpResponse(content_type="application/json")
+    json.dump({"results": results, "pagination": {"more": False}}, response)
+    return response
+
+def place_search(request):
+    txt = request.GET.get('q', '')
+    places = Place.objects.filter(fullname__istartswith=txt)
+
+    results = [{'id': place.id, 'text': str(place)} for place in places[:20]]
     response = HttpResponse(content_type="application/json")
     json.dump({"results": results, "pagination": {"more": False}}, response)
     return response
