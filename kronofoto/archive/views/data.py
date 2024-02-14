@@ -3,8 +3,11 @@ from typing import Optional
 from .base import ArchiveRequest, require_valid_archive
 from django.core.serializers import serialize
 import json
-from ..models import Key
+from django.urls import reverse
+from ..models import Key, Archive
+from django.shortcuts import get_object_or_404
 import hmac
+from django.core.exceptions import PermissionDenied
 
 def hmac_auth(func):
     def do_auth(request, *args, **kwargs):
@@ -29,7 +32,14 @@ def hmac_auth(func):
 @hmac_auth
 @require_valid_archive
 def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
-    photos = ArchiveRequest(request=request, short_name=short_name, category=category).get_photo_queryset().select_related('donor', 'photographer', 'scanner').prefetch_related("terms", "tags").order_by('id')[:200]
+    archive_request = ArchiveRequest(request=request, short_name=short_name, category=category)
+    try:
+        after = int(request.GET.get('after', 0))
+    except ValueError:
+        after = 0
+    photos = archive_request.get_photo_queryset().filter(id__gte=after).select_related('donor', 'photographer', 'scanner').prefetch_related("terms", "tags").order_by('id')[:200]
+    if not request.user.has_perm('archive.archive.{}.view'.format(short_name)):
+        raise PermissionDenied
     field = lambda name: lambda p: getattr(p, name)
     const = lambda value: lambda p: value
 
@@ -95,6 +105,11 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Opt
     }
     data = [{k: mapper(p) for (k, mapper) in map.items()} for p in photos]
     response = HttpResponse("", content_type="application/json")
-    json.dump(data, response)
+    json.dump({
+        "results": data,
+        "next": "{}?after={}".format(
+            reverse("kronofoto:data-dump", kwargs={"short_name": short_name, "category": category}),
+            photos[photos.count()-1].id,
+        )
+    }, response)
     return response
-    return HttpResponse(json.dumps(data), content_type="application/json")
