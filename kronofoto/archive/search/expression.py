@@ -777,6 +777,8 @@ def MultiWordTag(value):
 @dataclass
 class PlaceValue(ValueBase):
     value: int
+    def serialize(self):
+        return 'place:"{}"'.format(self.object.fullname)
     def filter_related(self, *, related):
         return related
 
