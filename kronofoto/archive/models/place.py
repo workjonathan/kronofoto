@@ -1,5 +1,5 @@
 from django.contrib.gis.db import models
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Upper
 from mptt.models import MPTTModel, TreeForeignKey
 
 
@@ -61,5 +61,6 @@ class Place(MPTTModel):
             models.Index(fields=['name']),
             models.Index(fields=['fullname']),
             models.Index(fields=['place_type', 'name', "parent"]),
-            #models.Index(fields=['tree_id', 'id', "lft"]),
+            models.Index(fields=['tree_id', "lft", 'rght'], name='tree_nested_set_index'),
+            models.Index(Upper('fullname'), name='place_icase_fullname'),
         )
