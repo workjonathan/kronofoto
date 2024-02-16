@@ -4,8 +4,23 @@
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
 @use 'components/timeline' as timeline;
-
 @use 'typography' as typography;
+
+body, #kfroot {
+  container-type: inline-size;
+}
+
+#kfroot {
+  aspect-ratio: 4 / 3;
+}
+
+#kfroot #app.zoom-opened {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0px;
+  left: 0px;
+}
 
 // Foundation Dependencies
 @import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
@@ -74,6 +89,13 @@
   font-family: var(--fp-main-font);
 }
 
+html, body {
+  height: 100%;
+}
+
+#app {
+  height: calc(100% - 80px);
+}
 
 img {
   /*max-height: calc(100vh - 278px);*/
@@ -81,6 +103,7 @@ img {
 
 main {
   overflow-x: hidden;
+  height: 100%;
 }
 
 body {
@@ -133,11 +156,23 @@ select {
 }
 
 .sticky-parent {
-  position: sticky;
-  bottom: 0px;
-  left: 100%;
+  @include breakpoint(large up) {
+    position: sticky;
+    bottom: 0px;
+    left: 100%;
+  }
 }
 
 .foundation-mq {
   font-family: "small=0em&medium=40em&large=64em&xlarge=75em&xxlarge=90em";
+}
+
+@include breakpoint(small only) {
+  .small-12:not[first-child] {
+    margin-top: 20px;
+  }
+}
+
+#kfroot {
+  position: relative;
 }

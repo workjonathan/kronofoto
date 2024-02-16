@@ -23,7 +23,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.1",
     "clipboard": "^2.0.11",
-    "foundation-sites": "^6.7.5",
+    "foundation-sites": "github:jeremygrajales/foundation-sites#develop",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "^8.0.0",
     "gulp-concat": "^2.6.1",

@@ -21,21 +21,21 @@
     <nav aria-label="Main navigation">
 
       <div class="main-nav">
-        <div class="main-nav_left">
+        <div class="main-nav__left">
           <div id="logo">
             <!--{% static "assets/images/01-fi-logo.svg" %}-->
             <a href="{% url "kronofoto:random-image" %}"><img class="logo-img" src="{% static "assets/images/skyblue/logo.svg" %}" alt="Fortepan Iowa Logo"></a>
           </div>
         </div>
 
-        <div class="main-nav_center">
+        <div class="main-nav__center">
           <ul class="navigation-menu">
             {% docnav title %}
             <li><a href="https://blog.fortepan.us/">Blog</a></li>
           </ul>
         </div>
 
-        <div class="main-nav_right">
+        <div class="main-nav__right">
 
           <a href="{% url "kronofoto:random-image" %}">To the archive  <i class="fas fa-long-arrow-alt-right"></i></a>
 

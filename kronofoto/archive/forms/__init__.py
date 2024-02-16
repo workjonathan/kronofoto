@@ -28,6 +28,20 @@ class WebComponentForm(forms.Form):
         label="View-type"
     )
 
+    text_field1 = forms.CharField(
+        label=False,
+        widget=forms.TextInput(attrs={'placeholder': 'your embed title'}),
+        max_length=100,
+        required=False
+    )
+
+    text_field2 = forms.CharField(
+        label=False,
+        max_length=100,
+        initial='Photos of camping, Ankeney, Iowa',
+        required=False
+    )
+
 class ListForm(forms.Form):
     name = forms.CharField(label="create a new list")
     name.widget.attrs['placeholder'] = "new list name"

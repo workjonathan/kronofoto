@@ -335,7 +335,7 @@ main article.fi-image {
   top: 80px;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 80px);
   z-index: 999;
   display: none;
 }

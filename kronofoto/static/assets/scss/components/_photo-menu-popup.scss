@@ -29,7 +29,7 @@ $popupMaxHeight: 40vh;
 }
 
 #share-popup {
-  select {
+  input, select {
     max-width: 546px;
   }
 }
@@ -55,6 +55,10 @@ $popupMaxHeight: 40vh;
     font-weight: $font-weight-regular;
     letter-spacing: 0.05em;
     margin-bottom: $global-margin;
+    line-break: anywhere;
+    @include breakpoint(large up) {
+      line-break: normal;
+    }
   }
 
   &.expanded {
@@ -104,12 +108,21 @@ $popupMaxHeight: 40vh;
 
   &__wrapper {
     height: calc($popupMaxHeight - 120px);
-    margin: 40px 60px 80px;
+    margin: 20px 30px 40px;
+    @include breakpoint(large up) {
+      margin: 40px 60px 80px;
+    }
     &.no-scroll {
       overflow: hidden;
     }
     > .row {
       height: 100%;
+      > .columns {
+        margin-bottom: 16px;
+        @include breakpoint(large up) {
+          margin-bottom: 0px;
+        }
+      }
     }
     &:not(.no-scroll) {
       @include hover-scrollbar;

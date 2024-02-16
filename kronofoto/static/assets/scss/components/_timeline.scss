@@ -24,7 +24,7 @@ $grey: grey;
   .fi-timeline {
     //display: none;
     //@include breakpoint(large up) {
-    width: 100vw;
+    width: 100%;
     height: $thumbnailsHeight;
     //display: flex;
     flex-direction: column;
@@ -137,8 +137,8 @@ $grey: grey;
         content: "";
         left: 0;
         right: 0;
-        bottom: rem(-12px);
-        height: rem(12px);
+        bottom: -12px;
+        height: 12px;
         background: linear-gradient(0deg, rgba($dark-base, 0) 0%, rgba($dark-base, 0.06) 100%);
       }
     }
@@ -153,22 +153,22 @@ $grey: grey;
     position: absolute;
     top: 0;
     bottom: 0;
-    left: rem(73px);
-    right: rem(73px);
+    left: 73px;
+    right: 73px;
     cursor: pointer;
   }
 
   .photos-timeline__slider {
     position: absolute;
     top: calc(50% - 35px/2);
-    width: 3.5rem;
+    width: 56px;
     padding: 0px;
     border-radius: 4px;
     transition: left 0.4s $ease-out-expo, background-color 0.3s $ease-out-expo;
     cursor: pointer;
     font-weight: $font-weight-bold;
-    font-size: 0.8rem;
-    line-height: rem(35px);
+    font-size: 13;
+    line-height: 35px;
     box-sizing: border-box;
     user-select: none;
     text-align: center;
@@ -206,11 +206,11 @@ $grey: grey;
 
       &:before {
         position: absolute;
-        bottom: rem(-4px);
+        bottom: -4px;
         margin: auto;
         left: calc(50% - 8px);
         border-bottom: 0;
-        border-top: rem(6px) solid transparent;
+        border-top: 6px solid transparent;
       }
 
       &:before {
@@ -226,7 +226,7 @@ $grey: grey;
 
     .photos-timeline__year-indicator & {
       top: auto;
-      bottom: rem(20px);
+      bottom: 20px;
     }
 
     .photos-timeline__slider:hover &,
@@ -292,12 +292,12 @@ $grey: grey;
     width: 60px;
     top: 50%;
     transform: translateY(-50%);
-    left: rem(14px);
+    left: 14px;
     cursor: pointer;
     font-weight: $font-weight-bold;
-    font-size: 0.8rem;
+    font-size: 13px;
     letter-spacing: 0.3px;
-    line-height: rem(30px);
+    line-height: 30px;
     text-align: center;
     border-radius: 6px;
     box-sizing: border-box;
@@ -314,7 +314,7 @@ $grey: grey;
 
     &.photos-timeline__year-label--yearEnd {
       left: auto;
-      right: rem(14px);
+      right: 14px;
     }
   }
 
@@ -324,16 +324,16 @@ $grey: grey;
 
     cursor: pointer;
     font-weight: $font-weight-bold;
-    font-size: rem(11px);
+    font-size: 11px;
 
     &:before {
       content: "";
       display: block;
       position: absolute;
-      top: rem(-7px);
-      left: rem(-1px);
-      width: rem(2px);
-      height: rem(14px);
+      top: -7px;
+      left: -1px;
+      width: 2px;
+      height: 14px;
       border-radius: 1px;
       background-color: var(--fp-main-color);
 
@@ -366,10 +366,10 @@ $grey: grey;
       content: "";
       display: block;
       position: absolute;
-      top: rem(-7px);
-      left: rem(-1px);
-      width: rem(2px);
-      height: rem(14px);
+      top: -7px;
+      left: -1px;
+      width: 2px;
+      height: 14px;
       border-radius: 1px;
     }
 
