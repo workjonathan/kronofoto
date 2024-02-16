@@ -2,7 +2,7 @@
 @use 'gallery' as gallery;
 @use '../keyframes' as *;
 @use '../typography' as *;
-@import 'foundation/scss/global';
+@import 'foundation-sites/scss/global';
 
 // Settings
 $thumbnailsHeight: 90px;

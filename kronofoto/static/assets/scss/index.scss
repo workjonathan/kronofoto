@@ -23,24 +23,24 @@ body, #kfroot {
 }
 
 // Foundation Dependencies
-@import 'foundation/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
-@import 'foundation/_vendor/sassy-lists/stylesheets/helpers/true';
-@import 'foundation/_vendor/sassy-lists/stylesheets/functions/contain';
-@import 'foundation/_vendor/sassy-lists/stylesheets/functions/purge';
-@import 'foundation/_vendor/sassy-lists/stylesheets/functions/remove';
-@import 'foundation/_vendor/sassy-lists/stylesheets/functions/replace';
-@import 'foundation/_vendor/sassy-lists/stylesheets/functions/to-list';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/true';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/contain';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/purge';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/remove';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/replace';
+@import 'foundation-sites/_vendor/sassy-lists/stylesheets/functions/to-list';
 
 // Foundation Utilities
-@import 'foundation/scss/util/util';
+@import 'foundation-sites/scss/util/util';
 
 // Foundation Global styles
-@import 'foundation/scss/global';
-@import 'foundation/scss/typography/typography';
+@import 'foundation-sites/scss/global';
+@import 'foundation-sites/scss/typography/typography';
 
 // Foundation Grids
-@import 'foundation/scss/grid/grid';
-@import 'foundation/scss/xy-grid/xy-grid';
+@import 'foundation-sites/scss/grid/grid';
+@import 'foundation-sites/scss/xy-grid/xy-grid';
 
 @import 'kronofoto';
 @include typography.styles;
@@ -62,15 +62,15 @@ body, #kfroot {
 @import 'components/search';
 
 // Foundation Components
-@import 'foundation/scss/components/switch';
-@import 'foundation/scss/components/tooltip';
-@import 'foundation/scss/components/callout';
+@import 'foundation-sites/scss/components/switch';
+@import 'foundation-sites/scss/components/tooltip';
+@import 'foundation-sites/scss/components/callout';
 
 // Foundation Helpers
-@import 'foundation/scss/components/float';
-@import 'foundation/scss/components/visibility';
-@import 'foundation/scss/prototype/prototype';
-@import 'foundation/scss/components/flex';
+@import 'foundation-sites/scss/components/float';
+@import 'foundation-sites/scss/components/visibility';
+@import 'foundation-sites/scss/prototype/prototype';
+@import 'foundation-sites/scss/components/flex';
 
 @include foundation-switch;
 @include foundation-tooltip;
