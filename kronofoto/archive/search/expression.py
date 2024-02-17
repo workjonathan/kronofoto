@@ -259,7 +259,7 @@ class SubqueryExpression(Expression):
 
 class PlaceExpression(Expression):
     def get_search_args(self, user=None):
-        return [Exists(self.select_objects(user=user)) | Q(location_point__within=self.object.geom)]
+        return [Exists(self.select_objects(user=user))] # | Q(location_point__within=self.object.geom)] too slow for now
 
 class SimpleExpression(Expression):
     def get_search_kwargs(self):
