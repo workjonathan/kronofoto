@@ -15,6 +15,11 @@ class Archive(models.Model):
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="archive.ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="archive.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
+    class Meta:
+        indexes = (
+            models.Index(fields=['slug'], name="archive_slug_idx"),
+        )
+
 
     def __str__(self) -> str:
         return self.name

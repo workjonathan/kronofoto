@@ -4,7 +4,7 @@ import json
 from ..models.tag import Tag
 from ..models.donor import Donor
 from ..models import Place, Photo
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, F
 from django.db.models.functions import Upper
 from django.http import HttpResponse
 import re
@@ -31,6 +31,8 @@ def place_search(request):
     txt = request.GET.get('q', '').upper()
     tmp = list(txt)
     tmp[-1] = chr(1 + ord(tmp[-1]))
+    # This is doing a subquery in where clause to archive_photo which joins place again.
+    # Maybe it could instead subquery place and join photo. Maybe easier for db indexes.
     places = Place.objects.annotate(ufullname=Upper('fullname')).filter(ufullname__gte=txt, ufullname__lt=''.join(tmp))
     #places = Place.objects.filter(fullname__istartswith=txt)#, fullname__lt=''.join(tmp))
     # Places that match search and have at least 1 photo.
@@ -40,9 +42,10 @@ def place_search(request):
         # Photo.location_point is spatially within place p
     places = places.filter(
         Exists(
-            Photo.objects.filter(
-                Q(place__lft__lte=OuterRef('lft'), place__rght__gte=OuterRef('rght'), place__tree_id=OuterRef('tree_id')) # this benefits from index tree_id, lft, rght
-                | Q(place__geom__within=OuterRef('geom')) # fast
+            Place.objects.filter(Q(archive_photo_place__place_id=F('id')) &
+                #parents have smaller lft and larger rght
+                (Q(lft__gte=OuterRef('lft'), rght__lte=OuterRef('rght'), tree_id=OuterRef('tree_id')) # this benefits from index tree_id, lft, rght
+                | Q(geom__within=OuterRef('geom'))) # fast
                 #| Q(location_point__within=OuterRef('geom')) # fast
             )
         )
