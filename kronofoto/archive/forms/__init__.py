@@ -96,15 +96,13 @@ class SearchForm(forms.Form):
     })
     place.group = "LOCATION"
 
-
-
-    city = LocationChoiceField(required=False, label='', field='city')
+    city = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     city.group = 'LOCATION'
-    county = LocationChoiceField(required=False, label='', field='county')
+    county = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     county.group = 'LOCATION'
-    state = LocationChoiceField(required=False, label='', field='state')
+    state = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     state.group = 'LOCATION'
-    country = LocationChoiceField(required=False, label='', field='country')
+    country = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     country.group = 'LOCATION'
 
     query = forms.CharField(required=False, label='')
@@ -112,13 +110,6 @@ class SearchForm(forms.Form):
         'placeholder': 'Keywords, terms, photo ID#, contributor',
     })
     query.group = "ADVANCED SEARCH"
-
-    def __init__(self, data=None, *args, **kwargs):
-        super().__init__(data, *args, **kwargs)
-        self.fields['city'].load_choices()
-        self.fields['county'].load_choices()
-        self.fields['state'].load_choices()
-        self.fields['country'].load_choices()
 
     def clean(self):
         cleaned_data = super().clean()
