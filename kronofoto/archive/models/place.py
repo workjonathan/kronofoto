@@ -61,6 +61,7 @@ class Place(MPTTModel):
             models.Index(fields=['name']),
             models.Index(fields=['fullname']),
             models.Index(fields=['place_type', 'name', "parent"]),
-            models.Index(fields=['tree_id', "lft", 'rght'], name='tree_nested_set_index'),
-            models.Index(Upper('fullname'), name='place_icase_fullname'),
+            models.Index(fields=['tree_id', "lft", 'rght'], name='archive_tree_nested_set_index'),
+            models.Index(Upper('fullname'), name='archive_place_icase_fullname'),
+            models.Index(Upper('name'), 'place_type', name='archive_place_icase_name'),
         )

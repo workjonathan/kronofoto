@@ -1,10 +1,20 @@
 from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.db.models import Q
-from .models import Photo, WordCount, Tag, Term, PhotoTag
+from .models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount
 from collections import Counter
 import re
 
+
+@receiver(post_save, sender=Place)
+def place_save(sender, instance, created, raw, using, update_fields, **kwargs):
+    PlaceWordCount.objects.filter(place=instance).delete()
+    counts = Counter(w for w in re.split(r"[^\w\']+", instance.name.lower()) if w.strip())
+    total = sum(counts.values())
+    wordcounts = [
+        PlaceWordCount(place=instance, word=w) for w in counts
+    ]
+    PlaceWordCount.objects.bulk_create(wordcounts)
 
 @receiver(post_save, sender=Photo)
 def photo_save(sender, instance, created, raw, using, update_fields, **kwargs):

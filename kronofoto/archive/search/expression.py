@@ -1,5 +1,5 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField, Value
-from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
+from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex, Upper
 from django.db.models import Subquery, Exists, OuterRef
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from functools import cached_property
@@ -321,6 +321,76 @@ class SingleWordValueBase(ValueBase):
     def get_related_queryset(self, *, user=None):
         return models.WordCount.objects.all()
 
+@dataclass
+class CityContainsWordValue(ValueBase):
+    value: str
+    def group(self):
+        return 'location'
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(archive_photo_place=OuterRef('pk'))
+
+    def filter_related(self, *, related):
+        return related
+
+    def get_related_queryset(self, *, user=None):
+        return models.Place.objects.filter(Exists(models.PlaceWordCount.objects.filter(place=OuterRef('id'), place__name=self.value)), place_type__name='US Town')
+
+@dataclass
+class PlaceNameExactValue(ValueBase):
+    value: str
+    def group(self):
+        return 'location'
+
+    def get_subquery(self, *, query):
+        return Exists(query)
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(archive_photo_place=OuterRef('pk'))
+
+    def filter_related(self, *, related):
+        return related
+
+    def get_related_queryset(self, *, user=None):
+        return models.Place.objects.filter(
+            Exists(
+                models.Place.objects.annotate(uname=Upper('name')).filter(
+                    Q(uname=self.value.upper(), place_type__name=self.placetype_name()) & (
+                        Q(lft__lte=OuterRef('lft'), rght__gte=OuterRef('rght'), tree_id=OuterRef('tree_id'))
+                        | Q(geom__contains=OuterRef('geom'))
+                    )
+                )
+            )
+        )
+
+@dataclass
+class StateWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'state:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'US State'
+
+@dataclass
+class CountyWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'county:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'US County'
+
+@dataclass
+class CityWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'city:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'US Town'
+
+@dataclass
+class CountryWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'country:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'Country'
+
 class SingleWordTagValue(SingleWordValueBase):
     def serialize(self):
         return 'tag:{}'.format(self.value)
@@ -595,24 +665,7 @@ class CountryValue(ValueBase):
 
     def short_label(self):
         return 'Country: {}'.format(self.value)
-@dataclass
-class CityValue(ValueBase):
-    value: str
 
-    def serialize(self):
-        return 'city:{}'.format(self.value)
-
-    def get_search_value(self):
-        return self.value
-
-    def get_search_field(self):
-        return "city__iexact"
-
-    def group(self):
-        return 'location'
-
-    def short_label(self):
-        return 'City: {}'.format(self.value)
 
 @dataclass
 class YearEqualsValue(ValueBase):
@@ -796,6 +849,22 @@ class PlaceValue(ValueBase):
     def group(self):
         return "place"
 
+@dataclass
+class CityValue(PlaceValue):
+    value: str
+
+    def get_exact_object(self):
+        return models.Place.objects.get(name=self.value, place_type__name='US Town')
+
+    def serialize(self):
+        return 'city:{}'.format(self.value)
+
+    def group(self):
+        return 'location'
+
+    def short_label(self):
+        return 'City: {}'.format(self.value)
+
 def PlaceExactly(value):
     return PlaceExpression(_value=PlaceValue(value))
 
@@ -825,16 +894,16 @@ def SingleWordCaption(value):
 Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCaption(s)
 
 def State(value):
-    return SimpleExpression(_value=StateValue(value))
+    return PlaceExpression(_value=StateWordValue(value))
 
 def Country(value):
-    return SimpleExpression(_value=CountryValue(value))
+    return PlaceExpression(_value=CountryWordValue(value))
 
 def County(value):
-    return SimpleExpression(_value=CountyValue(value))
+    return PlaceExpression(_value=CountyWordValue(value))
 
 def City(value):
-    return SimpleExpression(_value=CityValue(value))
+    return PlaceExpression(_value=CityWordValue(value))
 
 def YearLTE(value):
     return SimpleExpression(_value=YearLTEValue(value))
