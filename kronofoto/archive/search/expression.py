@@ -322,14 +322,22 @@ class SingleWordValueBase(ValueBase):
         return models.WordCount.objects.all()
 
 @dataclass
-class PlaceContainsWordValue(SingleWordValueBase):
+class IndexContainsWordValue(ValueBase):
     value: str
+
+    def serialize(self):
+        return self.value
+
     def group(self):
-        return 'location'
+        return "location"
+    def get_subquery(self, *, query):
+        return Subquery(query.annotate(total=Sum('count')).values('total'))
 
-    def wordcount_field(self):
-        return 'PL'
+    def filter_related(self, *, related):
+        return related.filter(Q(word=self.value.lower()) & (Q(field="TE") | Q(field='TA') | Q(field='PL')))
 
+    def get_related_queryset(self, *, user=None):
+        return models.WordCount.objects.all()
 
 @dataclass
 class PlaceNameExactValue(ValueBase):
@@ -897,8 +905,8 @@ def Country(value):
 def County(value):
     return PlaceExpression(_value=CountyWordValue(value))
 
-def PlaceContains(value):
-    return PlaceExpression(_value=PlaceContainsWordValue(value))
+def IndexContains(value):
+    return SubqueryExpression(_value=IndexContainsWordValue(value))
 
 def City(value):
     return PlaceExpression(_value=CityWordValue(value))
@@ -1083,7 +1091,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(CollectionTag(s), Maximum(Term(s), PlaceContains(s)))
+    expr = IndexContains(s)
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:
