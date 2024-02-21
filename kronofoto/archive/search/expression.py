@@ -227,8 +227,6 @@ class Expression:
     def as_collection(self, qs, user):
         q = self.filter(user)
         r = qs.filter(q).order_by('year', 'id')
-        print(r.query)
-        print(r.explain())
         return r
 
     def as_search(self, qs, user):
@@ -318,33 +316,20 @@ class SingleWordValueBase(ValueBase):
         return Subquery(query.annotate(total=Sum('count')).values('total'))
 
     def filter_related(self, *, related):
-        return related.filter(word=self.value, field=self.wordcount_field())
+        return related.filter(word=self.value.lower(), field=self.wordcount_field())
 
     def get_related_queryset(self, *, user=None):
         return models.WordCount.objects.all()
 
 @dataclass
-class CityContainsWordValue(ValueBase):
+class PlaceContainsWordValue(SingleWordValueBase):
     value: str
     def group(self):
         return 'location'
 
-    def matching_photos(self, *, queryset):
-        return queryset.filter(archive_photo_place=OuterRef('pk'))
+    def wordcount_field(self):
+        return 'PL'
 
-    def filter_related(self, *, related):
-        return related
-
-    def get_related_queryset(self, *, user=None):
-        return models.Place.objects.filter(Exists(models.Place.objects.filter(
-            Q(
-                placewordcount__word=self.value.lower(),
-                place_type__name='US Town',
-            ) & (
-                Q(lft__lte=OuterRef('lft'), rght__gte=OuterRef('rght'), tree_id=OuterRef('tree_id'))
-                #| Q(geom__contains=OuterRef('geom'))
-            )
-        )))
 
 @dataclass
 class PlaceNameExactValue(ValueBase):
@@ -912,8 +897,8 @@ def Country(value):
 def County(value):
     return PlaceExpression(_value=CountyWordValue(value))
 
-def CityContains(value):
-    return PlaceExpression(_value=CityContainsWordValue(value))
+def PlaceContains(value):
+    return PlaceExpression(_value=PlaceContainsWordValue(value))
 
 def City(value):
     return PlaceExpression(_value=CityWordValue(value))
@@ -1098,8 +1083,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(CollectionTag(s), Maximum(Term(s), Maximum(CityContains(s), Maximum(State(s), Maximum(Country(s), County(s))))))
-    expr = CityContains(s)
+    expr = Maximum(CollectionTag(s), Maximum(Term(s), PlaceContains(s)))
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:
