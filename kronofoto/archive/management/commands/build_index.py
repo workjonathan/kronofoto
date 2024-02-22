@@ -25,6 +25,7 @@ class Command(BaseCommand):
                 if photo.location_point:
                     q |= Q(geom__contains=photo.location_point)
                 places = Place.objects.filter(q)
+                photo.places.set(places)
                 counts = sum((Counter(place.name.lower().split()) for place in places), Counter())
                 total = sum(counts.values())
                 wordcounts += [

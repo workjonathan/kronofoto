@@ -346,25 +346,16 @@ class PlaceNameExactValue(ValueBase):
         return 'location'
 
     def get_subquery(self, *, query):
-        return Exists(query)
+        return Exists(query, output_field=FloatField())
 
     def matching_photos(self, *, queryset):
-        return queryset.filter(archive_photo_place=OuterRef('pk'))
+        return queryset.filter(photo__id=OuterRef('pk'))
 
     def filter_related(self, *, related):
         return related
 
     def get_related_queryset(self, *, user=None):
-        return models.Place.objects.filter(
-            Exists(
-                models.Place.objects.annotate(uname=Upper('name')).filter(
-                    Q(uname=self.value.upper(), place_type__name=self.placetype_name()) & (
-                        Q(lft__lte=OuterRef('lft'), rght__gte=OuterRef('rght'), tree_id=OuterRef('tree_id'))
-                        | Q(geom__contains=OuterRef('geom'))
-                    )
-                )
-            )
-        )
+        return models.Place.objects.annotate(uname=Upper('name')).filter(uname=self.value.upper(), place_type__name=self.placetype_name())
 
 @dataclass
 class StateWordValue(PlaceNameExactValue):
@@ -835,6 +826,7 @@ class PlaceValue(ValueBase):
     value: int
     def serialize(self):
         return 'place:"{}"'.format(self.object.fullname)
+
     def filter_related(self, *, related):
         return related
 
@@ -897,19 +889,19 @@ def SingleWordCaption(value):
 Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCaption(s)
 
 def State(value):
-    return PlaceExpression(_value=StateWordValue(value))
+    return SubqueryExpression(_value=StateWordValue(value))
 
 def Country(value):
-    return PlaceExpression(_value=CountryWordValue(value))
+    return SubqueryExpression(_value=CountryWordValue(value))
 
 def County(value):
-    return PlaceExpression(_value=CountyWordValue(value))
+    return SubqueryExpression(_value=CountyWordValue(value))
 
 def IndexContains(value):
     return SubqueryExpression(_value=IndexContainsWordValue(value))
 
 def City(value):
-    return PlaceExpression(_value=CityWordValue(value))
+    return SubqueryExpression(_value=CityWordValue(value))
 
 def YearLTE(value):
     return SimpleExpression(_value=YearLTEValue(value))
