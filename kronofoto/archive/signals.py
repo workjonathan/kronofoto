@@ -32,7 +32,7 @@ def photo_save(sender, instance, created, raw, using, update_fields, **kwargs):
         if instance.location_point:
             q |= Q(geom__contains=instance.location_point)
         places = Place.objects.filter(q)
-        photo.places.set(places)
+        instance.places.set(places)
         counts = sum((Counter(place.name.lower().split()) for place in places), Counter())
         total = sum(counts.values())
         wordcounts += [

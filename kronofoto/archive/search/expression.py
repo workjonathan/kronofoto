@@ -346,7 +346,7 @@ class PlaceNameExactValue(ValueBase):
         return 'location'
 
     def get_subquery(self, *, query):
-        return Exists(query, output_field=FloatField())
+        return Case(When(Exists(query), then=1), default=0, output_field=FloatField())
 
     def matching_photos(self, *, queryset):
         return queryset.filter(photo__id=OuterRef('pk'))

@@ -588,7 +588,7 @@ class CSVRecordAdmin(admin.ModelAdmin):
 class PlaceAdmin(MPTTModelAdmin):
     search_fields = ['name']
     raw_id_fields = ["parent"]
-    list_display = ['name', "place_type"]
+    list_display = ['fullname', "place_type"]
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.GISModelAdmin):
