@@ -834,12 +834,10 @@ class PlaceValue(ValueBase):
         return models.Place.objects.get(id=self.value)
 
     def get_related_queryset(self, *, user=None):
-        if self.object:
-            return self.object.get_descendants(include_self=True) | models.Place.objects.filter(geom__within=self.object.geom)
-        return models.Place.objects.none()
+        return models.Place.objects.filter(id=self.value.id)
 
     def matching_photos(self, *, queryset):
-        return queryset.filter(archive_photo_place=OuterRef('pk'))
+        return queryset.filter(photo__id=OuterRef('pk'))
 
     def group(self):
         return "place"
@@ -861,7 +859,7 @@ class CityValue(PlaceValue):
         return 'City: {}'.format(self.value)
 
 def PlaceExactly(value):
-    return PlaceExpression(_value=PlaceValue(value))
+    return SubqueryExpression(_value=PlaceValue(value))
 
 def TagExactly(value):
     return ExactMatchExpression(_value=TagExactlyValue(value))

@@ -1,6 +1,8 @@
 from django.contrib.gis.db import models
 from django.db.models.functions import Concat, Upper
 from mptt.models import MPTTModel, TreeForeignKey
+from ..reverse import reverse
+from django.http import QueryDict
 
 
 class PlaceType(models.Model):
@@ -36,6 +38,16 @@ class Place(MPTTModel):
     geom = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey('self', related_name='children', null=True, db_index=True, on_delete=models.PROTECT)
     fullname = models.CharField(max_length=128, null=False, default="")
+
+    def get_absolute_url(self, kwargs=None, params=None):
+        kwargs = kwargs or {}
+        kwargs = dict(**kwargs)
+        url = reverse('kronofoto:gridview', kwargs=kwargs)
+        params = params or QueryDict(mutable=True)
+        params['place'] = self.id
+        if params:
+            return '{}?{}'.format(url, params.urlencode())
+        return url
 
     class MPTTMeta:
         order_insertion_by = ['place_type', 'name']
