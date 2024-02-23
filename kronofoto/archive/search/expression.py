@@ -86,19 +86,19 @@ class GenericFilterReporter:
 
 class PlaceFilterReporter:
     def describe(self, exprs):
-        return 'from ' + ', '.join(expr.object.fullname for expr in exprs)
+        return 'from ' + ', '.join(expr.object.fullname for expr in exprs if expr.object)
 
 class LocationFilterReporter:
     def describe(self, exprs):
         location = {}
         for expr in exprs:
-            if isinstance(expr._value, CountyValue):
+            if isinstance(expr._value, CountyValue) or isinstance(expr._value, CountyWordValue):
                 location['county'] = expr._value.value
-            elif isinstance(expr._value, CityValue):
+            elif isinstance(expr._value, CityValue) or isinstance(expr._value, CityWordValue):
                 location['city'] = expr._value.value
-            elif isinstance(expr._value, StateValue):
+            elif isinstance(expr._value, StateValue) or isinstance(expr._value, StateWordValue):
                 location['state'] = expr._value.value
-            elif isinstance(expr._value, CountryValue):
+            elif isinstance(expr._value, CountryValue) or isinstance(expr._value, CountryWordValue):
                 location['country'] = expr._value.value
         return 'from ' + models.format_location(**location)
 
@@ -144,6 +144,8 @@ class Description:
             return GenericFilterReporter('termed with')
         if group == 'donor_lastname':
             return GenericFilterReporter('donor has last name')
+        if group == 'any':
+            return GenericFilterReporter('')
         if group == 'tag':
             return GenericFilterReporter('tagged with')
         if group == 'photographer':
@@ -329,7 +331,8 @@ class IndexContainsWordValue(ValueBase):
         return self.value
 
     def group(self):
-        return "location"
+        return "any"
+
     def get_subquery(self, *, query):
         return Subquery(query.annotate(total=Sum('count')).values('total'))
 
@@ -825,16 +828,23 @@ def MultiWordTag(value):
 class PlaceValue(ValueBase):
     value: int
     def serialize(self):
-        return 'place:"{}"'.format(self.object.fullname)
+        if self.object:
+            return 'place:{}'.format(self.object.id)
+        return "place:{}".format(self.value)
 
     def filter_related(self, *, related):
         return related
 
     def get_exact_object(self):
-        return models.Place.objects.get(id=self.value)
+        if not hasattr(self.value, 'id'):
+            return models.Place.objects.get(id=self.value)
+        return self.value
 
     def get_related_queryset(self, *, user=None):
-        return models.Place.objects.filter(id=self.value.id)
+        if self.object:
+            return models.Place.objects.filter(id=self.object.id)
+        else:
+            return models.Place.objects.none()
 
     def matching_photos(self, *, queryset):
         return queryset.filter(photo__id=OuterRef('pk'))
