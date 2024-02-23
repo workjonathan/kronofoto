@@ -107,7 +107,9 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     ])),
     path('mainstreet360/<int:pk>', PhotoSphereView.as_view(), name="mainstreetview"),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
+    path('autocomplete/contributors/select2', views.contributor_search, name='contributor-search2'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
+    path('autocomplete/places', views.place_search, name='place-search'),
 ]
 
 urlpatterns = urlpatterns + [

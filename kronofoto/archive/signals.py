@@ -1,20 +1,44 @@
 from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.db.models import Q
-from .models import Photo, WordCount, Tag, Term, PhotoTag
+from .models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount
 from collections import Counter
 import re
 
 
+@receiver(post_save, sender=Place)
+def place_save(sender, instance, created, raw, using, update_fields, **kwargs):
+    PlaceWordCount.objects.filter(place=instance).delete()
+    counts = Counter(w for w in re.split(r"[^\w\']+", instance.name.lower()) if w.strip())
+    total = sum(counts.values())
+    wordcounts = [
+        PlaceWordCount(place=instance, word=w) for w in counts
+    ]
+    PlaceWordCount.objects.bulk_create(wordcounts)
+
 @receiver(post_save, sender=Photo)
 def photo_save(sender, instance, created, raw, using, update_fields, **kwargs):
-    if update_fields and 'caption' in update_fields:
-        WordCount.objects.filter(photo=instance, field='CA').delete()
-        counts = Counter(w for w in re.split(r"[^\w\']+", instance.caption.lower()) if w.strip())
+    WordCount.objects.filter(photo=instance, field='CA').delete()
+    WordCount.objects.filter(photo=instance, field='PL').delete()
+    counts = Counter(w for w in re.split(r"[^\w\']+", instance.caption.lower()) if w.strip())
+    total = sum(counts.values())
+    wordcounts = [
+        WordCount(photo=instance, word=w, field='CA', count=counts[w]/total) for w in counts
+    ]
+    if instance.place:
+        q = Q(lft__lte=instance.place.lft, rght__gte=instance.place.rght, tree_id=instance.place.tree_id)
+        if instance.place.geom:
+            q |= Q(geom__contains=instance.place.geom)
+        if instance.location_point:
+            q |= Q(geom__contains=instance.location_point)
+        places = Place.objects.filter(q)
+        instance.places.set(places)
+        counts = sum((Counter(place.name.lower().split()) for place in places), Counter())
         total = sum(counts.values())
-        wordcounts = [
-            WordCount(photo=instance, word=w, field='CA', count=counts[w]/total) for w in counts
+        wordcounts += [
+            WordCount(photo=instance, word=w, field='PL', count=counts[w]/total) for w in counts
         ]
+    WordCount.objects.bulk_create(wordcounts)
 
 @receiver(post_save, sender=PhotoTag)
 def tag_change(sender, instance, update_fields, **kwargs):

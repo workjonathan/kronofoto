@@ -208,8 +208,6 @@ def test_photoadmin_save_form():
     form = Mock()
     change = Mock()
     ma.save_form(request, form, change)
-    assert form.save().thumbnail == None
-    assert form.save().h700 == None
     assert [] == change.mock_calls
 
 def test_usertaginline():

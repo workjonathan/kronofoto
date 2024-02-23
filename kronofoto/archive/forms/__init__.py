@@ -1,11 +1,11 @@
 from django import forms
-from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair
+from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair, Place
 from ..search import expression
 from ..search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
-from ..widgets import HeadingWidget, PositioningWidget
+from ..widgets import HeadingWidget, PositioningWidget, Select2
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
@@ -75,7 +75,6 @@ class LocationChoiceField(forms.ChoiceField):
         yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
 
 
-
 class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
     basic.group = 'BASIC'
@@ -97,16 +96,27 @@ class SearchForm(forms.Form):
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
     endYear.group = 'DATE RANGE'
 
-    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.filter_donated().order_by('last_name', 'first_name'))
+    donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.all(), widget=Select2(queryset=Donor.objects.all()))
+    donor.widget.attrs.update({
+        'data-select2-url': reverse_lazy("kronofoto:contributor-search2"),
+        "placeholder": "Contributor search",
+    })
     donor.group = "CONTRIBUTOR"
 
-    city = LocationChoiceField(required=False, label='', field='city')
+    place = forms.ModelChoiceField(required=False, label='', queryset=Place.objects.all(), widget=Select2(queryset=Place.objects.all()))
+    place.widget.attrs.update({
+        'data-select2-url': reverse_lazy("kronofoto:place-search"),
+        "placeholder": "Place search",
+    })
+    place.group = "LOCATION"
+
+    city = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     city.group = 'LOCATION'
-    county = LocationChoiceField(required=False, label='', field='county')
+    county = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     county.group = 'LOCATION'
-    state = LocationChoiceField(required=False, label='', field='state')
+    state = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     state.group = 'LOCATION'
-    country = LocationChoiceField(required=False, label='', field='country')
+    country = forms.CharField(required=False, label='', widget=forms.HiddenInput)
     country.group = 'LOCATION'
 
     query = forms.CharField(required=False, label='')
@@ -114,13 +124,6 @@ class SearchForm(forms.Form):
         'placeholder': 'Keywords, terms, photo ID#, contributor',
     })
     query.group = "ADVANCED SEARCH"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['city'].load_choices()
-        self.fields['county'].load_choices()
-        self.fields['state'].load_choices()
-        self.fields['country'].load_choices()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -169,6 +172,8 @@ class SearchForm(forms.Form):
             form_exprs.append(expression.County(cleaned_data['county']))
         if cleaned_data['state']:
             form_exprs.append(expression.State(cleaned_data['state']))
+        if cleaned_data['place']:
+            form_exprs.append(expression.PlaceExactly(cleaned_data['place']))
         if cleaned_data['country']:
             form_exprs.append(expression.Country(cleaned_data['country']))
         if len(form_exprs):

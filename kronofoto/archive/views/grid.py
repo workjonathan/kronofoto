@@ -116,7 +116,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         try:
-            raise Redirect("single object found", url=qs.get().get_absolute_url())
+            raise Redirect("single object found", url=qs.order_by('year', 'id').get().get_absolute_url())
         except (MultipleObjectsReturned, self.model.DoesNotExist):
             pass
 

@@ -58,29 +58,29 @@ class OrderedDetailBase(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().only('id', 'year', 'original')
         object = self.object
         object.active = True
 
-        before = queryset.photos_before(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+        before = queryset.photos_before(year=object.year, id=object.id)[:self.item_count]
         before_cycling = cycle(
             PhotoPlaceholder(
                 thumbnail=EMPTY_THUMBNAIL,
                 is_spacer=True,
                 photo=photo
-            ) for photo in queryset.order_by('-year', '-id').iterator(chunk_size=self.item_count)
+            ) for photo in queryset.order_by('-year', '-id')[:self.item_count]
         )
         before_looping = chain(before, before_cycling)
         before = list(islice(before_looping, self.item_count))
         context['prev_photo'] = before[0]
 
-        after = queryset.photos_after(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+        after = queryset.photos_after(year=object.year, id=object.id)[:self.item_count]
         after_cycling = cycle(
             PhotoPlaceholder(
                 thumbnail=EMPTY_THUMBNAIL,
                 is_spacer=True,
                 photo=photo,
-            ) for photo in queryset.iterator(chunk_size=self.item_count)
+            ) for photo in queryset[:self.item_count]
         )
         after_looping = chain(after, after_cycling)
         after = list(islice(after_looping, self.item_count))
@@ -105,29 +105,29 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
         return self.form_class(self.request.GET)
 
     def form_valid(self, form):
-        queryset = self.object_list = self.get_queryset()
+        queryset = self.object_list = self.get_queryset().only('id', 'year', 'original')
         object = get_object_or_404(self.model, pk=form.cleaned_data['id'])
         offset = form.cleaned_data['offset']
         if form.cleaned_data['forward']:
-            objects = queryset.photos_after(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+            objects = queryset.photos_after(year=object.year, id=object.id)[:self.item_count]
             objects_cycling = cycle(
                 PhotoPlaceholder(
                     thumbnail=EMPTY_THUMBNAIL,
                     is_spacer=True,
                     photo=photo
-                ) for photo in queryset.iterator(chunk_size=self.item_count)
+                ) for photo in queryset[:self.item_count]
             )
             objects_looping = chain(objects, objects_cycling)
             objects = list(islice(objects_looping, self.item_count))
 
         else:
-            objects = queryset.photos_before(year=object.year, id=object.id).iterator(chunk_size=self.item_count)
+            objects = queryset.photos_before(year=object.year, id=object.id)[:self.item_count]
             objects_cycling = cycle(
                 PhotoPlaceholder(
                     thumbnail=EMPTY_THUMBNAIL,
                     is_spacer=True,
                     photo=photo
-                ) for photo in queryset.order_by('-year', '-id').iterator(chunk_size=self.item_count)
+                ) for photo in queryset.order_by('-year', '-id')[:self.item_count]
             )
             objects_looping = chain(objects, objects_cycling)
             objects = list(islice(objects_looping, self.item_count))

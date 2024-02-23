@@ -21,6 +21,7 @@ body, #kfroot {
   top: 0px;
   left: 0px;
 }
+@import 'select2/src/scss/core';
 
 // Foundation Dependencies
 @import 'foundation-sites/_vendor/sassy-lists/stylesheets/helpers/missing-dependencies';
@@ -144,6 +145,11 @@ input[type=number]::-webkit-outer-spin-button {
 
 select::-ms-expand {
   display: none;
+}
+
+.select2-dropdown {
+    z-index: 20000;
+    width: 25%;
 }
 
 select {

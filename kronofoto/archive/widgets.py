@@ -1,5 +1,19 @@
-from django.forms.widgets import NumberInput, Widget, SelectMultiple, ClearableFileInput, CheckboxSelectMultiple
+from django.forms.widgets import NumberInput, Widget, SelectMultiple, ClearableFileInput, CheckboxSelectMultiple, Select
 from django.forms import MultiWidget, HiddenInput
+
+
+class Select2(Select):
+    def __init__(self, queryset):
+        self.queryset = queryset
+        super().__init__()
+
+    def get_context(self, name, value, attrs):
+        if value is None:
+            self.choices = []
+        else:
+            self.choices = [(obj.id, str(obj)) for obj in self.queryset.filter(id=value)]
+        return super().get_context(name, value, attrs)
+
 
 class ImagePreviewClearableFileInput(ClearableFileInput):
     template_name = "archive/widgets/image_preview_clearable_file_input.html"

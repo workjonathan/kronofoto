@@ -1,8 +1,12 @@
 from django.views.generic.list import BaseListView
 from .jsonresponse import JSONResponseMixin
+import json
 from ..models.tag import Tag
 from ..models.donor import Donor
-from django.db.models import Q
+from ..models import Place, Photo
+from django.db.models import Q, Exists, OuterRef, F
+from django.db.models.functions import Upper
+from django.http import HttpResponse
 import re
 from functools import reduce
 from operator import or_
@@ -11,6 +15,45 @@ SPLIT = r"\[|\]|-| |,"
 archive_id_tag = re.compile(r"\[\s*([^\[\]]*[^\[\]\s]+)\s*-\s*(\d+)\s*\]")
 id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
+def contributor_search(request):
+    txts = request.GET.get('q', '').split(', ')
+    donors = Donor.objects.all()
+    for s in txts:
+        if s:
+            donors = donors.filter(Q(first_name__istartswith=s) | Q(last_name__istartswith=s))
+    donors = donors.filter_donated()
+    results = [{'id': donor.id, 'text': str(donor)} for donor in donors[:20]]
+    response = HttpResponse(content_type="application/json")
+    json.dump({"results": results, "pagination": {"more": False}}, response)
+    return response
+
+def place_search(request):
+    txt = request.GET.get('q', '').upper()
+    tmp = list(txt)
+    tmp[-1] = chr(1 + ord(tmp[-1]))
+    # This is doing a subquery in where clause to archive_photo which joins place again.
+    # Maybe it could instead subquery place and join photo. Maybe easier for db indexes.
+    places = Place.objects.annotate(ufullname=Upper('fullname')).filter(ufullname__gte=txt, ufullname__lt=''.join(tmp))
+    #places = Place.objects.filter(fullname__istartswith=txt)#, fullname__lt=''.join(tmp))
+    # Places that match search and have at least 1 photo.
+    # A place p has a photo if
+        # photo.place and photo.place's ancestors include place p...
+        # Photo.place is spatially within place p
+        # Photo.location_point is spatially within place p
+    places = places.filter(
+        Exists(
+            Place.objects.filter(Q(archive_photo_place__place_id=F('id')) &
+                #parents have smaller lft and larger rght
+                (Q(lft__gte=OuterRef('lft'), rght__lte=OuterRef('rght'), tree_id=OuterRef('tree_id')) # this benefits from index tree_id, lft, rght
+                | Q(geom__within=OuterRef('geom'))) # fast
+                #| Q(location_point__within=OuterRef('geom')) # fast
+            )
+        )
+    ).order_by('fullname')
+    results = [{'id': place.id, 'text': str(place)} for place in places[:20]]
+    response = HttpResponse(content_type="application/json")
+    json.dump({"results": results, "pagination": {"more": False}}, response)
+    return response
 
 class ContributorSearchView(JSONResponseMixin, BaseListView):
     def get_queryset(self):

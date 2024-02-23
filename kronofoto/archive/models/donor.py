@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Count, QuerySet
 from django_stubs_ext import WithAnnotations
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q, Exists, OuterRef, F
+from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
 from .collectible import Collectible
 from .archive import Archive
@@ -11,16 +11,24 @@ from typing import final, Any, Type, List
 
 class DonorQuerySet(models.QuerySet):
     def annotate_photographedcount(self) -> Self:
-        return self.annotate(photographed_count=Count("archive_photo_photographed", distinct=True))
+        from .photo import Photo
+        q = Photo.objects.filter(photographer=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
+        return self.annotate(photographed_count=Subquery(q))
 
     def annotate_scannedcount(self) -> Self:
-        return self.annotate(scanned_count=Count("archive_photo_scanned", distinct=True))
+        from .photo import Photo
+        q = Photo.objects.filter(scanner=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
+        return self.annotate(scanned_count=Subquery(q))
 
     def annotate_donatedcount(self) -> Self:
-        return self.annotate(donated_count=Count('photo', distinct=True))
+        from .photo import Photo
+        q = Photo.objects.filter(donor=OuterRef('id')).annotate(donated_count=Func(F('id'), function='COUNT')).values('donated_count')[:1]
+        return self.annotate(donated_count=Subquery(q))
 
-    def filter_donated(self, at_least: int=1) -> Self:
-        return self.annotate_donatedcount().filter(donated_count__gte=at_least)
+    def filter_donated(self) -> Self:
+        from .photo import Photo
+        q = Photo.objects.filter(donor__id=OuterRef('pk'), is_published=True, year__isnull=False)
+        return self.filter(Exists(q))
 
 
 class Donor(Collectible, models.Model):

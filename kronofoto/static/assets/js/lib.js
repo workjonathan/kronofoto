@@ -7,6 +7,8 @@ import timeline from "./timeline";
 import $ from "jquery"
 import ClipboardActionCopy from 'clipboard/src/actions/copy'
 import 'jquery-ui-pack'
+import * as Select2 from 'select2'
+Select2.default(window, $)
 
 // Foundation
 import {
@@ -463,6 +465,20 @@ class KronofotoContext {
             $input.autocomplete({
                 source: $input.data("autocomplete-url"),
                 minLength: $input.data("autocomplete-min-length"),
+            })
+        })
+        $("[data-select2-url]", elem).each((_, input) => {
+            const $input = $(input)
+            $input.select2({
+                width: "300px",
+                allowClear: true,
+                minimumInputLength: 2,
+                placeholder: $input.attr('placeholder'),
+                ajax: {
+                    delay: 250,
+                    url: $input.data('select2-url'),
+                    dataType: "json",
+                },
             })
         })
         $(elem).find(".form--add-tag .link--icon").on('click', (e) => {

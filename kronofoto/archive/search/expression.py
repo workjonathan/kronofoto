@@ -1,5 +1,5 @@
 from django.db.models import Q, F, Value, Case, When, IntegerField, Sum, FloatField, BooleanField, Value
-from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex
+from django.db.models.functions import Cast, Length, Lower, Replace, Greatest, Least, StrIndex, Upper
 from django.db.models import Subquery, Exists, OuterRef
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from functools import cached_property
@@ -84,17 +84,21 @@ class GenericFilterReporter:
             clauses = ' and '.join([', '.join(words[:-1]), words[-1]])
         return "{verb} {clauses}".format(verb=self.verb, clauses=clauses)
 
+class PlaceFilterReporter:
+    def describe(self, exprs):
+        return 'from ' + ', '.join(expr.object.fullname for expr in exprs if expr.object)
+
 class LocationFilterReporter:
     def describe(self, exprs):
         location = {}
         for expr in exprs:
-            if isinstance(expr._value, CountyValue):
+            if isinstance(expr._value, CountyValue) or isinstance(expr._value, CountyWordValue):
                 location['county'] = expr._value.value
-            elif isinstance(expr._value, CityValue):
+            elif isinstance(expr._value, CityValue) or isinstance(expr._value, CityWordValue):
                 location['city'] = expr._value.value
-            elif isinstance(expr._value, StateValue):
+            elif isinstance(expr._value, StateValue) or isinstance(expr._value, StateWordValue):
                 location['state'] = expr._value.value
-            elif isinstance(expr._value, CountryValue):
+            elif isinstance(expr._value, CountryValue) or isinstance(expr._value, CountryWordValue):
                 location['country'] = expr._value.value
         return 'from ' + models.format_location(**location)
 
@@ -130,6 +134,8 @@ class Description:
             return MaxReporter()
         if group == 'year':
             return YearFilterReporter()
+        if group == 'place':
+            return PlaceFilterReporter()
         if group == 'location':
             return LocationFilterReporter()
         if group == 'caption':
@@ -138,6 +144,8 @@ class Description:
             return GenericFilterReporter('termed with')
         if group == 'donor_lastname':
             return GenericFilterReporter('donor has last name')
+        if group == 'any':
+            return GenericFilterReporter('')
         if group == 'tag':
             return GenericFilterReporter('tagged with')
         if group == 'photographer':
@@ -251,6 +259,10 @@ class SubqueryExpression(Expression):
     def get_score(self, user=None):
         return self._value.get_subquery(query=self.select_objects(user=user))
 
+class PlaceExpression(Expression):
+    def get_search_args(self, user=None):
+        return [Exists(self.select_objects(user=user))] # | Q(location_point__within=self.object.geom)] too slow for now
+
 class SimpleExpression(Expression):
     def get_search_kwargs(self):
         return {self._value.get_search_field(): self._value.get_search_value()}
@@ -306,10 +318,75 @@ class SingleWordValueBase(ValueBase):
         return Subquery(query.annotate(total=Sum('count')).values('total'))
 
     def filter_related(self, *, related):
-        return related.filter(word=self.value, field=self.wordcount_field())
+        return related.filter(word=self.value.lower(), field=self.wordcount_field())
 
     def get_related_queryset(self, *, user=None):
         return models.WordCount.objects.all()
+
+@dataclass
+class IndexContainsWordValue(ValueBase):
+    value: str
+
+    def serialize(self):
+        return self.value
+
+    def group(self):
+        return "any"
+
+    def get_subquery(self, *, query):
+        return Subquery(query.annotate(total=Sum('count')).values('total'))
+
+    def filter_related(self, *, related):
+        return related.filter(Q(word=self.value.lower()) & (Q(field="TE") | Q(field='TA') | Q(field='PL')))
+
+    def get_related_queryset(self, *, user=None):
+        return models.WordCount.objects.all()
+
+@dataclass
+class PlaceNameExactValue(ValueBase):
+    value: str
+    def group(self):
+        return 'location'
+
+    def get_subquery(self, *, query):
+        return Case(When(Exists(query), then=1), default=0, output_field=FloatField())
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(photo__id=OuterRef('pk'))
+
+    def filter_related(self, *, related):
+        return related
+
+    def get_related_queryset(self, *, user=None):
+        return models.Place.objects.annotate(uname=Upper('name')).filter(uname=self.value.upper(), place_type__name=self.placetype_name())
+
+@dataclass
+class StateWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'state:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'US State'
+
+@dataclass
+class CountyWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'county:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'US County'
+
+@dataclass
+class CityWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'city:"{}"'.format(self.value)
+    def get_related_queryset(self, *, user=None):
+        return models.Place.objects.annotate(uname=Upper('name')).filter(Q(uname=self.value.upper()) & (Q(place_type__name="US Town") | Q(place_type__name="US Unincorporated Area")))
+
+@dataclass
+class CountryWordValue(PlaceNameExactValue):
+    def serialize(self):
+        return 'country:"{}"'.format(self.value)
+    def placetype_name(self):
+        return 'Country'
 
 class SingleWordTagValue(SingleWordValueBase):
     def serialize(self):
@@ -585,24 +662,7 @@ class CountryValue(ValueBase):
 
     def short_label(self):
         return 'Country: {}'.format(self.value)
-@dataclass
-class CityValue(ValueBase):
-    value: str
 
-    def serialize(self):
-        return 'city:{}'.format(self.value)
-
-    def get_search_value(self):
-        return self.value
-
-    def get_search_field(self):
-        return "city__iexact"
-
-    def group(self):
-        return 'location'
-
-    def short_label(self):
-        return 'City: {}'.format(self.value)
 
 @dataclass
 class YearEqualsValue(ValueBase):
@@ -764,6 +824,53 @@ def AccessionNumber(value):
 def MultiWordTag(value):
     return SubqueryExpression(_value=MultiWordTagValue(value.lower()))
 
+@dataclass
+class PlaceValue(ValueBase):
+    value: int
+    def serialize(self):
+        if self.object:
+            return 'place:{}'.format(self.object.id)
+        return "place:{}".format(self.value)
+
+    def filter_related(self, *, related):
+        return related
+
+    def get_exact_object(self):
+        if not hasattr(self.value, 'id'):
+            return models.Place.objects.get(id=self.value)
+        return self.value
+
+    def get_related_queryset(self, *, user=None):
+        if self.object:
+            return models.Place.objects.filter(id=self.object.id)
+        else:
+            return models.Place.objects.none()
+
+    def matching_photos(self, *, queryset):
+        return queryset.filter(photo__id=OuterRef('pk'))
+
+    def group(self):
+        return "place"
+
+@dataclass
+class CityValue(PlaceValue):
+    value: str
+
+    def get_exact_object(self):
+        return models.Place.objects.get(Q(name=self.value) & (Q(place_type__name='US Town') | Q(place_type__name='US Unincorporated Area')))
+
+    def serialize(self):
+        return 'city:{}'.format(self.value)
+
+    def group(self):
+        return 'location'
+
+    def short_label(self):
+        return 'City: {}'.format(self.value)
+
+def PlaceExactly(value):
+    return SubqueryExpression(_value=PlaceValue(value))
+
 def TagExactly(value):
     return ExactMatchExpression(_value=TagExactlyValue(value))
 
@@ -790,16 +897,19 @@ def SingleWordCaption(value):
 Caption = lambda s: MultiWordCaption(s) if len(s.split()) > 1 else SingleWordCaption(s)
 
 def State(value):
-    return SimpleExpression(_value=StateValue(value))
+    return SubqueryExpression(_value=StateWordValue(value))
 
 def Country(value):
-    return SimpleExpression(_value=CountryValue(value))
+    return SubqueryExpression(_value=CountryWordValue(value))
 
 def County(value):
-    return SimpleExpression(_value=CountyValue(value))
+    return SubqueryExpression(_value=CountyWordValue(value))
+
+def IndexContains(value):
+    return SubqueryExpression(_value=IndexContainsWordValue(value))
 
 def City(value):
-    return SimpleExpression(_value=CityValue(value))
+    return SubqueryExpression(_value=CityWordValue(value))
 
 def YearLTE(value):
     return SimpleExpression(_value=YearLTEValue(value))
@@ -981,7 +1091,7 @@ def Any(s):
     return expr
 
 def CollectionExpr(s):
-    expr = Maximum(CollectionTag(s), Maximum(Term(s), Maximum(City(s), Maximum(State(s), Maximum(Country(s), County(s))))))
+    expr = IndexContains(s)
     try:
         expr = Maximum(YearEquals(int(s)), expr)
     except:

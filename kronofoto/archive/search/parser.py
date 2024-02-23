@@ -31,6 +31,7 @@ termExpr = parsy.string('term:') >> string.map(Term)
 cityExpr = parsy.string('city:') >> string.map(City)
 stateExpr = parsy.string('state:') >> string.map(State)
 countryExpr = parsy.string('country:') >> string.map(Country)
+placeExpr = parsy.string('place:') >> number.map(PlaceExactly)
 countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
@@ -54,6 +55,7 @@ token = (
     | cityExpr
     | stateExpr
     | countryExpr
+    | placeExpr
     | countyExpr
     | accessionExpr
     | captionExpr

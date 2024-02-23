@@ -119,11 +119,11 @@ class PhotoBase(models.Model):
     photographer = models.ForeignKey(
         Donor, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_photographed",
     )
-    address = models.CharField(max_length=128, blank=True, db_index=True)
-    city = models.CharField(max_length=128, blank=True, db_index=True)
-    county = models.CharField(max_length=128, blank=True, db_index=True)
-    state = models.CharField(max_length=64, blank=True, db_index=True)
-    country = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    address = models.CharField(max_length=128, blank=True)
+    city = models.CharField(max_length=128, blank=True)
+    county = models.CharField(max_length=128, blank=True)
+    state = models.CharField(max_length=64, blank=True)
+    country = models.CharField(max_length=64, null=True, blank=True)
     place = models.ForeignKey(
         Place, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_place"
     )
@@ -254,6 +254,7 @@ class ImageData:
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
+    places = models.ManyToManyField(Place, editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
     @property
@@ -302,7 +303,22 @@ class Photo(PhotoBase):
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
         indexes = (
-            models.Index(fields=['year', 'is_published']),
+            models.Index(fields=['year', 'id'], condition=Q(is_published=True, year__isnull=False), name="year_id_sort"),
+            models.Index(fields=['donor_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="donor_year_id_sort"),
+            models.Index(fields=['donor_id', 'category', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_category_year_id_sort"),
+            models.Index(fields=['donor_id', 'archive', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_archive_year_id_sort"),
+            models.Index(fields=['donor_id', 'category', 'archive', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_category_archive_year_id_s"),
+            models.Index(fields=['category', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_year_id_sort"),
+            models.Index(fields=['archive', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="archive_year_id_sort"),
+            models.Index(fields=['category', 'archive', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_archive_year_id_sort"),
+            models.Index(fields=['place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="pyear_id_sort"),
+            models.Index(fields=['donor_id', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="donor_pyear_id_sort"),
+            models.Index(fields=['donor_id', 'category', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_category_pyear_id_sort"),
+            models.Index(fields=['donor_id', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_archive_pyear_id_sort"),
+            models.Index(fields=['donor_id', 'category', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_category_archive_pyear_id_s"),
+            models.Index(fields=['category', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_pyear_id_sort"),
+            models.Index(fields=['archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="archive_pyear_id_sort"),
+            models.Index(fields=['category', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_archive_pyear_id_sort"),
         )
 
     def page_number(self):
