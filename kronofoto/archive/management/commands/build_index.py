@@ -16,7 +16,7 @@ class Command(BaseCommand):
         for photo in Photo.objects.all().order_by('id'):
             print(photo.id, len(wordcounts))
             if len(wordcounts) > 10000:
-                WordCount.objects.bulk_create(wordcounts)
+                WordCount.objects.bulk_create(wordcounts, ignore_conflicts=True)
                 wordcounts = []
             if photo.place:
                 q = Q(lft__lte=photo.place.lft, rght__gte=photo.place.rght, tree_id=photo.place.tree_id)
@@ -46,4 +46,4 @@ class Command(BaseCommand):
             wordcounts += [
                 WordCount(photo=photo, word=w, field='TA', count=counts[w]/total) for w in counts
             ]
-        WordCount.objects.bulk_create(wordcounts)
+        WordCount.objects.bulk_create(wordcounts, ignore_conflicts=True)

@@ -378,8 +378,8 @@ class CountyWordValue(PlaceNameExactValue):
 class CityWordValue(PlaceNameExactValue):
     def serialize(self):
         return 'city:"{}"'.format(self.value)
-    def placetype_name(self):
-        return 'US Town'
+    def get_related_queryset(self, *, user=None):
+        return models.Place.objects.annotate(uname=Upper('name')).filter(Q(uname=self.value.upper()) & (Q(place_type__name="US Town") | Q(place_type__name="US Unincorporated Area")))
 
 @dataclass
 class CountryWordValue(PlaceNameExactValue):
@@ -857,7 +857,7 @@ class CityValue(PlaceValue):
     value: str
 
     def get_exact_object(self):
-        return models.Place.objects.get(name=self.value, place_type__name='US Town')
+        return models.Place.objects.get(Q(name=self.value) & (Q(place_type__name='US Town') | Q(place_type__name='US Unincorporated Area')))
 
     def serialize(self):
         return 'city:{}'.format(self.value)

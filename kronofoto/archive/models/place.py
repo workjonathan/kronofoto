@@ -18,7 +18,7 @@ class PlaceType(models.Model):
             for place in updates:
                 place.fullname = place.newfullname
             Place.objects.bulk_update(updates, ['fullname'])
-        elif self.name == "US Town":
+        elif self.name == "US Town" or self.name == 'US Unincorporated Area':
             updates = list(self.place_set.all().annotate(newfullname=Concat("name", models.Value(", "), "parent__name")))
             for place in updates:
                 place.fullname = place.newfullname
@@ -63,10 +63,10 @@ class Place(MPTTModel):
         elif self.place_type.name == "US State":
             return Photo.objects.filter(place__isnull=True, address="", country=self.parent.name, city="", state__iexact=self.name, county="").update(place=self)
         elif self.place_type.name == "US County":
-            return (Photo.objects.filter(place__isnull=True, address="", city="", state__iexact=self.parent.name, county__iexact=self.name).update(place=self) +
-            Photo.objects.filter(place__isnull=True, address="", city="", state__iexact=self.parent.name, county__iexact=self.name + " county").update(place=self))
-        elif self.place_type.name == "US Town":
-            return Photo.objects.filter(place__isnull=True, address="", city__iexact=self.name, state__iexact=self.parent.name).update(place=self)
+            return (Photo.objects.filter(place__isnull=True, city="", state__iexact=self.parent.name, county__iexact=self.name).update(place=self) +
+            Photo.objects.filter(place__isnull=True, city="", state__iexact=self.parent.name, county__iexact=self.name + " county").update(place=self))
+        elif self.place_type.name == "US Town" or self.place_type.name == 'US Unincorporated Area':
+            return Photo.objects.filter(place__isnull=True, city__iexact=self.name, state__iexact=self.parent.name).update(place=self)
 
     class Meta:
         indexes = (
