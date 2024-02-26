@@ -36,9 +36,9 @@
                     <div id="logo">
 
 
-                        <a href="{% url "kronofoto:random-image" %}">
-                        <img class="logo-img show-for-large" src="{% url "kronofoto:logosvg" theme.name view.kwargs.short_name|default:"ia" %}" alt="Fortepan Iowa Logo">
-                        <img class="logo-img hide-for-large" src="{% url "kronofoto:logosvgsmall" theme.name view.kwargs.short_name|default:"ia" %}" alt="Fortepan Iowa Logo">
+                        <a href="{% krono_url "kronofoto:random-image" %}">
+                        <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Logo">
+                        <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Logo">
                         </a>
 
                     </div>
@@ -46,7 +46,7 @@
                 </div> <!-- end nav left -->
 
                 <div class="main-nav__center">
-                    <h1 class="main-nav__title">My Town My Story</h1>
+                    <h1 class="main-nav__title">Fortepan Images</h1>
                 </div>
                 <!-- end nav center -->
 
