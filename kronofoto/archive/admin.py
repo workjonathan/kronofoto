@@ -586,14 +586,13 @@ class CSVRecordAdmin(admin.ModelAdmin):
 
 @base_admin.register(Place)
 class PlaceAdmin(MPTTModelAdmin):
-    search_fields = ['name']
+    search_fields = ['fullname']
     raw_id_fields = ["parent"]
     list_display = ['fullname', "place_type"]
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.GISModelAdmin):
-    autocomplete_fields = ['donor', 'scanner', 'photographer']
-    raw_id_fields = ['place']
+    autocomplete_fields = ['donor', 'scanner', 'photographer', 'place']
     def get_urls(self) -> List[URLPattern]:
         from django.urls import path
         def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
