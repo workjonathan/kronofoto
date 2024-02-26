@@ -29,6 +29,8 @@ def contributor_search(request):
 
 def place_search(request):
     txt = request.GET.get('q', '').upper()
+    if len(txt) < 2:
+        return HttpResponse("Invalid request", status=400)
     tmp = list(txt)
     tmp[-1] = chr(1 + ord(tmp[-1]))
     # This is doing a subquery in where clause to archive_photo which joins place again.
@@ -42,12 +44,7 @@ def place_search(request):
         # Photo.location_point is spatially within place p
     places = places.filter(
         Exists(
-            Place.objects.filter(Q(archive_photo_place__place_id=F('id')) &
-                #parents have smaller lft and larger rght
-                (Q(lft__gte=OuterRef('lft'), rght__lte=OuterRef('rght'), tree_id=OuterRef('tree_id')) # this benefits from index tree_id, lft, rght
-                | Q(geom__within=OuterRef('geom'))) # fast
-                #| Q(location_point__within=OuterRef('geom')) # fast
-            )
+            Photo.objects.filter(places__id=OuterRef('id'))
         )
     ).order_by('fullname')
     results = [{'id': place.id, 'text': str(place)} for place in places[:20]]
