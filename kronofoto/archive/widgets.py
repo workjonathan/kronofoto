@@ -14,6 +14,13 @@ class Select2(Select):
             self.choices = [(obj.id, str(obj)) for obj in self.queryset.filter(id=value)]
         return super().get_context(name, value, attrs)
 
+    def value_from_datadict(self, data, files, name):
+        r = super().value_from_datadict(data, files, name)
+        if r:
+            return r
+        else:
+            return None
+
 
 class ImagePreviewClearableFileInput(ClearableFileInput):
     template_name = "archive/widgets/image_preview_clearable_file_input.html"
