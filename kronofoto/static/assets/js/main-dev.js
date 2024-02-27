@@ -16,6 +16,8 @@ window.kfcontext = document
 import HTMX from "./htmx.js"
 
 const htmx = HTMX(document)
+htmx.config.historyCacheSize = 0
+htmx.config.refreshOnHistoryMiss = true
 
 const init = () => {
   initHTMXListeners(htmx, document)
