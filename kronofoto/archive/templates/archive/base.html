@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" prefix="og: https://ogp.me/ns#">
+<html lang="en" prefix="og: https://ogp.me/ns#" template="gallery">
 {% load static %}
 {% load searchform %}
 {% load header %}
@@ -42,7 +42,6 @@
 </head>
 <body hx-push-url="true" theme="{{ theme.name }}">
   {% gtm_body %}
-  <div id="overlay" class="overlay"></div>
   {% block header %}
   {% header %}
   {% endblock header %}
