@@ -11,6 +11,12 @@ $font-weight-extralight: 200;
 $font-weight-thin: 100;
 
 @mixin styles {
+
+  a {
+    color: var(--fp-main-color);
+    text-decoration: none;
+  }
+
   h1, .h1 {
     font-size: 40px;
     font-weight: $font-weight-semibold;
