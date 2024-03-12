@@ -450,24 +450,15 @@ class HasGeoLocationFilter(base_admin.SimpleListFilter):
 
     def lookups(self, request: HttpRequest, model_admin: "admin.ModelAdmin[Any]") -> Tuple[Tuple[str, str], ...]:
         return (
-            ("Yes", "Point and Polygon"),
-            ("Maybe", "Point or Polygon"),
-            ("Point only", "Point only"),
-            ("Polygon only", "Polygon only"),
+            ("Yes", "Yes"),
             ("No", "No"),
         )
 
     def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
         if self.value() == 'Yes':
-            return queryset.filter(location_point__isnull=False) & queryset.filter(location_bounds__isnull=False)
-        elif self.value() == 'Maybe':
-            return queryset.filter(location_point__isnull=False) | queryset.filter(location_bounds__isnull=False)
-        elif self.value() == 'Point only':
-            return queryset.filter(location_point__isnull=False) & queryset.filter(location_bounds__isnull=True)
-        elif self.value() == 'Polygon only':
-            return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=False)
+            return queryset.filter(location_point__isnull=False)
         elif self.value() == 'No':
-            return queryset.filter(location_point__isnull=True) & queryset.filter(location_bounds__isnull=True)
+            return queryset.filter(location_point__isnull=True)
         return queryset
 
 
@@ -785,6 +776,7 @@ class SubmissionAdmin(PhotoBaseAdmin):
     change_form_template = 'admin/custom_changeform.html'
     readonly_fields = ["image_display", "uploader"]
     form = SubmissionForm
+    exclude = ('city', 'state', 'address', 'county', 'country')
 
     class Media:
         js = ('https://unpkg.com/htmx.org@1.9.6',)
@@ -1027,20 +1019,18 @@ class SubmissionAdmin(PhotoBaseAdmin):
 
 @admin.register(Photo)
 class PhotoAdmin(PhotoBaseAdmin):
-    readonly_fields = ["h700_image"]
+    readonly_fields = ['county', 'state', 'city', 'country', "h700_image"]
     inlines = (TagInline,)
     list_filter = (TermFilter, TagFilter, YearIsSetFilter, IsPublishedFilter, HasGeoLocationFilter, HasLocationFilter, HasPlaceFilter)
     list_display = ('thumb_image', 'accession_number', 'donor', 'year', 'caption')
     actions = [publish_photos, unpublish_photos]
     form = PhotoForm
     search_fields = [
-        'city',
-        'state',
-        'county',
         'donor__last_name',
         'donor__first_name',
         'caption',
         'year',
+        'place__fullname',
     ]
 
     class Media:

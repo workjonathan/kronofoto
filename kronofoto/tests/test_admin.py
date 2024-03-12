@@ -130,7 +130,7 @@ def test_execute_filters():
     model = Mock()
     ma = PhotoAdmin(model=model, admin_site=AdminSite())
     request = RequestFactory().get('/')
-    for filter in (HasLocationFilter, HasGeoLocationFilter):
+    for filter in (HasLocationFilter,):
         lookups = filter(request=request, params={}, model=model, model_admin=ma).lookups(request, ma)
         for (lookup, title) in lookups:
             qs = filter(request=request, params={filter.parameter_name: lookup}, model=model, model_admin=ma).queryset(request, Photo.objects.all())

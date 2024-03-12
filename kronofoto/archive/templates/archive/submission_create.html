@@ -11,6 +11,7 @@
     Use this form to enter information about your submission. Fields marked with an * are required. The help text under the form label will help you fill in the form. When you are finished click the "Submit" button at the bottom of the form. 
     </div>
     <form enctype="multipart/form-data" class="form--submission" method="post">
+    {{ form.media }}
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit">

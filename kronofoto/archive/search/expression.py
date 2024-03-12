@@ -362,6 +362,8 @@ class PlaceNameExactValue(ValueBase):
 
 @dataclass
 class StateWordValue(PlaceNameExactValue):
+    def short_label(self):
+        return "State: {}".format(self.value)
     def serialize(self):
         return 'state:"{}"'.format(self.value)
     def placetype_name(self):
@@ -369,6 +371,8 @@ class StateWordValue(PlaceNameExactValue):
 
 @dataclass
 class CountyWordValue(PlaceNameExactValue):
+    def short_label(self):
+        return "County: {}".format(self.value)
     def serialize(self):
         return 'county:"{}"'.format(self.value)
     def placetype_name(self):
@@ -376,6 +380,8 @@ class CountyWordValue(PlaceNameExactValue):
 
 @dataclass
 class CityWordValue(PlaceNameExactValue):
+    def short_label(self):
+        return "City: {}".format(self.value)
     def serialize(self):
         return 'city:"{}"'.format(self.value)
     def get_related_queryset(self, *, user=None):
@@ -383,6 +389,8 @@ class CityWordValue(PlaceNameExactValue):
 
 @dataclass
 class CountryWordValue(PlaceNameExactValue):
+    def short_label(self):
+        return "Country: {}".format(self.value)
     def serialize(self):
         return 'country:"{}"'.format(self.value)
     def placetype_name(self):
@@ -827,6 +835,10 @@ def MultiWordTag(value):
 @dataclass
 class PlaceValue(ValueBase):
     value: int
+
+    def get_subquery(self, *, query):
+        return Exists(query, output_field=FloatField())
+
     def serialize(self):
         if self.object:
             return 'place:{}'.format(self.object.id)

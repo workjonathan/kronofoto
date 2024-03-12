@@ -51,12 +51,12 @@ class ArchiveSubmissionForm(PhotoBaseForm):
 
     class Meta:
         model = Submission
-        exclude : List[str] = []
+        exclude : List[str] = ['state', 'city', 'county', 'country', 'address']
 
 class SubmissionForm(PhotoBaseForm):
     class Meta:
         model = Submission
-        exclude : List[str] = []
+        exclude : List[str] = ['state', 'city', 'county', 'country', 'address']
 
 class PhotoForm(PhotoBaseForm):
     class Meta:

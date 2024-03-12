@@ -73,15 +73,15 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
         photo.save()
         self.donor_model[donor.pk].add(photo.pk)
 
-    @rule(count=st.integers(max_value=1000, min_value=-1000))
-    def check_filter_donated(self, count):
+    @rule()
+    def check_filter_donated(self):
         db_donors = set()
         model_donors = set()
-        for donor in FakeDonor.objects.filter_donated(at_least=count):
+        for donor in FakeDonor.objects.filter_donated():
             db_donors.add(donor.pk)
             assert len(self.donor_model[donor.pk]) == donor.donated_count
         for donor in self.donor_model:
-            if len(self.donor_model[donor]) >= count:
+            if len(self.donor_model[donor]) >= 1:
                 model_donors.add(donor)
         assert db_donors == model_donors
 

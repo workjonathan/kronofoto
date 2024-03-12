@@ -110,6 +110,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('autocomplete/contributors/select2', views.contributor_search, name='contributor-search2'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
     path('autocomplete/places', views.place_search, name='place-search'),
+    path('autocomplete/places/all', views.place_search, {"require_photo": False}, name='all-place-search'),
 ]
 
 urlpatterns = urlpatterns + [

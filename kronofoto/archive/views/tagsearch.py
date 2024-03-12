@@ -27,14 +27,13 @@ def contributor_search(request):
     json.dump({"results": results, "pagination": {"more": False}}, response)
     return response
 
-def place_search(request):
+def place_search(request, *, require_photo=True):
+    print(require_photo)
     txt = request.GET.get('q', '').upper()
     if len(txt) < 2:
         return HttpResponse("Invalid request", status=400)
     tmp = list(txt)
     tmp[-1] = chr(1 + ord(tmp[-1]))
-    # This is doing a subquery in where clause to archive_photo which joins place again.
-    # Maybe it could instead subquery place and join photo. Maybe easier for db indexes.
     places = Place.objects.annotate(ufullname=Upper('fullname')).filter(ufullname__gte=txt, ufullname__lt=''.join(tmp))
     #places = Place.objects.filter(fullname__istartswith=txt)#, fullname__lt=''.join(tmp))
     # Places that match search and have at least 1 photo.
@@ -42,11 +41,12 @@ def place_search(request):
         # photo.place and photo.place's ancestors include place p...
         # Photo.place is spatially within place p
         # Photo.location_point is spatially within place p
-    places = places.filter(
-        Exists(
-            Photo.objects.filter(places__id=OuterRef('id'))
-        )
-    ).order_by('fullname')
+    if require_photo:
+        places = places.filter(
+            Exists(
+                Photo.objects.filter(places__id=OuterRef('id'))
+            )
+        ).order_by('fullname')
     results = [{'id': place.id, 'text': str(place)} for place in places[:20]]
     response = HttpResponse(content_type="application/json")
     json.dump({"results": results, "pagination": {"more": False}}, response)

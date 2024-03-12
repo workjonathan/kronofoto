@@ -127,6 +127,7 @@ class PhotoBase(models.Model):
     place = models.ForeignKey(
         Place, models.PROTECT, null=True, blank=True, related_name="%(app_label)s_%(class)s_place"
     )
+    location_point = models.PointField(null=True, srid=4326, blank=True)
     year = models.SmallIntegerField(null=True, blank=True, db_index=True, validators=[MinValueValidator(limit_value=1800), MaxValueValidator(limit_value=datetime.now().year)])
     circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True, verbose_name="comment")
@@ -166,10 +167,13 @@ class Submission(PhotoBase):
     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
 
     def __str__(self):
-        location = self.location()
+        location = self.place
+        stuff = [str(self.donor)]
         if self.year:
-            return "{} - {}".format(self.year, location)
-        return location
+            stuff.append(str(self.year))
+        if location:
+            stuff.append(location.fullname)
+        return ' - '.join(stuff)
 
 class ResizerBase:
 
@@ -284,8 +288,6 @@ class Photo(PhotoBase):
 
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
     location_from_google = models.BooleanField(editable=False, default=False)
-    location_point = models.PointField(null=True, srid=4326, blank=True)
-    location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False, db_index=True)
     local_context_id = models.CharField(

@@ -7,7 +7,7 @@ from hypothesis import given, strategies, note
 from archive.search import expression, evaluate, parser
 from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
 from archive.search.expression import (
-    And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly, SingleWordTag, MultiWordCaption, IsNew
+    And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly, SingleWordTag, MultiWordCaption, IsNew, IndexContains
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
 from archive.models import Photo, Archive, Donor as DonorModel, Category, Tag as TagModel, PhotoTag, NewCutoff, Term as TermModel
@@ -234,7 +234,7 @@ class BasicParserTest(SimpleTestCase):
 
     def testParserShouldAcceptSimpleWords(self):
         expr = parser.BasicParser.tokenize("dog").parse()
-        self.assertEqual(expr, Maximum(Tag('dog'), Maximum(Term('dog'), Maximum(City('dog'), Maximum(State('dog'), Maximum(Country('dog'), County('dog')))))))
+        self.assertEqual(expr, IndexContains('dog'))
 
     def testParserShouldCombineTerms(self):
         expr = parser.BasicParser.tokenize("dog waterloo").parse()

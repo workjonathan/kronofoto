@@ -8,12 +8,13 @@ from django.template.response import TemplateResponse
 from django.shortcuts import redirect, get_object_or_404
 from archive.models.term import Term, TermQuerySet
 from archive.models.donor import Donor
-from archive.models import Photo
+from archive.models import Photo, Place
 from archive.models.photo import Submission
 from archive.models.archive import ArchiveAgreement, UserAgreement, Archive, ArchiveAgreementQuerySet
+from django.contrib.gis.forms import OSMWidget
 from .agreement import UserAgreementCheck, require_agreement, KronofotoTemplateView
 from ..fields import RecaptchaField, AutocompleteField
-from ..widgets import AutocompleteWidget, SelectMultipleTerms, ImagePreviewClearableFileInput
+from ..widgets import AutocompleteWidget, SelectMultipleTerms, ImagePreviewClearableFileInput, Select2
 from ..reverse import reverse_lazy
 from ..forms import ArchiveSubmissionForm
 from django.utils.decorators import method_decorator
@@ -85,24 +86,22 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         field = self.fields.get('year')
         if field:
             field.help_text = 'The year that the item was created, if you are unsure, put in an approximate date and click the "Approximate date" box.'
-        field = self.fields.get('address')
-        if field:
-            field.help_text = 'If relevant, and you know the exact address (street name or street name and number) of the location of the events depicted in the item you are submitting,  enter it here.'
-        field = self.fields.get('city')
-        if field:
-            field.help_text = 'The city or town where the item was created. Choose from the list, if an item covers multiple towns pick the one that is most represented.'
-        field = self.fields.get('county')
-        if field:
-            field.help_text = 'The county where the item was created if known.'
-        field = self.fields.get('state')
-        if field:
-            field.help_text = 'The State where the item was created.'
-        field = self.fields.get('country')
         if field:
             field.help_text = 'The country where the item was created.'
         field = self.fields.get('caption')
         if field:
             field.help_text = 'Is there anything else you would like to share about this photo? Tell us in your own words and language.'
+        field = self.fields.get('place')
+        if field:
+            field.widget.attrs.update({
+                'data-select2-url': reverse_lazy("kronofoto:all-place-search"),
+                "placeholder": "Place search",
+            })
+        field = self.fields.get('location_point')
+        if field:
+            field.widget.attrs.update({
+                'style': 'width: 400px; height:400px;'
+            })
 
 
     donor = AutocompleteField(
@@ -144,11 +143,8 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
             "year",
             "circa",
             "photographer",
-            "address",
-            "city",
-            "county",
-            "state",
-            "country",
+            "place",
+            'location_point',
             "terms",
             "caption",
             "image",
@@ -156,6 +152,8 @@ class SubmissionDetailsForm(ArchiveSubmissionForm):
         widgets = {
             'image': ImagePreviewClearableFileInput(attrs={"data-image-input": True}, img_attrs={"style": "width: 600px"}),
             'terms': SelectMultipleTerms(),
+            'place': Select2(queryset=Place.objects.all()),
+            'location_point': OSMWidget(),
         }
         labels = {
             "donor": "Contributor",
