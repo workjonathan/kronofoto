@@ -837,7 +837,7 @@ class PlaceValue(ValueBase):
     value: int
 
     def get_subquery(self, *, query):
-        return Exists(query, output_field=FloatField())
+        return Case(When(Exists(query), then=1), default=0, output_field=FloatField())
 
     def serialize(self):
         if self.object:
