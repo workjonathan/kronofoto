@@ -47,6 +47,30 @@ admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
 admin.site.login_form = FortepanAuthenticationForm
 
+from .models import Exhibit, Card, PhotoCard, DoublePhotoCard
+
+class CardInline(admin.StackedInline):
+    model = Card
+    extra = 1
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(photocard__isnull=True)
+class PhotoCardInline(admin.StackedInline):
+    model = PhotoCard
+    raw_id_fields = ['photo',]
+    extra = 1
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(doublephotocard__isnull=True)
+
+class DoublePhotoCardInline(admin.StackedInline):
+    model = DoublePhotoCard
+    raw_id_fields = ['photo', 'photo2']
+    extra = 1
+
+@admin.register(Exhibit)
+class ExhibitAdmin(admin.ModelAdmin):
+    raw_id_fields = ['photo', 'owner']
+    inlines = (CardInline, PhotoCardInline, DoublePhotoCardInline)
+
 class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"
     parameter_name = "photo"

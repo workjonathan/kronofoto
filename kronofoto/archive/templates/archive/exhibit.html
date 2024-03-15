@@ -1,10 +1,356 @@
-{% extends base_template %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortepan Exhibit</title>
+    <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+	<link rel="apple-touch-icon" sizes="180x180" href="https://fortepan.us/static/assets/favicon/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="https://fortepan.us/static/assets/favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="https://fortepan.us/static/assets/favicon/favicon-16x16.png">
+	<link rel="manifest" href="https://fortepan.us/static/assets/favicon/site.webmanifest">
+	<link rel="mask-icon" href="https://fortepan.us/static/assets/favicon/safari-pinned-tab.svg" color="#5bbad5">
+	<link rel="shortcut icon" href="https://fortepan.us/static/assets/favicon/favicon.ico">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="msapplication-config" content="https://fortepan.us/static/assets/favicon/browserconfig.xml">
+	<meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<style>
+        body { display: none; } /* Initially hide body while scss is loading */
+    </style>
+    <style id="scss-style"></style>
+    <script type="module">
+	  import * as sass from 'https://jspm.dev/sass';
 
-{% load widgets %}
+		const importer = {
+			load: async (url) => {
+				const response = await fetch(url.href);
+				const text = await response.text();
+				return {
+					contents: text,
+					syntax: 'scss'
+				}
+			},
+			canonicalize: (url) => {
+				return new URL(url, window.location.toString())
+			}
+		};
 
-{% block content %}
-    {% for photo in photos %}
-        <img src="{{ photo.h700.url }}">
-        <div>{{ photo.caption | markdown }}</div>
+	    const compile = () => sass.compileStringAsync(`@import "{% static "assets/exhibit/styles.scss" %}";`, { importers: [importer] });
+		document.getElementById('scss-style').innerHTML += ((await compile()).css);
+		document.body.style.display = 'block';
+
+		AOS.init({
+			disable: 'mobile',
+			once: true
+		});
+
+        const containers = document.querySelectorAll('.container');
+        let zIndex = containers.length + 10;
+        containers.forEach((container) => {
+            container.style.zIndex = (zIndex--);
+        });
+
+        window.addEventListener('scroll', () => {
+            let elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
+                elements.forEach((element) => {
+                const viewportHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const distanceFromBottom = viewportHeight - elementTop;
+                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+                const start = 30;
+                const end = 50;
+                const opacity = (percentageFromBottom - start) * (100/(end - start));
+                element.style.opacity = opacity / 100;
+            });
+
+            elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
+            elements.forEach((element) => {
+              const viewportHeight = window.innerHeight;
+              const elementTop = element.getBoundingClientRect().top;
+              const distanceFromBottom = viewportHeight - elementTop;
+              const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+              const start = 30;
+              const end = 50;
+              const opacity = (percentageFromBottom - start) * (100/(end - start));
+              element.style.opacity = opacity / 100;
+            });
+
+            elements = document.querySelectorAll('.hero__title');
+            elements.forEach((element) => {
+                const viewportHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const distanceFromBottom = viewportHeight - elementTop;
+                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+                const start = 80;
+                const end = 100;
+                const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
+                element.style.opacity = opacity / 100;
+            });
+
+            elements = document.querySelectorAll('.hero__content');
+            elements.forEach((element) => {
+                const viewportHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const distanceFromBottom = viewportHeight - elementTop;
+                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+                const start = 50;
+                const end = 80;
+                const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
+                element.style.opacity = opacity / 100;
+            });
+
+        });
+
+    </script>
+</head>
+<body>
+
+	<header class="header">
+		<div class="header__logo">
+
+		</div>
+		<div class="header__title">
+			{{ exhibit.name }}
+		</div>
+
+    </header>
+
+    <div class="hero">
+        <div class="hero__content-wrapper" >
+            <div class="hero__title">
+                <h1>{{ exhibit.title }}</h1>
+            </div>
+            <div class="hero__content">
+                {{ exhibit.description | linebreaks }}
+            </div>
+        </div>
+        <div class="hero__background">
+            <img src="{{ exhibit.photo.h700.url }}">
+        </div>
+
+        <div class="hero__info-button info-button info-button--bottom">
+            <span class="info-button__icon"></span>
+            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
+        </div>
+    </div>
+    {% for card in cards %}
+        {% if card.photocard and card.photocard.doublephotocard %}
+            {% with card=card.photocard.doublephotocard %}
+    <div class="container" style="border-top: 1px solid #ffffff">
+        <div class="image-collection">
+            <figure>
+                <div class="image-collection__wrapper">
+                    <div class="image-collection__inner-wrapper">
+                        <img src="{{ card.photo.h700.url }}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <div class="image-collection__info info-button">
+                            <span class="info-button__icon"></span>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                        </div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description | linebreaksbr }}</figcaption>
+            </figure>
+            <figure>
+                <div class="image-collection__wrapper">
+                    <div class="image-collection__inner-wrapper">
+                        <img src="{{ card.photo2.h700.url }}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <div class="image-collection__info info-button">
+                            <span class="info-button__icon"></span>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo2 %}</div>
+                        </div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description2 | linebreaksbr }}</figcaption>
+            </figure>
+        </div>
+    </div>
+            {% endwith %}
+        {% elif card.photocard %}
+            {% with card=card.photocard %}
+            {% if card.card_style == 0 %}
+    <div class="container container--full-width container--no-padding">
+        <div class="full-image-area full-image-area--contain">
+            <div class="full-image-area__info info-button">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+            </div>
+            <div class="full-image-area__text">
+                {{ card.description | linebreaks }}
+            </div>
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
+                <img src="{{ card.photo.h700.url }}">
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 1 %}
+    <div class="container container--no-padding">
+        <div class="two-column two-column--image-left two-column--variation-1">
+            <div class="two-column__image">
+                <img src="{{ card.photo.h700.url }}">
+                <div class="two-column__info-button info-button">
+                    <span class="info-button__icon"></span>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                </div>
+            </div>
+            <div class="two-column__content-wrapper">
+                <div class="two-column__content">
+                    {{ card.description | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 2 %}
+    <div class="container container--no-padding">
+        <div class="two-column two-column--image-right two-column--variation-2">
+            <div class="two-column__image">
+                <img src="{{ card.photo.h700.url }}">
+                <div class="two-column__info-button info-button">
+                    <span class="info-button__icon"></span>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                </div>
+            </div>
+            <div class="two-column__content-wrapper">
+                <div class="two-column__content">
+                    {{ card.description | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 3 %}
+    <div class="container container--no-padding">
+        <div class="two-column two-column--image-left two-column--variation-3">
+            <div class="two-column__image">
+                <img src="{{ card.photo.h700.url }}">
+                <div class="two-column__info-button info-button">
+                    <span class="info-button__icon"></span>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                </div>
+            </div>
+            <div class="two-column__content-wrapper">
+                <div class="two-column__content">
+                    {{ card.description | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+            {% elif card.card_style == 4 %}
+    <div class="container container--no-padding">
+    <div class="container container--no-padding">
+        <div class="two-column two-column--image-right two-column--variation-4">
+            <div class="two-column__image">
+                <img src="{{ card.photo.h700.url }}">
+                <div class="two-column__info-button info-button">
+                    <span class="info-button__icon"></span>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                </div>
+            </div>
+            <div class="two-column__content-wrapper">
+                <div class="two-column__content">
+                    {{ card.description | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 5 %}
+    <div class="container container--full-width container--no-padding">
+        <div class="full-image-area">
+            <div class="full-image-area__info info-button">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+            </div>
+            <div class="full-image-area__text">
+                {{ card.description | linebreaksbr }}
+            </div>
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
+                <img src="{{ card.photo.h700.url }}">
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 6 %}
+    <div class="container">
+        <div class="image-collection">
+            <figure style="width: 100%;">
+                <div class="image-collection__wrapper">
+                    <img src="{{ card.photo.h700.url }}" alt="" style="width: 100%; aspect-ratio: initial">
+                    <div class="image-collection__info info-button">
+                        <span class="info-button__icon"></span>
+                        <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description | linebreaksbr }}</figcaption>
+            </figure>
+        </div>
+    </div>
+            {% elif card.card_style == 7 %}
+    <div class="container container--full-width container--no-padding">
+        <div class="full-image-area">
+            <div class="full-image-area__info info-button">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+            </div>
+            <div class="full-image-area__text">
+                {{ card.description | linebreaksbr }}
+            </div>
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
+                <img src="{{ card.photo.h700.url }}">
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 8 %}
+    <div class="container container--full-width container--no-padding">
+        <div class="full-image-area">
+            <div class="full-image-area__info info-button">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+            </div>
+            <div class="full-image-area__text">
+                Here you can see a photo of a Black regiment arriving back home in Waterloo, Iowa in 1946, with the neighborhood celebrating their return. Jesse Cosby wasn’t in this particular unit—his brother-in-law was—but he would soon arrive in East Waterloo, a place he would call home.
+            </div>
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
+                <img src="{{ card.photo.h700.url }}">
+            </div>
+        </div>
+    </div>
+            {% endif %}
+            {% endwith %}
+        {% else %}
+            {% if card.card_style == 0 %}
+    <div class="container">
+        <div class="content-area">
+            <div class="content-area__content" data-aos="fade-up" data-aos-duration="1000">
+                {{ card.description | linebreaks }}
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 1 %}
+    <div class="container" style="border-top: 1px solid #ffffff;">
+        <div class="content-area">
+            <div class="content-area__content">
+                {{ card.description | linebreaks }}
+            </div>
+        </div>
+    </div>
+            {% elif card.card_style == 2 %}
+    <div class="container">
+        <div class="content-area">
+            <div class="content-area__content">
+                {{ card.description | linebreaks }}
+            </div>
+        </div>
+    </div>
+            {% endif %}
+        {% endif %}
     {% endfor %}
-{% endblock %}
+
+
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+
+    </script>
+</body>
+</html>
