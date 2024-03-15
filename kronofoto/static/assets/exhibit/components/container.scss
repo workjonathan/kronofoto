@@ -1,0 +1,33 @@
+$container-max-width: 1280px;
+
+.container {
+  margin: 0px auto; // All containers should have default 100px vertical margins
+  position: relative;
+  //max-width: $container-max-width;
+  background-color: $white;
+  padding: 25px 55px;
+  @media screen and (min-width: 48em) {
+    border-top: 100px solid $white;
+    border-bottom: 100px solid $white;
+    width: 100%;
+    padding: 0px;
+  }
+  &--full-width {
+    max-width: none;
+  }
+  &--no-padding {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    border-top: none;
+    border-bottom: none;
+    padding: 0px;
+  }
+  //overflow: hidden;
+  //@media screen and (min-width: 48em) {
+    overflow: initial;
+  //}
+}
+
+.container--image-left {
+  // when the image needs to be cropped with object-size: cover, we need to make sure we don't crop too much to cut out important image content.
+}
