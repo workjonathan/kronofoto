@@ -1,0 +1,28 @@
+    <div class="container" style="border-top: 1px solid #ffffff; z-index: {{zindex}}">
+        <div class="image-collection">
+            <figure>
+                <div class="image-collection__wrapper">
+                    <div class="image-collection__inner-wrapper">
+                        <img loading="lazy" src="{{ card.photo.h700.url }}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <div class="image-collection__info info-button">
+                            <span class="info-button__icon"></span>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                        </div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description | linebreaksbr }}</figcaption>
+            </figure>
+            <figure>
+                <div class="image-collection__wrapper">
+                    <div class="image-collection__inner-wrapper">
+                        <img loading="lazy" src="{{ card.photo2.h700.url }}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <div class="image-collection__info info-button">
+                            <span class="info-button__icon"></span>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo2 %}</div>
+                        </div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description2 | linebreaksbr }}</figcaption>
+            </figure>
+        </div>
+    </div>

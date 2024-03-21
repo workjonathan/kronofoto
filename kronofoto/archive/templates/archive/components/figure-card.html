@@ -1,0 +1,14 @@
+    <div class="container" style="z-index: {{ zindex }}">
+        <div class="image-collection">
+            <figure style="width: 100%;">
+                <div class="image-collection__wrapper">
+                    <img loading="lazy" src="{{ card.photo.h700.url }}" alt="" style="width: 100%; aspect-ratio: initial">
+                    <div class="image-collection__info info-button">
+                        <span class="info-button__icon"></span>
+                        <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                    </div>
+                </div>
+                <figcaption>{{ card.description | linebreaksbr }}</figcaption>
+            </figure>
+        </div>
+    </div>

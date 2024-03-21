@@ -1,0 +1,14 @@
+    <div class="container container--full-width container--no-padding" style="z-index: {{zindex}}">
+        <div class="full-image-area {{ card.image_area_classes | join:" " }}">
+            <div class="full-image-area__info info-button">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+            </div>
+            <div class="full-image-area__text">
+                {{ card.description }}
+            </div>
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
+                <img loading="lazy" src="{{ card.photo.h700.url }}">
+            </div>
+        </div>
+    </div>

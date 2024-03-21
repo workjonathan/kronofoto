@@ -52,13 +52,13 @@ from .models import Exhibit, Card, PhotoCard, DoublePhotoCard
 class CardInline(admin.StackedInline):
     model = Card
     extra = 1
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).filter(photocard__isnull=True)
 class PhotoCardInline(admin.StackedInline):
     model = PhotoCard
     raw_id_fields = ['photo',]
     extra = 1
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).filter(doublephotocard__isnull=True)
 
 class DoublePhotoCardInline(admin.StackedInline):

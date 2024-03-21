@@ -1,0 +1,8 @@
+
+    <div class="container" style="{% for name, value in card.styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+        <div class="content-area">
+            <div class="content-area__content"{% for attr, value in card.content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
+                {{ card.description | linebreaks }}
+            </div>
+        </div>
+    </div>
