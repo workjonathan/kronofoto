@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load widgets %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -106,7 +107,7 @@
             </div>
         </div>
         <div class="hero__background">
-            <img src="{{ exhibit.photo.h700.url }}">
+            <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
         </div>
 
         <div class="hero__info-button info-button info-button--bottom">

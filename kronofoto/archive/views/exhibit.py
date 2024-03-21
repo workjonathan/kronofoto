@@ -15,88 +15,70 @@ def cardinfo(cards: QuerySet[Card]) -> Iterator[Union[Card, Dict[str, Any]]]:
             if hasattr(card.photocard, 'doublephotocard'):
                 card = card.photocard.doublephotocard
                 obj = {
-                    'card_style': 0,
                     'description': card.description,
                     'description2': card.description2,
                     'photo': card.photo,
                     'photo2': card.photo2,
                     'template': 'archive/components/two-image-card.html',
                 }
-                obj['photocard'] = obj
-                obj['doublephotocard'] = obj
                 yield obj
             else:
                 card = card.photocard
                 if card.card_style == 0:
                     obj = {
-                        'image_area_classes': ['full-image-area--contain'],
-                        'card_style': 0,
+                        'image_area_classes': ['full-image-area--contain'], # shrink
                         'description': linebreaks_filter(card.description),
                         'photo': card.photo,
                         'template': 'archive/components/full-image-card.html',
                     }
-                    obj['photocard'] = obj
                     yield obj
                 elif card.card_style in (5, 7, 8):
                     obj = {
-                        'image_area_classes': [],
-                        'card_style': 0,
+                        'image_area_classes': [], # warp
                         'description': linebreaksbr(card.description),
                         'photo': card.photo,
                         'template': 'archive/components/full-image-card.html',
                     }
-                    obj['photocard'] = obj
                     yield obj
-                elif card.card_style in (1,):
+                elif card.card_style in (1,): # area classes represent left/right and slide/reveal animation
                     obj = {
                         'image_area_classes': ['two-column--image-left', 'two-column--variation-1'],
-                        'card_style': 1,
                         'description': card.description,
                         'photo': card.photo,
                         'template': 'archive/components/two-column-card.html',
                     }
-                    obj['photocard'] = obj
                     yield obj
                 elif card.card_style in (3,):
                     obj = {
                         'image_area_classes': ['two-column--image-left', 'two-column--variation-3'],
-                        'card_style': 1,
                         'description': card.description,
                         'photo': card.photo,
                         'template': 'archive/components/two-column-card.html',
                     }
-                    obj['photocard'] = obj
                     yield obj
                 elif card.card_style in (4,):
                     obj = {
                         'image_area_classes': ['two-column--image-right', 'two-column--variation-4'],
-                        'card_style': 1,
                         'description': card.description,
                         'photo': card.photo,
                         'template': 'archive/components/two-column-card.html',
                     }
-                    obj['photocard'] = obj
                     yield obj
                 elif card.card_style in (2,):
                     obj = {
                         'image_area_classes': ['two-column--image-right', 'two-column--variation-2'],
-                        'card_style': 1,
                         'description': card.description,
                         'photo': card.photo,
                         'template': 'archive/components/two-column-card.html',
-
                     }
-                    obj['photocard'] = obj
                     yield obj
                 elif card.card_style in (6,):
                     obj = {
-                        'card_style': 1,
                         'description': card.description,
                         'photo': card.photo,
                         'template': 'archive/components/figure-card.html',
 
                     }
-                    obj['photocard'] = obj
                     yield obj
         else:
             if card.card_style == 0:
@@ -108,7 +90,6 @@ def cardinfo(cards: QuerySet[Card]) -> Iterator[Union[Card, Dict[str, Any]]]:
                     'styles': {
                     },
                     'description': card.description,
-                    'card_style': 0,
                     'template': 'archive/components/text-card.html',
                 }
             elif card.card_style == 1:
@@ -119,7 +100,6 @@ def cardinfo(cards: QuerySet[Card]) -> Iterator[Union[Card, Dict[str, Any]]]:
                         'border-top': '1px solid #ffffff'
                     },
                     'description': card.description,
-                    'card_style': 0,
                     'template': 'archive/components/text-card.html',
                 }
             elif card.card_style == 2:
@@ -129,7 +109,6 @@ def cardinfo(cards: QuerySet[Card]) -> Iterator[Union[Card, Dict[str, Any]]]:
                     'styles': {
                     },
                     'description': card.description,
-                    'card_style': 0,
                     'template': 'archive/components/text-card.html',
                 }
             else:
