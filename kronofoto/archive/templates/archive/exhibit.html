@@ -116,7 +116,7 @@
         </div>
     </div>
     {% for card in cards %}
-        {% include card.template with zindex=forloop.revcounter|add:10 %}
+        {% card_tag card=card zindex=forloop.revcounter|add:10 %}
     {% endfor %}
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>

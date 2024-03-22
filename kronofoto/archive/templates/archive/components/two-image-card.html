@@ -4,26 +4,26 @@
             <figure>
                 <div class="image-collection__wrapper">
                     <div class="image-collection__inner-wrapper">
-                        <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=1000 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=1000 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
                         <div class="image-collection__info info-button">
                             <span class="info-button__icon"></span>
-                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
                         </div>
                     </div>
                 </div>
-                <figcaption>{{ card.description | linebreaksbr }}</figcaption>
+                <figcaption>{{ description | linebreaksbr }}</figcaption>
             </figure>
             <figure>
                 <div class="image-collection__wrapper">
                     <div class="image-collection__inner-wrapper">
-                        <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo2.original.name width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <img loading="lazy" src="{% image_url id=photo.id path=photo2.original.name width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
                         <div class="image-collection__info info-button">
                             <span class="info-button__icon"></span>
-                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo2 %}</div>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo2 %}</div>
                         </div>
                     </div>
                 </div>
-                <figcaption>{{ card.description2 | linebreaksbr }}</figcaption>
+                <figcaption>{{ description2 | linebreaksbr }}</figcaption>
             </figure>
         </div>
     </div>

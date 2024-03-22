@@ -1,16 +1,16 @@
 {% load widgets %}
     <div class="container container--no-padding" style="z-index: {{ zindex }}">
-        <div class="two-column {{ card.image_area_classes | join:" "}}">
+        <div class="two-column {{ image_area_classes | join:" "}}">
             <div class="two-column__image">
-                <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=1000 %}">
+                <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=1000 %}">
                 <div class="two-column__info-button info-button">
                     <span class="info-button__icon"></span>
-                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
                 </div>
             </div>
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
-                    {{ card.description | safe }}
+                    {{ description | safe }}
                 </div>
             </div>
         </div>
