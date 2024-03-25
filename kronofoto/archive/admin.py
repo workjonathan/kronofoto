@@ -777,6 +777,21 @@ class SubmissionAdmin(PhotoBaseAdmin):
     readonly_fields = ["image_display", "uploader"]
     form = SubmissionForm
     exclude = ('city', 'state', 'address', 'county', 'country')
+    fields = [
+        'archive',
+        'category',
+        'donor',
+        'image',
+        'year',
+        'circa',
+        'photographer',
+        'terms',
+        'place',
+        'location_point',
+        'caption',
+        'scanner',
+        'uploader',
+    ]
 
     class Media:
         js = ('https://unpkg.com/htmx.org@1.9.6',)
@@ -1033,6 +1048,28 @@ class PhotoAdmin(PhotoBaseAdmin):
         'place__fullname',
     ]
 
+    fields = [
+        'archive',
+        'category',
+        'donor',
+        'original',
+        'h700_image',
+        'year',
+        'circa',
+        'photographer',
+        'terms',
+        'place',
+        'location_point',
+        'address',
+        'city',
+        'county',
+        'state',
+        'country',
+        'caption',
+        'is_featured',
+        'is_published',
+        'scanner',
+    ]
     class Media:
         js = ('https://unpkg.com/htmx.org@1.9.6',)
 
