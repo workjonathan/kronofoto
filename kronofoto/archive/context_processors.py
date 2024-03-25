@@ -2,7 +2,7 @@ from django.http import HttpRequest
 from typing import Dict, Any, Optional
 from django.conf import settings
 import random
-from .views.basetemplate import THEME # type: ignore
+from .views.basetemplate import Theme
 from django.urls import resolve
 from django.core.cache import cache
 import json
@@ -18,5 +18,5 @@ def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> D
         context['hxheaders'] = json.dumps(hxheaders)
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
-    context['theme'] = random.choice(list(THEME[short_name if short_name else 'us'].values()))
+    context['theme'] = Theme.select_random_theme(short_name)
     return context
