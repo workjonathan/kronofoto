@@ -38,7 +38,7 @@ from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.shortcuts import get_object_or_404
 from dataclasses import dataclass
 
@@ -1138,6 +1138,7 @@ class UserTagInline(admin.TabularInline):
     extra = 0
     fields = ['thumb_image', 'tag', 'accepted']
     readonly_fields = ['thumb_image', 'tag', 'accepted']
+    can_delete = False
 
     def thumb_image(self, instance: Any) -> str:
         return mark_safe(
@@ -1345,7 +1346,25 @@ class block_escalation:
 
 
 class KronofotoUserAdmin(UserAdmin):
-    inlines = (UserArchivePermissionsInline, UserTagInline,)
+    inlines = (UserArchivePermissionsInline,)
+    readonly_fields = ['tagging_history']
+    fieldsets = tuple(list(UserAdmin.fieldsets) + [("Other", {"fields": ('tagging_history',)})])
+
+    def tagging_history(self, obj: User) -> str:
+        table = format_html_join(
+            '',
+            '<tr><td><a href="{}"><img src="{}" width="75" height="75"></a></td><td>{}</td><td>{}</td></tr>',
+            (
+                (
+                    reverse('admin:archive_photo_change',
+                    args=(tag.photo.id,)),
+                    tag.photo.thumbnail.url,
+                    tag.tag, "Yes" if tag.accepted else "No",
+                )
+                for tag in PhotoTag.objects.filter(creator=obj).select_related('photo', 'tag')
+            ),
+        )
+        return format_html("<table><thead><tr><td>Photo</td><td>Tag</td><td>Accepted?</td></tr><tbody>{}</tbody></table>", table)
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: Any) -> None:
         # the symmetric difference of before edit and after edit will be a subset of editor's privileges
@@ -1373,9 +1392,6 @@ class KronofotoUserAdmin(UserAdmin):
         if obj and not request.user.is_superuser:
             fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'groups', 'user_permissions')
         return fieldsets
-
-
-
 
 class KronofotoGroupAdmin(GroupAdmin):
     inlines = (GroupArchivePermissionsInline,)
