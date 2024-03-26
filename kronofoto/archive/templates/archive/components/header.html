@@ -12,9 +12,12 @@
             <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">
           </a>
 
+          {% if collection_name %}
           <div class="collection-name">
             <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
           </div>
+          {% endif %}
+
         </div>
 
         <div class="header-text">{% photo_count %} images</div>

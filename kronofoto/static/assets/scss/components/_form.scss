@@ -5,6 +5,27 @@ $form-spacing: 16px;
 $switch-background: $medium-gray !default;
 $switch-background-active: var(--fp-main-color);
 
+input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
+   -moz-appearance:none; /* Firefox */
+   -webkit-appearance:none; /* Safari and Chrome */
+   appearance:none;
+   height: 34px;
+   padding: 4px 8px;
+   background-color: var(--fp-light-grey);
+   color: #333;
+   border: none;
+   border-radius: 2px;
+   box-shadow: none;
+   box-sizing: border-box;
+   width: 100%;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .form {
 
   select {
@@ -195,34 +216,11 @@ $switch-background-active: var(--fp-main-color);
 
 }
 
-#app {
-  input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
-    -moz-appearance:none; /* Firefox */
-    -webkit-appearance:none; /* Safari and Chrome */
-    appearance:none;
-    height: 34px;
-    padding: 4px 8px;
-    background-color: var(--fp-light-grey);
-    color: #333;
-    border: none;
-    border-radius: 2px;
-    box-shadow: none;
-    box-sizing: border-box;
-    width: 100%;
-  }
+select::-ms-expand {
+  display: none;
+}
 
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  select::-ms-expand {
-    display: none;
-  }
-
-  select {
-    //background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
-    /* !important used for overriding all other customisations */
-  }
+.select2-dropdown {
+  z-index: 20000;
+  width: 25%;
 }
