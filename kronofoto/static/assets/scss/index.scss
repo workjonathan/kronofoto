@@ -5,6 +5,9 @@
 @use 'components/tags' as tags;
 @use 'components/timeline' as timeline;
 @use 'typography' as typography;
+@use '@photo-sphere-viewer/core/index.css' as photoSphereViewerCore;
+@use '@photo-sphere-viewer/markers-plugin/index.css' as photoSphereViewerMarkers;
+
 
 body, #kfroot {
   container-type: inline-size;

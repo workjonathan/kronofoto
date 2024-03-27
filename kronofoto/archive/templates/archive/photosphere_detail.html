@@ -7,8 +7,8 @@
 <div>{{ object.description | markdown }}</div>
 <script src="{% static "assets/js/three.min.js" %}"></script>
 <script src="{% static "assets/js/panolens.min.js" %}"></script>
-{{ sphere_data | json_script:"sphere-data" }}
-<script type="module">
+{{ sphere_data | json_script:"photosphere-data" }}
+<!-- script type="module">
 const context = JSON.parse(document.querySelector('#sphere-data').textContent)
 import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
 const container = document.querySelector('#photosphere')
@@ -16,7 +16,7 @@ const sphere = new PhotoSphere({element: container, sphere: context.sphere_image
 for (const photo of context.photos) {
     sphere.addPhoto(photo)
 }
-</script>
-<div id="photosphere" style="width: 100%; height: 80vh">
+</script-->
+<div data-photosphere-data="#photosphere-data" style="width: 100vw; height: 80vh">
 </div>
 {% endblock %}

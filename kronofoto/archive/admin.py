@@ -1348,7 +1348,7 @@ class block_escalation:
 class KronofotoUserAdmin(UserAdmin):
     inlines = (UserArchivePermissionsInline,)
     readonly_fields = ['tagging_history']
-    fieldsets = tuple(list(UserAdmin.fieldsets) + [("Other", {"fields": ('tagging_history',)})])
+    fieldsets = tuple(list(UserAdmin.fieldsets) + [("Other", {"fields": ('tagging_history',)})]) # type: ignore
 
     def tagging_history(self, obj: User) -> str:
         table = format_html_join(

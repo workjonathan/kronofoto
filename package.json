@@ -19,6 +19,9 @@
   },
   "homepage": "https://github.com/workjonathan/kronofoto#readme",
   "devDependencies": {
+    "@photo-sphere-viewer/core": "^5.7.2",
+    "@photo-sphere-viewer/markers-plugin": "^5.7.2-fix.1",
+    "@photo-sphere-viewer/overlays-plugin": "^5.7.2",
     "@rollup/plugin-commonjs": "^23.0.3",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.1",
