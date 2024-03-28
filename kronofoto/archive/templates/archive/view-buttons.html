@@ -5,7 +5,7 @@
       {% if photo %}
       <a class="fi-timeline-a" href="{% object_url photo url_kwargs get_params %}" hx-get="{% object_url photo url_kwargs get_params %}" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
       {% else %}
-      <a class="fi-timeline-a" href="#" hx-get="#" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
+      <a class="fi-timeline-a" href="/" hx-get="#" hx-target="#app"><img class="timeline-icon" src="{% static "assets/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
       {% endif %}
     </div>
 {% endblock timeline_icon %}
