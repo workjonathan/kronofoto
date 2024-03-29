@@ -1,9 +1,62 @@
 import GUI from "./lil-gui.esm.min.js"
+import { AbstractPlugin, events } from "@photo-sphere-viewer/core"
+import * as THREE from "three"
 
 const toRadians = degrees => 2*Math.PI*degrees/360
 
+export class ImagePlanePlugin extends AbstractPlugin {
+    static id = 'image-plane-plugin'
+    constructor(viewer, config) {
+        super(viewer)
+        this.config = config
+    }
+    init() {
+        this.viewer.addEventListener(events.PanoramaLoadedEvent.type, this, { once: true })
+    }
+    destroy() {
+        this.viewer.removeEventListener(events.PanoramaLoadedEvent.type, this)
+        super.destroy()
+    }
+    handleEvent(e) {
+        if (e instanceof events.PanoramaLoadedEvent) {
+            for (const photo of this.config.photos) {
+                this.azimuth = photo.azimuth + 90
+                this.inclination = photo.inclination
+                this.distance = 1
+                console.log(this.azimuth, this.inclination, this.distance)
+                const texture = new THREE.TextureLoader().load(photo.url)
+                this.geometry = new THREE.PlaneGeometry(photo.width/photo.distance, photo.height/photo.distance)
+                this.material = new THREE.MeshBasicMaterial({transparent: true, map: texture})
+                this.material.opacity = 1
+                this.mesh = new THREE.Mesh(this.geometry, this.material)
+                this.updatePosition()
+                this.mesh.renderOrder = 0
+                this.viewer.renderer.addObject(this.mesh)
+                this.viewer.needsUpdate()
+            }
+        }
+    }
+    updatePosition() {
+        const theta = toRadians(this.inclination - 90)
+        const phi = toRadians(this.azimuth)
+        const z = Math.cos(phi) * Math.sin(theta) * this.distance
+        const x = Math.sin(phi) * Math.sin(theta) * this.distance
+        const y = Math.cos(theta) * this.distance
+        this.mesh.position.set(x, y, z)
+		this.mesh.lookAt(0,0,0)
+        if (this.azimuth_el) {
+            this.azimuth_el.setAttribute("value", this.azimuth)
+        }
+        if (this.inclination_el) {
+            this.inclination_el.setAttribute("value", this.inclination)
+        }
+        if (this.distance_el) {
+            this.distance_el.setAttribute("value", this.distance)
+        }
+    }
 
-export default class PhotoSphere {
+}
+/*export default class PhotoSphere {
     constructor({element, sphere, input=undefined, azimuth_el=undefined, inclination_el=undefined, distance_el=undefined}) {
         this.azimuth_el = input || azimuth_el
         this.inclination_el = inclination_el
@@ -68,4 +121,5 @@ export default class PhotoSphere {
         }
     }
 }
+*/
 

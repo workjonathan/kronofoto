@@ -11,6 +11,7 @@ import * as Select2 from 'select2'
 Select2.default(window, $)
 import { Viewer } from "@photo-sphere-viewer/core";
 import { OverlaysPlugin } from "@photo-sphere-viewer/overlays-plugin";
+import { ImagePlanePlugin } from './photosphere.js'
 
 // Foundation
 import {
@@ -390,27 +391,14 @@ class PhotoSpherePlugin {
         this.context = context
     }
     install({elem}) {
-        console.log({elem, context: this.context})
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
             const photosphere_data = JSON.parse(this.context.querySelector(elem2.getAttribute("data-photosphere-data")).textContent)
-            console.log({OverlaysPlugin, path: photosphere_data.photos[0].url})
+            console.log({ImagePlanePlugin, path: photosphere_data.photos[0].url})
             const viewer = new Viewer({
                 container: elem2,
                 panorama: photosphere_data.sphere_image_url,
                 plugins: [
-                    [OverlaysPlugin, {
-                        overlays: [
-                            {
-                                id: "positioned",
-                                path: photosphere_data.photos[0].url,
-                                yaw: "-17deg",
-                                pitch: "26deg",
-                                height: "32.266deg",
-                                width: "21.802deg",
-                                opacity: 1,
-                            },
-                        ],
-                    }],
+                    [ImagePlanePlugin, { photos: photosphere_data.photos }]
                 ],
             })
         }

@@ -5,8 +5,6 @@
 {% block content %}
 <h2>{{ object.title }}</h2>
 <div>{{ object.description | markdown }}</div>
-<script src="{% static "assets/js/three.min.js" %}"></script>
-<script src="{% static "assets/js/panolens.min.js" %}"></script>
 {{ sphere_data | json_script:"photosphere-data" }}
 <!-- script type="module">
 const context = JSON.parse(document.querySelector('#sphere-data').textContent)
