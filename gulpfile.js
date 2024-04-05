@@ -37,7 +37,7 @@ gulp.task('build:sass', function () {
     return gulp.src(path.join(config.root, '/scss/index.scss'))
         .pipe(sourcemaps.init())
         .pipe(sass({
-            outputStlye: 'compressed',
+            outputStyle: 'compressed',
             includePaths: [
                 './node_modules'
             ]
@@ -46,6 +46,22 @@ gulp.task('build:sass', function () {
         .pipe(sourcemaps.write())
         .pipe(gulp.dest(path.join(config.root, './dist/css/')));
 });
+
+gulp.task('build:exhibit', function () {
+  return gulp.src(path.join(config.root, '/exhibit/styles.scss'))
+      .pipe(sourcemaps.init())
+      .pipe(sass({
+        outputStlye: 'compressed',
+        includePaths: [
+          './node_modules'
+        ]
+      }).on('error', sass.logError))
+      .pipe(autoprefixer())
+      .pipe(sourcemaps.write())
+      .pipe(concat('exhibit.css'))
+      .pipe(gulp.dest(path.join(config.root, './dist/css/')));
+});
+
 
 gulp.task('watch:all', function () {
     gulp.watch(path.join(config.root, '/scss/**/*.scss'), gulp.series('build:sass'));

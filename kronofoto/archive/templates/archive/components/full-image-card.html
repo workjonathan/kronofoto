@@ -1,10 +1,10 @@
 {% load widgets %}
     <div class="container container--full-width container--no-padding" style="z-index: {{zindex}}">
         <div class="full-image-area {{ image_area_classes | join:" " }}">
-            <div class="full-image-area__info info-button">
+            <a class="full-image-area__info info-button info-button--top" href="#" target="_blank">
                 <span class="info-button__icon"></span>
                 <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
-            </div>
+            </a>
             <div class="full-image-area__text">
                 {{ description }}
             </div>
