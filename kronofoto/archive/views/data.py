@@ -4,10 +4,14 @@ from .base import ArchiveRequest, require_valid_archive
 from django.core.serializers import serialize
 import json
 from django.urls import reverse
-from ..models import Key, Archive
+from ..models import Key, Archive, Tag, PhotoTag
 from django.shortcuts import get_object_or_404
 import hmac
 from django.core.exceptions import PermissionDenied
+from datetime import datetime, timedelta
+from ..models import Photo, Place
+from django.db.models import Prefetch
+from collections import defaultdict
 
 def hmac_auth(func):
     def do_auth(request, *args, **kwargs):
@@ -15,10 +19,10 @@ def hmac_auth(func):
             try:
                 token, timestamp, sig = request.headers['Authorization'].split(" ")
                 key = Key.objects.get(token=token)
-                signer = hmac.new(key.key, digestmod="sha256")
-                signer.update(request.method)
-                signer.update(timestamp)
-                signer.update(request.get_full_path())
+                signer = hmac.new(key.key.encode('utf-8'), digestmod="sha256")
+                signer.update(request.method.encode('utf-8'))
+                signer.update(timestamp.encode('utf-8'))
+                signer.update(request.get_full_path().encode('utf-8'))
                 if sig == signer.hexdigest():
                     if abs(datetime.fromisoformat(timestamp) - datetime.now()) < timedelta(minutes=5):
                         request.user = key.user
@@ -31,13 +35,16 @@ def hmac_auth(func):
 
 @hmac_auth
 @require_valid_archive
-def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
-    archive_request = ArchiveRequest(request=request, short_name=short_name, category=category)
+def datadump(request: HttpRequest, short_name: Optional[str]=None) -> HttpResponse:
+    size = 200
     try:
         after = int(request.GET.get('after', 0))
     except ValueError:
         after = 0
-    photos = archive_request.get_photo_queryset().filter(id__gte=after).select_related('donor', 'photographer', 'scanner').prefetch_related("terms", "tags").order_by('id')[:200]
+    photos = Photo.objects.filter(archive__slug=short_name, id__gt=after).select_related('donor', 'photographer', 'scanner').prefetch_related('terms', 'place').order_by('id')[:size+1]
+    phototags = defaultdict(list)
+    for t in PhotoTag.objects.filter(photo__in=photos, accepted=True).select_related('tag', 'photo'):
+        phototags[t.photo.id].append(t.tag)
     if not request.user.has_perm('archive.archive.{}.view'.format(short_name)):
         raise PermissionDenied
     field = lambda name: lambda p: getattr(p, name)
@@ -45,7 +52,7 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Opt
 
     def tags(p):
         terms = [term.term for term in p.terms.all()]
-        tags = [tag.tag for tag in p.get_accepted_tags()]
+        tags = [tag.tag for tag in phototags[p.id]]
         return "^^".join(terms+tags)
 
     def names(p):
@@ -58,15 +65,13 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Opt
             associated.append("{}|Scanner".format(p.scanner))
         return "^^".join(associated)
 
+    place_cache = {}
     def place(p):
         if not p.place:
             return ""
-        place = p.place
-        names = []
-        while place:
-            names.append(place.name)
-            place = place.parent
-        return "^^".join(names)
+        if p.place.id not in place_cache:
+            place_cache[p.place.id] = "^^".join(p2.name for p2 in p.place.get_ancestors(ascending=True, include_self=True))
+        return place_cache[p.place.id]
 
     def coords(p):
         if p.location_point:
@@ -105,11 +110,18 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None, category: Opt
     }
     data = [{k: mapper(p) for (k, mapper) in map.items()} for p in photos]
     response = HttpResponse("", content_type="application/json")
-    json.dump({
-        "results": data,
-        "next": "{}?after={}".format(
-            reverse("kronofoto:data-dump", kwargs={"short_name": short_name, "category": category}),
-            photos[photos.count()-1].id,
-        )
-    }, response)
+    if len(data) > size:
+        json.dump({
+            "results": data[:size],
+            "next": "{}?after={}".format(
+                reverse("kronofoto:data-dump", kwargs={"short_name": short_name}),
+                photos[photos.count()-1].id,
+            )
+        }, response)
+    else:
+        json.dump({
+            "results": data[:size],
+            "next": None,
+        }, response)
+
     return response
