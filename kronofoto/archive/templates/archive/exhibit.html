@@ -8,7 +8,7 @@
     <title>Fortepan Exhibit</title>
     <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link href="{% static "assets/exhibit/styles.css" %}" rel="stylesheet">
+    <link href="{% static "assets/dist/css/exhibit.css" %}" rel="stylesheet">
 	<link rel="apple-touch-icon" sizes="180x180" href="https://fortepan.us/static/assets/favicon/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="https://fortepan.us/static/assets/favicon/favicon-32x32.png">
 	<link rel="icon" type="image/png" sizes="16x16" href="https://fortepan.us/static/assets/favicon/favicon-16x16.png">
@@ -19,108 +19,129 @@
 	<meta name="msapplication-config" content="https://fortepan.us/static/assets/favicon/browserconfig.xml">
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-    body { display: none }
-    </style>
     <script type="module">
 
-		AOS.init({
-			disable: 'mobile',
-			once: true
-		});
-        window.addEventListener("load", () => {
-            document.body.style.display = "block"
-        })
+      const siteWrapper = document.querySelector('.site-wrapper');
 
-        window.addEventListener('scroll', () => {
-            let elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
-                elements.forEach((element) => {
-                const viewportHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const distanceFromBottom = viewportHeight - elementTop;
-                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
-                const start = 30;
-                const end = 50;
-                const opacity = (percentageFromBottom - start) * (100/(end - start));
-                element.style.opacity = opacity / 100;
-            });
+      // Function to update the --vh custom property
+      const updateVH = () => {
+        if (siteWrapper) {
+          let vh = window.innerHeight / 100;
+          siteWrapper.style.setProperty('--vh', `${vh}px`);
+        }
+      }
 
-            elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
-            elements.forEach((element) => {
-              const viewportHeight = window.innerHeight;
-              const elementTop = element.getBoundingClientRect().top;
-              const distanceFromBottom = viewportHeight - elementTop;
-              const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
-              const start = 30;
-              const end = 50;
-              const opacity = (percentageFromBottom - start) * (100/(end - start));
-              element.style.opacity = opacity / 100;
-            });
+      // Scroll event handler for dynamically fading content
+      const updateScrollOpacity = () => {
 
-            elements = document.querySelectorAll('.hero__title');
-            elements.forEach((element) => {
-                const viewportHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const distanceFromBottom = viewportHeight - elementTop;
-                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
-                const start = 80;
-                const end = 100;
-                const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
-                element.style.opacity = opacity / 100;
-            });
-
-            elements = document.querySelectorAll('.hero__content');
-            elements.forEach((element) => {
-                const viewportHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const distanceFromBottom = viewportHeight - elementTop;
-                const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
-                const start = 50;
-                const end = 80;
-                const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
-                element.style.opacity = opacity / 100;
-            });
-
+        let elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
+        elements.forEach((element) => {
+          const viewportHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const distanceFromBottom = viewportHeight - elementTop;
+          const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+          const start = 30;
+          const end = 50;
+          const opacity = (percentageFromBottom - start) * (100/(end - start));
+          element.style.opacity = opacity / 100;
         });
+
+        elements = document.querySelectorAll('.scroll-opacity, .two-column__content');
+        elements.forEach((element) => {
+          const viewportHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const distanceFromBottom = viewportHeight - elementTop;
+          const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+          const start = 30;
+          const end = 50;
+          const opacity = (percentageFromBottom - start) * (100/(end - start));
+          element.style.opacity = opacity / 100;
+        });
+
+        elements = document.querySelectorAll('.hero__title');
+        elements.forEach((element) => {
+          const viewportHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const distanceFromBottom = viewportHeight - elementTop;
+          const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+          const start = 80;
+          const end = 100;
+          const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
+          element.style.opacity = opacity / 100;
+        });
+
+        elements = document.querySelectorAll('.hero__content');
+        elements.forEach((element) => {
+          const viewportHeight = window.innerHeight;
+          const elementTop = element.getBoundingClientRect().top;
+          const distanceFromBottom = viewportHeight - elementTop;
+          const percentageFromBottom = (distanceFromBottom / viewportHeight) * 100;
+          const start = 50;
+          const end = 80;
+          const opacity = 100 - (percentageFromBottom - start) * (100/(end - start));
+          element.style.opacity = opacity / 100;
+        });
+      }
+
+      document.body.style.display = 'block';
+
+      AOS.init({
+        disable: 'mobile',
+        once: true
+      });
+
+      // Add alt classes for two-column components
+      const twoColumnComponents = document.querySelectorAll('.two-column');
+      twoColumnComponents.forEach((component, i) => {
+        if(!(i % 2)) {
+          component.classList.add('two-column--alt');
+        }
+      });
+
+      // Add event listeners
+      window.addEventListener('scroll', updateScrollOpacity);
+      window.addEventListener('resize', updateVH);
 
     </script>
 </head>
 <body>
+    <div class="site-wrapper">
+        <header class="header">
+            <div class="header__logo">
 
-	<header class="header">
-		<div class="header__logo">
-
-		</div>
-		<div class="header__title">
-			{{ exhibit.name }}
-		</div>
-
-    </header>
-
-    <div class="hero">
-        <div class="hero__content-wrapper" >
-            <div class="hero__title">
-                <h1>{{ exhibit.title }}</h1>
             </div>
-            <div class="hero__content">
-                {{ exhibit.description | linebreaks }}
+            <div class="header__title">
+                {{ exhibit.name }}
+            </div>
+
+        </header>
+
+        <div class="hero">
+            <div class="hero__content-wrapper" >
+                <div class="hero__title">
+                    <h1>{{ exhibit.title }}</h1>
+                </div>
+                <div class="hero__content">
+                    {{ exhibit.description | linebreaks }}
+                </div>
+            </div>
+            <div class="hero__background">
+                <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+            </div>
+
+            <div class="hero__info-button info-button info-button--bottom">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
             </div>
         </div>
-        <div class="hero__background">
-            <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
-        </div>
 
-        <div class="hero__info-button info-button info-button--bottom">
-            <span class="info-button__icon"></span>
-            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
-        </div>
+        {% for card in cards %}
+            {% card_tag card=card zindex=forloop.revcounter|add:10 %}
+        {% endfor %}
+
     </div>
-    {% for card in cards %}
-        {% card_tag card=card zindex=forloop.revcounter|add:10 %}
-    {% endfor %}
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
 
-    </script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
 </body>
 </html>

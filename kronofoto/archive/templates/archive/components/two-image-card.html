@@ -1,14 +1,14 @@
 {% load widgets %}
-    <div class="container" style="border-top: 1px solid #ffffff; z-index: {{zindex}}">
+    <div class="container" style="z-index: {{zindex}}">
         <div class="image-collection">
             <figure>
                 <div class="image-collection__wrapper">
                     <div class="image-collection__inner-wrapper">
                         <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=1000 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
-                        <div class="image-collection__info info-button">
+                        <a class="image-collection__info info-button info-button--bottom" href="#" target="_blank">
                             <span class="info-button__icon"></span>
                             <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 <figcaption>{{ description | linebreaksbr }}</figcaption>
@@ -17,10 +17,10 @@
                 <div class="image-collection__wrapper">
                     <div class="image-collection__inner-wrapper">
                         <img loading="lazy" src="{% image_url id=photo.id path=photo2.original.name width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
-                        <div class="image-collection__info info-button">
+                        <a class="image-collection__info info-button info-button--bottom" href="#" target="_blank">
                             <span class="info-button__icon"></span>
                             <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo2 %}</div>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 <figcaption>{{ description2 | linebreaksbr }}</figcaption>
