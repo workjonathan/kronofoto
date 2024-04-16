@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}">
+  <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}?version={{ CSS_VERSION }}">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static "assets/favicon/apple-touch-icon.png" %}">
@@ -52,5 +52,5 @@
 
 </footer>
 </body>
-<script src="{% static "assets/dist/js/main.js" %}"></script>
+<script src="{% static "assets/dist/js/main.js" %}?version={{ CSS_VERSION}}"></script>
 </html>

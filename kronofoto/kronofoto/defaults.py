@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from datetime import datetime
 
+CSS_VERSION = (int(datetime.now().timestamp()) >> 3) & 127
+print(CSS_VERSION)
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -160,3 +163,4 @@ LOCAL_CONTEXTS = 'https://localcontextshub.org/api/v1/'
 GOOGLE_RECAPTCHA3_SITE_KEY = ''
 GOOGLE_RECAPTCHA3_SECRET_KEY = ''
 IMAGE_CACHE_URL_PREFIX = ""
+
