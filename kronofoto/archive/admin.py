@@ -38,7 +38,7 @@ from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html, format_html_join, html_safe
 from django.shortcuts import get_object_or_404
 from dataclasses import dataclass
 
@@ -501,6 +501,18 @@ class MainstreetSetIsSetFilter(StandardSimpleListFilter):
         ("No", True),
     )
 
+#@html_safe
+class ImportMap:
+    def __html__(self):
+        return """<script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+                    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
+                    "@photo-sphere-viewer/compass-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.module.js"
+                }
+            }
+        </script>"""
 
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.GISModelAdmin):
@@ -510,6 +522,13 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
+
+    class Media:
+        js = [ImportMap()]
+        css = {"all": [
+            "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css",
+            "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.min.css",
+        ]}
 
     def get_form(
         self, request: HttpRequest, obj: Optional[PhotoSphere] = None, change: bool=False, **kwargs: Any

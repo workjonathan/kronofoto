@@ -8,11 +8,37 @@
 </style>
 {% endblock %}
 <script type="module">
-import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
+import { Viewer } from "@photo-sphere-viewer/core";
+import { CompassPlugin } from "@photo-sphere-viewer/compass-plugin"
+//import {ImagePlanePlugin} from "{% static "assets/js/photosphere.js" %}"
 const container = document.querySelector('#{{ id }}_sphere')
 const input = document.querySelector('#{{ id }}_input')
-const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", input})
-sphere.addHeadingSphere({azimuth: {{ widget.value }}, container: document.querySelector("#{{ id }}_gui")})
+let pan = {{ pan }};
+const viewer = new Viewer({
+    container,
+    panorama: "{{ sphere_image }}",
+    sphereCorrection: {pan: {{ pan }} },
+    plugins: [[CompassPlugin]],
+    navbar: [
+        "zoom",
+        "move",
+        {
+            content: "⚠️ Set North ⚠️",
+            onClick: () => {
+                const {yaw, pitch} = viewer.getPosition()
+                pan += yaw
+                viewer.rotate({yaw: 0, pitch })
+                viewer.setOption("sphereCorrection", { pan })
+            },
+            title: "Clicking this will orient the compass so that north is forward. This value will be saved when this photo sphere record is saved.",
+        },
+        "caption",
+        "fullscreen",
+    ]
+
+})
+//const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", input})
+//sphere.addHeadingSphere({azimuth: {{ widget.value }}, container: document.querySelector("#{{ id }}_gui")})
 </script>
 <div id="{{ id }}_admin_sphere">
     <div id="{{ id }}_sphere">

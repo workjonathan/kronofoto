@@ -393,7 +393,6 @@ class PhotoSpherePlugin {
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
             const photosphere_data = JSON.parse(this.context.querySelector(elem2.getAttribute("data-photosphere-data")).textContent)
-            console.log({ImagePlanePlugin, path: photosphere_data.photos[0].url})
             const viewer = new Viewer({
                 container: elem2,
                 panorama: photosphere_data.sphere_image_url,
