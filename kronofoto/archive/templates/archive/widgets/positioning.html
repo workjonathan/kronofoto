@@ -10,20 +10,38 @@
 </style>
 {% endblock %}
 <script type="module">
-import PhotoSphere from "{% static "assets/js/photosphere.js" %}"
+import { Viewer } from "@photo-sphere-viewer/core";
+import {ImagePlanePlugin} from "{% static "assets/js/photosphere.js" %}"
 const container = document.querySelector('#{{ id }}_sphere')
 {% for subwidget in widget.subwidgets %}
 const {{ subwidget.attrs.anglename }} = document.querySelector('#{{ subwidget.attrs.id }}')
 {% endfor %}
-const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", azimuth_el: azimuth, inclination_el: inclination, distance_el: distance})
-sphere.addPhoto({
-    url: "{{ photo }}", 
-    height: {{ photo_h }}, 
-    width: {{ photo_w }}, 
+const viewer = new Viewer({
+    container,
+    panorama: "{{ sphere_image }}",
+    plugins: [
+        [ImagePlanePlugin, { photos: [{
+            url: "{{ photo }}",
+            height: "{{ photo_h }}",
+            width: "{{ photo_w }}",
+            container: document.querySelector("#{{ id }}_gui"),
 {% for subwidget in widget.subwidgets %}
-    {{ subwidget.attrs.anglename }}: {{ subwidget.value }},
+            {{ subwidget.attrs.anglename }}: {{ subwidget.value }},
+            {{ subwidget.attrs.anglename }}_el: {{ subwidget.attrs.anglename }},
 {% endfor %}
-    container: document.querySelector("#{{ id }}_gui")})
+            }]}
+        ]
+    ],
+})
+// const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", azimuth_el: azimuth, inclination_el: inclination, distance_el: distance})
+// sphere.addPhoto({
+//     url: "{{ photo }}", 
+//     height: {{ photo_h }}, 
+//     width: {{ photo_w }}, 
+// {% for subwidget in widget.subwidgets %}
+//     {{ subwidget.attrs.anglename }}: {{ subwidget.value }},
+// {% endfor %}
+//     container: document.querySelector("#{{ id }}_gui")})
 </script>
 <div id="{{ id }}_admin_sphere">
     <div id="{{ id }}_sphere">

@@ -33,6 +33,15 @@ export class ImagePlanePlugin extends AbstractPlugin {
                 this.mesh.renderOrder = 0
                 this.viewer.renderer.addObject(this.mesh)
                 this.viewer.needsUpdate()
+                if (photo.container) {
+                    const gui = new GUI({container: photo.container, width: 400})
+                    gui.domElement.addEventListener('mousedown', evt => evt.stopPropagation())
+                    gui.add(this.material, "opacity", 0, 1)
+                    const posFolder = gui.addFolder("Position")
+                    posFolder.add(this, "azimuth", -180, 180).onChange(this.updatePosition.bind(this))
+                    posFolder.add(this, "inclination", -180, 180).onChange(this.updatePosition.bind(this))
+                    posFolder.add(this, "distance", 10, 2000).onChange(this.updatePosition.bind(this))
+                }
             }
         }
     }
@@ -44,15 +53,17 @@ export class ImagePlanePlugin extends AbstractPlugin {
         const y = Math.cos(theta) * this.distance
         this.mesh.position.set(x, y, z)
 		this.mesh.lookAt(0,0,0)
-        if (this.azimuth_el) {
-            this.azimuth_el.setAttribute("value", this.azimuth)
+        console.log(this.azimuth)
+        if (this.config.azimuth_el) {
+            this.config.azimuth_el.setAttribute("value", this.azimuth)
         }
-        if (this.inclination_el) {
-            this.inclination_el.setAttribute("value", this.inclination)
+        if (this.config.inclination_el) {
+            this.config.inclination_el.setAttribute("value", this.inclination)
         }
         if (this.distance_el) {
-            this.distance_el.setAttribute("value", this.distance)
+            this.config.distance_el.setAttribute("value", this.distance)
         }
+        this.viewer.needsUpdate()
     }
 
 }
