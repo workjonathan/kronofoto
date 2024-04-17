@@ -29,13 +29,14 @@ const viewer = new Viewer({
                 pan += yaw
                 viewer.rotate({yaw: 0, pitch })
                 viewer.setOption("sphereCorrection", { pan })
+                console.log(pan)
+                input.setAttribute("value", ((pan*180)/Math.PI + 90) % 360)
             },
             title: "Clicking this will orient the compass so that north is forward. This value will be saved when this photo sphere record is saved.",
         },
         "caption",
         "fullscreen",
     ]
-
 })
 //const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", input})
 //sphere.addHeadingSphere({azimuth: {{ widget.value }}, container: document.querySelector("#{{ id }}_gui")})
