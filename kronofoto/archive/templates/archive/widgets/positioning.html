@@ -19,6 +19,7 @@ const {{ subwidget.attrs.anglename }} = document.querySelector('#{{ subwidget.at
 const viewer = new Viewer({
     container,
     panorama: "{{ sphere_image }}",
+    rendererParameters: { antialias: true, stencil: true, alpha: true},
     plugins: [
         [ImagePlanePlugin, { photos: [{
             url: "{{ photo }}",

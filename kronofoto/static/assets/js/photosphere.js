@@ -20,48 +20,52 @@ export class ImagePlanePlugin extends AbstractPlugin {
     handleEvent(e) {
         if (e instanceof events.PanoramaLoadedEvent) {
             for (const photo of this.config.photos) {
-                this.azimuth = photo.azimuth + 90
+                this.azimuth = photo.azimuth
                 this.inclination = photo.inclination
-                this.distance = 1
+                this.distance = photo.distance
+                this.azimuth_el = photo.azimuth_el
+                this.inclination_el = photo.inclination_el
+                this.distance_el = photo.distance_el
                 console.log(this.azimuth, this.inclination, this.distance)
-                const texture = new THREE.TextureLoader().load(photo.url)
-                this.geometry = new THREE.PlaneGeometry(photo.width/photo.distance, photo.height/photo.distance)
-                this.material = new THREE.MeshBasicMaterial({transparent: true, map: texture})
-                this.material.opacity = 1
-                this.mesh = new THREE.Mesh(this.geometry, this.material)
-                this.updatePosition()
-                this.mesh.renderOrder = 0
-                this.viewer.renderer.addObject(this.mesh)
-                this.viewer.needsUpdate()
-                if (photo.container) {
-                    const gui = new GUI({container: photo.container, width: 400})
-                    gui.domElement.addEventListener('mousedown', evt => evt.stopPropagation())
-                    gui.add(this.material, "opacity", 0, 1)
-                    const posFolder = gui.addFolder("Position")
-                    posFolder.add(this, "azimuth", -180, 180).onChange(this.updatePosition.bind(this))
-                    posFolder.add(this, "inclination", -180, 180).onChange(this.updatePosition.bind(this))
-                    posFolder.add(this, "distance", 10, 2000).onChange(this.updatePosition.bind(this))
-                }
+                new THREE.TextureLoader().load(photo.url, texture => {
+                    this.geometry = new THREE.PlaneGeometry(photo.width/2000, photo.height/2000)
+                    this.material = new THREE.MeshBasicMaterial({transparent: true, map: texture})
+                    this.material.opacity = 1
+                    this.mesh = new THREE.Mesh(this.geometry, this.material)
+                    this.updatePosition()
+                    this.viewer.renderer.addObject(this.mesh)
+                    this.viewer.needsUpdate()
+                    console.log(this.viewer.renderer.scene)
+                    if (photo.container) {
+                        const gui = new GUI({container: photo.container, width: 400})
+                        gui.domElement.addEventListener('mousedown', evt => evt.stopPropagation())
+                        gui.add(this.material, "opacity", 0, 1).onChange(this.viewer.needsUpdate.bind(this.viewer))
+                        const posFolder = gui.addFolder("Position")
+                        posFolder.add(this, "azimuth", -180, 180).onChange(this.updatePosition.bind(this))
+                        posFolder.add(this, "inclination", -90, 90).onChange(this.updatePosition.bind(this))
+                        posFolder.add(this, "distance", 10, 2000).onChange(this.updatePosition.bind(this))
+                    }
+                })
             }
         }
     }
     updatePosition() {
+        const distance = this.distance/2000
         const theta = toRadians(this.inclination - 90)
-        const phi = toRadians(this.azimuth)
-        const z = Math.cos(phi) * Math.sin(theta) * this.distance
-        const x = Math.sin(phi) * Math.sin(theta) * this.distance
-        const y = Math.cos(theta) * this.distance
+        const phi = toRadians(this.azimuth + 90)
+        const z = Math.cos(phi) * Math.sin(theta) * distance
+        const x = Math.sin(phi) * Math.sin(theta) * distance
+        const y = Math.cos(theta) * distance
         this.mesh.position.set(x, y, z)
 		this.mesh.lookAt(0,0,0)
-        console.log(this.azimuth)
-        if (this.config.azimuth_el) {
-            this.config.azimuth_el.setAttribute("value", this.azimuth)
+        if (this.azimuth_el) {
+            this.azimuth_el.setAttribute("value", this.azimuth)
         }
-        if (this.config.inclination_el) {
-            this.config.inclination_el.setAttribute("value", this.inclination)
+        if (this.inclination_el) {
+            this.inclination_el.setAttribute("value", this.inclination)
         }
         if (this.distance_el) {
-            this.config.distance_el.setAttribute("value", this.distance)
+            this.distance_el.setAttribute("value", this.distance)
         }
         this.viewer.needsUpdate()
     }
