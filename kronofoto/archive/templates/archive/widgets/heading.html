@@ -29,7 +29,7 @@ const viewer = new Viewer({
                 viewer.rotate({yaw: 0, pitch })
                 viewer.setOption("sphereCorrection", { pan })
                 console.log(pan)
-                input.setAttribute("value", ((pan*180)/Math.PI + 90) % 360)
+                input.setAttribute("value", ((pan*180)/Math.PI + 90 + 180) % 360 - 180)
             },
             title: "Clicking this will orient the compass so that north is forward. This value will be saved when this photo sphere record is saved.",
         },
