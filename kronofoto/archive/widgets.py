@@ -74,7 +74,10 @@ class HeadingWidget(NumberInput):
         context['sphere_width'] = self.sphere_width
         context['sphere_height'] = self.sphere_height
         context['module'] = 'archive_heading'
-        context['pan'] = (value-90) / 180 * 3.1415
+        try:
+            context['pan'] = (float(value)-90) / 180 * 3.1415
+        except ValuerError:
+            context['pan'] = ""
         return context
 
 class PositioningWidget(MultiWidget):
