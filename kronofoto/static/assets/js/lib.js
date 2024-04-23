@@ -10,7 +10,7 @@ import 'jquery-ui-pack'
 import * as Select2 from 'select2'
 Select2.default(window, $)
 import { Viewer } from "@photo-sphere-viewer/core";
-import { OverlaysPlugin } from "@photo-sphere-viewer/overlays-plugin";
+import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
 import { ImagePlanePlugin } from './photosphere.js'
 
 // Foundation
@@ -393,12 +393,37 @@ class PhotoSpherePlugin {
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
             const photosphere_data = JSON.parse(this.context.querySelector(elem2.getAttribute("data-photosphere-data")).textContent)
+            console.log(photosphere_data)
+            let links = photosphere_data.nodes[0].links
             const viewer = new Viewer({
                 container: elem2,
-                panorama: photosphere_data.sphere_image_url,
                 plugins: [
-                    [ImagePlanePlugin, { photos: photosphere_data.photos }]
+                    [ImagePlanePlugin, { photos: [] }],
+                    [VirtualTourPlugin, {
+                        dataMode: "server",
+                        positionMode: "gps",
+                        startNodeId: photosphere_data.startNodeId,
+                        getNode: async (nodeId) => {
+                            if (nodeId == photosphere_data.nodes[0].id) {
+                                return photosphere_data.nodes[0]
+                            }
+                            else {
+                                for (const link of links) {
+                                    if (link.nodeId == nodeId) {
+                                        const resp = await fetch(link.GET)
+                                        const data = resp.json()
+                                        links = data.links
+                                        return data
+                                    }
+                                }
+                            }
+                            return {}
+                        },
+                    }],
                 ],
+            })
+            viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
+                viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
             })
         }
     }

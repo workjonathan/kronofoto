@@ -503,7 +503,7 @@ class MainstreetSetIsSetFilter(StandardSimpleListFilter):
 
 #@html_safe
 class ImportMap:
-    def __html__(self):
+    def __html__(self) -> str:
         return """<script type="importmap">
             {
                 "imports": {
