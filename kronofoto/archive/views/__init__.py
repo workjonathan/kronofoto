@@ -4,7 +4,7 @@ from .addtag import tags_view
 from .keyframes import Keyframes
 from .paginator import TimelinePaginator, EMPTY_PNG, FAKE_PHOTO, FakeTimelinePage
 from .photo import PhotoView
-from .photosphere import photosphere_data
+from .photosphere import photosphere_data, photosphere_view
 from .embedstylesheet import EmbedStyleSheet
 from .downloadpage import DownloadPageView
 from .tagsearch import TagSearchView, contributor_search, place_search

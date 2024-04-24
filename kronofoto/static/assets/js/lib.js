@@ -392,9 +392,10 @@ class PhotoSpherePlugin {
     }
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
-            const photosphere_data = JSON.parse(this.context.querySelector(elem2.getAttribute("data-photosphere-data")).textContent)
-            console.log(photosphere_data)
-            let links = photosphere_data.nodes[0].links
+            const api_url = elem2.getAttribute("data-node-href")
+            const param_name = elem2.getAttribute("data-node-param")
+            const startNodeId = elem2.getAttribute("data-node-start")
+
             const viewer = new Viewer({
                 container: elem2,
                 plugins: [
@@ -402,28 +403,26 @@ class PhotoSpherePlugin {
                     [VirtualTourPlugin, {
                         dataMode: "server",
                         positionMode: "gps",
-                        startNodeId: photosphere_data.startNodeId,
+                        startNodeId,
                         getNode: async (nodeId) => {
-                            if (nodeId == photosphere_data.nodes[0].id) {
-                                return photosphere_data.nodes[0]
-                            }
-                            else {
-                                for (const link of links) {
-                                    if (link.nodeId == nodeId) {
-                                        const resp = await fetch(link.GET)
-                                        const data = resp.json()
-                                        links = data.links
-                                        return data
-                                    }
-                                }
-                            }
-                            return {}
+                            const url = new URL(api_url)
+                            url.searchParams.append(param_name, nodeId)
+                            const resp = await fetch(url.toString())
+                            return resp.json()
                         },
                     }],
                 ],
             })
             viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
                 viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                if (data.fromNode && node.id != data.fromNode.id) {
+                    const form = elem2.closest('form')
+                    const input = form.querySelector("[name='id']")
+                    input.value = node.id
+                    elem2.dispatchEvent(new Event("node-changed", {
+                        bubbles: true
+                    }))
+                }
             })
         }
     }

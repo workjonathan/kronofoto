@@ -1,4 +1,5 @@
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, JsonResponse, HttpResponse
+from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
 from ..reverse import reverse
 from django.views.generic.detail import DetailView
@@ -8,55 +9,28 @@ from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
 from typing import Any, Dict
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
+from django import forms
+from .base import ArchiveRequest
 
-def photosphere_data(request: HttpRequest, pk: int) -> JsonResponse:
-    object = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
-    links = [
-        {
-            "nodeId": str(link.id),
-            "gps": [link.location.x, link.location.y],
-            "GET": reverse("kronofoto:mainstreetview.json", kwargs={'pk': link.id}),
-        }
-        for link in object.links.all()
-    ]
-    node = {
-        "id": str(object.id),
-        "panorama": object.image.url,
-        "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
-        "gps": [object.location.x, object.location.y],
-        "links": links,
-        'data': {
-            "photos": [dict(
-                url=position.photo.original.url,
-                height=position.photo.h700.height,
-                width=position.photo.h700.width,
-                azimuth=position.azimuth+object.heading-90,
-                inclination=position.inclination,
-                distance=position.distance,
-            ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
-        },
-    }
-    return JsonResponse(node)
+class DataParams(forms.Form):
+    id = forms.IntegerField(required=True)
 
-class PhotoSphereView(BaseTemplateMixin, DetailView):
-    model = PhotoSphere
-
-    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(*args, **kwargs)
-        object = context['object']
+def photosphere_data(request: HttpRequest) -> JsonResponse:
+    query = DataParams(request.GET)
+    if query.is_valid():
+        object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
         links = [
             {
                 "nodeId": str(link.id),
-                "gps": [link.location.x, link.location.y],
-                "GET": reverse("kronofoto:mainstreetview.json", kwargs={'pk': link.id}),
+                "gps": [link.location.x, link.location.y], # type: ignore
             }
             for link in object.links.all()
         ]
-        nodes = [{
+        node = {
             "id": str(object.id),
             "panorama": object.image.url,
             "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
-            "gps": [object.location.x, object.location.y],
+            "gps": [object.location.x, object.location.y], # type: ignore
             "links": links,
             'data': {
                 "photos": [dict(
@@ -68,13 +42,34 @@ class PhotoSphereView(BaseTemplateMixin, DetailView):
                     distance=position.distance,
                 ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
             },
-        }]
-
-        context['sphere_data'] = {
-            "startNodeId": str(object.id),
-            "nodes": nodes,
         }
-        return context
+        return JsonResponse(node)
+    else:
+        return JsonResponse({}, status=400)
+
+class PhotoSphereRequest(ArchiveRequest):
+    @property
+    def base_template(self) -> str:
+        if self.hx_target == 'fi-photosphere-metadata':
+            return 'archive/photosphere_partial.html'
+        else:
+            return super().base_template
+
+def photosphere_view(request: HttpRequest) -> HttpResponse:
+    query = DataParams(request.GET)
+    if query.is_valid():
+        object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
+        archiverequest = PhotoSphereRequest(request)
+        context = archiverequest.common_context
+        context['object'] = object
+
+        return TemplateResponse(request, "archive/photosphere_detail.html", context=context)
+    else:
+        return HttpResponse("Invalid query", status=400)
+
+
+class PhotoSphereView(BaseTemplateMixin, DetailView):
+    model = PhotoSphere
 
 class MainStreetDetail(BaseTemplateMixin, DetailView):
     model = MainStreetSet
