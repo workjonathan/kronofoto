@@ -13,14 +13,22 @@ from ..models import Photo, Place
 from django.db.models import Prefetch
 from collections import defaultdict
 from django import forms
+from typing import Any, Protocol, TypeVar
 
-def hmac_auth(func):
-    def do_auth(request, *args, **kwargs):
+T = TypeVar('T')
+
+class HttpHandler(Protocol):
+    def __call__(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+
+def hmac_auth(func: HttpHandler) -> HttpHandler:
+    def do_auth(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if 'Authorization' in request.headers:
             try:
                 token, timestamp, sig = request.headers['Authorization'].split(" ")
                 key = Key.objects.get(token=token)
                 signer = hmac.new(key.key.encode('utf-8'), digestmod="sha256")
+                assert request.method
                 signer.update(request.method.encode('utf-8'))
                 signer.update(timestamp.encode('utf-8'))
                 signer.update(request.get_full_path().encode('utf-8'))
@@ -60,12 +68,12 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None) -> HttpRespon
         field = lambda name: lambda p: getattr(p, name)
         const = lambda value: lambda p: value
 
-        def tags(p):
+        def tags(p: Photo) -> str:
             terms = [term.term for term in p.terms.all()]
             tags = [tag.tag for tag in phototags[p.id]]
             return "^^".join(terms+tags)
 
-        def names(p):
+        def names(p: Photo) -> str:
             associated = []
             if p.donor:
                 associated.append("{}|Contributor".format(p.donor))
@@ -76,14 +84,14 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None) -> HttpRespon
             return "^^".join(associated)
 
         place_cache = {}
-        def place(p):
+        def place(p: Photo) -> str:
             if not p.place:
                 return ""
             if p.place.id not in place_cache:
                 place_cache[p.place.id] = "^^".join(p2.name for p2 in p.place.get_ancestors(ascending=True, include_self=True))
             return place_cache[p.place.id]
 
-        def coords(p):
+        def coords(p: Photo) -> str:
             if p.location_point:
                 return "{}|{}".format(p.location_point.y, p.location_point.x)
             else:

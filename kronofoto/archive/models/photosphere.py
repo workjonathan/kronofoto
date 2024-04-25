@@ -78,7 +78,7 @@ class PhotoSphere(models.Model):
 
     def get_absolute_url(self) -> str:
         query = QueryDict(mutable=True)
-        query['id'] = self.pk
+        query['id'] = str(self.pk)
         return "{}?{}".format(reverse('kronofoto:mainstreetview'), query.urlencode())
 
     def __str__(self) -> str:
