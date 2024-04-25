@@ -121,19 +121,25 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None) -> HttpRespon
         data = [{k: mapper(p) for (k, mapper) in map.items()} for p in photos]
         response = HttpResponse("", content_type="application/json")
         if len(data) > size:
+            query_params = QueryDict(mutable=True)
+            query_params['after'] = photos[photos.count()-1].id
+            if since:
+                query_params['since'] = since
             json.dump({
                 "results": data[:size],
-                "next": "{}?after={}".format(
+                "status": "OK",
+                "next": "{}?{}".format(
                     reverse("kronofoto:data-dump", kwargs={"short_name": short_name}),
-                    photos[photos.count()-1].id,
+                    query_params.urlencode()
                 )
             }, response)
         else:
             json.dump({
                 "results": data[:size],
+                "status": "OK",
                 "next": None,
             }, response)
 
         return response
     else:
-        return HttpResponse("Invalid query", status=400)
+        return JsonResponse({"status": "Invalid query"}, status=400)
