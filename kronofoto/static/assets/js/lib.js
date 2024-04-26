@@ -441,6 +441,7 @@ class Zoom {
     addZoom(container) {
         let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
         imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+        const fullsize = container.getAttribute("data-fullsize")
 
         let img = new Image();
         let zoomOpened = false
@@ -472,6 +473,13 @@ class Zoom {
 
                 if (zoomed) {
                     galleryElem.classList.add('zoomed')
+                    const img2 = new Image();
+                    img2.src = imgsrc;
+                    img2.onload = () => {
+                        Object.assign(container.style, {
+                            backgroundImage: `url("${fullsize}")`,
+                        })
+                    }
                     container.onmousemove(e)
                 } else {
                     galleryElem.classList.remove('zoomed')
