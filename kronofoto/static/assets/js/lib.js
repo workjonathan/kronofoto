@@ -472,6 +472,7 @@ class Zoom {
 
                 if (zoomed) {
                     galleryElem.classList.add('zoomed')
+                    container.onmousemove(e)
                 } else {
                     galleryElem.classList.remove('zoomed')
                     removeZoom()
