@@ -17,7 +17,7 @@ class DonorQuerySet(models.QuerySet):
 
     def annotate_scannedcount(self) -> Self:
         from .photo import Photo
-        q = Photo.objects.filter(scanner=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
+        q = Photo.objects.filter(scanner=OuterRef('id')).annotate(scanned_count=Func(F('id'), function='COUNT')).values('scanned_count')[:1]
         return self.annotate(scanned_count=Subquery(q))
 
     def annotate_donatedcount(self) -> Self:

@@ -12,6 +12,8 @@ GRID_DISPLAY_COUNT = 3
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media2', 'media')
 
+CSS_VERSION = 1
+
 
 KF_DJANGOCMS_NAVIGATION = False
 KF_DJANGOCMS_SUPPORT = False

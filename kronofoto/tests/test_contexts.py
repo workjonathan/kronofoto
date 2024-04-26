@@ -61,7 +61,8 @@ class Tests(TestCase):
     @settings(max_examples=1)
     @given(from_model(PhotoSphere.photos.through, photo=photos(), photosphere=from_model(PhotoSphere, id=st.none(), image=st.builds(lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')))))
     def test_photosphere_context(self, pair):
-        resp = Client().get(reverse('kronofoto:mainstreetview', kwargs={'pk': pair.id}))
+        resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={pair.id}")
+
         assertTemplateUsed(resp, 'archive/photosphere_detail.html')
         assert resp.status_code == 200
-        assert 'sphere_data' in resp.context
+        assert 'object' in resp.context and resp.context['object'].id == pair.photosphere.id

@@ -23,7 +23,6 @@ class FakeSubmission(models.Model):
 class FakeDonor(models.Model):
     x = models.IntegerField()
     objects = DonorQuerySet.as_manager()
-    users_starred_by = models.ManyToManyField(User)
 
 class FakePhoto(models.Model):
     x = models.IntegerField()
