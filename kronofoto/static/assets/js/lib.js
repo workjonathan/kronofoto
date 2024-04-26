@@ -434,7 +434,7 @@ class Zoom {
     }
 
     install({elem}) {
-        for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
+        for (const elem2 of querySelectorAll({selector: "#follow-zoom-timeline-version", node: elem})) {
             this.addZoom(elem2)
         }
     }
