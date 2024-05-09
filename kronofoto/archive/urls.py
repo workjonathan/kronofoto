@@ -78,8 +78,8 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
         ])),
         path('random', views.RandomRedirect.as_view(), **get_kwargs('random-image')),
         path('carousel', CarouselListView.as_view(item_count=40), **get_kwargs('carousel')),
-        path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
         path('year', YearRedirect.as_view(), **get_kwargs("year-redirect")),
+        path('map', views.map_list, **get_kwargs('map')),
     ]))
 
 app_name = 'kronofoto'
