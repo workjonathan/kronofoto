@@ -1,4 +1,5 @@
 {% extends base_template %}
+
 {% load widgets %}
 {% load krono_urls %}
 {% load geojson_tags %}
@@ -16,15 +17,16 @@
     data-north="{{ bounds.north }}" 
     style="width:100%; height:30vh;"></div>
 </form>
+
 <main class="container-center" id="fi-map-result">
 <figure id="fi-map-figure">
+    <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ photo|describe:request.user|join:", " }}" />
 </figure>
 <ul class="photo-grid" id="photo-grid">
     {% for photo in photos %}
     <li><a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" /></a></li>
     {% endfor %}
 </ul>
-<br>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>

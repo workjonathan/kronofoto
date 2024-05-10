@@ -1,5 +1,6 @@
 from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
+from django.shortcuts import get_object_or_404
 from typing import Optional, Any
 from .base import ArchiveRequest
 from ..forms import BoundsSearchForm, Bounds
@@ -17,9 +18,10 @@ class MapRequest(ArchiveRequest):
 
     @property
     def base_template(self) -> str:
-        print(f'{self.hx_target=}')
-        if self.hx_target == "photo-grid":
+        if self.hx_target == "fi-map-result":
             return "archive/map_partial.html"
+        elif self.hx_target == "fi-map-figure":
+            return "archive/map-detail_partial.html"
         else:
             return super().base_template
 
@@ -47,3 +49,14 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, category: 
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
     return TemplateResponse(request, context=context, template="archive/map.html")
+
+def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
+    areq = MapRequest(request=request, short_name=short_name, category=category)
+    context = areq.common_context
+    qs = areq.get_photo_queryset()
+
+    context['form'] = areq.form
+    context['photos'] = qs[:48]
+    context['bounds'] = areq.map_bounds
+    context['photo'] = get_object_or_404(qs, id=photo)
+    return TemplateResponse(request, context=context, template="archive/map-detail.html")
