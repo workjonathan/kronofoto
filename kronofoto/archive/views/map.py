@@ -19,9 +19,9 @@ class MapRequest(ArchiveRequest):
     @property
     def base_template(self) -> str:
         if self.hx_target == "fi-map-result":
-            return "archive/map_partial.html"
+            return "archive/map/map_partial.html"
         elif self.hx_target == "fi-map-figure":
-            return "archive/map-detail_partial.html"
+            return "archive/map/map-detail_partial.html"
         else:
             return super().base_template
 
@@ -48,7 +48,7 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, category: 
     context['form'] = areq.form
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
-    return TemplateResponse(request, context=context, template="archive/map.html")
+    return TemplateResponse(request, context=context, template="archive/map/map.html")
 
 def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
     areq = MapRequest(request=request, short_name=short_name, category=category)
@@ -59,4 +59,4 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
     context['photo'] = get_object_or_404(qs, id=photo)
-    return TemplateResponse(request, context=context, template="archive/map-detail.html")
+    return TemplateResponse(request, context=context, template="archive/map/map-detail.html")
