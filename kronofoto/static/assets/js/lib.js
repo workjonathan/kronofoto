@@ -37,8 +37,8 @@ import {
 import {
     MediaQuery
 } from './foundation-sites/js/foundation.util.mediaQuery';
-import { 
-    Triggers 
+import {
+    Triggers
 } from './foundation-sites/js/foundation.util.triggers';
 
 class TimelineScroller {
@@ -304,7 +304,7 @@ class ImagePreviewInput {
         }
     }
     imageChange(evt) {
-        const img = this.getPrevious({elem: evt.target, tagName: "IMG"}) 
+        const img = this.getPrevious({elem: evt.target, tagName: "IMG"})
         this.selectLoader({img, input: evt.target}).loadImage()
     }
     getPrevious({elem, tagName}) {
@@ -563,6 +563,18 @@ class KronofotoContext {
                 $('#overlay', this.context).fadeOut()
             }
         })
+
+        // Close all dropdowns when clicking outside of a dropdown
+        $(elem).on('click', (e) =>{
+          // Get the closest dropdown menu, if it exists
+          var $parentDropdownMenu = $(e.target, elem).closest('.collection__item-menu');
+          $('.collection__item-menu.expanded', elem).each((i,f) => {
+            if(!$parentDropdownMenu.length || $parentDropdownMenu.attr('id') != $(f).attr('id')) {
+              $(f).foundation('toggle');
+            }
+          });
+        });
+
         $('#login', elem).on('off.zf.toggler', (e) => {
             $('#hamburger-menu', this.context).addClass('collapse')
             $('#overlay', this.context).fadeIn()
@@ -586,10 +598,10 @@ class KronofotoContext {
         })
         const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context}) 
+            const plugin = new cls({context: this.context})
             plugin.install({elem})
         }
-        
+
         initNavSearch(elem)
         // modified this foundation function to attach a "rootNode" variable to all plugin objects.
         // The foundation function already accepts one optional argument, so undefined is passed to preserve

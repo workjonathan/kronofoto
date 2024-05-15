@@ -299,16 +299,17 @@ main article.fi-image {
   height: 45vh;
 }
 
-.user-header {
-  height: 250px;
-  background: url('../images/user-bg.png');
-  background-blend-mode: saturation;
-  background-size: cover;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+//
+//.user-header {
+//  height: 250px;
+//  background: url('../images/user-bg.png');
+//  background-blend-mode: saturation;
+//  background-size: cover;
+//  display: flex;
+//  flex-direction: column;
+//  align-items: center;
+//  justify-content: center;
+//}
 
 .user-content {
   width: 50%;
@@ -321,12 +322,12 @@ main article.fi-image {
   display: grid;
   grid-template-rows: inherit;
 }
-
-.user-page-content div:first-child {
-  margin-bottom: 20px;
-  text-align: center;
-  line-height: 2em;
-}
+//
+//.user-page-content div:first-child {
+//  margin-bottom: 20px;
+//  text-align: center;
+//  line-height: 2em;
+//}
 
 .overlay {
   opacity: 0.75;
@@ -338,10 +339,6 @@ main article.fi-image {
   height: calc(100vh - 80px);
   z-index: 999;
   display: none;
-}
-
-.collection-grid ul li {
-  list-style-type: none;
 }
 
 .collection-name {
@@ -511,7 +508,7 @@ main article.fi-image {
 }
 
 .year-ticker a:last-of-type text {
-  text-anchor: end;
+  text-anchor: flex-end;
 }
 /* ======================================================================== */
 

@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/workjonathan/kronofoto#readme",
   "devDependencies": {
-    "@photo-sphere-viewer/core": "^5.7.2",
+    "@photo-sphere-viewer/core": "^5.7.3",
     "@photo-sphere-viewer/markers-plugin": "^5.7.2-fix.1",
     "@photo-sphere-viewer/virtual-tour-plugin": "^5.7.2",
     "@rollup/plugin-commonjs": "^23.0.3",
