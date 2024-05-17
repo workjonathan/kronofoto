@@ -1,2 +1,76 @@
+{% load static %}
 {% load widgets %}
+{% load permissions %}
+{% load krono_urls %}
+<div style="position:relative">
 <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ photo|describe:request.user|join:", " }}" />
+<div style="top: 0px; width:100%; position: absolute; display: flex; justify-content: flex-end; align-items: stretch">
+    <button class="image-control-button image-control-button--toggle">
+        X
+    </button>
+    <div style="flex-grow:1;">
+    </div>
+    <button id="zoom-image-control-button" class="image-control-button image-control-button--toggle" data-toggle="gallery">
+        <img class="meta-info-icon" src="{% static "assets/images/skyblue/zoom.svg" %}">
+        <img class="meta-info-icon hide" src="{% static "assets/images/skyblue/zoom-out.svg" %}">
+    </button>
+</div>
+<div style="bottom: 0px; width:100%; position: absolute; display: flex; justify-content: flex-end; align-items: stretch">
+    <!--Add to List Button-->
+    <button class="image-control-button" data-toggle="add-to-list-popup">
+        <img class="add-to-list-icon" src="{% static "assets/images/skyblue/add-to-list.svg" %}">
+    </button>
+    <!--Share Button-->
+    <button class="image-control-button" data-toggle="share-popup">
+        <img class="meta-info-icon" src="{% static "assets/images/skyblue/share.svg" %}">
+    </button>
+    <!--Download Button-->
+    <button class="image-control-button" data-toggle="download-popup">
+        <img class="meta-dl-icon" src="{% static "assets/images/skyblue/download.svg" %}">
+    </button>
+    <!--Info Button-->
+    <button class="image-control-button" data-toggle="metadata-popup">
+        <img class="meta-info-icon" src="{% static "assets/images/skyblue/info.svg" %}">
+    </button>
+</div>
+</div>
+        <div class="gallery__popups">
+
+            <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
+                {% block metadata %}
+                {% if request.user|has_view_or_change_permission:photo %}
+                <a href="{{ object.get_edit_url }}" class="photo-menu-popup__edit-btn"></a>
+                {% endif %}
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="metadata-popup" data-toggler=".expanded"></a>
+                <div class="photo-menu-popup__wrapper">
+                    {% include "archive/photometadata.html" %}
+                </div>
+                {% endblock %}
+            </div>
+            <div id="add-to-list-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="add-to-list-popup" data-toggler=".expanded"></a>
+                {% block add_to_list %}
+                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#add-to-list-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper no-scroll" hx-swap="innerHTML" hx-target="this" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+                    Loading...
+                </div>
+                {% endblock add_to_list %}
+            </div>
+            <div id="share-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="share-popup" data-toggler=".expanded"></a>
+                {% block share_popup %}
+                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#share-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-web-component" url_kwargs photo=photo.id %}?{{ request.GET.urlencode }}" hx-trigger="intersect">
+                    Loading...
+                </div>
+                {% endblock share_popup %}
+            </div>
+            <div id="download-popup" class="gallery__popup" data-toggler=".expanded" >
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="download-popup" data-toggler=".expanded"></a>
+                {% block download_popup %}
+                <div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#download-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect">
+                    Loading...
+                </div>
+                {% endblock download_popup %}
+            </div>
+
+        </div>
+
