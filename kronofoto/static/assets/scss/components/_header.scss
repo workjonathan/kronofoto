@@ -23,7 +23,7 @@ $height: ("small": 60px, "medium": 80px, "large": 80px);
     @include breakpoint(small up) {
       width: 75px;
     }
-    @include breakpoint(xlarge up) {
+    @include breakpoint(large up) {
       width: 11.5vw;
       min-width: 165px;
     }

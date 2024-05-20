@@ -18,6 +18,8 @@ import operator
 from dataclasses import dataclass, replace
 from .base import ArchiveRequest, require_valid_archive
 from django.utils.decorators import method_decorator
+import random
+from typing import Optional
 
 class ThemeDict(dict):
     def __missing__(self, key):
@@ -36,7 +38,13 @@ class Theme:
     timelineSvg: str
 
     name: str
-    archive: str
+    archive: Optional[str]
+
+    colors = {
+        'skyblue': ("#6E86BC", "#A8B6D7", "#53658D"),
+        'golden': ("#C2891C", "#D6BC89", "#987024"),
+        'haybail': ("#C2A562", "#CEB57C", "#A28B54"),
+    }
 
     def logo(self):
         kwargs = {'theme': self.name}
@@ -51,40 +59,44 @@ class Theme:
         return reverse('kronofoto:logosvgsmall', kwargs=kwargs)
 
     @classmethod
-    def generate_themes(cls):
-        # This is a very annoying feature, and this is unpleasantly non-general.
-        colors = (
-            ('skyblue', ("#6E86BC", "#A8B6D7", "#53658D")),
-            ('golden', ("#C2891C", "#D6BC89", "#987024")),
-            ('haybail', ("#C2A562", "#CEB57C", "#A28B54")),
+    def select_named_theme(cls, name, archive=None):
+        try:
+            colors = cls.colors[name]
+        except KeyError:
+            colors = cls.colors['skyblue']
+        return Theme(
+            color=colors[0],
+            colorLighter=colors[1],
+            colorDarker=colors[2],
+            menuSvg='assets/images/{}/menu.svg'.format(name),
+            infoSvg='assets/images/{}/info.svg'.format(name),
+            downloadSvg='assets/images/{}/download.svg'.format(name),
+            searchSvg='assets/images/{}/search.svg'.format(name),
+            carrotSvg='assets/images/{}/carrot.svg'.format(name),
+            timelineSvg='assets/images/{}/toggle.svg'.format(name),
+            name=name,
+            archive=archive,
         )
-        colors = {
-            name: Theme(
-                color=color[0],
-                colorLighter=color[1],
-                colorDarker=color[2],
-                menuSvg='assets/images/{}/menu.svg'.format(name),
-                infoSvg='assets/images/{}/info.svg'.format(name),
-                downloadSvg='assets/images/{}/download.svg'.format(name),
-                searchSvg='assets/images/{}/search.svg'.format(name),
-                carrotSvg='assets/images/{}/carrot.svg'.format(name),
-                timelineSvg='assets/images/{}/toggle.svg'.format(name),
-                name=name,
-                archive=None,
-            )
-            for name, color in colors
-        }
-        themes = {
-            archive: {
-                name: replace(theme, archive=archive)
-                for name, theme in colors.items()
-            }
-            for archive in ('ia', 'ct', 'ak')
-        }
-        themes['us'] = colors
-        return ThemeDict(themes)
 
-THEME = Theme.generate_themes()
+
+    @classmethod
+    def select_random_theme(cls, archive=None):
+        name, color = random.choice(list(cls.colors.items()))
+
+        return Theme(
+            color=color[0],
+            colorLighter=color[1],
+            colorDarker=color[2],
+            menuSvg='assets/images/{}/menu.svg'.format(name),
+            infoSvg='assets/images/{}/info.svg'.format(name),
+            downloadSvg='assets/images/{}/download.svg'.format(name),
+            searchSvg='assets/images/{}/search.svg'.format(name),
+            carrotSvg='assets/images/{}/carrot.svg'.format(name),
+            timelineSvg='assets/images/{}/toggle.svg'.format(name),
+            name=name,
+            archive=archive,
+        )
+
 
 class BaseTemplateMixin:
     category = None

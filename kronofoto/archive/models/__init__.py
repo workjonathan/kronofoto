@@ -16,3 +16,4 @@ from .archive import Archive, ArchiveAgreement
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
 from .exhibit import Exhibit, Card, PhotoCard, DoublePhotoCard
+from .key import Key

@@ -64,6 +64,7 @@ class RecaptchaWidget(Widget):
 class HeadingWidget(NumberInput):
     sphere_width = 600
     sphere_height = 400
+    template_name = 'archive/widgets/heading.html'
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
@@ -73,6 +74,10 @@ class HeadingWidget(NumberInput):
         context['sphere_width'] = self.sphere_width
         context['sphere_height'] = self.sphere_height
         context['module'] = 'archive_heading'
+        try:
+            context['pan'] = (float(value)-90) / 180 * 3.1415
+        except ValuerError:
+            context['pan'] = ""
         return context
 
 class PositioningWidget(MultiWidget):

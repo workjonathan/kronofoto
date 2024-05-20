@@ -17,7 +17,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
 from .base import PhotoRequest
 from typing import final, TypedDict
-from .basetemplate import THEME
+from .basetemplate import Theme
 from ..forms import CarouselForm
 import random
 from itertools import cycle, chain, islice
@@ -276,7 +276,7 @@ class LogoSvg(TemplateView):
 
     def get_context_data(self, theme='skyblue', short_name='us'):
         context = {
-            'theme': THEME[short_name][theme]
+            'theme': Theme.select_named_theme(archive=short_name, name=theme),
         }
         return context
 
@@ -299,7 +299,7 @@ class LogoSvgSmall(TemplateView):
 
     def get_context_data(self, theme='skyblue', short_name='us'):
         context = {
-            'theme': THEME[short_name][theme]
+            'theme': Theme.select_named_theme(archive=short_name, name=theme),
         }
         return context
 

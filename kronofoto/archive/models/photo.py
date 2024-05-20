@@ -297,6 +297,7 @@ class Photo(PhotoBase):
         validators=[RegexValidator(regex="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", message='This should be blank or 36 alphanumerics with hyphens grouped like this: 8-4-4-4-12')],
     )
     created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     objects = PhotoQuerySet.as_manager()
 
@@ -305,6 +306,7 @@ class Photo(PhotoBase):
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
         indexes = (
+            models.Index(fields=['archive', 'id']),
             models.Index(fields=['year', 'id'], condition=Q(is_published=True, year__isnull=False), name="year_id_sort"),
             models.Index(fields=['donor_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="donor_year_id_sort"),
             models.Index(fields=['donor_id', 'category', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="d_category_year_id_sort"),

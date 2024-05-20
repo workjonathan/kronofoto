@@ -5,6 +5,10 @@
 @use 'components/tags' as tags;
 @use 'components/timeline' as timeline;
 @use 'typography' as typography;
+@use '@photo-sphere-viewer/core/index.css' as photoSphereViewerCore;
+@use '@photo-sphere-viewer/markers-plugin/index.css' as photoSphereViewerMarkers;
+@use '@photo-sphere-viewer/virtual-tour-plugin/index.css' as photospheretour;
+
 
 body, #kfroot {
   container-type: inline-size;
@@ -21,6 +25,7 @@ body, #kfroot {
   top: 0px;
   left: 0px;
 }
+
 @import 'select2/src/scss/core';
 
 // Foundation Dependencies
@@ -90,83 +95,8 @@ body, #kfroot {
   font-family: var(--fp-main-font);
 }
 
-html, body {
-  height: 100%;
-}
-
-#app {
-  height: calc(100% - 80px);
-}
-
-img {
-  /*max-height: calc(100vh - 278px);*/
-}
-
-main {
-  overflow-x: hidden;
-  height: 100%;
-}
-
-body {
-  /*display: grid;
-  height: 100vh;
-  grid-template: "header" 8vh
-                 "main" 92vh
-                 / 1fr;*/
-  margin: 0 auto;
-  overflow-x: hidden;
-}
-
-a {
-  color: var(--fp-main-color);
-  text-decoration: none;
-}
-
-input[type="email"], input[type="number"], input[type="search"], input[type="text"], input[type="tel"], input[type="url"], input[type="password"], textarea, select {
-  -moz-appearance:none; /* Firefox */
-  -webkit-appearance:none; /* Safari and Chrome */
-  appearance:none;
-  height: 34px;
-  padding: 4px 8px;
-  background-color: var(--fp-light-grey);
-  color: #333;
-  border: none;
-  border-radius: 2px;
-  box-shadow: none;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-select::-ms-expand {
-  display: none;
-}
-
-.select2-dropdown {
-    z-index: 20000;
-    width: 25%;
-}
-
-select {
-  //background: url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") var(--fp-light-grey) no-repeat 98.5% !important;
-  /* !important used for overriding all other customisations */
-}
-
 .float-right {
   float: right;
-}
-
-.sticky-parent {
-  @include breakpoint(large up) {
-    position: sticky;
-    bottom: 0px;
-    left: 100%;
-  }
 }
 
 .foundation-mq {
@@ -182,3 +112,7 @@ select {
 #kfroot {
   position: relative;
 }
+
+// Template-specific overrides
+@import "templates/gallery";
+@import "templates/cms";

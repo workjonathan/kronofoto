@@ -9,6 +9,9 @@ import ClipboardActionCopy from 'clipboard/src/actions/copy'
 import 'jquery-ui-pack'
 import * as Select2 from 'select2'
 Select2.default(window, $)
+import { Viewer } from "@photo-sphere-viewer/core";
+import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
+import { ImagePlanePlugin } from './photosphere.js'
 
 // Foundation
 import {
@@ -383,19 +386,62 @@ class Gallery {
     }
 }
 
+class PhotoSpherePlugin {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
+            const api_url = elem2.getAttribute("data-node-href")
+            const param_name = elem2.getAttribute("data-node-param")
+            const startNodeId = elem2.getAttribute("data-node-start")
+
+            const viewer = new Viewer({
+                container: elem2,
+                plugins: [
+                    [ImagePlanePlugin, { photos: [] }],
+                    [VirtualTourPlugin, {
+                        dataMode: "server",
+                        positionMode: "gps",
+                        startNodeId,
+                        getNode: async (nodeId) => {
+                            const url = new URL(api_url)
+                            url.searchParams.append(param_name, nodeId)
+                            const resp = await fetch(url.toString())
+                            return resp.json()
+                        },
+                    }],
+                ],
+            })
+            viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
+                viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                if (data.fromNode && node.id != data.fromNode.id) {
+                    const form = elem2.closest('form')
+                    const input = form.querySelector("[name='id']")
+                    input.value = node.id
+                    elem2.dispatchEvent(new Event("node-changed", {
+                        bubbles: true
+                    }))
+                }
+            })
+        }
+    }
+}
+
 class Zoom {
     constructor({context}) {
         this.context = context
     }
 
     install({elem}) {
-        for (const elem2 of elem.querySelectorAll("#follow-zoom-timeline-version")) {
+        for (const elem2 of querySelectorAll({selector: "#follow-zoom-timeline-version", node: elem})) {
             this.addZoom(elem2)
         }
     }
     addZoom(container) {
         let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
         imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+        const fullsize = container.getAttribute("data-fullsize")
 
         let img = new Image();
         let zoomOpened = false
@@ -427,6 +473,14 @@ class Zoom {
 
                 if (zoomed) {
                     galleryElem.classList.add('zoomed')
+                    const img2 = new Image();
+                    img2.src = imgsrc;
+                    img2.onload = () => {
+                        Object.assign(container.style, {
+                            backgroundImage: `url("${fullsize}")`,
+                        })
+                    }
+                    container.onmousemove(e)
                 } else {
                     galleryElem.classList.remove('zoomed')
                     removeZoom()
@@ -530,7 +584,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context}) 
             plugin.install({elem})

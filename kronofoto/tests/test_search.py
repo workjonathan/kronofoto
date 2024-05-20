@@ -133,7 +133,7 @@ class ExpressionTests(TestCase):
             archive=archive,
             donor=donor,
             category=category,
-            caption=1951,
+            year=1951,
         )
         photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())
         self.assertIn(matchphoto, photos)
@@ -162,7 +162,7 @@ class ExpressionTests(TestCase):
             archive=archive,
             donor=donor,
             category=category,
-            caption=1951,
+            year=1951,
         )
         photo.terms.set([TermModel.objects.create(term="term2")])
         photos = expression.as_collection(Photo.objects.all(), user=AnonymousUser())

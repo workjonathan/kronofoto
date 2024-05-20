@@ -51,7 +51,7 @@ def tag_change(sender, instance, update_fields, **kwargs):
     WordCount.objects.bulk_create(wordcounts)
 
 @receiver(m2m_changed, sender=Photo.terms.through)
-def photo_save(sender, instance, action, **kwargs):
+def photo_save_m2m(sender, instance, action, **kwargs):
     if action in ('post_add', 'post_remove'):
         WordCount.objects.filter(photo=instance, field='TE').delete()
         counts = sum((Counter(term.term.lower().split()) for term in instance.terms.all()), Counter())

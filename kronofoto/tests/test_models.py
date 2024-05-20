@@ -88,7 +88,8 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
     @rule()
     def check_counts(self):
         note(f"{FakeDonor.objects.count()=}")
-        for donor in FakeDonor.objects.annotate_donatedcount().annotate_scannedcount():
+        qs = FakeDonor.objects.annotate_donatedcount().annotate_scannedcount()
+        for donor in qs:
             assert donor.donated_count == len(self.donor_model[donor.pk])
             assert donor.scanned_count == len(self.scanner_model[donor.pk])
 

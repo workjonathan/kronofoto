@@ -1,0 +1,24 @@
+[template=gallery] {
+  height: 100%;
+
+  body {
+    height: 100%;
+  }
+  #app {
+    height: calc(100% - 80px);
+  }
+
+  main {
+    overflow-x: hidden;
+    height: 100%;
+  }
+  body {
+    /*display: grid;
+    height: 100vh;
+    grid-template: "header" 8vh
+                   "main" 92vh
+                   / 1fr;*/
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+}

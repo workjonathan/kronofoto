@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" prefix="og: https://ogp.me/ns#">
+<html lang="en" prefix="og: https://ogp.me/ns#" template="gallery">
 {% load static %}
 {% load searchform %}
 {% load header %}
@@ -9,7 +9,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}">
+  <link type="text/css" rel="stylesheet" href="{% static "assets/dist/css/index.css" %}?version={{ CSS_VERSION }} %}">
   {% block opengraph %}
   {% endblock %}
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -42,7 +42,6 @@
 </head>
 <body hx-push-url="true" theme="{{ theme.name }}">
   {% gtm_body %}
-  <div id="overlay" class="overlay"></div>
   {% block header %}
   {% header %}
   {% endblock header %}
@@ -52,6 +51,6 @@
   </div>
   <!-- <footer></footer> -->
 
-  <script src="{% static "assets/dist/js/main.js" %}"></script>
+  <script src="{% static "assets/dist/js/main.js" %}?{{ CSS_VERSION }}" ></script>
 </body>
 </html>

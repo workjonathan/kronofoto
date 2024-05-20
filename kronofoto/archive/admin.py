@@ -38,7 +38,7 @@ from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join, html_safe
 from django.shortcuts import get_object_or_404
 from dataclasses import dataclass
 
@@ -525,6 +525,18 @@ class MainstreetSetIsSetFilter(StandardSimpleListFilter):
         ("No", True),
     )
 
+#@html_safe
+class ImportMap:
+    def __html__(self) -> str:
+        return """<script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+                    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js",
+                    "@photo-sphere-viewer/compass-plugin": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.module.js"
+                }
+            }
+        </script>"""
 
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.GISModelAdmin):
@@ -534,6 +546,13 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
+
+    class Media:
+        js = [ImportMap()]
+        css = {"all": [
+            "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css",
+            "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.min.css",
+        ]}
 
     def get_form(
         self, request: HttpRequest, obj: Optional[PhotoSphere] = None, change: bool=False, **kwargs: Any
@@ -801,6 +820,21 @@ class SubmissionAdmin(PhotoBaseAdmin):
     readonly_fields = ["image_display", "uploader"]
     form = SubmissionForm
     exclude = ('city', 'state', 'address', 'county', 'country')
+    fields = [
+        'archive',
+        'category',
+        'donor',
+        'image',
+        'year',
+        'circa',
+        'photographer',
+        'terms',
+        'place',
+        'location_point',
+        'caption',
+        'scanner',
+        'uploader',
+    ]
 
     class Media:
         js = ('https://unpkg.com/htmx.org@1.9.6',)
@@ -1057,6 +1091,28 @@ class PhotoAdmin(PhotoBaseAdmin):
         'place__fullname',
     ]
 
+    fields = [
+        'archive',
+        'category',
+        'donor',
+        'original',
+        'h700_image',
+        'year',
+        'circa',
+        'photographer',
+        'terms',
+        'place',
+        'location_point',
+        'address',
+        'city',
+        'county',
+        'state',
+        'country',
+        'caption',
+        'is_featured',
+        'is_published',
+        'scanner',
+    ]
     class Media:
         js = ('https://unpkg.com/htmx.org@1.9.6',)
 
@@ -1125,6 +1181,7 @@ class UserTagInline(admin.TabularInline):
     extra = 0
     fields = ['thumb_image', 'tag', 'accepted']
     readonly_fields = ['thumb_image', 'tag', 'accepted']
+    can_delete = False
 
     def thumb_image(self, instance: Any) -> str:
         return mark_safe(
@@ -1332,7 +1389,25 @@ class block_escalation:
 
 
 class KronofotoUserAdmin(UserAdmin):
-    inlines = (UserArchivePermissionsInline, UserTagInline,)
+    inlines = (UserArchivePermissionsInline,)
+    readonly_fields = ['tagging_history']
+    fieldsets = tuple(list(UserAdmin.fieldsets) + [("Other", {"fields": ('tagging_history',)})]) # type: ignore
+
+    def tagging_history(self, obj: User) -> str:
+        table = format_html_join(
+            '',
+            '<tr><td><a href="{}"><img src="{}" width="75" height="75"></a></td><td>{}</td><td>{}</td></tr>',
+            (
+                (
+                    reverse('admin:archive_photo_change',
+                    args=(tag.photo.id,)),
+                    tag.photo.thumbnail.url,
+                    tag.tag, "Yes" if tag.accepted else "No",
+                )
+                for tag in PhotoTag.objects.filter(creator=obj).select_related('photo', 'tag')
+            ),
+        )
+        return format_html("<table><thead><tr><td>Photo</td><td>Tag</td><td>Accepted?</td></tr><tbody>{}</tbody></table>", table)
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: Any) -> None:
         # the symmetric difference of before edit and after edit will be a subset of editor's privileges
@@ -1360,9 +1435,6 @@ class KronofotoUserAdmin(UserAdmin):
         if obj and not request.user.is_superuser:
             fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'groups', 'user_permissions')
         return fieldsets
-
-
-
 
 class KronofotoGroupAdmin(GroupAdmin):
     inlines = (GroupArchivePermissionsInline,)

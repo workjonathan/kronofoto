@@ -12,6 +12,7 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.geos import Point
 from typing import Tuple
 from .photo import Photo
+from django.http import QueryDict
 
 class IncompleteGPSInfo(Exception):
     pass
@@ -76,7 +77,9 @@ class PhotoSphere(models.Model):
         raise IncompleteGPSInfo
 
     def get_absolute_url(self) -> str:
-        return reverse('kronofoto:mainstreetview', kwargs=dict(pk=self.pk))
+        query = QueryDict(mutable=True)
+        query['id'] = str(self.pk)
+        return "{}?{}".format(reverse('kronofoto:mainstreetview'), query.urlencode())
 
     def __str__(self) -> str:
         return self.title

@@ -200,3 +200,11 @@ $popupMaxHeight: 40vh;
   }
 
 }
+
+.sticky-parent {
+  @include breakpoint(large up) {
+    position: sticky;
+    bottom: 0px;
+    left: 100%;
+  }
+}
