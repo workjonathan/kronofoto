@@ -52,6 +52,13 @@ $font-weight-thin: 100;
     letter-spacing: 0.1em;
   }
 
+  [role="doc-subtitle"] {
+    font-size: 10px;
+    line-height: 16px;
+    color: #747474;
+    margin-bottom: 25px;
+  }
+
   .text-semibold {
     font-weight: $font-weight-semibold;
   }
@@ -139,6 +146,15 @@ $font-weight-thin: 100;
   line-height: 26px;
   letter-spacing: 0.05em;
   font-weight: $font-weight-bold;
+}
+
+.paragraph {
+  @include font-paragraph();
+  margin-bottom: 15px;
+}
+
+.color-light {
+  color: #747474;
 }
 
 .icon {

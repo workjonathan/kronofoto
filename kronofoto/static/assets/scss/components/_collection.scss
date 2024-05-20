@@ -1,0 +1,63 @@
+@use '../typography' as *;
+@use 'foundation-sites/scss/global' as *;
+
+.collection {
+
+  &--list {
+    margin-top: -20px;
+    column-fill: balance;
+    > div {
+      border-bottom: 1px solid #DDDDDD;
+      position: relative;
+    }
+    &.collection--2 {
+      @include breakpoint(medium up) {
+        columns: 2;
+        column-gap: 20px;
+      }
+      @include breakpoint(large up) {
+        columns: 2;
+        column-gap: 30px;
+      }
+    }
+    &.collection--3 {
+      @include breakpoint(medium up) {
+        columns: 2;
+        column-gap: 20px;
+      }
+      @include breakpoint(large up) {
+        columns: 3;
+        column-gap: 52px;
+      }
+    }
+  }
+
+  &__item-label {
+    font-size: 14px;
+    font-weight: $font-weight-bold;
+    color: #333333;
+    line-height: 20px;
+    position: relative;
+    z-index: 0;
+    > a {
+      color: #333333;
+      display: inline-block;
+      padding-top: 20px;
+      padding-bottom: 10px;
+      padding-right: 0px;
+      width: calc(100% - 40px);
+      &:hover {
+        color: var(--fp-main-blue);
+        text-decoration: underline;
+      }
+    }
+  }
+  &__item {
+    border-bottom: 1px solid #DDDDDD;
+  }
+  &__item-menu {
+    position: absolute;
+    top: 17px;
+    right: 0px;
+  }
+}
