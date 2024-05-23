@@ -9,7 +9,7 @@ from .embedstylesheet import EmbedStyleSheet
 from .downloadpage import DownloadPageView
 from .tagsearch import TagSearchView, contributor_search, place_search
 from .directory import DirectoryView
-from .collection import AddToList, CollectionCreate, CollectionDelete, Profile
+from .collection import AddToList, CollectionCreate, CollectionDelete, profile_view, collections_view
 from .grid import GridView
 from .categories import category_list
 from .submission import submission, list_terms, define_terms

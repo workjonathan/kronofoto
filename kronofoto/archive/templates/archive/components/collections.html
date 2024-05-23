@@ -1,0 +1,67 @@
+{% load krono_urls %}
+
+<section id="my-lists" class="border-bottom">
+
+    <div class="row">
+
+        <div class="columns small-12">
+            <h2>My Lists</h2>
+            {% with collection_count=object_list.count %}
+            <div role="doc-subtitle">{{ collection_count }} list{{ collection_count|pluralize }}</div>
+            {% endwith %}
+        </div>
+
+        {% if profile_user == request.user %}
+        <div class="columns small-12 large-4 small-push-8">
+            <form 
+                class="form form--collection" 
+                method="post" 
+                action="{% krono_url "kronofoto:collection-create" %}"
+                hx-post="{% krono_url "kronofoto:collection-create" %}"
+                hx-target="#my-lists"
+                hx-push-url="false"
+                hx-swap="outerHTML"
+            >
+                {% csrf_token %}
+                <h3>Create a List</h3>
+                <p class="paragraph color-light">You can use lists to organize photos into your own curated collections.</p>
+                {% for field in form %}
+                <div class="form-item">
+                    <input class="border" type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" placeholder="List Name" />
+                </div>
+                {% endfor %}
+                <input type="submit" class="button" value="Create" />
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="columns small-12 large-8">
+            <div class="collection collection--list collection--2">
+
+                {% for collection in object_list %}
+                    <div class="collection__item">
+                        <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
+                        {% if profile_user == request.user %}
+                        <div class="collection__item-menu dropdown-menu" id="list-{{ collection.uuid }}" data-toggler=".expanded">
+                            <div class="dropdown-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
+                            <div class="dropdown-menu__items">
+                                <ul>
+                                    <li><a href="#">Edit</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
+                                    <li><a href="#">Add to List</a></li>
+                                    <li><a 
+                                        href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                        hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                        hx-target="#app"
+                                    >Delete</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</section>

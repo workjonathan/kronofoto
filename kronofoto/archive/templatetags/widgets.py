@@ -1,28 +1,33 @@
 from django import template
 from django.core.signing import Signer
+from django.http import HttpRequest
 from ..reverse import reverse
-import markdown as md
+import markdown as md # type: ignore
 from .urlify import URLifyExtension
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
-from ..models import Photo
+from ..models import Photo, Collection
 from ..imageutil import ImageSigner
+from typing import Optional, Any, Dict
+from django.contrib.auth.models import User
+from django.db.models import QuerySet
+from ..forms import CollectionForm
 
 
 register = template.Library()
 
 @register.filter
-def all_tags_with(photo, user=None):
+def all_tags_with(photo: Photo, user: Optional[User]=None) -> QuerySet:
     return photo.get_all_tags(user=user)
 
 @register.filter
-def describe(object, user=None):
+def describe(object: Photo, user: Optional[User]=None) -> str:
     return object.describe(user)
 
 @register.inclusion_tag('archive/page-links.html', takes_context=False)
-def page_links(formatter, page_obj, target=None):
+def page_links(formatter: Any, page_obj: Any, target: Any=None) -> Dict[str, Any]:
     links = [{'label': label} for label in ['First', 'Previous', 'Next', 'Last']]
     if page_obj.has_previous():
         links[0]['url'] = formatter.page_url(1)
@@ -40,22 +45,31 @@ def page_links(formatter, page_obj, target=None):
     )
 
 @register.simple_tag(takes_context=False)
-def image_url(*, id, path, width=None, height=None):
+def image_url(*, id: int, path: str, width: int, height: int) -> str:
     return ImageSigner(id=id, path=path, width=width, height=height).url
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()
 
 @register.simple_tag(takes_context=False)
-def photo_count() -> int:
+def photo_count() -> Optional[Any]:
     return cache.get_or_set("photo_count", count_photos)
 
 @register.filter(is_safe=True)
 @stringfilter
-def markdown(text):
+def markdown(text: str) -> str:
     return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
 
 @register.simple_tag(takes_context=False)
-def thumb_left(*, index, offset, width):
+def thumb_left(*, index: int, offset: int, width: int) -> int:
     return index * width + offset
 
+@register.inclusion_tag("archive/components/collections.html", takes_context=False)
+def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
+    context = {'request': request, 'profile_user': profile_user}
+    context['form'] = CollectionForm()
+    if request.user.id == profile_user.id:
+        context['object_list'] = Collection.objects.filter(owner=profile_user)
+    else:
+        context['object_list'] = Collection.objects.filter(owner=profile_user, visibility='PU')
+    return context

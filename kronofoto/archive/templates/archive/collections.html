@@ -1,0 +1,6 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block content %}
+{% collections request=request profile_user=profile_user %}
+{% endblock content %}
