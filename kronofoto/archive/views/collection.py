@@ -17,36 +17,112 @@ from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm, CollectionForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Callable, Protocol, Type
+from dataclasses import dataclass
 
 def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
     context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
     return TemplateResponse(request=request, context=context, template="archive/collection_list.html")
 
-@login_required
-def collections_view(request: HttpRequest) -> HttpResponse:
-    assert not request.user.is_anonymous
-    areq = ArchiveRequest(request=request)
-    context = areq.common_context
-    if request.method == 'POST':
-        form = CollectionForm(request.POST)
+class Responder(Protocol):
+    @property
+    def response(self) -> HttpResponse: ...
+
+@dataclass
+class UserPageRedirect:
+    user: User
+
+    @property
+    def response(self) -> HttpResponse:
+        return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": self.user.username}))
+
+@dataclass
+class FormResponse:
+    request: HttpRequest
+    user: User
+    template: str
+    context: Dict[str, Any]
+
+    form_class: Callable[[], CollectionForm] = CollectionForm
+
+    @property
+    def response(self) -> HttpResponse:
+        self.context['form'] = self.form_class()
+        self.context['object_list'] = Collection.objects.filter(owner=self.user)
+        self.context['profile_user'] = self.user
+        return TemplateResponse(request=self.request, context=self.context, template=self.template)
+
+class ListNullAction:
+    def save(self) -> None:
+        pass
+
+@dataclass
+class ListSaver(ListNullAction):
+    form: CollectionForm
+    user: User
+
+    def save(self) -> None:
+        instance = self.form.save(commit=False)
+        instance.owner = self.user
+        instance.visibility = "PU"
+        instance.save()
+
+class BehaviorSelection(Protocol):
+    def saver(self) -> ListNullAction: ...
+    def responder(self, *, request: HttpRequest, user: User) -> Responder: ...
+
+
+@dataclass
+class CollectionPostBehaviorSelection:
+    postdata: QueryDict
+    user: User
+    areq: ArchiveRequest
+    def saver(self) -> ListNullAction:
+        form = CollectionForm(self.postdata)
         if form.is_valid():
-            instance = form.save(commit=False)
-            instance.owner = request.user
-            instance.save()
-        if areq.is_hx_request:
-            context['form'] = CollectionForm()
-            context['object_list'] = Collection.objects.filter(owner=request.user)
-            context['profile_user'] = request.user
-            return TemplateResponse(request=request, context=context, template="archive/components/collections.html")
+            return ListSaver(user=self.user, form=form)
         else:
-            return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": request.user.username}))
-    else:
-        context['form'] = CollectionForm()
-        context['object_list'] = Collection.objects.filter(owner=request.user)
-        context['profile_user'] = request.user
-        return TemplateResponse(request=request, context=context, template="archive/collections.html")
+            return ListNullAction()
+
+    def responder(self, *, request: HttpRequest, user: User) -> Responder:
+        if self.areq.is_hx_request:
+            template = "archive/components/collections.html"
+            return FormResponse(request=request, user=user, template=template, context=self.areq.common_context)
+        else:
+            return UserPageRedirect(user=user)
+
+@dataclass
+class CollectionGetBehaviorSelection:
+    areq: ArchiveRequest
+    def saver(self) -> ListNullAction:
+        return ListNullAction()
+
+    def responder(self, *, request: HttpRequest, user: User) -> Responder:
+        template = "archive/collections.html"
+        responder = FormResponse(request=request, user=user, template=template, context=self.areq.common_context)
+        return responder
+
+class CollectionBehaviorSelection:
+    def behavior(self, *, request: HttpRequest, user: User) -> BehaviorSelection:
+        areq = ArchiveRequest(request=request)
+        if request.method == "POST":
+            return CollectionPostBehaviorSelection(postdata=request.POST, user=user, areq=areq)
+        else:
+            return CollectionGetBehaviorSelection(areq=areq)
+
+
+@login_required
+def collections_view(
+    request: HttpRequest,
+    behavior_class: Type[CollectionBehaviorSelection]=CollectionBehaviorSelection,
+) -> HttpResponse:
+    assert not request.user.is_anonymous
+    behavior = behavior_class().behavior(request=request, user=request.user)
+    saver = behavior.saver()
+    responder = behavior.responder(request=request, user=request.user)
+    saver.save()
+    return responder.response
 
 
 class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
