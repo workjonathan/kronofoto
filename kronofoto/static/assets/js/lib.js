@@ -393,8 +393,16 @@ class PhotoSpherePlugin {
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
             const api_url = elem2.getAttribute("data-node-href")
+            const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
             const startNodeId = elem2.getAttribute("data-node-start")
+            const map = L.map(map_elem)
+            const OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map)
+            let marker = undefined
+
 
             const viewer = new Viewer({
                 container: elem2,
@@ -414,7 +422,15 @@ class PhotoSpherePlugin {
                 ],
             })
             viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
+                const position = [node.gps[1], node.gps[0]]
+                if (!marker) {
+                    marker = L.marker(position).addTo(map)
+                } else {
+                    marker.setLatLng(position)
+                }
+
                 viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                map.setView(position, 20)
                 if (data.fromNode && node.id != data.fromNode.id) {
                     const form = elem2.closest('form')
                     const input = form.querySelector("[name='id']")
