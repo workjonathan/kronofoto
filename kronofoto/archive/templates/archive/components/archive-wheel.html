@@ -1,0 +1,25 @@
+    <div class="logo-spinner" data-returning="{{ returning_wheel|yesno:"1,0" }}">
+        <span href="/categories/all/random" class="logo-spinner__wrapper">
+            <div class="logo-spinner__icon">
+                <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Iowa Logo">
+<!--                <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">-->
+            </div>
+            <div class="logo-spinner__fortepan">Fortepan</div>
+            <div class="logo-spinner__list">
+                <div class="logo-spinner__list-wrapper">
+                    <ul>
+                        {% for archive in archives %}
+                        <li class="copy">{{ archive.slug|upper }}</li>
+                        {% endfor %}
+                        {% for archive in archives %}
+                        <li{% if archive.slug == archive_slug %} class="active"{% endif %}>{{ archive.slug|upper }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="logo-spinner__list-arrow"></div>
+            </div>
+        </span>
+        <div class="logo-spinner__select">
+
+        </div>
+    </div>

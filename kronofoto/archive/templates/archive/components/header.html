@@ -7,10 +7,7 @@
     <div class="main-nav">
       <div class="main-nav__left">
         <div id="logo">
-          <a href="{% url "kronofoto:random-image" %}">
-            <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Iowa Logo">
-            <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">
-          </a>
+          {% archive_wheel request=request theme=theme archive_slug=url_kwargs.short_name %}
 
           {% if collection_name %}
           <div class="collection-name">

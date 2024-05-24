@@ -7,7 +7,7 @@ from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
-from ..models import Photo
+from ..models import Photo, Archive
 from ..imageutil import ImageSigner
 
 
@@ -59,3 +59,13 @@ def markdown(text):
 def thumb_left(*, index, offset, width):
     return index * width + offset
 
+@register.inclusion_tag("archive/components/archive-wheel.html", takes_context=False)
+def archive_wheel(*, request, theme, archive_slug):
+    request.KF_RETURNING_WHEEL = True
+    print(request.COOKIES)
+    return {
+        "returning_wheel": request.COOKIES.get('kronofoto:returning:wheel', "0") != "0",
+        "theme": theme,
+        "archive_slug": archive_slug,
+        "archives": Archive.objects.all().order_by('slug'),
+    }
