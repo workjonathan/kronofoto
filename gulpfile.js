@@ -52,6 +52,4 @@ gulp.task('watch:all', function () {
     gulp.watch([path.join(config.root, '/js/**/*.js'), path.join('!' + config.root, '/js/kronofoto.js')], gulp.series('build:js'));
 });
 
-gulp.task('build:all', function() {
-   gulp.series('build:sass', 'build:js')
-});
+gulp.task('build:all', gulp.series('build:sass', 'build:js'));

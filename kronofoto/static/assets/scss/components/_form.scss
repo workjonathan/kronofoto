@@ -29,7 +29,7 @@ input[type=number]::-webkit-outer-spin-button {
 .form {
 
   &--collection {
-    padding: 20px 70px 20px 0px;
+    padding: 0px 70px 20px 0px;
     @include breakpoint(small only) {
       order: 9999;
     }
