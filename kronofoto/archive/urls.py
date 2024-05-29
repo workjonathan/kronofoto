@@ -99,7 +99,9 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('<str:theme>/logo.svg', LogoSvg.as_view(), name='logosvg'),
     path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
     *directory('collections', views.collections_view, name='collection-create', children=include([
-        path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+        *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([
+            path('delete', views.CollectionDelete.as_view(), name='collection-delete'),
+        ])),
     ])),
     *directory('mainstreets', MainStreetList.as_view(), name='mainstreet-list', children=include([
         path('<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),

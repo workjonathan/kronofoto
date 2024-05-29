@@ -25,6 +25,16 @@ def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
     return TemplateResponse(request=request, context=context, template="archive/collection_list.html")
 
+def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    collection = get_object_or_404(Collection.objects.all(), id=pk)
+    if collection.owner != request.user:
+        return HttpResponseForbidden()
+    else:
+        context = ArchiveRequest(request=request).common_context
+        context['collection'] = collection
+        return TemplateResponse(request=request, context=context, template="archive/collection_edit.html")
+
 class Responder(Protocol):
     @property
     def response(self) -> HttpResponse: ...

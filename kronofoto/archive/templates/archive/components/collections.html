@@ -46,7 +46,7 @@
                             <div class="dropdown-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
                             <div class="dropdown-menu__items">
                                 <ul>
-                                    <li><a href="#">Edit</a></li>
+                                    <li><a href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}">Edit</a></li>
                                     <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
                                     <li><a href="#">Add to List</a></li>
                                     <li><a 
