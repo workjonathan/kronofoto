@@ -13,6 +13,7 @@ from ..imageutil import ImageSigner
 from typing import Optional, Any, Dict
 from django.contrib.auth.models import User
 from django.db.models import QuerySet
+from django.db.models.functions import Lower
 from ..forms import CollectionForm
 
 
@@ -68,8 +69,8 @@ def thumb_left(*, index: int, offset: int, width: int) -> int:
 def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
     context = {'request': request, 'profile_user': profile_user}
     context['form'] = CollectionForm()
-    if request.user.id == profile_user.id:
-        context['object_list'] = Collection.objects.filter(owner=profile_user)
-    else:
-        context['object_list'] = Collection.objects.filter(owner=profile_user, visibility='PU')
+    filter_kwargs = {}
+    if request.user.id != profile_user.id:
+        filter_kwargs['visibility'] = "PU"
+    context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
     return context

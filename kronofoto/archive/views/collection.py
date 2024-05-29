@@ -59,7 +59,7 @@ class FormResponse:
     @property
     def response(self) -> HttpResponse:
         self.context['form'] = self.form_class()
-        self.context['object_list'] = Collection.objects.filter(owner=self.user)
+        self.context['object_list'] = Collection.objects.by_user(user=self.user)
         self.context['profile_user'] = self.user
         return TemplateResponse(request=self.request, context=self.context, template=self.template)
 
@@ -194,7 +194,7 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
             owner=self.request.user
         ).count_photo_instances(
             photo=self.kwargs['photo']
-        ) if not self.request.user.is_anonymous else []
+        ) if not self.request.user.is_anonymous else Collection.objects.none()
 
     def get_initial(self) -> Any:
         return [
