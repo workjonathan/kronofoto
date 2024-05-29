@@ -294,6 +294,24 @@ class ImageLoader {
 class NullLoader {
     loadImage() {}
 }
+class CopyLink {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const elem2 of elem.querySelectorAll("[data-clipboard-copy]")) {
+            elem2.addEventListener("click", this.copyLink.bind(this))
+        }
+    }
+    copyLink(evt) {
+        evt.preventDefault()
+        navigator.clipboard.writeText(evt.target.getAttribute("href")).then(() => {
+            showToast("The collection link has been copied to the clipboard.")
+        }, () => {
+            showToast("ERROR: The collection link has not been copied to the clipboard.")
+        })
+    }
+}
 class ImagePreviewInput {
     constructor({context}) {
         this.context = context
@@ -596,7 +614,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, CopyLink]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})
             plugin.install({elem})

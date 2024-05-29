@@ -47,7 +47,7 @@
                             <div class="dropdown-menu__items">
                                 <ul>
                                     <li><a href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}">Edit</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
                                     <li><a 
                                         href="{% krono_url "kronofoto:random-image" %}"
                                         {% comment %}
