@@ -1,36 +1,106 @@
-{% extends "archive/base.html" %}
+{% extends base_template %}
 {% load krono_urls %}
+{% load widgets %}
 
 {% block content %}
-<section class="user-page-content">
-    <div class="user-header">
-        <div>
-            <h2>{{ profile_user.username }}</h2>
-            <p>{{ profile_user.email }}</p>
-        {% if profile_user == request.user %}
-            <a href="#"><i class="fas fa-edit"></i> Edit</a>
-        {% endif %}
+
+<div class="user-header">
+    <div class="user-header__wrapper">
+        <div class=user-header__info>
+            <h2 class="user-header__username">{{ profile_user.username }}</h2>
+            <p class="user-header__email">{{ profile_user.email }}</p>
         </div>
-        
+
         {% if profile_user == request.user %}
-        <span class="logout-btn"><a href="{% url "logout"%}?next={% krono_url "kronofoto:random-image" %}">Logout</a></span> 
+        <div class="user-header__edit-button">
+            <a href="{% url "password_change" %}"><i class="fas fa-edit"></i><span class="sr-only">Edit</span></a>
+        </div>
+
+        <div class="user-header__logout">
+            <a class="button" href="{% url "logout" %}?next={% krono_url "kronofoto:random-image" %}">Logout</a>
+        </div>
         {% endif %}
     </div>
+</div>
 
-    <div class="user-content">
-        <h2>My Lists</h2>
-        <div class="collection-grid">
-            <ul>
+{% collections request=request profile_user=profile_user %}
+
+<section id="my-exhibits" class="border-bottom">
+
+    <div class="row">
+        <div class="columns small-12">
+            <h2>My Exhibits</h2>
+            <div role="doc-subtitle">3 exhibits</div>
+        </div>
+
+        <div class="columns small-12 large-4">
+            <form class="form form--collection">
+                <h3>Create an Exhibit</h3>
+                <p class="paragraph color-light">You can use exhibits to tell your own stories with Fortepan photos.</p>
+                <input class="border" type="text" id="exhibit_name" name="exhibit_name" placeholder="Exhibit Name" />
+                <input type="submit" class="button" value="Create" />
+            </form>
+        </div>
+
+        <div class="columns small-12 large-8">
+            <div class="collection collection--list collection--2">
                 {% for collection in object_list %}
-                    <li><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a>
+                <div class="collection__item">
+                    <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
                     {% if profile_user == request.user %}
-                    <a href="{% url "kronofoto:collection-delete" collection.id %}" style="margin-left: 10px;"><i class="fas fa-times" title="Delete"></i></a>
+                    <div class="collection__item-menu dropdown-menu" id="exhibit-{{ collection.uuid }}" data-toggler=".expanded">
+                        <div class="dropdown-menu__button" data-toggle="exhibit-{{ collection.uuid }}"></div>
+                        <div class="dropdown-menu__items">
+                            <ul>
+                                <li><a href="#">Edit</a></li>
+                                <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
+                                <li><a href="#">Add to List</a></li>
+                                <li><a href="href="{% url "kronofoto:collection-delete" collection.id %}">Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
                     {% endif %}
-
-                    </li>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
     </div>
 </section>
+
+<section id="my-360-tours" class="border-bottom">
+
+    <div class="row">
+
+        <div class="columns small-12">
+            <h2>My 360 Tours</h2>
+            <div role="doc-subtitle">1 tour</div>
+        </div>
+
+        <div class="columns small-12">
+            <div class="collection collection--list collection--3">
+
+                {% for collection in object_list %}
+                <div class="collection__item">
+                    <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
+                    {% if profile_user == request.user %}
+                    <div class="collection__item-menu dropdown-menu" id="tour-{{ collection.uuid }}" data-toggler=".expanded">
+                        <div class="dropdown-menu__button" data-toggle="tour-{{ collection.uuid }}"></div>
+                        <div class="dropdown-menu__items">
+                            <ul>
+                                <li><a href="#">Edit</a></li>
+                                <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
+                                <li><a href="#">Add to List</a></li>
+                                <li><a href="href="{% url "kronofoto:collection-delete" collection.id %}">Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</section>
+
 {% endblock %}

@@ -1,0 +1,14 @@
+//@use '../typography' as *;
+
+[route="user-page"] {
+  height: auto;
+  h2 {
+    font-weight: 700;
+  }
+  h3 {
+    @extend .h3;
+  }
+  .collection-name {
+    display: none;
+  }
+}

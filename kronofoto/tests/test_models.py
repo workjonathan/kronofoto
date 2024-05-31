@@ -81,6 +81,7 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
             db_donors.add(donor.pk)
             assert len(self.donor_model[donor.pk]) == donor.donated_count
         for donor in self.donor_model:
+            note(donor)
             if len(self.donor_model[donor]) >= 1:
                 model_donors.add(donor)
         assert db_donors == model_donors

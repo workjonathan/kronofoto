@@ -1,0 +1,11 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block content %}
+<main hx-target="#app" hx-swap="innerHTML">
+    {{ collection }}
+    {% for photo in collection.photos.all %}
+        <img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" />
+    {% endfor %}
+</main>
+{% endblock content %}

@@ -223,7 +223,7 @@ class TagForm(forms.Form):
 class CollectionForm(forms.ModelForm):
     class Meta:
         model = Collection
-        fields = ['name', 'visibility']
+        fields = ['name']
 
 
 class AddToListForm(forms.Form):

@@ -98,8 +98,10 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('logo-small.svg/<str:theme>', LogoSvgSmall.as_view()),
     path('<str:theme>/logo.svg', LogoSvg.as_view(), name='logosvg'),
     path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
-    *directory('collections', views.CollectionCreate.as_view(), name='collection-create', children=include([
-        path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+    *directory('collections', views.collections_view, name='collection-create', children=include([
+        *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([
+            path('delete', views.CollectionDelete.as_view(), name='collection-delete'),
+        ])),
     ])),
     *directory('mainstreets', MainStreetList.as_view(), name='mainstreet-list', children=include([
         path('<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
@@ -115,13 +117,13 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 ]
 
 urlpatterns = urlpatterns + [
-    path('users/<str:username>', views.Profile.as_view(), name='user-page'),
+    path('users/<str:username>', views.profile_view, name='user-page'),
     path('about/', TemplateView.as_view(template_name='archive/about.html', extra_context={'title': 'About'}), name='about'),
     path('use/', TemplateView.as_view(template_name='archive/use.html', extra_context={'title': 'Use'}), name='use'),
     path('contribute/', TemplateView.as_view(template_name='archive/contribute.html', extra_context={'title': 'Contribute'}), name='contribute'),
     path('volunteer/', TemplateView.as_view(template_name='archive/volunteer.html', extra_context={'title': 'Volunteer'}), name='volunteer'),
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
-    path('user/<str:username>/', views.Profile.as_view()),
+    path('user/<str:username>/', views.profile_view),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="archive/contributor_created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement-create"),
