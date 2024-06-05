@@ -1,0 +1,18 @@
+.header-group {
+  position: relative;
+  &__header {
+    display: inline-block;
+    width: calc(100% - 31px)
+  }
+  &__subtitle {
+    display: flex;
+    padding-top: 12px;
+    border-top: 1px solid #747474;
+  }
+  &__context-menu {
+    position: static;
+    vertical-align: middle;
+    display: inline-block;
+
+  }
+}

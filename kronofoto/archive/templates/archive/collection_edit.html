@@ -1,11 +1,88 @@
 {% extends base_template %}
 {% load widgets %}
+{% load krono_urls %}
 
 {% block content %}
 <main hx-target="#app" hx-swap="innerHTML">
-    {{ collection }}
-    {% for photo in collection.photos.all %}
-        <img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" />
-    {% endfor %}
+
+    <section>
+
+        <div class="row">
+            <div class="columns small-12">
+                <a href="#" class="back-link">My Profile</a>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="columns medium-8 small-12">
+                <div class="header-group">
+                    <h2 class="header-group__header">{{ collection }}</h2>
+                    <div class="header-group__context-menu context-menu" id="exhibit-{{ collection.uuid }}" data-toggler=".expanded">
+                        <div class="context-menu__button" data-toggle="exhibit-{{ collection.uuid }}"></div>
+                        <div class="context-menu__items">
+                            <ul>
+                                <li><a href="#">Edit List Name</a></li>
+                                <li><a href="#">Add Photos</a></li>
+                                <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
+                                <li><a href="#">Embed List</a></li>
+                                <li><a
+                                        href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                    hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                    hx-target="#app"
+                                    >Delete List</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="header-group__subtitle">
+                        <form class="form margin-right-auto">
+                            <div class="switch-group">
+                                <div class="switch">
+                                    <input type="checkbox" name="is_private" class="switch-input" id="id_is_private" data-toggle="id_is_private_active id_is_private_inactive">
+                                    <label class="switch-paddle" for="id_is_private">
+                                        <span class="show-for-sr">List Privacy</span>
+                                    </label>
+                                </div>
+                                <label class="switch-group__left-label-with-subtitle" for="id_is_private">
+                                    List Privacy
+                                    <span id="id_is_private_inactive" class="invisible" data-toggler=".invisible">Anyone with the url can view the list</span>
+                                    <span id="id_is_private_active" data-toggler=".invisible">Only you can view the list</span>
+                                </label>
+                            </div>
+                        </form>
+                        <div role="doc-subtitle" class="margin-left-auto">{{ collection.photos.all|length }} photos</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="columns small-12">
+
+            </div>
+
+            <br /><br /><br /><br /><br />
+
+            <div class="columns small-12">
+                <div class="thumbnail-collection thumbnail-collection--3">
+                    {% for photo in collection.photos.all %}
+                    <div class="thumbnail-collection__item">
+                        <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
+                        <a class="thumbnail-collection__delete" href="#"></a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="messages">
+        <script type="template" id="toast-template">
+            <div class="callout success">
+                <button class="close-button" aria-label="Dismiss alert" type="button" data-close></button>
+            </div>
+        </script>
+    </div>
+
 </main>
 {% endblock content %}

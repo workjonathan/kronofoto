@@ -51,7 +51,11 @@ $font-weight-thin: 100;
     color: rgba(219, 219, 219, 1);
     letter-spacing: 0.1em;
   }
-  
+
+  hr + [role="doc-subtitle"] {
+    margin-top: 12px;
+  }
+
   [role="doc-subtitle"] {
     font-size: 10px;
     line-height: 16px;
@@ -132,6 +136,27 @@ $font-weight-thin: 100;
     opacity: .75;
     line-height: 16px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3C!--! Font Awesome Pro 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --%3E%3Cpath d='M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3h58.3c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24V250.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1H222.6c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z'/%3E%3C/svg%3E");
+  }
+}
+
+.back-link {
+  color: #747474;
+  font-size: 10px;
+  line-height: 16px;
+  &:hover {
+    color: var(--fp-main-blue);
+    text-decoration: underline;
+    &:before {
+      //background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10.352' height='7.52' viewBox='0 0 10.352 7.52'%3E%3Cg id='arrow' transform='translate(-404.474 -238.766)'%3E%3Cline id='Line_7' data-name='Line 7' y2='9.279' transform='translate(414.827 242.526) rotate(90)' fill='none' stroke='%23747474' stroke-miterlimit='10' stroke-width='1.5'/%3E%3Cpath id='Path_16' data-name='Path 16' d='M6.447,0,3.224,3.3,0,0' transform='translate(408.844 239.302) rotate(90)' fill='none' stroke='%23747474' stroke-miterlimit='10' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+    }
+  }
+  &:before {
+    content: '\2190';
+    margin-right: 4px;
+    width: 10px;
+    height: 7px;
+    display: inline-block;
+    //background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10.352' height='7.52' viewBox='0 0 10.352 7.52'%3E%3Cg id='arrow' transform='translate(-404.474 -238.766)'%3E%3Cline id='Line_7' data-name='Line 7' y2='9.279' transform='translate(414.827 242.526) rotate(90)' fill='none' stroke='%23747474' stroke-miterlimit='10' stroke-width='1.5'/%3E%3Cpath id='Path_16' data-name='Path 16' d='M6.447,0,3.224,3.3,0,0' transform='translate(408.844 239.302) rotate(90)' fill='none' stroke='%23747474' stroke-miterlimit='10' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E%0A");
   }
 }
 

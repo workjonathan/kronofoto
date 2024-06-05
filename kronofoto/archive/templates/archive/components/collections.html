@@ -13,9 +13,9 @@
 
         {% if profile_user == request.user %}
         <div class="columns small-12 large-4 small-push-8">
-            <form 
-                class="form form--collection" 
-                method="post" 
+            <form
+                class="form form--collection"
+                method="post"
                 action="{% krono_url "kronofoto:collection-create" %}"
                 hx-post="{% krono_url "kronofoto:collection-create" %}"
                 hx-target="#my-lists"
@@ -42,13 +42,13 @@
                     <div class="collection__item">
                         <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
                         {% if profile_user == request.user %}
-                        <div class="collection__item-menu dropdown-menu" id="list-{{ collection.uuid }}" data-toggler=".expanded">
-                            <div class="dropdown-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
-                            <div class="dropdown-menu__items">
+                        <div class="collection__item-menu context-menu" id="list-{{ collection.uuid }}" data-toggler=".expanded">
+                            <div class="context-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
+                            <div class="context-menu__items">
                                 <ul>
                                     <li><a href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}">Edit</a></li>
                                     <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
-                                    <li><a 
+                                    <li><a
                                         href="{% krono_url "kronofoto:random-image" %}"
                                         {% comment %}
                                         hx-get="{% krono_url "kronofoto:random-image" %}"
@@ -56,7 +56,7 @@
                                         hx-swap="innerHTML"
                                         {% endcomment %}
                                     >Add to List</a></li>
-                                    <li><a 
+                                    <li><a
                                         href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-target="#app"
