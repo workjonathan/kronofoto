@@ -62,6 +62,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
 
 class NewList(FormView):
     form_class = ListForm
+    template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
     def get_success_url(self):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
