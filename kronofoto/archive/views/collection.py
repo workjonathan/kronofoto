@@ -83,6 +83,12 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
     def get_success_url(self):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
+    def post(self, *args, **kwargs):
+        try:
+            super().post(*args, **kwargs)
+        except TypeError:
+            return HttpResponse("", status=400)
+
     def get_queryset(self):
         return Collection.objects.filter(
             owner=self.request.user
