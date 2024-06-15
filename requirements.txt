@@ -1,5 +1,5 @@
 Django>=4.2.*,<5.0.0
-Pillow==10.2.*
+Pillow==10.3.*
 parsy==1.4.0
 django-google-tag-manager==0.0.5
 markdown==3.4.*
