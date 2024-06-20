@@ -10,6 +10,7 @@ from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
+from .card import CardForm, PhotoCardForm
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")

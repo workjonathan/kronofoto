@@ -56,6 +56,7 @@
                                         hx-swap="innerHTML"
                                         {% endcomment %}
                                     >Add to List</a></li>
+                                    <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Start Exhibit</a></li>
                                     <li><a 
                                         href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"

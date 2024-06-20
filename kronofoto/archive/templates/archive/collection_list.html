@@ -34,28 +34,32 @@
         </div>
 
         <div class="columns small-12 large-4">
-            <form class="form form--collection">
+            <form class="form form--collection" x-post="{% krono_url "kronofoto:exhibit-create" %}" method="post" action="{% krono_url "kronofoto:exhibit-create" %}">
+                {% csrf_token %}
                 <h3>Create an Exhibit</h3>
                 <p class="paragraph color-light">You can use exhibits to tell your own stories with Fortepan photos.</p>
-                <input class="border" type="text" id="exhibit_name" name="exhibit_name" placeholder="Exhibit Name" />
+                {% for field in form %}
+                {# <input class="border" type="text" id="exhibit_name" name="exhibit_name" placeholder="Exhibit Name" /> #}
+                {{ field }}
+                {% endfor %}
                 <input type="submit" class="button" value="Create" />
             </form>
         </div>
 
         <div class="columns small-12 large-8">
             <div class="collection collection--list collection--2">
-                {% for collection in object_list %}
+                {% for exhibit in exhibits %}
                 <div class="collection__item">
-                    <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
+                    <div class="collection__item-label"><a href="{{ exhibit.get_absolute_url }}">{{ exhibit.name }}</a></div>
                     {% if profile_user == request.user %}
-                    <div class="collection__item-menu dropdown-menu" id="exhibit-{{ collection.uuid }}" data-toggler=".expanded">
-                        <div class="dropdown-menu__button" data-toggle="exhibit-{{ collection.uuid }}"></div>
+                    <div class="collection__item-menu dropdown-menu" id="exhibit-{{ exhibit.id }}" data-toggler=".expanded">
+                        <div class="dropdown-menu__button" data-toggle="exhibit-{{ exhibit.id }}"></div>
                         <div class="dropdown-menu__items">
                             <ul>
-                                <li><a href="#">Edit</a></li>
-                                <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
+                                <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
+                                <li><a href="{{ exhibit.get_absolute_url }}">Copy Share Link</a></li>
                                 <li><a href="#">Add to List</a></li>
-                                <li><a href="href="{% url "kronofoto:collection-delete" collection.id %}">Delete</a></li>
+                                <li><a href="">Delete</a></li>
                             </ul>
                         </div>
                     </div>

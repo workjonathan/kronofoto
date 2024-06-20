@@ -1,8 +1,17 @@
-
-    <div class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+{% load krono_urls %}
+    <div id="card-{{ card.id }}" class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
-                {{ description | linebreaks }}
+                {{ card.description }}
             </div>
         </div>
+        {% if form %}
+        <form hx-target="closest div" hx-swap="outerHTML" hx-patch="{% krono_url "kronofoto:card-edit" pk=card.id %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            {{ form }}
+            <input type="submit" name="save" value="Save">
+            <input type="submit" name="up" value="Up">
+            <input type="submit" name="down" value="Down">
+            <input type="submit" name="delete" value="Delete" hx-delete="{% krono_url "kronofoto:card-edit" pk=card.id %}">
+        </form>
+        {% endif %}
     </div>

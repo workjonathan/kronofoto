@@ -8,22 +8,57 @@ from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
-from ..models import Photo, Card, Collection
+from ..models import Photo, Card, Collection, PhotoCard
 from ..imageutil import ImageSigner
 from typing import Union, Dict, Any, Union, Optional
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.db.models.functions import Lower
-from ..forms import CollectionForm
+from ..forms import CollectionForm, CardForm, PhotoCardForm
 
 
 register = template.Library()
 
 @register.inclusion_tag('archive/components/card.html', takes_context=False)
-def card_tag(card: Card, zindex: int) -> Union[Card, Dict[str, Any]]:
+def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
+    obj : Dict[str, Any] = {
+        'zindex': zindex,
+    }
     if hasattr(card, 'photocard'):
-        if hasattr(card.photocard, 'doublephotocard'):
+        card = card.photocard
+        if edit:
+            photoform = PhotoCardForm(instance=card)
+            if hasattr(photoform.fields['photo'], 'queryset'):
+                photoform.fields['photo'].queryset = Photo.objects.filter(card.photo_choices() | Q(id=card.photo.id))
+            obj['form'] = photoform
+        if card.alignment == PhotoCard.Alignment.FULL:
+            obj['template'] = 'archive/components/full-image-card.html'
+            obj['image_area_classes'] = ['full-image-area--contain']
+        else:
+            obj['template'] = 'archive/components/two-column-card.html'
+            obj['image_area_classes'] = (
+                ['two-column--image-left', 'two-column--variation-1']
+                if card.alignment == PhotoCard.Alignment.LEFT
+                else ['two-column--image-right', 'two-column--variation-2']
+            )
+    else:
+        card = card
+        if edit:
+            form = CardForm(instance=card)
+            obj['form'] = form
+        obj['template'] = 'archive/components/text-card.html'
+        obj['content_attrs'] = {
+            'data-aos': 'fade-up',
+            'data-aos-duration': '1000',
+        }
+    obj['card'] = card
+    return obj
+
+
+
+    if hasattr(card, 'photocard'):
+        if False: # hasattr(card.photocard, 'doublephotocard'):
             card = card.photocard.doublephotocard
             obj = {
                 'zindex': zindex,
@@ -36,7 +71,9 @@ def card_tag(card: Card, zindex: int) -> Union[Card, Dict[str, Any]]:
             return obj
         else:
             card = card.photocard
-            if card.card_style == 0:
+            if card.card_style == 0: # 0, 5, 7, 8 all seem to be the same now.
+            # Jeremy says the css class does something, and now I see what it does.
+            # I am not convinced it is necessary or sure how to get the right information from users.
                 obj = {
                     'zindex': zindex,
                     'image_area_classes': ['full-image-area--contain'], # shrink
@@ -96,7 +133,6 @@ def card_tag(card: Card, zindex: int) -> Union[Card, Dict[str, Any]]:
                     'description': card.description,
                     'photo': card.photo,
                     'template': 'archive/components/figure-card.html',
-
                 }
                 return obj
     else:
@@ -112,7 +148,7 @@ def card_tag(card: Card, zindex: int) -> Union[Card, Dict[str, Any]]:
                 'description': card.description,
                 'template': 'archive/components/text-card.html',
             }
-        elif card.card_style == 1:
+        elif card.card_style == 1: # only diff between 1 and 2 is that 2 has a 100px border-top and this overrides it down to 1px. I don't think users should care about this. Maybe this should happen if the previous card is a full width image? Should the spacing be a slider?
             return {
                 'zindex': zindex,
                 'content_attrs': {
@@ -162,7 +198,7 @@ def page_links(formatter: Any, page_obj: Any, target: Any=None) -> Dict[str, Any
     )
 
 @register.simple_tag(takes_context=False)
-def image_url(*, id: int, path: str, width: int, height: int) -> str:
+def image_url(*, id: int, path: str, width: Optional[int]=None, height: Optional[int]=None) -> str:
     return ImageSigner(id=id, path=path, width=width, height=height).url
 
 def count_photos() -> int:

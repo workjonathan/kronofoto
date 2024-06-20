@@ -11,7 +11,6 @@ from .basetemplate import BasePhotoTemplateMixin
 from .paginator import TimelinePaginator, EMPTY_PNG
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
-from ..reverse import get_request, set_request, as_absolute
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt

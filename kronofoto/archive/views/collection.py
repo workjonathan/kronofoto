@@ -11,8 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .basetemplate import BaseTemplateMixin
 from .base import ArchiveRequest
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Exists, OuterRef
 from ..models.photo import Photo
+from ..models import Exhibit
 from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm, CollectionForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
@@ -23,6 +24,11 @@ from dataclasses import dataclass
 def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
     context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
+    from .exhibit import ExhibitCreateForm
+    if not request.user.is_anonymous:
+        context['form'] = ExhibitCreateForm()
+        context['form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
+        context['exhibits'] = Exhibit.objects.filter(owner=request.user)
     return TemplateResponse(request=request, context=context, template="archive/collection_list.html")
 
 def collection_view(request: HttpRequest, pk: int) -> HttpResponse:

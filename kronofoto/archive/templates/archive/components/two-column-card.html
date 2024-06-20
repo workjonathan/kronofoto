@@ -1,17 +1,28 @@
 {% load widgets %}
-    <div class="container container--no-padding" style="z-index: {{ zindex }}">
+{% load krono_urls %}
+
+    <div id="card-{{ card.id }}" class="container container--no-padding" style="z-index: {{ zindex }}">
         <div class="two-column {{ image_area_classes | join:" "}}">
             <div class="two-column__image">
-                <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=1000 %}">
+                <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=1000 %}">
                 <a class="two-column__info-button info-button info-button--top" href="#" target="_blank">
                     <span class="info-button__icon"></span>
-                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
+                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
                 </a>
             </div>
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
-                    {{ description | safe }}
+                    {{ card.description }}
                 </div>
             </div>
         </div>
+        {% if form %}
+        <form hx-target="closest div" hx-swap="outerHTML" hx-patch="{% krono_url "kronofoto:card-edit" pk=card.id %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            {{ form }}
+            <input type="submit" name="save" value="Save">
+            <input type="submit" name="up" value="Up">
+            <input type="submit" name="down" value="Down">
+            <input type="submit" name="delete" value="Delete" hx-delete="{% krono_url "kronofoto:card-edit" pk=card.id %}">
+        </form>
+        {% endif %}
     </div>
