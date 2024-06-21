@@ -125,6 +125,7 @@ urlpatterns = urlpatterns + [
     path('give/', TemplateView.as_view(template_name='archive/give.html', extra_context={'title': 'Give'}), name='give'),
     path('user/<str:username>/', views.profile_view),
     path("cards/<int:pk>", views.card_edit, name='card-edit'),
+    path("cards/<int:pk>/figure-form", views.exhibit_figure_form, name='exhibit-figure-form'),
     path("exhibits", views.exhibit_list, name="exhibit-list"),
     path("exhibits/<int:pk>-<slug:title>", views.exhibit, name='exhibit-view'),
     path("exhibits/<int:pk>/edit", views.exhibit_edit, name='exhibit-edit'),

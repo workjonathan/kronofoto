@@ -1,5 +1,24 @@
 {% load krono_urls %}
+{% load widgets %}
     <div id="card-{{ card.id }}" class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+        {% if card.figure_set.all %}
+            <div class="image-collection image-collection--1">
+            {% for figure in card.figure_set.all %}
+                <figure>
+                    <div class="image-collection__wrapper">
+                        <div class="image-collection__inner-wrapper">
+                            <img loading="lazy" src="{% image_url id=figure.photo.id path=figure.photo.original.name height=450 width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                            <a class="image-collection__info info-button info-button--bottom" href="#" target="_blank">
+                                <span class="info-button__icon"></span>
+                                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
+                            </a>
+                        </div>
+                    </div>
+                    <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
+                </figure>
+            {% endfor %}
+            </div>
+        {% endif %}
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
                 {{ card.description }}
@@ -12,6 +31,7 @@
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
             <input type="submit" name="delete" value="Delete" hx-delete="{% krono_url "kronofoto:card-edit" pk=card.id %}">
+            <button value="Add Figure" hx-get="{% krono_url "kronofoto:exhibit-figure-form" pk=card.id %}" hx-target="closest form" hx-swap="beforebegin">Add Figure</button>
         </form>
         {% endif %}
     </div>

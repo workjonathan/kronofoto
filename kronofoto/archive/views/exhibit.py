@@ -14,7 +14,7 @@ from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm, ModelChoiceField
 from ..templatetags.widgets import card_tag
-from ..forms import CardForm, PhotoCardForm
+from ..forms import CardForm, PhotoCardForm, FigureForm
 import json
 
 
@@ -52,7 +52,7 @@ def card_edit(request: HttpRequest, pk: int) -> HttpResponse:
                 context=context,
                 template=context['template'],
             )
-            if 'down' in put_data:
+            if 'down' in put_data and other_card:
                 response['Hx-Trigger'] = json.dumps({
                     'kronofoto:exhibit:reorder': {
                         'id': f'#card-{photocard.id}',
@@ -60,7 +60,7 @@ def card_edit(request: HttpRequest, pk: int) -> HttpResponse:
                         'swapStyle': 'afterend',
                     },
                 })
-            if 'up' in put_data:
+            if 'up' in put_data and other_card:
                 response['Hx-Trigger'] = json.dumps({
                     'kronofoto:exhibit:reorder': {
                         'id': f'#card-{photocard.id}',
@@ -90,7 +90,7 @@ def card_edit(request: HttpRequest, pk: int) -> HttpResponse:
                 context=context,
                 template=context['template'],
             )
-            if 'down' in put_data:
+            if 'down' in put_data and other_card:
                 response['Hx-Trigger'] = json.dumps({
                     'kronofoto:exhibit:reorder': {
                         'id': f'#card-{card.id}',
@@ -98,7 +98,7 @@ def card_edit(request: HttpRequest, pk: int) -> HttpResponse:
                         'swapStyle': 'afterend',
                     },
                 })
-            if 'up' in put_data:
+            if 'up' in put_data and other_card:
                 response['Hx-Trigger'] = json.dumps({
                     'kronofoto:exhibit:reorder': {
                         'id': f'#card-{card.id}',
@@ -145,6 +145,29 @@ def exhibit_cards(request: HttpRequest, pk: int) -> HttpResponse:
                 return HttpResponse(status=400)
     else:
         return HttpResponse(status=400)
+
+def exhibit_figure_form(request: HttpRequest, pk: int) -> HttpResponse:
+    context : Dict[str, Any] = {'card_id' : pk}
+    card = get_object_or_404(Card.objects.all(), pk=pk)
+    exhibit = card.exhibit
+    if request.method and request.method.lower() == "post":
+        form = FigureForm(request.POST)
+        if form.is_valid():
+            figure = form.save(commit=False)
+            figure.card = card
+            figure.save()
+    else:
+        context['form'] = FigureForm()
+        if exhibit.collection:
+            context['form'].fields['photo'].queryset = exhibit.collection.photos.all()
+        else:
+            context['form'].fields['photo'].queryset = Photo.objects.none()
+        return TemplateResponse(
+            template="archive/components/figure-form.html",
+            request=request,
+            context=context,
+        )
+    return HttpResponse()
 
 def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResponse:
     context : Dict[str, Any] = {'exhibit_id' : pk}
