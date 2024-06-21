@@ -135,7 +135,7 @@ def exhibit_cards(request: HttpRequest, pk: int) -> HttpResponse:
                 card.order = (exhibit.card_set.aggregate(Max("order"))['order__max'] or 0) + 1
                 card.card_style = 0
                 card.save()
-                context = card_tag(card, 0)
+                context = card_tag(card, 0, edit=True)
                 return TemplateResponse(
                     request=request,
                     context=context,

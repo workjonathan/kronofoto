@@ -109,6 +109,9 @@
         target.insertAdjacentElement(evt.detail.swapStyle, elem)
 
       })
+      htmx.onLoad(() =>
+        AOS.refreshHard()
+      )
 
     </script>
 </head>
@@ -149,7 +152,6 @@
 
         {% for card in cards %}
             {% card_tag card=card zindex=forloop.revcounter|add:10 edit=True %}
-            
         {% endfor %}
         <div>Content blocks
             <button hx-target="closest div" hx-swap="beforebegin" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}">Text Card</button>
