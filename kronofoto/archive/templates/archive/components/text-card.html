@@ -6,6 +6,7 @@
     <div id="card-{{ card.id }}" class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
+                {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
                 {{ card.description }}
             </div>
         </div>

@@ -7,6 +7,7 @@
                 <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
             </a>
             <div class="full-image-area__text">
+                {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
                 {{ card.description }}
             </div>
             <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">

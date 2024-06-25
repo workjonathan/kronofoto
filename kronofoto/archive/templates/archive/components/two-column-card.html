@@ -12,6 +12,7 @@
             </div>
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
+                    {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
                     {{ card.description }}
                 </div>
             </div>
