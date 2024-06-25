@@ -3,28 +3,41 @@ from django.core.signing import Signer
 from django.http import HttpRequest
 from ..reverse import reverse
 import markdown as md # type: ignore
-from .urlify import URLifyExtension
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
-from ..models import Photo, Card, Collection, PhotoCard
+from ..models import Photo, Card, Collection, PhotoCard, Figure
 from ..imageutil import ImageSigner
-from typing import Union, Dict, Any, Union, Optional
+from typing import Union, Dict, Any, Union, Optional, Tuple
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
 from django.db.models.functions import Lower
-from ..forms import CollectionForm, CardForm, PhotoCardForm
 import uuid
+from django import forms
 
 
 register = template.Library()
 
+@register.filter
+def with_parent(figure: Figure, parent: str) -> Tuple[Figure, str]:
+    return figure, parent
+@register.filter
+def figure_form(figure_parent: Tuple[Figure, str], photos: QuerySet[Photo]) -> forms.Form:
+    figure, parent = figure_parent
+    from ..forms.card import FigureForm
+    form = FigureForm(prefix=str(uuid.uuid1()), initial={"parent": parent, 'card_type': 'figure'}, instance=figure)
+    assert hasattr(form.fields['photo'], 'queryset')
+    form.fields['photo'].queryset = photos
+    return form
+
 @register.inclusion_tag('archive/components/card.html', takes_context=False)
 def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
+    from ..forms import CollectionForm, CardForm, PhotoCardForm
     obj : Dict[str, Any] = {
         'zindex': zindex,
+        'edit': edit,
     }
     if hasattr(card, 'photocard'):
         card = card.photocard
@@ -49,6 +62,10 @@ def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
             form = CardForm(instance=card, initial={"card_type": "text"}, prefix=str(uuid.uuid1()))
             obj['form'] = form
         obj['template'] = 'archive/components/text-card.html'
+        if card.figure_set.all().exists():
+            obj['styles'] = {
+                'border-top': '1px solid #ffffff',
+            }
         obj['content_attrs'] = {
             'data-aos': 'fade-up',
             'data-aos-duration': '1000',
@@ -212,6 +229,7 @@ def photo_count() -> Optional[Any]:
 @register.filter(is_safe=True)
 @stringfilter
 def markdown(text: str) -> str:
+    from .urlify import URLifyExtension
     return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
 
 @register.simple_tag(takes_context=False)
@@ -220,6 +238,7 @@ def thumb_left(*, index: int, offset: int, width: int) -> int:
 
 @register.inclusion_tag("archive/components/collections.html", takes_context=False)
 def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
+    from ..forms import CollectionForm
     context = {'request': request, 'profile_user': profile_user}
     context['form'] = CollectionForm()
     filter_kwargs = {}

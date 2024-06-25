@@ -224,7 +224,10 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                 for form in card_types
             ]
             if all(form.is_valid() for form in forms):
+                from archive.models import Figure
+                print(Figure.objects.all().count())
                 exhibit.card_set.all().delete()
+                print(Figure.objects.all().count())
                 card_objs = {}
                 for order, form in enumerate(forms):
                     if form.cleaned_data['card_type'] != 'figure':

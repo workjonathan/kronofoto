@@ -1,17 +1,24 @@
 {% load widgets %}
     <div class="container" style="z-index: {{ zindex }}">
-        <div class="image-collection image-collection--1">
+        <div class="image-collection image-collection--{{ figures.count }}">
+        {% for figure in figures %}
             <figure>
                 <div class="image-collection__wrapper">
                     <div class="image-collection__inner-wrapper">
-                        <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name height=450 width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
+                        <img loading="lazy" src="{% image_url id=figure.photo.id path=figure.photo.original.name height=450 width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
                         <a class="image-collection__info info-button info-button--bottom" href="#" target="_blank">
                             <span class="info-button__icon"></span>
-                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=figure.photo %}</div>
                         </a>
                     </div>
                 </div>
-                <figcaption>{{ description | linebreaksbr }}</figcaption>
+                <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
+                {% if edit %}
+                {% with form=figure|with_parent:parent|figure_form:photos %}
+                {{ form.as_p }}<input type="hidden" name="prefix" value="{{ form.prefix }}">
+                {% endwith %}
+                {% endif %}
             </figure>
+        {% endfor %}
         </div>
     </div>
