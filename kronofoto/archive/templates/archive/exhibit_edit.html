@@ -107,7 +107,6 @@
         const elem = document.querySelector(evt.detail.id)
         const target = document.querySelector(evt.detail.target)
         target.insertAdjacentElement(evt.detail.swapStyle, elem)
-
       })
       htmx.onLoad(() =>
         AOS.refreshHard()
@@ -127,6 +126,8 @@
 
         </header>
 
+        <form method="post">
+        {% csrf_token %}
         <div class="hero">
             <div class="hero__content-wrapper" >
                 <div class="hero__title">
@@ -145,10 +146,7 @@
                 <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
             </div>
         </div>
-        <form hx-put="{% krono_url "kronofoto:exhibit-view" pk=exhibit.id title=exhibit.name|slugify%}">
-            {{ form }}
-            <input type="submit" value="Save" />
-        </form>
+        {{ form }}
 
         {% for card in cards %}
             {% card_tag card=card zindex=forloop.revcounter|add:10 edit=True %}
@@ -157,8 +155,8 @@
             <button hx-target="closest div" hx-swap="beforebegin" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}">Text Card</button>
             <button hx-target="closest div" hx-swap="beforebegin" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}">Photo Card</button>
         </div>
-        <div id="forms">
-        </div>
+        <input type="submit" value="Save">
+        </form>
 
     </div>
 

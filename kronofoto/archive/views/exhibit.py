@@ -14,8 +14,9 @@ from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm, ModelChoiceField
 from ..templatetags.widgets import card_tag
-from ..forms import CardForm, PhotoCardForm, FigureForm
+from ..forms import CardForm, PhotoCardForm, FigureForm, CardFormType
 import json
+import uuid
 
 
 @transaction.atomic
@@ -146,41 +147,33 @@ def exhibit_cards(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         return HttpResponse(status=400)
 
-def exhibit_figure_form(request: HttpRequest, pk: int) -> HttpResponse:
-    context : Dict[str, Any] = {'card_id' : pk}
-    card = get_object_or_404(Card.objects.all(), pk=pk)
-    exhibit = card.exhibit
-    if request.method and request.method.lower() == "post":
-        form = FigureForm(request.POST)
-        if form.is_valid():
-            figure = form.save(commit=False)
-            figure.card = card
-            figure.save()
+def exhibit_figure_form(request: HttpRequest, pk: int, parent: str) -> HttpResponse:
+    context = {}
+    exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
+    context['form'] = FigureForm(prefix=str(uuid.uuid1()), initial={"card_type": "figure", "parent": parent})
+    assert hasattr(context['form'].fields['photo'], 'queryset')
+    if exhibit.collection:
+        context['form'].fields['photo'].queryset = exhibit.collection.photos.all()
     else:
-        context['form'] = FigureForm()
-        if exhibit.collection:
-            context['form'].fields['photo'].queryset = exhibit.collection.photos.all()
-        else:
-            context['form'].fields['photo'].queryset = Photo.objects.none()
-        return TemplateResponse(
-            template="archive/components/figure-form.html",
-            request=request,
-            context=context,
-        )
-    return HttpResponse()
+        context['form'].fields['photo'].queryset = Photo.objects.none()
+    return TemplateResponse(
+        template="archive/components/figure-form.html",
+        request=request,
+        context=context,
+    )
 
 def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResponse:
     context : Dict[str, Any] = {'exhibit_id' : pk}
     exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
     if card_type == "text":
-        context['form'] = CardForm()
+        context['form'] = CardForm(initial={'card_type': "text"}, prefix=str(uuid.uuid1()))
         return TemplateResponse(
             template="archive/components/card-form.html",
             request=request,
             context=context,
         )
     elif card_type == "photo":
-        context['form'] = PhotoCardForm()
+        context['form'] = PhotoCardForm(initial={'card_type': 'photo'}, prefix=str(uuid.uuid1()))
         if exhibit.collection:
             context['form'].fields['photo'].queryset = exhibit.collection.photos.all()
         else:
@@ -209,6 +202,7 @@ class ExhibitForm(ModelForm):
         model = Exhibit
         fields = ['name', 'title', 'description', 'photo']
 
+@transaction.atomic
 @login_required
 def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
@@ -219,7 +213,38 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
         'photocard__photo__donor',
         'photocard__photo__place',
     )
-    form = ExhibitForm(instance=exhibit)
+    if request.method == 'POST':
+        body_data = QueryDict(request.body)
+        card_types = [CardFormType(request.POST, prefix=prefix) for prefix in body_data.getlist("prefix")]
+        if all(typeform.is_valid() for typeform in card_types):
+            forms = [
+                CardForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'text'
+                else FigureForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'figure'
+                else PhotoCardForm(request.POST, prefix=form.prefix)
+                for form in card_types
+            ]
+            if all(form.is_valid() for form in forms):
+                exhibit.card_set.all().delete()
+                card_objs = {}
+                for order, form in enumerate(forms):
+                    if form.cleaned_data['card_type'] != 'figure':
+                        card = form.save(commit=False)
+                        card_objs[form.prefix] = card
+                        card.exhibit = exhibit
+                        card.order = order
+                        card.card_style = 0
+                        card.save()
+                for order, form in enumerate(forms):
+                    if form.cleaned_data['card_type'] == 'figure':
+                        figure = form.save(commit=False)
+                        figure.card = card_objs[form.cleaned_data['parent']]
+                        figure.order = order
+                        figure.save()
+            else:
+                print('not valid?')
+        else:
+            print('not valid?')
+    form = ExhibitForm(instance=exhibit) # type: ignore
     context['form'] = form
     context['exhibit'] = exhibit
     context['cards'] = cards
@@ -229,6 +254,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
 @user_passes_test(lambda user: user.is_staff) # type: ignore
 def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
+
     context: Dict[str, Any] = {}
     context['exhibit'] = exhibit
     cards = exhibit.card_set.all().order_by('order').select_related(

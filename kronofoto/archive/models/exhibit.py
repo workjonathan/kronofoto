@@ -21,7 +21,7 @@ class Exhibit(models.Model):
 class Card(models.Model):
     PLAIN_TEXT = 0
     NO_BORDER = 1
-    card_style = models.IntegerField()
+    card_style = models.IntegerField(default=0)
     title = models.TextField(blank=True, default="")
     description = models.TextField()
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
@@ -48,3 +48,4 @@ class Figure(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     caption = models.TextField(blank=True, default="")
     photo = models.ForeignKey(Photo, on_delete=models.PROTECT)
+    order = models.IntegerField(default=0)

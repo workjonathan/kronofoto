@@ -1,6 +1,7 @@
 {% load krono_urls %}
-<form hx-post="{% krono_url "kronofoto:exhibit-cards" pk=exhibit_id %}">
-{% csrf_token %}
-{{ form }}
-<input type="submit" value="Save">
-</form>
+{{ form.as_p }}
+<input type="hidden" name="prefix" value="{{ form.prefix }}">
+<button hx-get>Add Figure</button>
+<input type="submit" name="up" value="Up">
+<input type="submit" name="down" value="Down">
+<input type="submit" name="delete" value="Delete">
