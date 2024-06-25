@@ -1,11 +1,13 @@
 @use 'components/collection' as collection;
-@use 'components/dropdown-menu' as dropdown-menu;
+@use 'components/context-menu' as context-menu;
 @use 'components/gallery' as gallery;
 @use 'components/header' as header;
+@use 'components/header-group' as header-group;
 @use 'components/messages' as messages;
 @use 'components/section' as section;
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
+@use 'components/thumbnail-collection' as thumbnail-collection;
 @use 'components/timeline' as timeline;
 @use 'typography' as typography;
 @use 'components/user-header' as user-header;
@@ -98,8 +100,20 @@ body, #kfroot {
   font-family: var(--fp-main-font);
 }
 
+.float-left {
+  float: left;
+}
+
 .float-right {
   float: right;
+}
+
+.margin-right-auto {
+  margin-right: auto;
+}
+
+.margin-left-auto {
+  margin-left: auto;
 }
 
 .foundation-mq {

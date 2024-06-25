@@ -1,3 +1,4 @@
+@use '../typography' as *;
 @import 'button';
 @import 'input';
 
@@ -29,7 +30,7 @@ input[type=number]::-webkit-outer-spin-button {
 .form {
 
   &--collection {
-    padding: 20px 70px 20px 0px;
+    padding: 0px 70px 20px 0px;
     @include breakpoint(small only) {
       order: 9999;
     }
@@ -106,6 +107,22 @@ input[type=number]::-webkit-outer-spin-button {
       cursor: pointer;
       line-height: 32px;
       padding-right: 16px;
+    }
+    &__left-label-with-subtitle {
+      cursor: pointer;
+      order: -1;
+      color: #747474;
+      font-weight: $font-weight-bold;
+      margin-right: 20px;
+      > span {
+        margin-top: 6px;
+        font-weight: $font-weight-regular;
+        display: block;
+        &.invisible {
+          height: 0px;
+          margin: 0px;
+        }
+      }
     }
     &__right-label {
       cursor: pointer;

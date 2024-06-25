@@ -5,7 +5,7 @@
 {% block content %}
 
 <div class="user-header">
-    <div class="user-header__wrapper">
+    <div class="user-header__wrapper column">
         <div class=user-header__info>
             <h2 class="user-header__username">{{ profile_user.username }}</h2>
             <p class="user-header__email">{{ profile_user.email }}</p>
@@ -52,9 +52,9 @@
                 <div class="collection__item">
                     <div class="collection__item-label"><a href="{{ exhibit.get_absolute_url }}">{{ exhibit.name }}</a></div>
                     {% if profile_user == request.user %}
-                    <div class="collection__item-menu dropdown-menu" id="exhibit-{{ exhibit.id }}" data-toggler=".expanded">
-                        <div class="dropdown-menu__button" data-toggle="exhibit-{{ exhibit.id }}"></div>
-                        <div class="dropdown-menu__items">
+                    <div class="collection__item-menu context-menu" id="exhibit-{{ exhibit.id }}" data-toggler=".expanded">
+                        <div class="context-menu__button" data-toggle="exhibit-{{ exhibit.id }}"></div>
+                        <div class="context-menu__items">
                             <ul>
                                 <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
                                 <li><a href="{{ exhibit.get_absolute_url }}">Copy Share Link</a></li>
@@ -87,9 +87,9 @@
                 <div class="collection__item">
                     <div class="collection__item-label"><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></div>
                     {% if profile_user == request.user %}
-                    <div class="collection__item-menu dropdown-menu" id="tour-{{ collection.uuid }}" data-toggler=".expanded">
-                        <div class="dropdown-menu__button" data-toggle="tour-{{ collection.uuid }}"></div>
-                        <div class="dropdown-menu__items">
+                    <div class="collection__item-menu context-menu" id="tour-{{ collection.uuid }}" data-toggler=".expanded">
+                        <div class="context-menu__button" data-toggle="tour-{{ collection.uuid }}"></div>
+                        <div class="context-menu__items">
                             <ul>
                                 <li><a href="#">Edit</a></li>
                                 <li><a href="{{ collection.get_absolute_url }}">Copy Share Link</a></li>
