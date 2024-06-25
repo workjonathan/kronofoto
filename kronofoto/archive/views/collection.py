@@ -173,6 +173,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView): # typ
 
 class NewList(FormView):
     form_class = ListForm
+    template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
     def get_success_url(self) -> str:
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
@@ -194,6 +195,12 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
 
     def get_success_url(self) -> str:
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+
+    def post(self, *args: Any, **kwargs: Any) -> HttpResponse:
+        try:
+            return super().post(*args, **kwargs)
+        except TypeError:
+            return HttpResponse("", status=400)
 
     def get_queryset(self) -> QuerySet:
         return Collection.objects.filter(
