@@ -8,10 +8,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
+from django.db.models import QuerySet
 from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
+from typing import Any
 
 
 class Profile(BaseTemplateMixin, ListView):
@@ -83,13 +85,13 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
     def get_success_url(self):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
-    def post(self, *args, **kwargs):
+    def post(self, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
-            super().post(*args, **kwargs)
+            return super().post(*args, **kwargs)
         except TypeError:
             return HttpResponse("", status=400)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         return Collection.objects.filter(
             owner=self.request.user
         ).count_photo_instances(
