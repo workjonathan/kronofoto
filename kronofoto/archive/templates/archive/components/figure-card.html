@@ -16,7 +16,13 @@
                 {% if edit %}
                 {% with form=figure|with_parent:parent|figure_form:photos %}
                 {{ form.as_p }}<input type="hidden" name="prefix" value="{{ form.prefix }}">
+                {% for photo in form.fields.photo.queryset %}
+                    <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
+                {% endfor %}
                 {% endwith %}
+                <input type="submit" name="up" value="Up">
+                <input type="submit" name="down" value="Down">
+                <input type="submit" name="delete" value="Delete">
                 {% endif %}
             </figure>
         {% endfor %}

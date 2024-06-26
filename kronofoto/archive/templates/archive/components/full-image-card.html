@@ -16,6 +16,9 @@
         </div>
         {% if form %}
             {{ form }}
+            {% for photo in form.fields.photo.queryset %}
+                <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
+            {% endfor %}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
             <input type="submit" name="save" value="Save">
             <input type="submit" name="up" value="Up">
