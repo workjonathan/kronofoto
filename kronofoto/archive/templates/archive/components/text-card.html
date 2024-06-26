@@ -15,7 +15,7 @@
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
-            <input type="submit" name="delete" value="Delete" hx-delete="{% krono_url "kronofoto:card-edit" pk=card.id %}">
+            <input type="submit" name="delete" value="Delete">
             <button value="Add Figure" hx-get="{% krono_url "kronofoto:exhibit-figure-form" pk=card.exhibit.id parent=form.prefix %}" hx-target="#card-{{ card.id }}" hx-swap="beforebegin">Add Figure</button>
         {% endif %}
     </div>
