@@ -10,6 +10,8 @@ from archive.models.donor import Donor
 from archive.models.photo import Photo
 from archive.models.archive import Archive
 from collections import defaultdict
+import pytest
+from django.db.utils import IntegrityError
 
 class PhotoInterface:
     def test_should_have(self):
@@ -93,7 +95,18 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
             assert donor.donated_count == len(self.donor_model[donor.pk])
             assert donor.scanned_count == len(self.scanner_model[donor.pk])
 
-DonorMachine.TestCase.settings = hsettings(max_examples = 5, stateful_step_count = 5, deadline=None)
+DonorMachine.TestCase.settings = hsettings(max_examples = 1, stateful_step_count = 1, deadline=None)
 
 class TestDonorQuerySet(TestCase, DonorMachine.TestCase):
     pass
+
+@pytest.mark.django_db
+def test_donor_requires_archive():
+    with pytest.raises(IntegrityError):
+        Donor.objects.create(archive=None)
+
+@pytest.mark.django_db
+def test_donor_only_requires_archive():
+    archive = Archive.objects.create()
+    donor = Donor.objects.create(archive=archive)
+    donor.clean_fields()

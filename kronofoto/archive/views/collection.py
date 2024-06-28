@@ -8,10 +8,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
+from django.db.models import QuerySet
 from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
+from typing import Any
 
 
 class Profile(BaseTemplateMixin, ListView):
@@ -62,6 +64,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
 
 class NewList(FormView):
     form_class = ListForm
+    template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
     def get_success_url(self):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
@@ -82,7 +85,13 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
     def get_success_url(self):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
-    def get_queryset(self):
+    def post(self, *args: Any, **kwargs: Any) -> HttpResponse:
+        try:
+            return super().post(*args, **kwargs)
+        except TypeError:
+            return HttpResponse("", status=400)
+
+    def get_queryset(self) -> QuerySet:
         return Collection.objects.filter(
             owner=self.request.user
         ).count_photo_instances(

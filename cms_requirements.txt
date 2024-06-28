@@ -2,6 +2,6 @@ django-cms==3.11.*
 django-sekizai==4.0.*
 djangocms-file==3.0.*
 djangocms-link==3.1.*
-djangocms-picture==4.0.*
+djangocms-picture==4.1.*
 djangocms-text-ckeditor==5.1.*
 #easy-thumbnails==2.8.3
