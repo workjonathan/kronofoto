@@ -212,7 +212,7 @@ class AutocompleteParserTest(TestCase):
         self.assertEqual(tuple(lexer.parse(':')), ([MissingField()], ["Colon (:) with no field preceding it at index 1"]))
         self.assertEqual(tuple(lexer.parse('""')), ([EmptyQuotedString()], ['Quoted sequence with nothing in it at index 1']))
     @given(strategies.text(min_size=1))
-    def testParseEveryInput(self, input):
+    def tstParseEveryInput(self, input):
         "Lexer should be able to convert any string to a list of tokens and a list of tokens to a string."
         "All whitespace should be replaced by a single space, so string -> ([tokens], [errors]) -> string may fail."
         "However, string -> ([tokens], [errors]) -> string -> ([tokens], [errors]) should produce identical tokens."

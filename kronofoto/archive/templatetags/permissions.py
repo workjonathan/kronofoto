@@ -31,7 +31,7 @@ class PermissionListFactory:
         if isinstance(object, Photo):
             return PhotoPermissions(object)
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
 @register.filter
 def has_view_or_change_permission(user: User, object: Any) -> bool:
