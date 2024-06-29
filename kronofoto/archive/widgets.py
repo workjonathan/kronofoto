@@ -8,7 +8,7 @@ class Select2(Select):
         super().__init__()
 
     def get_context(self, name, value, attrs):
-        if value is None:
+        if value is None or not isinstance(value, int):
             self.choices = []
         else:
             self.choices = [(obj.id, str(obj)) for obj in self.queryset.filter(id=value)]
