@@ -15,6 +15,7 @@ from .base import ArchiveRequest
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
 
+
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
@@ -35,8 +36,8 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
             'data': {
                 "photos": [dict(
                     url=position.photo.original.url,
-                    height=position.photo.h700.height,
-                    width=position.photo.h700.width,
+                    height=position.photo.h700.height if position.photo.h700 else 700,
+                    width=position.photo.h700.width if position.photo.h700 else 400,
                     azimuth=position.azimuth+object.heading-90,
                     inclination=position.inclination,
                     distance=position.distance,

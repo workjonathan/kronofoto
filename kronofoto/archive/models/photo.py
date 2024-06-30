@@ -5,7 +5,7 @@ from django.core.files.storage import default_storage
 from django.http import QueryDict
 from django.core.signing import Signer
 from django.db import transaction
-from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max
+from django.db.models import Q, Window, F, Min, Subquery, Count, OuterRef, Sum, Max, QuerySet
 from django.db.models.functions import Lower
 from django.db.models.signals import post_delete, pre_delete
 from django.conf import settings
@@ -26,7 +26,7 @@ from bisect import bisect_left
 from functools import reduce
 from ..storage import OverwriteStorage
 from .donor import Donor
-from .tag import Tag
+from .tag import Tag, TagQuerySet
 from .term import Term
 from .archive import Archive
 from .category import Category
@@ -34,33 +34,36 @@ from .place import Place
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
+from typing_extensions import Self
+from .collectionquery import CollectionQuery
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
 class PhotoQuerySet(models.QuerySet):
-    def year_range(self):
+    def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max('year'), start=Min('year'))
 
-    def photo_position(self, photo):
+    def photo_position(self, photo: "Photo") -> int:
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
 
-    def filter_photos(self, collection):
+    def filter_photos(self, collection: CollectionQuery) -> QuerySet:
         return collection.filter(self.filter(year__isnull=False, is_published=True))
 
-    def photos_before(self, *, year: int, id: int):
+    def photos_before(self, *, year: int, id: int) -> Self:
         photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by('-year', '-id')
         return photos
 
 
-    def photos_after(self, *, year: int, id: int) -> "PhotoQuerySet":
+    def photos_after(self, *, year: int, id: int) -> Self:
         photos = self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by('year', 'id')
         return photos
 
-    def exclude_geocoded(self):
+    def exclude_geocoded(self) -> Self:
         return self.filter(location_point__isnull=True) | self.filter(location_bounds__isnull=True) | self.filter(location_from_google=True)
 
 
-def format_location(force_country=False, **kwargs):
+def format_location(force_country:bool=False, **kwargs: str) -> str:
     parts = []
     if kwargs.get('address', None):
         parts.append(kwargs['address'])
@@ -70,13 +73,13 @@ def format_location(force_country=False, **kwargs):
         parts.append('{} County'.format(kwargs['county']))
     if kwargs.get('state', None):
         parts.append(kwargs['state'])
-    if (force_country or not parts) and kwargs.get('country', None):
+    if (force_country or not parts) and 'country' in kwargs:
         parts.append(kwargs['country'])
     s = ', '.join(parts)
     return s or 'Location: n/a'
 
 
-def get_original_path(instance, filename):
+def get_original_path(instance: "Photo", filename: str) -> str:
     created = datetime.now() if instance.created is None else instance.created
     return path.join(
         'original',
@@ -86,7 +89,7 @@ def get_original_path(instance, filename):
         '{}.jpg'.format(instance.uuid)
     )
 
-def get_submission_path(instance, filename):
+def get_submission_path(instance: "Submission", filename: str) -> str:
     return path.join('submissions', '{}.jpg'.format(instance.uuid))
 
 @dataclass
@@ -97,7 +100,7 @@ class PlaceData:
     state: str
     country: str
 
-    def get_query(self):
+    def get_query(self) -> str:
         parts = []
         if self.city:
             parts.append('city:"{}"'.format(self.city))
@@ -136,23 +139,25 @@ class PhotoBase(models.Model):
         Donor, null=True, on_delete=models.SET_NULL, blank=True, related_name="%(app_label)s_%(class)s_scanned",
     )
 
-    def get_place(self, with_address=False):
+    def get_place(self, with_address: bool=False) -> PlaceData:
         return PlaceData(
             address=self.address,
             city=self.city,
             county=self.county,
             state=self.state,
-            country=self.country,
+            country=self.country or "",
         )
 
     @property
-    def place_query(self):
+    def place_query(self) -> str:
         return self.get_place().get_query()
 
-    def location(self, with_address=False, force_country=False):
-        kwargs = dict(
-            city=self.city, state=self.state, county=self.county, country=self.country
+    def location(self, with_address: bool=False, force_country: bool=False) -> str:
+        kwargs : Dict[str, str] = dict(
+            city=self.city, state=self.state, county=self.county,
         )
+        if self.country:
+            kwargs['country'] = self.country
         if with_address:
             kwargs['address'] = self.address
         if self.city:
@@ -166,7 +171,7 @@ class Submission(PhotoBase):
     image = models.ImageField(upload_to=get_submission_path, null=False)
     uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         location = self.place
         stuff = [str(self.donor)]
         if self.year:
@@ -175,9 +180,17 @@ class Submission(PhotoBase):
             stuff.append(location.fullname)
         return ' - '.join(stuff)
 
-class ResizerBase:
+class ResizerBase(Protocol):
+    @property
+    def output_height(self) -> int:
+        ...
+    @property
+    def output_width(self) -> int:
+        ...
+    def crop_image(self, *, image: Image.Image) -> Image.Image:
+        ...
 
-    def resize(self, *, image):
+    def resize(self, *, image: Image.Image) -> Image.Image:
         image = self.crop_image(image=image)
         return image.resize(
             (self.output_width, self.output_height),
@@ -190,15 +203,15 @@ class FixedHeightResizer(ResizerBase):
     original_width: int
     original_height: int
 
-    def crop_image(self, *, image):
+    def crop_image(self, *, image: Image.Image) -> Image.Image:
         return image
 
     @property
-    def output_height(self):
+    def output_height(self) -> int:
         return self.height
 
     @property
-    def output_width(self):
+    def output_width(self) -> int:
         return round(self.original_width * self.height / self.original_height)
 
 @dataclass
@@ -207,15 +220,15 @@ class FixedWidthResizer(ResizerBase):
     original_width: int
     original_height: int
 
-    def crop_image(self, *, image):
+    def crop_image(self, *, image: Image.Image) -> Image.Image:
         return image
 
     @property
-    def output_height(self):
+    def output_height(self) -> int:
         return round(self.original_height * self.width / self.original_width)
 
     @property
-    def output_width(self):
+    def output_width(self) -> int:
         return self.width
 
 @dataclass
@@ -226,7 +239,7 @@ class FixedResizer(ResizerBase):
     original_height: int
 
     @property
-    def crop_coords(self):
+    def crop_coords(self) -> Tuple[int, int, int, int]:
         original_origin_x = self.original_width / 2
         original_origin_y = self.original_height / 4
         output_ratio = self.width/self.height
@@ -234,19 +247,19 @@ class FixedResizer(ResizerBase):
         adjusted_output_height = min(self.original_height, self.original_width / output_ratio)
         adjusted_origin_x = adjusted_output_width / 2
         adjusted_origin_y = adjusted_output_height / 4
-        xoff = original_origin_x - adjusted_origin_x
-        yoff = original_origin_y - adjusted_origin_y
-        return (xoff, yoff, xoff+adjusted_output_width, yoff+adjusted_output_height)
+        xoff = round(original_origin_x - adjusted_origin_x)
+        yoff = round(original_origin_y - adjusted_origin_y)
+        return (xoff, yoff, round(xoff+adjusted_output_width), round(yoff+adjusted_output_height))
 
-    def crop_image(self, *, image):
+    def crop_image(self, *, image: Image.Image) -> Image.Image:
         return image.crop(self.crop_coords)
 
     @property
-    def output_height(self):
+    def output_height(self) -> int:
         return self.height
 
     @property
-    def output_width(self):
+    def output_width(self) -> int:
         return self.width
 
 @dataclass
@@ -258,11 +271,11 @@ class ImageData:
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
-    places = models.ManyToManyField(Place, editable=False)
+    places = models.ManyToManyField("archive.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
     @property
-    def h700(self):
+    def h700(self) -> Optional[ImageData]:
         from ..imageutil import ImageSigner
         if not self.original or not self.id:
             return None
@@ -274,7 +287,7 @@ class Photo(PhotoBase):
             name="h700",
         )
     @property
-    def thumbnail(self):
+    def thumbnail(self) -> Optional[ImageData]:
         if not self.original or not self.id:
             return None
         from ..imageutil import ImageSigner
@@ -286,7 +299,7 @@ class Photo(PhotoBase):
             name="thumbnail",
         )
 
-    tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="PhotoTag")
+    tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="archive.PhotoTag")
     location_from_google = models.BooleanField(editable=False, default=False)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False, db_index=True)
@@ -325,31 +338,31 @@ class Photo(PhotoBase):
             models.Index(fields=['category', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_archive_pyear_id_sort"),
         )
 
-    def page_number(self):
+    def page_number(self) -> Dict[str, Optional[int]]:
         return {'year:gte': self.year, 'id:gt': self.id-1}
 
-    def get_all_tags(self, user=None):
+    def get_all_tags(self, user: Optional[User]=None) -> List[str]:
         "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
         tags = self.get_accepted_tags(user=user).annotate(label_lower=Lower("tag"), label=models.F("tag"))
         terms = self.terms.annotate(label_lower=Lower("term"), label=models.F("term"))
         return list(tags) + list(terms)
 
 
-    def get_accepted_tags(self, user=None):
+    def get_accepted_tags(self, user: Optional[User]=None) -> TagQuerySet:
         query = Q(phototag__accepted=True)
         if user:
             query |= Q(phototag__creator__pk=user.pk)
         return self.tags.filter(query)
 
-    def get_proposed_tags(self):
+    def get_proposed_tags(self) -> TagQuerySet:
         return self.tags.filter(phototag__accepted=False)
 
-    def add_params(self, url, params):
+    def add_params(self, url: str, params: Optional[QueryDict]) -> str:
         if params:
             url = '{}?{}'.format(url, params.urlencode())
         return url
 
-    def create_url(self, viewname, queryset=None, params=None):
+    def create_url(self, viewname: str, queryset: Optional[int]=None, params: Optional[QueryDict]=None) -> str:
         kwargs = {'photo': self.id}
         url = reverse(
             viewname,
@@ -357,7 +370,7 @@ class Photo(PhotoBase):
         )
         return self.add_params(url=url, params=params)
 
-    def get_download_page_url(self, kwargs=None, params=None):
+    def get_download_page_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
         kwargs = kwargs or {}
         url = reverse('kronofoto:download', kwargs=dict(**kwargs, **{'pk': self.id}))
         if params:
@@ -366,24 +379,26 @@ class Photo(PhotoBase):
             params = QueryDict(mutable=True)
         return self.add_params(url=url, params=params)
 
-    def get_urls(self, embed=False):
+    def get_urls(self, embed: bool=False) -> Dict[str, str]:
         return {
-            'url': self.get_embedded_url() if embed else self.get_absolute_url(),
+            'url': self.get_absolute_url(),
         }
 
-    def get_grid_url(self, kwargs=None, params=None):
-        kwargs = kwargs or {}
-        url = reverse('kronofoto:gridview', kwargs=kwargs)
-        if params:
-            params = params.copy()
-        else:
-            params = QueryDict(mutable=True)
-        params['year:gte'] = self.year
-        params['id:gt'] = self.id - 1
-        return self.add_params(url=url, params=params)
+    def get_grid_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
+        if self.year:
+            kwargs = kwargs or {}
+            url = reverse('kronofoto:gridview', kwargs=kwargs)
+            if params:
+                params = params.copy()
+            else:
+                params = QueryDict(mutable=True)
+            params['year:gte'] = str(self.year)
+            params['id:gt'] = str(self.id - 1)
+            return self.add_params(url=url, params=params)
+        raise ValueError("Photo.year must be set")
 
 
-    def get_absolute_url(self, kwargs=None, params=None):
+    def get_absolute_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
         kwargs = kwargs or {}
         kwargs = dict(**kwargs)
         kwargs['photo'] = self.id
@@ -392,31 +407,31 @@ class Photo(PhotoBase):
             return '{}?{}'.format(url, params.urlencode())
         return url
 
-    def get_edit_url(self):
+    def get_edit_url(self) -> str:
         return reverse('admin:archive_photo_change', args=(self.id,))
 
     @staticmethod
-    def format_url(**kwargs):
+    def format_url(**kwargs: Any) -> str:
         return "{}?{}".format(
             reverse('kronofoto:gridview'), urlencode(kwargs)
         )
 
-    def get_county_url(self):
+    def get_county_url(self) -> str:
         return Photo.format_url(county=self.county, state=self.state)
 
-    def get_city_url(self):
+    def get_city_url(self) -> str:
         return Photo.format_url(city=self.city, state=self.state)
 
     class CityIndexer:
-        def index(self):
+        def index(self) -> List[Dict[str, Any]]:
             return Photo.city_index()
 
     class CountyIndexer:
-        def index(self):
+        def index(self) -> List[Dict[str, Any]]:
             return Photo.county_index()
 
     @staticmethod
-    def index_by_fields(*fields):
+    def index_by_fields(*fields: str) -> List[Dict[str, Any]]:
         return [
             {
                 'name': ', '.join(p[field] for field in fields),
@@ -431,53 +446,55 @@ class Photo(PhotoBase):
         ]
 
     @staticmethod
-    def county_index():
+    def county_index() -> List[Dict[str, Any]]:
         return Photo.index_by_fields('county', 'state')
 
     @staticmethod
-    def city_index():
+    def city_index() -> List[Dict[str, Any]]:
         return Photo.index_by_fields('city', 'state')
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.accession_number
 
     @staticmethod
-    def accession2id(accession):
+    def accession2id(accession: str) -> int:
         if not accession.startswith('FI'):
             raise ValueError("{} doesn't start with FI", accession)
         return int(accession[2:])
 
 
-    @property  # type: ignore[misc]
-    def accession_number(self):
+    @property
+    def accession_number(self) -> str:
         return 'FI' + str(self.id).zfill(7)
 
-    def resizer(self, *, size, original_width, original_height):
+    def resizer(self, *, size: int, original_width: int, original_height: int) -> ResizerBase:
         if size == 'thumbnail':
             return FixedResizer(width=75, height=75, original_width=original_width, original_height=original_height)
         elif size == 'h700':
             return FixedHeightResizer(height=700, original_width=original_width, original_height=original_height)
+        raise NotImplementedError
 
     @dataclass
     class Saver:
-        uuid: uuid
+        uuid: uuid.UUID
         path: str
 
-        def save(self, *, image):
+        def save(self, *, image: Image.Image) -> str:
             fname = self.format_path()
             image.save(os.path.join(settings.MEDIA_ROOT, fname), "JPEG")
             return fname
 
-        def format_path(self):
+        def format_path(self) -> str:
             return self.path.format(self.uuid)
 
 
-    def saver(self, *, size, uuid):
+    def saver(self, *, size: int, uuid: uuid.UUID) -> Saver:
         if size == 'thumbnail':
             return Photo.Saver(uuid=uuid, path='thumb/{}.jpg')
         elif size == 'h700':
             return Photo.Saver(uuid=uuid, path="h700/{}.jpg")
+        raise NotImplementedError
 
     #def save(self, *args, **kwargs):
     #    if not self.thumbnail:
@@ -501,17 +518,17 @@ class Photo(PhotoBase):
     #    super().save(*args, **kwargs)
 
 
-    def describe(self, user=None):
+    def describe(self, user: Optional[User]=None) -> Set[str]:
         terms = {str(t) for t in self.terms.all()}
         tags = {str(t) for t in self.get_accepted_tags(user)}
         location = self.location()
-        location = {location} if location != "Location: n/a" else set()
-        return terms | tags | location | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
+        locations = {location} if location != "Location: n/a" else set()
+        return terms | tags | locations | { str(self.donor), "history of Iowa", "Iowa", "Iowa History" }
 
-    def notices(self):
+    def notices(self) -> List["LocalContextNotice"]:
         if not self.local_context_id:
             return []
-        def _():
+        def _() -> List[LocalContextNotice]:
             url = '{base}projects/{id}/'.format(base=settings.LOCAL_CONTEXTS, id=self.local_context_id)
             resp = requests.get(url)
             if resp.status_code == 200:
@@ -526,9 +543,14 @@ class Photo(PhotoBase):
                 ]
             else:
                 return []
-        return cache.get_or_set(self.local_context_id, _, timeout=24*60*60)
+        val = cache.get_or_set(self.local_context_id, _, timeout=24*60*60)
+        if val and isinstance(val, list):
+            return val
+        else:
+            return []
 
-def get_resized_path(instance, filename):
+
+def get_resized_path(instance: Any, filename: str) -> str:
     return path.join('resized', '{}_{}_{}.jpg'.format(instance.width, instance.height, instance.photo.uuid))
 
 
@@ -554,17 +576,17 @@ class PhotoTag(models.Model):
             models.Index(fields=['tag', 'photo']),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.tag)
 
-def remove_deadtags(sender, instance, **kwargs):
+def remove_deadtags(sender: Any, instance: Tag, **kwargs: Any) -> None:
     if instance.tag.phototag_set.count() == 0:
         instance.tag.delete()
 
-def disconnect_deadtags(sender, instance, **kwargs):
+def disconnect_deadtags(*args: Any, **kwargs: Any) -> None:
     post_delete.disconnect(remove_deadtags, sender=Photo.tags.through)
 
-def connect_deadtags(sender, instance, **kwargs):
+def connect_deadtags(*args: Any, **kwargs: Any) -> None:
     post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 
 post_delete.connect(remove_deadtags, sender=Photo.tags.through)

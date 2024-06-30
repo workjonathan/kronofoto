@@ -33,7 +33,7 @@ class DonorQuerySet(models.QuerySet):
 
 class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
-    last_name = models.CharField(max_length=256, blank=True)
+    last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
     email = models.EmailField(blank=True)
     home_phone = models.CharField(max_length=256, blank=True)

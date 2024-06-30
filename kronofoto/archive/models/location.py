@@ -2,7 +2,7 @@ from django.contrib.gis.db import models
 
 
 class LocationQuerySet(models.QuerySet):
-    def locate(self, description):
+    def locate(self, description: str) -> "Location":
         return self.get(description=description)
 
 class Location(models.Model):
@@ -11,8 +11,8 @@ class Location(models.Model):
     location_bounds = models.MultiPolygonField(null=True, srid=4326, blank=True)
     objects = LocationQuerySet.as_manager()
 
-    def describe(self):
+    def describe(self) -> str:
         return self.description
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.description

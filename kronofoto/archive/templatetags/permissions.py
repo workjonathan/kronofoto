@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 
 register = template.Library()
 
-@dataclass
 class PermissionBase(Protocol):
     @property
     def permissions(self) -> List[str]:
@@ -25,7 +24,6 @@ class PhotoPermissions:
             'archive.archive.{}.change_photo'.format(slug),
         ]
 
-@dataclass
 class PermissionListFactory:
     def permission_list(self, object: Any) -> PermissionBase:
         if isinstance(object, Photo):

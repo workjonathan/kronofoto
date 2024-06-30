@@ -1,14 +1,15 @@
 from django.contrib.gis.db import models
 from django.db.models.functions import Concat, Upper
-from mptt.models import MPTTModel, TreeForeignKey
+from mptt.models import MPTTModel, TreeForeignKey # type: ignore
 from ..reverse import reverse
 from django.http import QueryDict
+from typing import Any, Optional, Dict
 
 
-class PlaceType(models.Model):
+class PlaceType(models.Model): # type: ignore
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
 
-    def name_places(self):
+    def name_places(self) -> None:
         if self.name == "Country":
             self.place_set.all().update(fullname=models.F("name"))
         elif self.name == "US State":
@@ -24,7 +25,7 @@ class PlaceType(models.Model):
                 place.fullname = place.newfullname
             Place.objects.bulk_update(updates, ['fullname'])
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     class Meta:
@@ -39,7 +40,7 @@ class Place(MPTTModel):
     parent = TreeForeignKey('self', related_name='children', null=True, db_index=True, on_delete=models.PROTECT)
     fullname = models.CharField(max_length=128, null=False, default="")
 
-    def get_absolute_url(self, kwargs=None, params=None):
+    def get_absolute_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
         kwargs = kwargs or {}
         kwargs = dict(**kwargs)
         url = reverse('kronofoto:gridview', kwargs=kwargs)
@@ -52,10 +53,10 @@ class Place(MPTTModel):
     class MPTTMeta:
         order_insertion_by = ['place_type', 'name']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.fullname
 
-    def collect_and_place_photos(self):
+    def collect_and_place_photos(self) -> Any:
         from .photo import Photo
 
         if self.place_type.name == "Country":
@@ -67,6 +68,8 @@ class Place(MPTTModel):
             Photo.objects.filter(place__isnull=True, city="", state__iexact=self.parent.name, county__iexact=self.name + " county").update(place=self))
         elif self.place_type.name == "US Town" or self.place_type.name == 'US Unincorporated Area':
             return Photo.objects.filter(place__isnull=True, city__iexact=self.name, state__iexact=self.parent.name).update(place=self)
+        else:
+            raise ValueError()
 
     class Meta:
         indexes = (

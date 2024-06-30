@@ -19,7 +19,7 @@ class TermGroup(models.Model):
         return self.name
 
 
-class Term(Collectible, models.Model):
+class Term(Collectible, models.Model): # type: ignore
     term = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
     description = models.TextField(blank=True)
