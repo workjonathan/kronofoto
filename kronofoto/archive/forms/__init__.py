@@ -5,6 +5,7 @@ from ..search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
+from django.conf import settings
 from ..widgets import HeadingWidget, PositioningWidget, Select2
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
@@ -131,6 +132,8 @@ class SearchForm(forms.Form):
         if self.is_valid():
             try:
                 cleaned_data['expr'] = self._as_expression(cleaned_data)
+                if cleaned_data['expr'].complexity() > settings.KRONOFOTO_SEARCH_LIMIT:
+                    cleaned_data['expr'] = None
             except NoExpression:
                 pass
         return cleaned_data
