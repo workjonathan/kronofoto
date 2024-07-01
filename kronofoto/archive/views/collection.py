@@ -62,7 +62,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
-class NewList(FormView):
+class NewList(LoginRequiredMixin, FormView):
     form_class = ListForm
     template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
