@@ -3,14 +3,15 @@ from django.contrib.sites.models import Site
 from ..forms import WebComponentForm, SearchForm
 from ..reverse import reverse
 from ..search.parser import NoExpression
+from typing import Any, Dict, List, Union, Optional
 
 class WebComponentPopupView(FormView):
     template_name = 'archive/web-component.html'
     form_class = WebComponentForm
-    def get_initial(self):
+    def get_initial(self) -> Dict[str, Any]:
         return {'page': 'random'}
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         form = context['form']
         searchForm = SearchForm(self.request.GET)
@@ -39,7 +40,7 @@ class WebComponentPopupView(FormView):
             context['params'].pop('page')
         return context
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict[str, Any]:
         kwargs = super().get_form_kwargs()
         if 'page' in self.request.GET:
             kwargs.update({'data': self.request.GET})

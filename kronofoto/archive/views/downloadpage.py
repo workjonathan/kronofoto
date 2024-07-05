@@ -4,13 +4,14 @@ from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
 from ..models.collectionquery import CollectionQuery
 from .base import require_valid_archive, ArchiveRequest
+from typing import Any, List, Dict, Union, Optional
 
 
 class BaseDownloadView(DetailView):
     model = Photo
     pk_url_kwarg = 'photo'
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
 
         archive_request = ArchiveRequest(request=self.request, short_name=self.kwargs.get('short_name'), category=self.kwargs.get('category'))

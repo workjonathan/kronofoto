@@ -1,4 +1,5 @@
 from ..models import Photo, Category, Archive
+from ..models.photo import PhotoQuerySet
 from django.core.exceptions import BadRequest
 from django.template.loader import select_template
 from functools import cached_property, wraps
@@ -117,11 +118,11 @@ class ArchiveRequest:
         return (expr & constraint) if (expr and constraint) else expr or constraint
 
     @cached_property
-    def params(self) -> Dict[str, Any]:
+    def params(self) -> QueryDict:
         return self.request.GET.copy()
 
     @cached_property
-    def get_params(self) -> Dict[str, Any]:
+    def get_params(self) -> QueryDict:
         return self.filter_params(self.params) if not self.final_expr or self.final_expr.is_collection() else QueryDict()
 
     def get_constraint_expr(self, constraint: Optional[str]) -> Optional[Expression]:
@@ -134,9 +135,9 @@ class ArchiveRequest:
 
     def filter_params(
         self,
-        params: Dict[str, Any],
+        params: QueryDict,
         removals: Sequence[str]=('id:lt', 'id:gt', 'page', 'year:gte', 'year:lte')
-    ) -> Dict[str, Any]:
+    ) -> QueryDict:
         get_params = params.copy()
         for key in removals:
             try:
@@ -145,7 +146,7 @@ class ArchiveRequest:
                 pass
         return get_params
 
-    def get_photo_queryset(self) -> QuerySet[Photo]:
+    def get_photo_queryset(self) -> PhotoQuerySet:
         if self.form.is_valid():
             qs = Photo.objects.filter(is_published=True, year__isnull=False)
             short_name = self.url_kwargs.get('short_name')
