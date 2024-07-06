@@ -9,7 +9,7 @@ from ..search.expression import Expression
 from django.shortcuts import get_object_or_404
 import random
 import json
-from ..reverse import set_request, reverse
+from ..reverse import reverse
 from ..forms import SearchForm
 from ..search.parser import Parser, NoExpression
 from ..models import Photo

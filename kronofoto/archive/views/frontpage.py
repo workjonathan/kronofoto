@@ -3,7 +3,6 @@ from django.views.generic.base import RedirectView
 from django.views.generic.list import MultipleObjectMixin
 from .basetemplate import BasePhotoTemplateMixin
 from ..models.photo import Photo
-from ..models.collectionquery import CollectionQuery
 from ..forms import SearchForm, TimelineForm
 from ..search.parser import NoExpression
 from django.core.exceptions import BadRequest

@@ -2,7 +2,6 @@ from django.views.generic.detail import DetailView
 from django.conf import settings
 from .basetemplate import BaseTemplateMixin
 from ..models.photo import Photo
-from ..models.collectionquery import CollectionQuery
 from .base import require_valid_archive, ArchiveRequest
 from typing import Any, List, Dict, Union, Optional
 

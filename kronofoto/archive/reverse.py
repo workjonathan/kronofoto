@@ -16,16 +16,6 @@ class ResolveResults:
     domain: str
     match: ResolverMatch
 
-def get_request() -> Optional[HttpRequest]:
-    return getattr(requests, 'current_request', None)
-
-def set_request(req: HttpRequest) -> None:
-    requests.current_request = req
-
-def as_absolute(uri: str) -> str:
-    req = get_request()
-    return req.build_absolute_uri(uri) if req else uri
-
 def reverse(viewname: str, urlconf: Optional[str]=None, args: Optional[Sequence[Any]]=None, kwargs: Optional[Dict[str, Any]]=None, current_app: Optional[str]=None, domain: Optional[str]=None) -> str:
     domain = domain or Site.objects.get_current().domain
     uri = django_reverse(viewname, urlconf=urlconf, args=args, kwargs=kwargs, current_app=current_app)

@@ -36,7 +36,6 @@ from dataclasses import dataclass
 from django.core.cache import cache
 from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
 from typing_extensions import Self
-from .collectionquery import CollectionQuery
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
@@ -46,9 +45,6 @@ class PhotoQuerySet(models.QuerySet):
 
     def photo_position(self, photo: "Photo") -> int:
         return self.filter(Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))).count()
-
-    def filter_photos(self, collection: CollectionQuery) -> QuerySet:
-        return collection.filter(self.filter(year__isnull=False, is_published=True))
 
     def photos_before(self, *, year: int, id: int) -> Self:
         photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by('-year', '-id')

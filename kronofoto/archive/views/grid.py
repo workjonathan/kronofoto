@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from .basetemplate import BasePhotoTemplateMixin
-from ..models import Photo, CollectionQuery
+from ..models import Photo
 from ..models.photo import PhotoQuerySet
 import json
 from django import forms

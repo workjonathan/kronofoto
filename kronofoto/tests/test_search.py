@@ -460,32 +460,3 @@ class DescriptionTest(SimpleTestCase):
         self.assertEqual(str(Description([Term("dog"), YearLTE(1920), YearGTE(1910)])), "between 1910 and 1920; and termed with dog")
 
 
-@tag("fast")
-class CollectionQueryTest(TestCase):
-    @given(strategies.text(min_size=1), strategies.text(min_size=1))
-    def testShouldDescribeCounty(self, place, state):
-        coll = models.CollectionQuery(County(place) & State(state), AnonymousUser)
-        self.assertEqual(str(coll), 'from {} County, {}'.format(place, state))
-
-    @given(strategies.text(min_size=1), strategies.text(min_size=1))
-    def testShouldDescribeCity(self, citytown, state):
-        coll = models.CollectionQuery(City(citytown) & State(state), AnonymousUser)
-        self.assertEqual(str(coll), 'from {}, {}'.format(citytown, state))
-
-    @given(strategies.text())
-    def testShouldDescribeTag(self, s):
-        tag = models.Tag(tag=s)
-        coll = models.CollectionQuery(TagExactly(tag.tag), AnonymousUser)
-        self.assertEqual(str(coll), 'tagged with {}'.format(s))
-
-    @given(strategies.text())
-    def testShouldDescribeTerm(self, s):
-        term = models.Term(term=s)
-        coll = models.CollectionQuery(TermExactly(term), AnonymousUser)
-        self.assertEqual(str(coll), 'termed with {}'.format(s))
-
-    @given(strategies.text(), strategies.text())
-    def testShouldDescribeDonor(self, first, last):
-        donor = models.Donor(first_name=first, last_name=last)
-        coll = models.CollectionQuery(DonorExactly(donor), AnonymousUser)
-        self.assertEqual(str(coll), 'contributed by {}'.format(donor.display_format()))
