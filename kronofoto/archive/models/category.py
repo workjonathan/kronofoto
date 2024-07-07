@@ -11,6 +11,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
+        db_table = 'kronofoto_category'
 
 class ValidCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
@@ -27,4 +28,5 @@ class ValidCategory(models.Model):
         indexes = [
             models.Index(fields=['category', 'archive']),
         ]
+        db_table = 'kronofoto_validcategory'
 

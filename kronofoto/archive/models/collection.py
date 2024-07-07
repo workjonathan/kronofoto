@@ -35,3 +35,5 @@ class Collection(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        db_table = 'kronofoto_collection'

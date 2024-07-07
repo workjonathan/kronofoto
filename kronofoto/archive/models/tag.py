@@ -48,3 +48,4 @@ class Tag(Collectible, models.Model):
 
     class Meta:
         ordering = ('tag',)
+        db_table = 'kronofoto_tag'

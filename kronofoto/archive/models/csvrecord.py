@@ -70,6 +70,7 @@ class ConnecticutRecord(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['file_id1', 'file_id2'], name='unique_id_combo'),
         ]
+        db_table = 'kronofoto_connecticutrecord'
 
 
 
@@ -147,3 +148,6 @@ class CSVRecord(models.Model):
         self.country = self.country.strip()
         self.state = self.state.strip()
         self.comments = self.comments.strip()
+
+    class Meta:
+        db_table = 'kronofoto_csvrecord'
