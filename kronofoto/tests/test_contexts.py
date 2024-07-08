@@ -34,8 +34,8 @@ class Tests(TestCase):
 
     def test_permission_list_factory_only_handles_photos(self):
         from archive.templatetags.permissions import PermissionListFactory
-        with pytest.raises(NotImplemented):
-            PermissionListFactory.permission_list([1,2,3])
+        with pytest.raises(NotImplementedError):
+            PermissionListFactory().permission_list([1,2,3])
 
     def test_permission_list_factory_handles_photos(self):
         from archive.templatetags.permissions import PermissionListFactory, PhotoPermissions
@@ -43,7 +43,7 @@ class Tests(TestCase):
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
-        assert isinstance(PermissionListFactory.permission_list(photo), PhotoPermissions)
+        assert isinstance(PermissionListFactory().permission_list(photo), PhotoPermissions)
 
 
     def test_permissioned_staff_must_have_privs(self):
@@ -52,7 +52,7 @@ class Tests(TestCase):
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
-        user = User.objects.create_user(is_staff=True)
+        user = User.objects.create_user(username="test_user", is_staff=True)
         assert not has_view_or_change_permission(user, photo)
 
     def test_permissioned_permissions_must_be_staff(self):
@@ -61,7 +61,7 @@ class Tests(TestCase):
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
-        user = User.objects.create_user(is_staff=True)
+        user = User.objects.create_user(username="test_user", is_staff=True)
         assert not has_view_or_change_permission(user, photo)
 
     def test_permissioned_staff_have_privs(self):
@@ -70,8 +70,11 @@ class Tests(TestCase):
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
-        user = User.objects.create_user(is_staff=False)
-        user.user_permissions.add("archive_change_photo")
+        from django.contrib.contenttypes.models import ContentType
+        ct = ContentType.objects.get_for_model(Photo)
+        permission = Permission.objects.get(content_type=ct, codename="change_photo")
+        user = User.objects.create_user(username="test_user", is_staff=False)
+        user.user_permissions.add(permission)
         assert not has_view_or_change_permission(user, photo)
 
     @settings(max_examples=5)

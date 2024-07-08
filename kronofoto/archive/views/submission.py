@@ -1,4 +1,3 @@
-from .multiform import MultiformView
 from .base import ArchiveRequest
 from django.db.models import QuerySet, Manager
 from django.contrib.auth.models import User, AnonymousUser

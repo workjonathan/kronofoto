@@ -1,15 +1,18 @@
 from django import forms
 from ..models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair, Place
 from ..search import expression
+from django.contrib.auth.models import User
 from ..search.parser import Parser, NoExpression, BasicParser
 from functools import reduce
 from django.utils.text import slugify
 from django.core.cache import cache
+from django.conf import settings
 from ..widgets import HeadingWidget, PositioningWidget, Select2
 from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
+from typing import Any, List, Dict, Optional, Union, Generator, Tuple
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")
@@ -29,14 +32,14 @@ class WebComponentForm(forms.Form):
     )
 
     text_field1 = forms.CharField(
-        label=False,
+        label="",
         widget=forms.TextInput(attrs={'placeholder': 'your embed title'}),
         max_length=100,
         required=False
     )
 
     text_field2 = forms.CharField(
-        label=False,
+        label="",
         max_length=100,
         initial='Photos of camping, Ankeney, Iowa',
         required=False
@@ -53,89 +56,94 @@ class ListForm(forms.Form):
 class ListMemberForm(forms.Form):
     membership = forms.BooleanField(required=False, label_suffix="")
     collection = forms.IntegerField(widget=forms.HiddenInput())
-    def __init__(self, *args, initial, **kwargs):
-        super().__init__(*args, initial=initial, **kwargs)
+    def __init__(self, *args: Any, initial: Dict[str, Any], **kwargs: Any):
+        kwargs['initial'] = initial
+        super().__init__(*args, **kwargs)
         self.fields['membership'].label = initial['name']
 
 
 class LocationChoiceField(forms.ChoiceField):
-    def __init__(self, field, *args, **kwargs):
+    def __init__(self, field: Any, *args: Any, **kwargs: Any):
         self.field = field
         super().__init__(*args, choices=[], **kwargs)
 
-    def load_choices(self):
+    def load_choices(self) -> None:
         key = 'form:' + self.field
         self.choices = cache.get(key, default=[])
         if not self.choices:
             self.choices = list(self.get_choices())
             cache.set(key, self.choices)
 
-    def get_choices(self):
+    def get_choices(self) -> Generator:
         yield ('', self.field.capitalize())
         yield from ((p[self.field], p[self.field]) for p in Photo.objects.filter(is_published=True, year__isnull=False).exclude(**{self.field: ''}).only(self.field).values(self.field).distinct().order_by(self.field))
 
 
 class SearchForm(forms.Form):
     basic = forms.CharField(required=False, label='')
-    basic.group = 'BASIC'
+    basic.group = 'BASIC' # type: ignore
     basic.widget.attrs.update({
         'id': 'search-box'
     })
     tag = forms.CharField(required=False, label='')
-    tag.group = 'TAG'
+    tag.group = 'TAG' # type: ignore
     tag.widget.attrs.update({
         'data-autocomplete-url': reverse_lazy("kronofoto:tag-search"),
         'data-autocomplete-min-length': 3,
         'placeholder': 'Tag Search',
     })
     term = forms.ModelChoiceField(required=False, label='', queryset=Term.objects.all())
-    term.group = "CATEGORY"
+    term.group = "CATEGORY" # type: ignore
 
     startYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'Start'}) )
-    startYear.group = 'DATE RANGE'
+    startYear.group = 'DATE RANGE' # type: ignore
     endYear = forms.IntegerField(required=False, label='', widget=forms.NumberInput(attrs={'placeholder': 'End'}) )
-    endYear.group = 'DATE RANGE'
+    endYear.group = 'DATE RANGE' # type: ignore
 
     donor = forms.ModelChoiceField(required=False, label='', queryset=Donor.objects.all(), widget=Select2(queryset=Donor.objects.all()))
     donor.widget.attrs.update({
         'data-select2-url': reverse_lazy("kronofoto:contributor-search2"),
         "placeholder": "Contributor search",
     })
-    donor.group = "CONTRIBUTOR"
+    donor.group = "CONTRIBUTOR" # type: ignore
 
     place = forms.ModelChoiceField(required=False, label='', queryset=Place.objects.all(), widget=Select2(queryset=Place.objects.all()))
     place.widget.attrs.update({
         'data-select2-url': reverse_lazy("kronofoto:place-search"),
         "placeholder": "Place search",
     })
-    place.group = "LOCATION"
+    place.group = "LOCATION" # type: ignore
 
     city = forms.CharField(required=False, label='', widget=forms.HiddenInput)
-    city.group = 'LOCATION'
+    city.group = 'LOCATION' # type: ignore
     county = forms.CharField(required=False, label='', widget=forms.HiddenInput)
-    county.group = 'LOCATION'
+    county.group = 'LOCATION' # type: ignore
     state = forms.CharField(required=False, label='', widget=forms.HiddenInput)
-    state.group = 'LOCATION'
+    state.group = 'LOCATION' # type: ignore
     country = forms.CharField(required=False, label='', widget=forms.HiddenInput)
-    country.group = 'LOCATION'
+    country.group = 'LOCATION' # type: ignore
 
     query = forms.CharField(required=False, label='')
     query.widget.attrs.update({
         'placeholder': 'Keywords, terms, photo ID#, contributor',
     })
-    query.group = "ADVANCED SEARCH"
+    query.group = "ADVANCED SEARCH" # type: ignore
 
-    def clean(self):
+    def clean(self) -> Optional[Dict[str, Any]]:
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return None
         cleaned_data['expr'] = None
         if self.is_valid():
             try:
                 cleaned_data['expr'] = self._as_expression(cleaned_data)
+                if cleaned_data['expr'].complexity() > settings.KRONOFOTO_SEARCH_LIMIT:
+                    cleaned_data['expr'] = None
             except NoExpression:
                 pass
         return cleaned_data
 
-    def _as_expression(self, cleaned_data):
+    def _as_expression(self, cleaned_data: Dict[str, Any]) -> expression.Expression:
         form_exprs = []
         year_exprs = []
         try:
@@ -194,8 +202,10 @@ class TimelineForm(SearchForm):
 class TagForm(forms.Form):
     tag = forms.CharField(strip=True, min_length=2, required=True)
 
-    def clean(self):
+    def clean(self) -> Optional[Dict[str, Any]]:
         data = super().clean()
+        if data is None:
+            return None
         if 'tag' in data:
             data['tag'] = [s.strip() for s in data['tag'].split(', ')]
             for text in data['tag']:
@@ -204,7 +214,7 @@ class TagForm(forms.Form):
         return data
 
 
-    def add_tag(self, photo, user):
+    def add_tag(self, photo: Photo, user: User) -> None:
         for text in self.cleaned_data['tag']:
             tag, _ = Tag.objects.get_or_create(slug=slugify(text), defaults={'tag': text})
             accepted = (
@@ -231,13 +241,15 @@ class AddToListForm(forms.Form):
     name = forms.CharField(required=False)
     visibility = forms.ChoiceField(required=False, choices=Collection.PRIVACY_TYPES)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         self.collection = kwargs.pop('collections')
         super().__init__(*args, **kwargs)
-        self.fields['collection'].choices = self.collection
+        self.fields['collection'].choices = self.collection # type: ignore
 
-    def clean(self):
+    def clean(self) -> Optional[Dict[str, Any]]:
         data = super().clean()
+        if data is None:
+            return None
         if not data['collection'] and not data['name']:
             self.add_error('name', 'A name must be provided')
         return data
@@ -248,7 +260,7 @@ class PhotoSphereAddForm(forms.ModelForm):
         fields = ('title', 'image')
 
 
-    def save(self, commit=False):
+    def save(self, commit: bool=False) -> PhotoSphere:
         instance = super().save(commit=False)
         if instance.image:
             try:
@@ -271,14 +283,14 @@ class PhotoSphereChangeForm(forms.ModelForm):
     class Media:
         js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
 
 
 class PhotoPositionField(forms.MultiValueField):
     widget = PositioningWidget
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         fields = (
             forms.FloatField(),
             forms.FloatField(),
@@ -286,7 +298,7 @@ class PhotoPositionField(forms.MultiValueField):
         )
         super().__init__(fields=fields, **kwargs)
 
-    def compress(self, data_list):
+    def compress(self, data_list: Tuple[Union[int, float], Union[int, float], Union[int, float]]) -> Dict[str, Union[int, float]]:
         return dict(azimuth=data_list[0], inclination=data_list[1], distance=data_list[2])
 
 
@@ -299,18 +311,19 @@ class PhotoSpherePairInlineForm(forms.ModelForm):
     class Media:
         js = ("assets/js/three.min.js", "assets/js/panolens.min.js")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         if 'instance' in kwargs and kwargs['instance']:
             instance = kwargs['instance']
+            initial = dict(
+                position=dict(
+                    azimuth=instance.azimuth,
+                    inclination=instance.inclination,
+                    distance=instance.distance,
+                )
+            )
+            kwargs['initial'] = initial
             super().__init__(
                 *args,
-                initial=dict(
-                    position=dict(
-                        azimuth=instance.azimuth,
-                        inclination=instance.inclination,
-                        distance=instance.distance,
-                    )
-                ),
                 **kwargs,
             )
             position = self.fields['position'].widget
@@ -324,8 +337,7 @@ class PhotoSpherePairInlineForm(forms.ModelForm):
                 **kwargs,
             )
 
-
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> PhotoSpherePair:
         position = self.cleaned_data['position']
         self.instance.azimuth = position['azimuth']
         self.instance.inclination = position['inclination']

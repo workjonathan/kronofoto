@@ -1,25 +1,31 @@
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractBaseUser
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ..reverse import reverse
 from django.conf import settings
+from typing import Any, Dict, List, Union, Optional, Protocol
 
+class TokenGen(Protocol):
+    def make_token(self, user: AbstractBaseUser) -> str:
+        ...
+    def check_token(self, user: Optional[AbstractBaseUser], token: Optional[str]) -> bool:
+        ...
 
 class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
-    def _make_hash_value(self, user, timestamp):
+    def _make_hash_value(self, user: AbstractBaseUser, timestamp: Any) -> str:
         return '{uid}_{timestamp}_{active}'.format(
             uid=user.pk, timestamp=timestamp, active=user.is_active
         )
 
 class UserEmailVerifier:
-    def __init__(self, token_gen=AccountActivationTokenGenerator()):
+    def __init__(self, token_gen: TokenGen=AccountActivationTokenGenerator()):
         self.token_gen = token_gen
 
-    def verify(self, user):
+    def verify(self, user: User) -> None:
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = self.token_gen.make_token(user)
 
@@ -38,10 +44,10 @@ class UserEmailVerifier:
         email = EmailMessage(subject=subject, body=message, to=[user.email])
         email.send(fail_silently=False)
 
-    def verify_token(self, uid, token):
-        uid = urlsafe_base64_decode(uid).decode()
+    def verify_token(self, uid: int, token: str) -> Optional[User]:
+        uid2 = urlsafe_base64_decode(str(uid)).decode()
         try:
-            user = User.objects.get(pk=uid)
+            user = User.objects.get(pk=uid2)
             if self.token_gen.check_token(user, token):
                 user.is_active = True
                 user.save()

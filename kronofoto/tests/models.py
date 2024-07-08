@@ -26,6 +26,7 @@ class FakeDonor(models.Model):
 
 class FakePhoto(models.Model):
     x = models.IntegerField()
+    year = models.IntegerField()
     is_published = models.BooleanField()
     donor = models.ForeignKey(FakeDonor, models.PROTECT, null=True, related_name="photo")
     photographer = models.ForeignKey(

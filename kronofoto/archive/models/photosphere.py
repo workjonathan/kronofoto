@@ -30,6 +30,9 @@ class MainStreetSet(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        db_table = 'kronofoto_mainstreetset'
+
 
 class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -84,6 +87,9 @@ class PhotoSphere(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    class Meta:
+        db_table = 'kronofoto_photosphere'
+
 
 class PhotoSpherePair(models.Model):
     photo = models.ForeignKey("Photo", on_delete=models.CASCADE, help_text="Select a photo then click Save and Continue Editing to use the interactive tool")
@@ -100,6 +106,7 @@ class PhotoSpherePair(models.Model):
         indexes = [
             models.Index(fields=['photo', 'photosphere']),
         ]
+        db_table = 'kronofoto_photospherepair'
 
     def __str__(self) -> str:
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)

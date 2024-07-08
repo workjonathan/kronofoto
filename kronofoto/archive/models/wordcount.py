@@ -18,6 +18,7 @@ class WordCount(models.Model):
         unique_together = [
             ('word', 'field', 'photo')
         ]
+        db_table = 'kronofoto_wordcount'
 
 class PlaceWordCount(models.Model):
     place = models.ForeignKey(Place, models.CASCADE)
@@ -27,3 +28,5 @@ class PlaceWordCount(models.Model):
         unique_together = [
             ('word', 'place')
         ]
+        db_table = 'kronofoto_placewordcount'
+

@@ -1,8 +1,8 @@
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
 from ..reverse import reverse
-from django.http import QueryDict, HttpResponse
-from django.forms import formset_factory
+from django.http import QueryDict, HttpResponse, HttpRequest, HttpResponseForbidden
+from django.forms import formset_factory, ModelForm, Form, BaseFormSet
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,19 +13,19 @@ from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
-from typing import Any
+from typing import Any, Dict, Collection as CollectionT, List
 
 
 class Profile(BaseTemplateMixin, ListView):
     model = Collection
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['profile_user'] = User.objects.get(username=self.kwargs['username'])
         return context
 
-    def get_queryset(self):
-        if self.request.user.get_username() == self.kwargs['username']:
+    def get_queryset(self) -> QuerySet:
+        if not self.request.user.is_anonymous and self.request.user.get_username() == self.kwargs['username']:
             return Collection.objects.filter(owner=self.request.user)
         else:
             user = get_object_or_404(User, username=self.kwargs['username'])
@@ -36,40 +36,41 @@ class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
     model = Collection
     fields = ['name', 'visibility']
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
 
-    def form_valid(self, form):
+    def form_valid(self, form: ModelForm) -> HttpResponse:
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
 
-class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView):
+class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView): # type: ignore
     model = Collection
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         if 'view' not in context:
             context['view'] = self
         return context
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         obj = self.get_object()
         if obj.owner != request.user:
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
-class NewList(FormView):
+class NewList(LoginRequiredMixin, FormView):
     form_class = ListForm
     template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
-    def form_valid(self, form):
+    def form_valid(self, form: Form) -> HttpResponse:
+        assert not self.request.user.is_anonymous
         collection = Collection.objects.create(
             name=form.cleaned_data['name'],
             owner=self.request.user,
@@ -82,7 +83,7 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
     template_name = 'archive/popup_collection_list.html'
     form_class = formset_factory(ListMemberForm, extra=0)
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
     def post(self, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -91,14 +92,14 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
         except TypeError:
             return HttpResponse("", status=400)
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> Any:
         return Collection.objects.filter(
             owner=self.request.user
         ).count_photo_instances(
             photo=self.kwargs['photo']
-        ) if not self.request.user.is_anonymous else []
+        ) if not self.request.user.is_anonymous else Collection.objects.filter(id__in=[])
 
-    def get_initial(self):
+    def get_initial(self) -> Any:
         return [
             {
                 'membership': bool(o.membership),
@@ -109,7 +110,9 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
             for o in self.get_queryset()
         ]
 
-    def form_valid(self, form):
+    def form_valid(self, form: BaseFormSet) -> HttpResponse:
+        if self.request.user.is_anonymous:
+            return HttpResponse(400)
         for data in form.cleaned_data:
             try:
                 collection = Collection.objects.get(id=data['collection'], owner=self.request.user)
@@ -121,12 +124,12 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
                 pass
         return super().form_valid(form)
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         context['new_list_form'] = ListForm()
         return context
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.object_list = self.get_queryset()
         return super().get(request, *args, **kwargs)
 
@@ -135,10 +138,11 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     template_name = 'archive/collection_create.html'
     form_class = AddToListForm
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return self.photo.get_absolute_url(kwargs=self.url_kwargs, params=self.get_params)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        assert not self.request.user.is_anonymous
         kwargs = super().get_form_kwargs()
         kwargs['collections'] = [
             (collection.id, collection.name)
@@ -147,12 +151,13 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
         kwargs['collections'].append((None, 'New List'))
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['photo'] = get_object_or_404(Photo, id=self.kwargs['photo'])
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: Form) -> HttpResponse:
+        assert not self.request.user.is_anonymous
         if isinstance(self.kwargs['photo'], int):
             self.photo = get_object_or_404(Photo, id=self.kwargs['photo'])
         else:

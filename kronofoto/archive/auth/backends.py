@@ -1,16 +1,19 @@
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import Permission
-from django.db.models import Q, Exists, OuterRef
+from django.contrib.auth.models import Permission, AbstractBaseUser, AnonymousUser
+from django.db.models import Q, Exists, OuterRef, QuerySet
 from ..models.archive import Archive
+from typing import Any, Union, Optional, List, Dict, Set, Tuple
 
 class ArchiveBackend(ModelBackend):
-    def get_group_permissions(self, user_obj, obj=None):
+    def get_group_permissions(self, user_obj: Union[AbstractBaseUser, AnonymousUser], obj: Any=None) -> Set[str]:
+        if user_obj.is_anonymous:
+            return set()
         perm_cache = super().get_group_permissions(user_obj, obj)
-        group_perms = Permission.objects.filter(
-            archivegrouppermission__group__user__id=user_obj.id,
+        group_perms_qs = Permission.objects.filter(
+            archivegrouppermission__group__user__id=user_obj.pk,
             content_type__app_label='archive',
         )
-        group_perms = group_perms.values_list(
+        group_perms = group_perms_qs.values_list(
             'content_type__app_label',
             'archivegrouppermission__archive__slug',
             'codename',
@@ -23,16 +26,16 @@ class ArchiveBackend(ModelBackend):
             "{label}.archive.{slug}.{codename}".format(label=label, slug=slug, codename=codename)
             for label, slug, codename in group_perms
         })
-        perms = Permission.objects.filter(
+        perms_qs = Permission.objects.filter(
             group__user=user_obj,
             content_type__app_label='archive',
         )
-        perms = perms.values_list('content_type__app_label', 'codename').order_by()
+        perms = perms_qs.values_list('content_type__app_label', 'codename').order_by()
         perm_cache = perm_cache.union(self.implied_per_archive_permissions(perms))
-        user_obj._group_perm_cache = perm_cache
+        user_obj._group_perm_cache = perm_cache # type: ignore
         return perm_cache
 
-    def implied_per_archive_permissions(self, values):
+    def implied_per_archive_permissions(self, values: Any) -> Set[str]:
         return {
             "{label}.archive.{slug}.{codename}".format(label=label, codename=codename, slug=archive.slug)
             for label, codename in values
@@ -42,9 +45,10 @@ class ArchiveBackend(ModelBackend):
             for label, codename in values
         }
 
-    def get_user_permissions(self, user_obj, obj=None):
+    def get_user_permissions(self, user_obj: Union[AbstractBaseUser, AnonymousUser], obj: Any=None) -> Set[str]:
+        assert hasattr(user_obj, "is_superuser")
         perm_cache = super().get_user_permissions(user_obj, obj)
-        perms = Permission.objects.filter(
+        perms: QuerySet = Permission.objects.filter(
             archiveuserpermission__user=user_obj,
             content_type__app_label='archive',
         )
@@ -69,8 +73,8 @@ class ArchiveBackend(ModelBackend):
         perms = perms.values_list('content_type__app_label', 'codename').order_by()
         perm_cache = perm_cache.union(self.implied_per_archive_permissions(perms))
 
-        user_obj._user_perm_cache = perm_cache
+        user_obj._user_perm_cache = perm_cache # type: ignore
         return perm_cache
 
-    def has_perm(self, user_obj, perm, obj=None):
+    def has_perm(self, user_obj: Union[AbstractBaseUser, AnonymousUser], perm: str, obj: Any=None) -> bool:
         return super().has_perm(user_obj, perm, obj)
