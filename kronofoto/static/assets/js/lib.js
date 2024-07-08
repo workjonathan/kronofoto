@@ -37,8 +37,8 @@ import {
 import {
     MediaQuery
 } from './foundation-sites/js/foundation.util.mediaQuery';
-import { 
-    Triggers 
+import {
+    Triggers
 } from './foundation-sites/js/foundation.util.triggers';
 
 class TimelineScroller {
@@ -304,7 +304,7 @@ class ImagePreviewInput {
         }
     }
     imageChange(evt) {
-        const img = this.getPrevious({elem: evt.target, tagName: "IMG"}) 
+        const img = this.getPrevious({elem: evt.target, tagName: "IMG"})
         this.selectLoader({img, input: evt.target}).loadImage()
     }
     getPrevious({elem, tagName}) {
@@ -508,12 +508,75 @@ class Zoom {
     }
 }
 
+class SwipeEvents {
+
+  constructor({context}) {
+    this.context = context
+  }
+
+  attachListeners() {
+    this.elem.addEventListener('touchstart', this.handleTouchStart.bind(this), false);
+    this.elem.addEventListener('touchmove', this.handleTouchMove.bind(this), false);
+  }
+
+  handleTouchStart(evt) {
+    const firstTouch = evt.touches[0];
+    this.xDown = firstTouch.clientX;
+    this.yDown = firstTouch.clientY;
+  }
+
+  handleTouchMove(evt) {
+    if (!this.xDown || !this.yDown) {
+      return;
+    }
+
+    var xUp = evt.touches[0].clientX;
+    var yUp = evt.touches[0].clientY;
+
+    var xDiff = this.xDown - xUp;
+    var yDiff = this.yDown - yUp;
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) { // Detecting a primarily horizontal movement
+      if (xDiff > this.threshold) {
+        // Left swipe
+        console.log('swipe left');
+        this.elem.dispatchEvent(new CustomEvent('swipeLeft'));
+      } else if (xDiff < -this.threshold) {
+        // Right swipe
+        console.log('swipe right');
+        this.elem.dispatchEvent(new CustomEvent('swipeRight'));
+      }
+    }
+
+    // Reset values after handling the swipe
+    this.xDown = null;
+    this.yDown = null;
+  }
+
+  install({elem}) {
+    this.xDown = null;
+    this.yDown = null;
+    this.threshold = 20;
+    this.elem = elem;
+    this.attachListeners(this.elem);
+  }
+}
+
 class KronofotoContext {
     constructor({htmx, context}) {
         this.htmx = htmx
         this.context = context
     }
     onLoad(elem) {
+
+        $(elem).on('swipeLeft', () => {
+          // Handle move backward here
+        });
+
+        $(elem).on('swipeRight', () => {
+          // Handle move forward here
+        });
+
         $("[data-autocomplete-url]", elem).each((_, input) => {
             const $input = $(input)
             $input.autocomplete({
@@ -584,12 +647,13 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
+
+        const plugins = [SwipeEvents, BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context}) 
+            const plugin = new cls({context: this.context})
             plugin.install({elem})
         }
-        
+
         initNavSearch(elem)
         // modified this foundation function to attach a "rootNode" variable to all plugin objects.
         // The foundation function already accepts one optional argument, so undefined is passed to preserve
