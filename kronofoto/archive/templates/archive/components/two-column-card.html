@@ -12,12 +12,13 @@
             </div>
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
-                    {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-                    {{ card.description }}
+                    {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
+                    <div contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</div>
                 </div>
             </div>
         </div>
         {% if form %}
+            <div class="hide">
             {{ form }}
             {% for photo in form.fields.photo.queryset %}
                 <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
@@ -27,5 +28,6 @@
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
             <input type="submit" name="delete" value="Delete">
+            </div>
         {% endif %}
     </div>

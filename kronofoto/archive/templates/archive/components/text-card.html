@@ -6,16 +6,18 @@
     <div id="card-{{ card.id }}" class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
-                {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-                {{ card.description }}
+                {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
+                <span contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</span>
             </div>
         </div>
         {% if form %}
+            <div class="hide">
             {{ form }}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
             <input type="submit" name="delete" value="Delete">
             <button value="Add Figure" hx-get="{% krono_url "kronofoto:exhibit-figure-form" pk=card.exhibit.id parent=form.prefix %}" hx-target="#card-{{ card.id }}" hx-swap="beforebegin">Add Figure</button>
+            </div>
         {% endif %}
     </div>

@@ -1,3 +1,6 @@
+@use '../../colors' as *;
+@use '../../exhibit-typography' as *;
+
 .full-image-area {
   position: relative;
   aspect-ratio: 1.6;
@@ -5,6 +8,9 @@
   width: 100%;
   //@media screen and (min-width: 48em) {
     height: 200vh;
+    .page-editor & {
+      height: auto;
+    }
     margin-top: -100vh;
   //}
   &:before {
@@ -39,6 +45,10 @@
     height: 100vh;
     //@media screen and (min-width: 48em) {
       width: 100vw;
+      .page-editor & {
+        height: auto;
+        width: 100%;
+      }
       position: sticky;
       top: 0px;
     //}

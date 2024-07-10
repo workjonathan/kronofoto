@@ -1,3 +1,6 @@
+@use '../../colors' as *;
+@use '../../typography' as *;
+
 .hero {
   background-color: $primary-color;
   color: white;
@@ -12,6 +15,10 @@
   width: 100%;
   &__info-button {
     z-index: 1;
+  }
+
+  &__content {
+    padding: 20px;
   }
 
   &__content-wrapper {

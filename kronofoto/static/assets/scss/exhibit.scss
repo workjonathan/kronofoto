@@ -1,0 +1,37 @@
+@use 'components/exhibit/content-area';
+@use 'components/exhibit/page-editor';
+@use 'components/exhibit/full-image-area';
+@use 'components/exhibit/header';
+@use 'components/exhibit/hero';
+@use 'components/exhibit/image-collection';
+@use 'components/exhibit/info-button';
+@use 'components/exhibit/two-column';
+@use 'typography' as *;
+
+@import 'foundation-sites/scss/util/util';
+@import 'foundation-sites/scss/global';
+@import 'foundation-sites/scss/typography/typography';
+@import "keyframes";
+@import 'components/button';
+@import 'components/navigation';
+@import 'components/hamburger';
+@import 'components/search';
+
+//@import 'typography';
+@import 'components/exhibit/container';
+
+body {
+  margin: 0;
+  font-family: "montserrat", sans-serif;
+  font-weight: $font-weight-regular;
+  font-style: normal;
+}
+
+.site-wrapper {
+  position: relative;
+}
+
+.hide {
+  display: none;
+}
+

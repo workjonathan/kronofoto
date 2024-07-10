@@ -48,7 +48,7 @@ gulp.task('build:sass', function () {
 });
 
 gulp.task('build:exhibit', function () {
-  return gulp.src(path.join(config.root, '/exhibit/styles.scss'))
+  return gulp.src(path.join(config.root, '/scss/exhibit.scss'))
       .pipe(sourcemaps.init())
       .pipe(sass({
         outputStlye: 'compressed',
@@ -58,13 +58,12 @@ gulp.task('build:exhibit', function () {
       }).on('error', sass.logError))
       .pipe(autoprefixer())
       .pipe(sourcemaps.write())
-      .pipe(concat('exhibit.css'))
       .pipe(gulp.dest(path.join(config.root, './dist/css/')));
 });
 
-
 gulp.task('watch:all', function () {
     gulp.watch(path.join(config.root, '/scss/**/*.scss'), gulp.series('build:sass'));
+    gulp.watch([path.join(config.root, '/scss/exhibit.scss'), path.join(config.root, '/scss/components/exhibit/**/*.scss')], gulp.series('build:exhibit'));
     gulp.watch([path.join(config.root, '/js/**/*.js'), path.join('!' + config.root, '/js/kronofoto.js')], gulp.series('build:js'));
 });
 
