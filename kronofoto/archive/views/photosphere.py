@@ -63,14 +63,19 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         archiverequest = PhotoSphereRequest(request)
         context = archiverequest.common_context
         context['object'] = object
+        Photo = object._meta.get_field("photos").related_model
+        assert not isinstance(Photo, str) and hasattr(Photo, "objects")
+        photos = Photo.objects.filter(photosphere__id=object.id, year__isnull=False, is_published=True)
+        if object.photos.exists():
+            photo = object.photos.all()[0]
+            if photo.year is not None:
+                photos_before = photos.photos_before(year=photo.year, id=photo.id)
+                photos_after = photos.photos_after(year=photo.year, id=photo.id)
+
 
         return TemplateResponse(request, "archive/photosphere_detail.html", context=context)
     else:
         return HttpResponse("Invalid query", status=400)
-
-
-class PhotoSphereView(BaseTemplateMixin, DetailView):
-    model = PhotoSphere
 
 class MainStreetDetail(BaseTemplateMixin, DetailView):
     model = MainStreetSet

@@ -9,6 +9,7 @@ from django.utils.html import escape
 from django.core.cache import cache
 from ..models import Photo
 from ..imageutil import ImageSigner
+from typing import Optional, Any, List, Dict
 
 
 register = template.Library()
@@ -59,3 +60,6 @@ def markdown(text):
 def thumb_left(*, index, offset, width):
     return index * width + offset
 
+@register.inclusion_tag('archive/thumbnails.html', takes_context=False)
+def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    return  {}

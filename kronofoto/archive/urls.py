@@ -2,7 +2,7 @@ from django.urls import path, include, register_converter, URLPattern, URLResolv
 from . import views
 from .views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
-from archive.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
+from archive.views.photosphere import MainStreetList, MainStreetDetail, MainStreetGeojson
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg, CarouselListView
 from archive.views.photo import LogoSvg, LogoSvgSmall

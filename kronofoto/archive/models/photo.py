@@ -34,10 +34,21 @@ from .place import Place
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
-from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol, TypedDict
 from typing_extensions import Self
+from itertools import chain, cycle, islice
 
+EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
+
+class Thumbnail(TypedDict):
+    url: str
+    height: int
+    width: int
+
+
+EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
+
 
 class PhotoQuerySet(models.QuerySet):
     def year_range(self) -> Dict[str, Any]:
@@ -593,3 +604,71 @@ def connect_deadtags(*args: Any, **kwargs: Any) -> None:
 post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 pre_delete.connect(disconnect_deadtags, sender=Tag)
 post_delete.connect(connect_deadtags, sender=Tag)
+
+@dataclass
+class PhotoPlaceholder:
+    thumbnail: Thumbnail
+    is_spacer: bool
+    photo: Photo
+
+    def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
+        return self.photo.get_absolute_url(*args, **kwargs)
+
+    @property
+    def id(self) -> int:
+        return self.photo.id
+
+    @property
+    def year(self) -> Optional[int]:
+        return self.photo.year
+
+@dataclass
+class CarouselList:
+    queryset: PhotoQuerySet
+
+    @property
+    def keyset(self) -> PhotoQuerySet:
+        raise NotImplementedError
+
+    @property
+    def wrapped_queryset(self) -> PhotoQuerySet:
+        raise NotImplementedError
+
+    def carousel_list(self, *, item_count: int) -> List[Photo]:
+        keyset = self.keyset
+        wrapped_qs = self.wrapped_queryset
+        cycling = cycle(
+            PhotoPlaceholder(
+                thumbnail=EMPTY_THUMBNAIL,
+                is_spacer=True,
+                photo=photo,
+            ) for photo in wrapped_qs[:item_count]
+        )
+        looping = chain(keyset[:item_count], cycling)
+        return list(islice(looping, item_count))
+
+@dataclass
+class BackwardList(CarouselList):
+    year: int
+    id: int
+
+    @property
+    def keyset(self) -> PhotoQuerySet:
+        return self.queryset.photos_before(year=self.year, id=self.id)
+
+    @property
+    def wrapped_queryset(self) -> PhotoQuerySet:
+        return self.queryset.order_by('-year', '-id')
+
+@dataclass
+class ForwardList(CarouselList):
+    year: int
+    id: int
+
+    @property
+    def keyset(self) -> PhotoQuerySet:
+        return self.queryset.photos_after(year=self.year, id=self.id)
+
+    @property
+    def wrapped_queryset(self) -> PhotoQuerySet:
+        return self.queryset

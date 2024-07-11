@@ -1,12 +1,10 @@
 from django.core.paginator import Paginator, EmptyPage, Page
 from itertools import chain
 from django.db.models import QuerySet
+from ..models.photo import EMPTY_PNG
 from typing import Any, List, Dict, Union, Optional, TYPE_CHECKING, Generator
 if TYPE_CHECKING:
     from django.core.paginator import _SupportsPagination
-
-
-EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 FAKE_PHOTO = dict(thumbnail=dict(url=EMPTY_PNG, height=75, width=75), is_spacer=True)
 
