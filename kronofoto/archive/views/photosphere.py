@@ -6,15 +6,46 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
-from typing import Any, Dict
+from ..models.photo import BackwardList, ForwardList, Photo
+from typing import Any, Dict, Optional
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
+from django.conf import settings
 from django import forms
 from .base import ArchiveRequest
+from dataclasses import dataclass
 
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
 
+class MainstreetThumbnails(forms.Form):
+    mainstreet = forms.IntegerField(required=True, widget=forms.HiddenInput)
+    forward = forms.BooleanField(required=True, widget=forms.HiddenInput)
+    offset = forms.IntegerField(required=True, widget=forms.HiddenInput)
+    width = forms.IntegerField(required=True, widget=forms.HiddenInput)
+    id = forms.IntegerField(required=True, widget=forms.HiddenInput)
+
+@dataclass
+class PhotoWrapper:
+    photo: Photo
+    mainstreetset: MainStreetSet
+
+    @property
+    def thumbnail(self):
+        return self.photo.thumbnail
+
+    def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
+        pairs = PhotoSpherePair.objects.filter(photo__id=self.photo.id, photosphere__id=OuterRef("pk"))
+        return PhotoSphere.objects.get(Exists(pairs), mainstreetset=self.mainstreetset).get_absolute_url()
+        return "{}?{}".format(reverse("kronofoto:mainstreetview"), PhotoSphere.objects.get(Exists(pairs), mainstreetset=self.mainstreetset).id)
+
+    @property
+    def id(self) -> int:
+        return self.photo.id
+
+    @property
+    def year(self) -> Optional[int]:
+        return self.photo.year
 
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
@@ -63,14 +94,23 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         archiverequest = PhotoSphereRequest(request)
         context = archiverequest.common_context
         context['object'] = object
+
         Photo = object._meta.get_field("photos").related_model
         assert not isinstance(Photo, str) and hasattr(Photo, "objects")
-        photos = Photo.objects.filter(photosphere__id=object.id, year__isnull=False, is_published=True)
+        assert object.mainstreetset
+        context['thumbnails_form'] = MainstreetThumbnails(initial={
+            "mainstreet": object.mainstreetset.id,
+        })
+        photos = Photo.objects.filter(photosphere__mainstreetset__id=object.mainstreetset.id, year__isnull=False, is_published=True)
         if object.photos.exists():
             photo = object.photos.all()[0]
             if photo.year is not None:
-                photos_before = photos.photos_before(year=photo.year, id=photo.id)
-                photos_after = photos.photos_after(year=photo.year, id=photo.id)
+                backlist = BackwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
+                forwardlist = ForwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
+                context['prev_photo'] = PhotoWrapper(photo=backlist[0], mainstreetset=object.mainstreetset) if backlist else None
+                context['next_photo'] = PhotoWrapper(photo=forwardlist[0], mainstreetset=object.mainstreetset) if forwardlist else None
+                backlist.reverse()
+                context['photos'] = [PhotoWrapper(photo=photo, mainstreetset=object.mainstreetset) for photo in backlist + [photo] + forwardlist]
 
 
         return TemplateResponse(request, "archive/photosphere_detail.html", context=context)

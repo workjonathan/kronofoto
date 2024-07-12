@@ -1,4 +1,5 @@
 from django import template
+from django.http import QueryDict
 from django.core.signing import Signer
 from ..reverse import reverse
 import markdown as md
@@ -61,5 +62,10 @@ def thumb_left(*, index, offset, width):
     return index * width + offset
 
 @register.inclusion_tag('archive/thumbnails.html', takes_context=False)
-def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-    return  {}
+def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]], url_kwargs=Optional[Dict[str, Any]], get_params: Optional[QueryDict]) -> Dict[str, Any]:
+    return  {
+        "object_list": object_list,
+        "positioning": positioning,
+        "url_kwargs": url_kwargs,
+        "get_params": get_params,
+    }

@@ -37,12 +37,10 @@
 {% block right_arrow %}
 {% endblock %}
 <div hx-swap-oob="innerHTML:[data-back-arrows]">
-{% block back_arrows %}
-{% endblock %}
+{% include "archive/components/photo-link/back-arrows.html" %}
 </div>
 <div hx-swap-oob="innerHTML:[data-forward-arrows]">
-{% block forward_arrows %}
-{% endblock %}
+{% include "archive/components/photo-link/forward-arrows.html" %}
 </div>
 
 {% block image %}

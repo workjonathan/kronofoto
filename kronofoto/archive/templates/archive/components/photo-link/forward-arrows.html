@@ -1,0 +1,10 @@
+{% load krono_urls %}
+<a 
+    id="forward"
+    href="{% object_url next_photo url_kwargs get_params %}"
+    hx-get="{% object_url next_photo url_kwargs get_params %}"
+></a>
+<a id="forward-zip">
+    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
+</a>
+

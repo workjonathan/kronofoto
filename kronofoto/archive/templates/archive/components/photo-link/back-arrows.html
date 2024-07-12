@@ -1,0 +1,8 @@
+{% load krono_urls %}
+
+<a id="backward-zip"></a>
+<a 
+    id="backward"
+    href="{% object_url prev_photo url_kwargs get_params %}"
+    hx-get="{% object_url prev_photo url_kwargs get_params %}"
+></a>
