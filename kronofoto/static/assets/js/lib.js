@@ -84,7 +84,6 @@ class TimelineScroller {
         }
         let carousel = newElems.querySelector("#fi-thumbnail-carousel-images")
         this.widthElement = (carousel ? carousel.getAttribute("data-width-element") : undefined) || "#fi-image"
-        console.log(this.widthElement)
         $('#fi-thumbnail-carousel-images', newElems).draggable({
             axis: 'x',
             drag: (event, ui) => {
@@ -116,14 +115,6 @@ class TimelineScroller {
         let currentPosition = preItemNum + quantizedPositionX + 1
 
         let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
-        console.log({
-            widthOfThumbnail,
-            preItemNum,
-            quantizedPositionX,
-            currentPosition,
-            numThumbnails,
-        })
-        console.log( $('#fi-thumbnail-carousel-images [data-origin]', this.context))
         let scroller = undefined
         if (drag && numThumbnails - currentPosition < 20) {
             scroller = new ForwardScroller({context: this.context})
@@ -415,7 +406,6 @@ class MapPlugin {
             map.setView(position, 20)
             this.context.addEventListener("kronofoto:map:marker:change", evt => {
                 const position = [evt.detail.y, evt.detail.x]
-                console.log(position)
                 marker.setLatLng(position)
                 map.setView(position, 20)
             })
@@ -453,11 +443,11 @@ class PhotoSpherePlugin {
                 ],
             })
             viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
-                const slideScroller = new TimelineScroller({context: this.context})
-                slideScroller.slideToId({
-                    fi: node.data.photos[0].id,
-                    target: "[data-fi-thumbnail-carousel-images]",
-                })
+                //const slideScroller = new TimelineScroller({context: this.context})
+                //slideScroller.slideToId({
+                //    fi: node.data.photos[0].id,
+                //    target: "[data-fi-thumbnail-carousel-images]",
+                //})
                 viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
                 if (data.fromNode && node.id != data.fromNode.id) {
                     const form = elem2.closest('form')

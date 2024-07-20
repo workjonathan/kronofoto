@@ -26,7 +26,9 @@
         hx-sync="this:drop"
     >
     {{ thumbnails_form }}
-    <div class="fi-thumbnail-carousel" hx-target="#app" hx-swap="innerHTML">
+    <ul id="fi-preload-zone"></ul>
+    <div data-fi-load-thumbnails class="hide"></div>
+    <div class="fi-thumbnail-carousel" hx-target="#fi-photosphere-metadata" hx-swap="innerHTML">
         {% include "archive/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" %}
     </div>
     </form>
