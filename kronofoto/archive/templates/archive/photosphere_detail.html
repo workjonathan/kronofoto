@@ -11,7 +11,7 @@
 <div>{{ object.description | markdown }}</div>
 </div>
 <form hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-<div data-photosphere-data data-map="#photosphere-map" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh">
+<div id="fi-photosphere" data-photosphere-data data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh">
 </div>
 <input name="id" type="hidden">
 </form>
@@ -19,18 +19,19 @@
 <nav id="fi-timeline" class="fi-timeline">
     <form 
         hx-trigger="kronofoto:loadThumbnails" 
-        hx-target="[data-fi-thumbnail-carousel-images]" 
-        hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}"
+        hx-target="#fi-photosphere-metadata" 
+        hx-get="{% krono_url "kronofoto:mainstreetview-carousel" %}"
         hx-push-url="false"
         hx-swap="beforeend"
         hx-sync="this:drop"
     >
     {{ thumbnails_form }}
-<div class="fi-thumbnail-carousel" hx-target="#app">
-    {% include "archive/components/thumbnail-carousel.html" with object_list=photos %}
-</div>
+    <div class="fi-thumbnail-carousel" hx-target="#app" hx-swap="innerHTML">
+        {% include "archive/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" %}
+    </div>
+    </form>
 </nav>
-<div id="photosphere-map" style="width: 100vw; height: 50vh;">
+<div id="photosphere-map" style="width: 100vw; height: 50vh;" data-map data-x="{{ object.location.x }}" data-y="{{ object.location.y }}" >
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}

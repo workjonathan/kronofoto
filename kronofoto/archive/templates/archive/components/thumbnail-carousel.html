@@ -6,7 +6,7 @@
 <div class="slide-container">
     <ul id="fi-preload-zone"></ul>
     <div data-fi-load-thumbnails class="hide"></div>
-    <ul id="fi-thumbnail-carousel-images" style="left: 0px;" data-fi-thumbnail-carousel-images>
+    <ul id="fi-thumbnail-carousel-images" style="left: 0px;" data-fi-thumbnail-carousel-images{% if width_element %} data-width-element="{{ width_element }}"{% endif %}>
         {% thumbnails object_list=object_list positioning=positioning url_kwargs=url_kwargs get_params=get_params %}
     </ul>
 </div>

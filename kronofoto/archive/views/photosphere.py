@@ -6,7 +6,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
-from ..models.photo import BackwardList, ForwardList, Photo
+from ..models.photo import BackwardList, ForwardList, Photo, ImageData
 from typing import Any, Dict, Optional
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
@@ -14,13 +14,14 @@ from django.conf import settings
 from django import forms
 from .base import ArchiveRequest
 from dataclasses import dataclass
+import json
 
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
 
 class MainstreetThumbnails(forms.Form):
     mainstreet = forms.IntegerField(required=True, widget=forms.HiddenInput)
-    forward = forms.BooleanField(required=True, widget=forms.HiddenInput)
+    forward = forms.BooleanField(required=False, widget=forms.HiddenInput)
     offset = forms.IntegerField(required=True, widget=forms.HiddenInput)
     width = forms.IntegerField(required=True, widget=forms.HiddenInput)
     id = forms.IntegerField(required=True, widget=forms.HiddenInput)
@@ -31,7 +32,7 @@ class PhotoWrapper:
     mainstreetset: MainStreetSet
 
     @property
-    def thumbnail(self):
+    def thumbnail(self) -> Optional[ImageData]:
         return self.photo.thumbnail
 
     def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
@@ -42,6 +43,10 @@ class PhotoWrapper:
     @property
     def id(self) -> int:
         return self.photo.id
+
+    @property
+    def active(self):
+        return hasattr(self.photo, "active") and self.photo.active
 
     @property
     def year(self) -> Optional[int]:
@@ -72,6 +77,7 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                     azimuth=position.azimuth+object.heading-90,
                     inclination=position.inclination,
                     distance=position.distance,
+                    id=position.photo.id,
                 ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
             },
         }
@@ -86,6 +92,34 @@ class PhotoSphereRequest(ArchiveRequest):
             return 'archive/photosphere_partial.html'
         else:
             return super().base_template
+
+def photosphere_carousel(request: HttpRequest) -> HttpResponse:
+    form = MainstreetThumbnails(request.GET)
+    if form.is_valid():
+        photos = Photo.objects.filter(photosphere__mainstreetset__id=form.cleaned_data['mainstreet'], year__isnull=False, is_published=True)
+        photo = get_object_or_404(Photo.objects.all(), pk = form.cleaned_data['id'])
+        offset = form.cleaned_data['offset']
+        if form.cleaned_data['forward']:
+            objects = ForwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=40)
+        else:
+            objects = BackwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=40)
+            offset -= form.cleaned_data['width'] * (1 + 40)
+        context = {
+            'object_list': objects,
+            'positioning': {
+                'width': form.cleaned_data['width'],
+                'offset': offset,
+            },
+        }
+        return TemplateResponse(
+            template="archive/thumbnails.html",
+            request=request,
+            context=context,
+        )
+
+
+    return HttpResponse("", status=400)
+
 
 def photosphere_view(request: HttpRequest) -> HttpResponse:
     query = DataParams(request.GET)
@@ -104,6 +138,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         photos = Photo.objects.filter(photosphere__mainstreetset__id=object.mainstreetset.id, year__isnull=False, is_published=True)
         if object.photos.exists():
             photo = object.photos.all()[0]
+            photo.active = True
             if photo.year is not None:
                 backlist = BackwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
                 forwardlist = ForwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
@@ -113,7 +148,16 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
                 context['photos'] = [PhotoWrapper(photo=photo, mainstreetset=object.mainstreetset) for photo in backlist + [photo] + forwardlist]
 
 
-        return TemplateResponse(request, "archive/photosphere_detail.html", context=context)
+
+        response = TemplateResponse(request, "archive/photosphere_detail.html", context=context)
+        if archiverequest.is_hx_request:
+            response['HX-Trigger'] = json.dumps({
+                "kronofoto:map:marker:change": {
+                    "x": object.location.x,
+                    "y": object.location.y,
+                }
+            })
+        return response
     else:
         return HttpResponse("Invalid query", status=400)
 

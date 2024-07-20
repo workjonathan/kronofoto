@@ -82,6 +82,9 @@ class TimelineScroller {
                 setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
             }
         }
+        let carousel = newElems.querySelector("#fi-thumbnail-carousel-images")
+        this.widthElement = (carousel ? carousel.getAttribute("data-width-element") : undefined) || "#fi-image"
+        console.log(this.widthElement)
         $('#fi-thumbnail-carousel-images', newElems).draggable({
             axis: 'x',
             drag: (event, ui) => {
@@ -113,6 +116,14 @@ class TimelineScroller {
         let currentPosition = preItemNum + quantizedPositionX + 1
 
         let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
+        console.log({
+            widthOfThumbnail,
+            preItemNum,
+            quantizedPositionX,
+            currentPosition,
+            numThumbnails,
+        })
+        console.log( $('#fi-thumbnail-carousel-images [data-origin]', this.context))
         let scroller = undefined
         if (drag && numThumbnails - currentPosition < 20) {
             scroller = new ForwardScroller({context: this.context})
@@ -139,7 +150,7 @@ class TimelineScroller {
         })
     }
     getNumVisibleTimelineTiles() {
-        let widthOfTimeline = $('#fi-image', this.context).width() // assumes the timeline is the same width as gallery image
+        let widthOfTimeline = $(this.widthElement, this.context).width() // assumes the timeline is the same width as gallery image
         let $li = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
         let widthOfTile = $li.outerWidth()
         return Math.floor(widthOfTimeline / widthOfTile)
@@ -386,6 +397,32 @@ class Gallery {
     }
 }
 
+class MapPlugin {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const map_elem of querySelectorAll({node: elem, selector:"[data-map]"})) {
+            const map = L.map(map_elem)
+            const x = map_elem.getAttribute("data-x")
+            const y = map_elem.getAttribute("data-y")
+            const OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map)
+            const position = [y, x]
+            let marker = L.marker(position).addTo(map)
+            map.setView(position, 20)
+            this.context.addEventListener("kronofoto:map:marker:change", evt => {
+                const position = [evt.detail.y, evt.detail.x]
+                console.log(position)
+                marker.setLatLng(position)
+                map.setView(position, 20)
+            })
+        }
+    }
+}
+
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -396,12 +433,6 @@ class PhotoSpherePlugin {
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
             const startNodeId = elem2.getAttribute("data-node-start")
-            const map = L.map(map_elem)
-            const OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map)
-            let marker = undefined
 
 
             const viewer = new Viewer({
@@ -422,15 +453,12 @@ class PhotoSpherePlugin {
                 ],
             })
             viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
-                const position = [node.gps[1], node.gps[0]]
-                if (!marker) {
-                    marker = L.marker(position).addTo(map)
-                } else {
-                    marker.setLatLng(position)
-                }
-
+                const slideScroller = new TimelineScroller({context: this.context})
+                slideScroller.slideToId({
+                    fi: node.data.photos[0].id,
+                    target: "[data-fi-thumbnail-carousel-images]",
+                })
                 viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
-                map.setView(position, 20)
                 if (data.fromNode && node.id != data.fromNode.id) {
                     const form = elem2.closest('form')
                     const input = form.querySelector("[name='id']")
@@ -600,7 +628,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, MapPlugin]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context}) 
             plugin.install({elem})
