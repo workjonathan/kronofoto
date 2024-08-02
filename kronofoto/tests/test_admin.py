@@ -423,7 +423,7 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 1, stateful_step_count = 3, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 50, stateful_step_count = 10, deadline=None)
 
 class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
     pass
@@ -465,7 +465,7 @@ class UserAdminTests(TestCase):
         ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
         self.assertQuerySetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
 
-    @hsettings(deadline=None, max_examples=1)
+    @hsettings(deadline=None, max_examples=20)
     @given(
         st.booleans(),
         st.booleans(),
