@@ -4,18 +4,19 @@ import json
 from ..models.tag import Tag
 from ..models.donor import Donor
 from ..models import Place, Photo
-from django.db.models import Q, Exists, OuterRef, F
+from django.db.models import Q, Exists, OuterRef, F, QuerySet
 from django.db.models.functions import Upper
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 import re
 from functools import reduce
 from operator import or_
+from typing import Any, List, Dict
 
 SPLIT = r"\[|\]|-| |,"
 archive_id_tag = re.compile(r"\[\s*([^\[\]]*[^\[\]\s]+)\s*-\s*(\d+)\s*\]")
 id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
-def contributor_search(request):
+def contributor_search(request: HttpRequest) -> HttpResponse:
     txts = request.GET.get('q', '').split(', ')
     donors = Donor.objects.all()
     for s in txts:
@@ -27,7 +28,7 @@ def contributor_search(request):
     json.dump({"results": results, "pagination": {"more": False}}, response)
     return response
 
-def place_search(request, *, require_photo=True):
+def place_search(request: HttpRequest, *, require_photo: bool=True) -> HttpResponse:
     print(require_photo)
     txt = request.GET.get('q', '').upper()
     if len(txt) < 2:
@@ -53,7 +54,7 @@ def place_search(request, *, require_photo=True):
     return response
 
 class ContributorSearchView(JSONResponseMixin, BaseListView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         if 'term' not in self.request.GET:
             return Donor.objects.none()
         txt = self.request.GET['term']
@@ -78,32 +79,32 @@ class ContributorSearchView(JSONResponseMixin, BaseListView):
         else:
             return Donor.objects.none()
 
-    def get_autocomplete_data(self, object):
+    def get_autocomplete_data(self, object: Donor) -> Dict[str, Any]:
         label = "{} [{}-{}]".format(object, object.archive.slug, object.id)
         return {'id': object.id, 'value': label, 'label': label}
 
-    def get_data(self, context):
+    def get_data(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             self.get_autocomplete_data(object)
             for object in context['object_list']
         ]
 
-    def render_to_response(self, context, **kwargs):
+    def render_to_response(self, context: Dict[str, Any], **kwargs: Any) -> HttpResponse:
         return self.render_to_json_response(context, safe=False, **kwargs)
 
 class TagSearchView(JSONResponseMixin, BaseListView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         if 'term' in self.request.GET:
             return Tag.objects.filter(
                 tag__icontains=self.request.GET['term'], phototag__accepted=True
             ).values('tag', 'id').distinct()[:10]
         return Tag.objects.none()
 
-    def get_data(self, context):
+    def get_data(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         return [
             dict(id=tag['id'], value=tag['tag'], label=tag['tag'])
             for tag in context['object_list']
         ]
 
-    def render_to_response(self, context, **kwargs):
+    def render_to_response(self, context: Dict[str, Any], **kwargs: Any) -> HttpResponse:
         return self.render_to_json_response(context, safe=False, **kwargs)

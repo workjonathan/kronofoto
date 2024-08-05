@@ -194,6 +194,9 @@ class Expression:
     def is_collection(self):
         return self._value.is_collection()
 
+    def complexity(self):
+        return 1
+
     @property
     def object(self):
         return self._value.object
@@ -982,6 +985,9 @@ class BinaryOperator(Expression):
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.left == other.left and self.right == other.right
+
+    def complexity(self):
+        return self.left.complexity() + self.right.complexity()
 
     def filter2(self, user):
         l = self.left.filter2(user)

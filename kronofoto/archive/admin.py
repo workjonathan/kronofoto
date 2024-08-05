@@ -1112,7 +1112,10 @@ class PhotoAdmin(PhotoBaseAdmin):
 
     def thumb_image(self, obj: Photo) -> str:
         thumbnail = obj.thumbnail
-        return mark_safe('<img src="{}" width="{}" height="{}" />'.format(thumbnail.url, thumbnail.width, thumbnail.height))
+        if thumbnail:
+            return mark_safe('<img src="{}" width="{}" height="{}" />'.format(thumbnail.url, thumbnail.width, thumbnail.height))
+        else:
+            return ""
 
     def h700_image(self, obj: Photo) -> str:
         h700 = obj.h700
@@ -1244,20 +1247,23 @@ class WithArchiveId(TypedDict):
 class PermissionAnalyst:
     def __init__(self, user: User) -> None:
         self.user = user
-    def get_archive_permissions(self) -> DefaultDict[int, Set["WithAnnotations[Permission, WithArchiveId]"]]:
+    def get_archive_permissions(self) -> DefaultDict[int, Set[Any]]:
         sets = defaultdict(set)
-        objects = (Permission.objects
+        objects : Any = (Permission.objects
             .filter(archiveuserpermission__user__id=self.user.id)
             .annotate(archive_id=F('archiveuserpermission__archive__id'))
         )
         for obj in objects:
             sets[obj.archive_id].add(obj)
-        objects = (Permission.objects
-            .filter(archivegrouppermission__group__user__id=self.user.id)
-            .annotate(archive_id=F('group__archivegrouppermission__archive__id'))
-        )
-        for obj in objects:
-            sets[obj.archive_id].add(obj)
+        for obj in Archive.groups.through.objects.filter(group__user__id=self.user.id):
+            for permission in obj.permission.all():
+                sets[obj.archive.id].add(permission)
+        #objects = (Permission.objects
+        #    .filter(archivegrouppermission__group__user__id=self.user.id)
+        #    .annotate(archive_id=F('group__archivegrouppermission__archive__id'))
+        #)
+        #for obj in objects:
+        #    sets[obj.archive_id].add(obj)
         return sets
 
     def get_changeable_permissions(self) -> QuerySet[Permission]:
@@ -1291,7 +1297,7 @@ class GroupAnalyst:
     def __init__(self, group: Group) -> None:
         self.group = group
 
-    def get_archive_permissions(self) -> DefaultDict[int, Set["WithAnnotations[Permission, WithArchiveId]"]]:
+    def get_archive_permissions(self) -> DefaultDict[int, Set[Any]]:
         sets = defaultdict(set)
         objects = (Permission.objects
             .filter(archivegrouppermission__group__id=self.group.id)
@@ -1386,6 +1392,12 @@ class KronofotoUserAdmin(UserAdmin):
     inlines = (UserArchivePermissionsInline,)
     readonly_fields = ['tagging_history']
     fieldsets = tuple(list(UserAdmin.fieldsets) + [("Other", {"fields": ('tagging_history',)})]) # type: ignore
+    def thumbnail_url(self, photo: Photo) -> str:
+        thumb = photo.thumbnail
+        if thumb:
+            return thumb.url
+        else:
+            return ""
 
     def tagging_history(self, obj: User) -> str:
         table = format_html_join(
@@ -1394,8 +1406,8 @@ class KronofotoUserAdmin(UserAdmin):
             (
                 (
                     reverse('admin:archive_photo_change',
-                    args=(tag.photo.id,)),
-                    tag.photo.thumbnail.url,
+                        args=(tag.photo.id,)),
+                    self.thumbnail_url(tag.photo),
                     tag.tag, "Yes" if tag.accepted else "No",
                 )
                 for tag in PhotoTag.objects.filter(creator=obj).select_related('photo', 'tag')

@@ -18,8 +18,11 @@ class TermGroup(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        db_table = 'kronofoto_termgroup'
 
-class Term(Collectible, models.Model):
+
+class Term(Collectible, models.Model): # type: ignore
     term = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
     description = models.TextField(blank=True)
@@ -43,6 +46,7 @@ class Term(Collectible, models.Model):
         ordering = ['term']
         verbose_name = "Subcategory"
         verbose_name_plural = "Subcategories"
+        db_table = 'kronofoto_term'
 
     @staticmethod
     def index() -> List[Dict[str, Any]]:

@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from ..reverse import reverse
 from django.http import QueryDict, HttpResponse, HttpResponseForbidden, HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.forms import formset_factory, Form
+from django.forms import formset_factory, Form, BaseFormSet
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -19,8 +19,8 @@ from ..models.collection import Collection
 from ..forms import AddToListForm, ListMemberForm, ListForm, CollectionForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
-from typing import Any, Dict, List, Callable, Protocol, Type
 from dataclasses import dataclass
+from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type
 
 def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
@@ -172,7 +172,7 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView): # typ
             return HttpResponseForbidden()
         return super().dispatch(request, *args, **kwargs)
 
-class NewList(FormView):
+class NewList(LoginRequiredMixin, FormView):
     form_class = ListForm
     template_name = 'archive/popup_collection_list.html' # any template is needed to prevent a 500 error
 
@@ -203,12 +203,12 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
         except TypeError:
             return HttpResponse("", status=400)
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> Any:
         return Collection.objects.filter(
             owner=self.request.user
         ).count_photo_instances(
             photo=self.kwargs['photo']
-        ) if not self.request.user.is_anonymous else Collection.objects.none()
+        ) if not self.request.user.is_anonymous else Collection.objects.filter(id__in=[])
 
     def get_initial(self) -> Any:
         return [
@@ -221,9 +221,9 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
             for o in self.get_queryset()
         ]
 
-    def form_valid(self, form: Form) -> HttpResponse:
+    def form_valid(self, form: BaseFormSet) -> HttpResponse:
         if self.request.user.is_anonymous:
-            return HttpResponseForbidden()
+            return HttpResponse(400)
         for data in form.cleaned_data:
             try:
                 collection = Collection.objects.get(id=data['collection'], owner=self.request.user) # type: ignore
@@ -253,6 +253,7 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
         return self.photo.get_absolute_url(kwargs=self.url_kwargs, params=self.get_params)
 
     def get_form_kwargs(self) -> Dict[str, Any]:
+        assert not self.request.user.is_anonymous
         kwargs = super().get_form_kwargs()
         if self.request.user.is_anonymous:
             raise PermissionDenied
@@ -269,9 +270,13 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form: Form) -> HttpResponse:
-        self.photo = get_object_or_404(Photo, id=self.kwargs['photo'])
-        if self.request.user.is_anonymous:
-            raise PermissionDenied
+        assert not self.request.user.is_anonymous
+        if isinstance(self.kwargs['photo'], int):
+            self.photo = get_object_or_404(Photo, id=self.kwargs['photo'])
+        else:
+            self.photo = get_object_or_404(
+                Photo, id=Photo.accession2id(self.kwargs['photo'])
+            )
         if form.cleaned_data['collection']:
             collection = get_object_or_404(
                 Collection, id=form.cleaned_data['collection']

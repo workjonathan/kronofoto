@@ -5,7 +5,7 @@ from django.db.models.signals import post_migrate
 class ArchiveConfig(AppConfig):
     name = "archive"
 
-    def ready(self):
+    def ready(self) -> None:
         from . import settings as app_defaults
         from . import signals
         from django.conf import settings

@@ -8,12 +8,13 @@ from .photo import Photo
 from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from typing import Optional
+from typing import Dict, Any, Protocol
 
 class CollectionQuerySet(models.QuerySet):
     @deal.ensure(lambda self, photo, result:
         all(bool(collection.membership) == collection.photos.filter(id=photo).exists() for collection in result)
     )
-    def count_photo_instances(self, *, photo: Photo) -> 'CollectionQuerySet':
+    def count_photo_instances(self, *, photo: Any) -> Dict[str, Any]:
         return self.annotate(
             membership=models.Count('photos', filter=models.Q(photos__id=photo))
         )
@@ -44,3 +45,5 @@ class Collection(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        db_table = 'kronofoto_collection'

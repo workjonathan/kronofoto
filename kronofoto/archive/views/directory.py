@@ -4,6 +4,7 @@ from ..models.photo import Photo
 from ..models.term import Term
 from ..models.tag import Tag
 from ..models.donor import Donor
+from typing import Any, Dict
 
 
 class DirectoryView(BaseTemplateMixin, TemplateView):
@@ -16,7 +17,7 @@ class DirectoryView(BaseTemplateMixin, TemplateView):
         {'name': 'Counties', 'indexer': Photo.CountyIndexer()},
     ]
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         context['subdirectories'] = self.subdirectories
         return context

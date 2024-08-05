@@ -11,29 +11,29 @@ from typing import final, Any, Type, List
 
 class DonorQuerySet(models.QuerySet):
     def annotate_photographedcount(self) -> Self:
-        from .photo import Photo
+        Photo: Any = self.model._meta.get_field('archive_photo_photographed').related_model # type: ignore
         q = Photo.objects.filter(photographer=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
         return self.annotate(photographed_count=Subquery(q))
 
     def annotate_scannedcount(self) -> Self:
-        from .photo import Photo
+        Photo: Any = self.model._meta.get_field('archive_photo_scanned').related_model # type: ignore
         q = Photo.objects.filter(scanner=OuterRef('id')).annotate(scanned_count=Func(F('id'), function='COUNT')).values('scanned_count')[:1]
         return self.annotate(scanned_count=Subquery(q))
 
     def annotate_donatedcount(self) -> Self:
-        from .photo import Photo
+        Photo: Any = self.model._meta.get_field('photo').related_model # type: ignore
         q = Photo.objects.filter(donor=OuterRef('id')).annotate(donated_count=Func(F('id'), function='COUNT')).values('donated_count')[:1]
         return self.annotate(donated_count=Subquery(q))
 
     def filter_donated(self) -> Self:
-        from .photo import Photo
+        Photo: Any = self.model._meta.get_field('photo').related_model # type: ignore
         q = Photo.objects.filter(donor__id=OuterRef('pk'), is_published=True, year__isnull=False)
         return self.filter(Exists(q))
 
 
 class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, models.PROTECT, null=False)
-    last_name = models.CharField(max_length=256, blank=True)
+    last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
     email = models.EmailField(blank=True)
     home_phone = models.CharField(max_length=256, blank=True)
@@ -51,6 +51,7 @@ class Donor(Collectible, models.Model):
         indexes = (
             models.Index(fields=['last_name', 'first_name']),
         )
+        db_table = 'kronofoto_donor'
 
 
     def display_format(self) -> str:

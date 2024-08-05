@@ -1,12 +1,13 @@
 from django.urls import reverse as django_reverse, resolve as django_resolve, ResolverMatch
 from django.contrib.sites.shortcuts import get_current_site
 from threading import local
+from django.http import HttpRequest
 from dataclasses import dataclass
 from django.contrib.sites.models import Site
 from urllib.parse import urlparse
 from django.conf import settings
 from django.utils.functional import lazy
-from typing import Optional, Sequence, Any, Dict
+from typing import Any, Optional, Union, Dict, List, Protocol, Tuple, Sequence
 
 requests = local()
 
