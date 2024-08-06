@@ -2,6 +2,7 @@
 {% load static %}
 {% load widgets %}
 {% load krono_urls %}
+{% load header %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +22,7 @@
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="{% static "assets/dist/js/main.js" %}"></script>
     <script type="module">
 
       const siteWrapper = document.querySelector('.site-wrapper');
@@ -113,51 +115,105 @@
       )
 
     </script>
+    <style>
+        :root {
+            --fp-main-font: 'Montserrat', sans-serif;
+            --fp-secondary-ticker-color: #9d9d9c;
+            --fp-main-grey: #d6d6da;
+            --fp-main-grey-translucent: rgba(214, 214, 218, 0.95);
+            --fp-light-grey: #efeff1;
+            --fp-light-grey-translucent: rgba(239, 239, 241, 0.9);
+            --fp-main-blue: {{ theme.color }};
+        --fp-main-color: {{ theme.color }};
+        --fp-main-color-lighter: {{ theme.colorLighter }};
+        --fp-main-color-darker: {{ theme.colorDarker }};
+        }
+    </style>
 </head>
 <body>
-    <div class="site-wrapper">
-        <header class="header">
-            <div class="header__logo">
 
-            </div>
-            <div class="header__title">
-                {{ exhibit.name }}
-            </div>
+    {% page_editor_header %}
 
-        </header>
-
-        <form method="post">
+    <form method="post">
         {% csrf_token %}
-        <div class="hero">
-            <div class="hero__content-wrapper" >
-                <div class="hero__title">
-                    <h1>{{ exhibit.title }}</h1>
-                </div>
-                <div class="hero__content">
-                    {{ exhibit.description | linebreaks }}
-                </div>
-            </div>
-            <div class="hero__background">
-                <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
-            </div>
 
-            <div class="hero__info-button info-button info-button--bottom">
-                <span class="info-button__icon"></span>
-                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
+        <div class="page-editor">
+            <div class="page-editor__page-wrapper">
+
+                <div class="site-wrapper">
+
+                    <header class="header">
+                        <div class="header__logo">
+                        </div>
+                        <div class="header__title" contenteditable="true" role="textbox" data-target="name">
+                            {{ exhibit.name }}
+                        </div>
+                    </header>
+
+                    <div class="hero">
+                        <div class="hero__content-wrapper" >
+                            <div class="hero__title">
+                                <h1 contenteditable="true" role="textbox" data-target="title">{{ exhibit.title }}</h1>
+                            </div>
+                            <div class="hero__content" contenteditable="true" role="textbox" data-target="description">
+                                {{ exhibit.description | linebreaks }}
+                            </div>
+                        </div>
+                        <div class="hero__background">
+                            <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+                        </div>
+
+                        <div class="hero__info-button info-button info-button--bottom">
+                            <span class="info-button__icon"></span>
+                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
+                        </div>
+                    </div>
+
+                    <div class="hide">
+                    {{ form }}
+                    </div>
+
+                    {% for card in cards %}
+                    {% card_tag card=card zindex=forloop.revcounter|add:10 edit=True %}
+                    {% endfor %}
+
+                </div>
+
+            </div>
+            <div class="page-editor__toolbar toolbar">
+                <div class="toolbar__section">
+                    <button type="submit" name="save" value="Save" class="button toolbar__button">Publish</button>
+                    <button class="toolbar__button--icon toolbar__button--small"><i class="icon--link"></i></button>
+                    <button class="toolbar__button--icon toolbar__button--small"><i class="icon--preview"></i></button>
+                    <button class="toolbar__button--icon toolbar__button--small"><i class="icon--undo-arrow"></i></button>
+                    <button class="toolbar__button--icon toolbar__button--small"><i class="icon--redo-arrow"></i></button>
+                </div>
+                <div class="toolbar__section">
+                    <label class="toolbar__label">Content blocks</label>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}"><i class="icon--add-text-image">Photo Card</i></button>
+                    <button class="toolbar__button--icon"><i class="icon--add-text-image-2"></i></button>
+                    <button class="toolbar__button--icon"><i class="icon--add-text-image-3"></i></button>
+                    <button class="toolbar__button--icon"><i class="icon--add-image-left"></i></button>
+                    <button class="toolbar__button--icon"><i class="icon--add-image-right"></i></button>
+                    <button class="toolbar__button--icon"><i class="icon--add-image-full"></i></button>
+
+                </div>
+
             </div>
         </div>
-        {{ form }}
-
-        {% for card in cards %}
-            {% card_tag card=card zindex=forloop.revcounter|add:10 edit=True %}
-        {% endfor %}
-        <div>Content blocks
-            <button hx-target="closest div" hx-swap="beforebegin" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}">Text Card</button>
-            <button hx-target="closest div" hx-swap="beforebegin" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}">Photo Card</button>
+    </form>
+    <div class="reveal tiny" id="add-image-modal" data-reveal>
+        <h1>My List - Title of the list that is selected</h1>
+        <div class="photo-tiles">
+            <div class="photo-tiles__tiles">
+            {% for i in "........................." %}
+            <img src="https://picsum.photos/200?random={{ forloop.counter }}">
+            {% endfor %}
+            </div>
         </div>
-        <input type="submit" value="Save">
-        </form>
-
+        <button class="close-button" data-close aria-label="Close modal" type="button">
+        </button>
     </div>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>

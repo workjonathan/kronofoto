@@ -38,7 +38,10 @@ import {
     MediaQuery
 } from './foundation-sites/js/foundation.util.mediaQuery';
 import {
-    Triggers
+  Reveal
+} from './foundation-sites/js/foundation.reveal';
+import {
+  Triggers
 } from './foundation-sites/js/foundation.util.triggers';
 
 class TimelineScroller {
@@ -294,23 +297,105 @@ class ImageLoader {
 class NullLoader {
     loadImage() {}
 }
+
 class CopyLink {
-    constructor({context}) {
-        this.context = context
+  constructor({context}) {
+    this.context = context
+  }
+  install({elem}) {
+    for (const elem2 of elem.querySelectorAll("[data-clipboard-copy]")) {
+      elem2.addEventListener("click", this.copyLink.bind(this))
     }
-    install({elem}) {
-        for (const elem2 of elem.querySelectorAll("[data-clipboard-copy]")) {
-            elem2.addEventListener("click", this.copyLink.bind(this))
+  }
+  copyLink(evt) {
+    evt.preventDefault()
+    navigator.clipboard.writeText(evt.target.getAttribute("href")).then(() => {
+      showToast("The collection link has been copied to the clipboard.")
+    }, () => {
+      showToast("ERROR: The collection link has not been copied to the clipboard.")
+    })
+  }
+}
+
+class PageEditor {
+  constructor({context}) {
+    this.context = context
+  }
+  install({elem}) {
+    for (const elem2 of elem.querySelectorAll(".page-editor")) {
+      elem2.addEventListener("input", this.updateHiddenField.bind(this))
+      $('.add-image-button', this.context).click(this.selectImage.bind(this))
+      $('.component-menu--off-canvas .up', this.context).click(this.moveComponentUp.bind(this))
+      $('.component-menu--off-canvas .down', this.context).click(this.moveComponentDown.bind(this))
+      $('.component-menu--off-canvas .delete', this.context).click(this.deleteComponent.bind(this))
+    }
+  }
+
+  moveComponentUp(event) {
+    const button = event.target
+    const card = button.closest('.card')
+    const parent = card.parentElement
+    const previous = card.previousElementSibling
+    if(previous) {
+      parent.before(card, previous)
+    }
+  }
+
+  moveComponentDown(event) {
+    const button = event.target
+    const card = button.closest('.card')
+    const parent = card.parentElement
+    const next = card.nextElementSibling
+    if(next) {
+      parent.after(card, next)
+    }
+  }
+
+  deleteComponent(event) {
+    const button = event.target
+    const card = button.closest('.card')
+    card.remove()
+  }
+
+  selectImage(event) {
+    const selectImageBtn = event.target
+    const images = $(selectImageBtn).data('images')
+    const target = $(selectImageBtn).data('target')
+    const $target = $('[name="' + target + '"]', this.context)
+    const $modal = $('#add-image-modal', this.context)
+    const $photos = $modal.find('.photo-tiles__tiles')
+    $photos.empty()
+    for(let i in images) {
+      let url = images[i]
+      let img = new Image()
+      img.src = url
+      if($target.val() == i) {
+        img.classList.add('active')
+      }
+      img.setAttribute('data-id', i)
+      img.addEventListener('click', (event) => {
+        if($target.length) {
+          $target.val(event.currentTarget.getAttribute('data-id'))
         }
+        $('#add-image-modal', this.context).foundation('close')
+      })
+      $photos.append(img)
     }
-    copyLink(evt) {
-        evt.preventDefault()
-        navigator.clipboard.writeText(evt.target.getAttribute("href")).then(() => {
-            showToast("The collection link has been copied to the clipboard.")
-        }, () => {
-            showToast("ERROR: The collection link has not been copied to the clipboard.")
-        })
+    $('#add-image-modal', this.context).foundation('open')
+  }
+  updateHiddenField(event) {
+    if (event.target.getAttribute('contenteditable') !== null) {
+      const contentEditable = event.target;
+      const targetName = contentEditable.getAttribute('data-target');
+      if (targetName) {
+        const $field = $("[name='" + targetName + "']", this.context);
+
+        if ($field.length) {
+          $field.val(contentEditable.innerHTML)
+        }
+      }
     }
+  }
 }
 class ImagePreviewInput {
     constructor({context}) {
@@ -614,7 +699,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, CopyLink]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, CopyLink, PageEditor]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})
             plugin.install({elem})
@@ -722,9 +807,10 @@ export function initFoundation(context) {
     Foundation.Motion = Motion;
     Foundation.Move = Move;
 
-    Triggers.Initializers.addToggleListener($(context))
+    Triggers.init($, Foundation, context);
     Foundation.plugin(Toggler, 'Toggler');
     Foundation.plugin(Tooltip, 'Tooltip');
+    Foundation.plugin(Reveal, 'Reveal');
 }
 
 export function initClipboardJS(context) {

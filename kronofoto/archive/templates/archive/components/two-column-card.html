@@ -1,7 +1,7 @@
 {% load widgets %}
 {% load krono_urls %}
 
-    <div id="card-{{ card.id }}" class="container container--no-padding" style="z-index: {{ zindex }}">
+    <div id="card-{{ card.id }}" class="card container container--no-padding" style="z-index: {{ zindex }}">
         <div class="two-column {{ image_area_classes | join:" "}}">
             <div class="two-column__image">
                 <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=1000 %}">
@@ -12,12 +12,18 @@
             </div>
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
-                    {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-                    {{ card.description }}
+                    {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
+                    <div contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</div>
                 </div>
             </div>
         </div>
         {% if form %}
+            <div class="component-menu--off-canvas">
+                <button type="button" class="up" aria-label="Move up">Move up</button>
+                <button type="button" class="down" aria-label="Move down">Move down</button>
+                <button type="button" class="delete" aria-label="Delete">Delete</button>
+            </div>
+            <div class="hide">
             {{ form }}
             {% for photo in form.fields.photo.queryset %}
                 <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
@@ -27,5 +33,6 @@
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
             <input type="submit" name="delete" value="Delete">
+            </div>
         {% endif %}
     </div>

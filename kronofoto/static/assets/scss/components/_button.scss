@@ -1,5 +1,5 @@
-@use '../typography' as *;
 @use 'sass:math';
+@use '../typography' as *;
 
 @function rem($value) {
   $remValue: math.div($value, 16px) * 1rem;

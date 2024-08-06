@@ -1,32 +1,11 @@
 @use '../typography' as *;
+@use '../scrollbar' as *;
 @import 'button';
 @import 'input';
 
 $popupBg: rgba(51, 51, 51, 0.95);
 //$popupMaxHeight: calc(100vh - 170px);
 $popupMaxHeight: 40vh;
-
-@mixin hover-scrollbar {
-  overflow-y: scroll;
-  mask-image: linear-gradient(to top, transparent, black), linear-gradient(to left, transparent 17px, black 17px);
-  mask-size: 100% 20000px;
-  mask-position: left bottom;
-  transition: mask-position 0.3s, -webkit-mask-position 0.3s;
-
-  &::-webkit-scrollbar {
-    background: transparent;
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #222;
-    border-radius: 20px;
-  }
-
-  &:hover {
-    -webkit-mask-position: left top;
-  }
-}
 
 #share-popup {
   input, select {

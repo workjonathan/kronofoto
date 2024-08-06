@@ -14,6 +14,7 @@ from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
 from django.db.models.functions import Lower
+import json
 import uuid
 from django import forms
 
@@ -44,7 +45,9 @@ def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
         if edit:
             photoform = PhotoCardForm(instance=card, initial={'card_type': "photo"}, prefix=str(uuid.uuid1()))
             if hasattr(photoform.fields['photo'], 'queryset'):
-                photoform.fields['photo'].queryset = Photo.objects.filter(card.photo_choices() | Q(id=card.photo.id))
+                photo_queryset = Photo.objects.filter(card.photo_choices() | Q(id=card.photo.id))
+                photoform.fields['photo'].queryset = photo_queryset
+                photoform.fields['photo'].image_urls = json.dumps({photo.id: image_url(id=photo.id, path=photo.original.name, height=200, width=200) for photo in photo_queryset})
             obj['form'] = photoform
         if card.alignment == PhotoCard.Alignment.FULL:
             obj['template'] = 'archive/components/full-image-card.html'
