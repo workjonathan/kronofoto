@@ -1,0 +1,46 @@
+@use '../../colors' as *;
+
+.info-button {
+  display: flex;
+  transition: width 300ms;
+  align-items: center;
+  position: absolute;
+  top: 10px;
+  left: 0px;
+  padding: 0px 10px;
+  width: 30px;
+  height: auto;
+  color: $white;
+  font-size: 12px;
+  line-height: 18px;
+  text-decoration: none;
+  overflow: hidden;
+  &--bottom {
+    top: auto;
+    bottom: 10px;
+  }
+  &:hover {
+    width: 600px;
+    > .info-button__text {
+      opacity: 1;
+    }
+  }
+  &__icon {
+    cursor: pointer;
+    display: block;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg id='info' xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='info-white' transform='translate(5 5)'%3E%3Ccircle id='Ellipse_4' data-name='Ellipse 4' cx='15' cy='15' r='15' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cg id='Group_10' data-name='Group 10' transform='translate(10.801 7.5)'%3E%3Cpath id='Path_21' data-name='Path 21' d='M21.95,24.53h5.28v7.416' transform='translate(-21.95 -17.06)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_62' data-name='Path 62' d='M0,0H8.4' transform='translate(0 15)' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3Ccircle id='Ellipse_5' data-name='Ellipse 5' cx='1.245' cy='1.245' r='1.245' transform='translate(2.64)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/g%3E%3Crect id='Rectangle_36' data-name='Rectangle 36' width='40' height='40' fill='none'/%3E%3C/svg%3E%0A");
+    background-size: cover;
+  }
+  &__text {
+    min-width: 600px;
+    position: relative;
+    top: 0px;
+    left: 6px;
+    opacity: 0;
+    transition: opacity 500ms;
+    text-align: left;
+  }
+}

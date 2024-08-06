@@ -1,0 +1,13 @@
+@use '../../colors' as *;
+@use '../../exhibit-typography' as *;
+
+.content-area {
+  &__content {
+    max-width: 600px;
+    margin: auto;
+    color: $clr-gray;
+    p {
+      @extend .paragraph;
+    }
+  }
+}

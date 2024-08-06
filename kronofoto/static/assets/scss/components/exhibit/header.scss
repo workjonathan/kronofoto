@@ -1,0 +1,32 @@
+.header {
+  padding: 15px;
+  width: calc(100% - 30px);
+  z-index: 100;
+  display: flex;
+  @media screen and (min-width: 48em) {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+  &__logo {
+    display: block;
+    aspect-ratio: 1.64;
+    width: 3.828125%;
+    min-width: 48px;
+    background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg id='Layer_1' data-name='Layer 1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 68.37 41.69'%3E%3Cdefs%3E%3Cstyle%3E .cls-1 %7B fill: %236e85b8; %7D .cls-1, .cls-2 %7B stroke-width: 0px; %7D .cls-2 %7B fill: %23fff; %7D %3C/style%3E%3C/defs%3E%3Cpath class='cls-1' d='M34.68,41.69h-1c-1.58,0-3.14-.28-4.62-.83l-20.42-7.58c-3.46-1.28-6.23-3.95-7.64-7.36h0c-1.35-3.25-1.35-6.91,0-10.16h0c1.41-3.41,4.18-6.07,7.64-7.36L29.07.83c1.48-.55,3.04-.83,4.62-.83h1c1.58,0,3.14.28,4.62.83l20.42,7.58c3.46,1.28,6.23,3.95,7.64,7.36h0c1.35,3.25,1.35,6.91,0,10.16h0c-1.41,3.41-4.18,6.07-7.64,7.36l-20.42,7.58c-1.48.55-3.04.83-4.62.83Z'/%3E%3Cg id='Fortepan_US_Mobile_Logo' data-name='Fortepan US Mobile Logo'%3E%3Cpath id='Path_94-2' data-name='Path 94-2' class='cls-2' d='M32.48,19.17h5.67c.54,0,.99-.42,1.03-.96,0-.32.01-.64.07-.96h2.46q.27,0,.27.27v6.96c.01.18-.12.33-.3.34-.01,0-.03,0-.04,0h-2.53v-1.57c-.02-.21-.12-.4-.27-.55-.2-.15-.44-.24-.68-.27h-5.8v8.19c.03.65.52,1.19,1.16,1.3h1.03c.34,0,.2,0,.2.2v2.53c0,.27,0,.34-.34.34h-7.11c-.2,0-.27,0-.27-.27v-2.73c.39-.01.78-.06,1.16-.14.63-.09,1.09-.66,1.03-1.3V11.25c0-.4-.15-.79-.41-1.09-.16-.2-.37-.34-.61-.41-.5-.07-1-.07-1.5,0-.18.01-.33-.12-.34-.3,0-.01,0-.03,0-.04v-2.59c0-.07.06-.13.14-.14h15.42v.14c0,1.98.14,3.62.14,5.67,0,.27,0,.34-.34.41h-2.94c-.18.01-.33-.12-.34-.3,0-.01,0-.03,0-.04v-1.98c.07-.14-.07-.41-.2-.41-.22-.1-.45-.17-.68-.2h-4.92c-.15.01-.26.13-.27.27v8.81c.14-.07.14.07.14.14h0Z'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  &__title {
+    font-size: 14px;
+    line-height: 18px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    color: #333333;
+    @media screen and (min-width: 48em) {
+      align-items: flex-start;
+      color: white;
+    }
+  }
+}

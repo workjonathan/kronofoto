@@ -1,0 +1,129 @@
+@use '../../colors' as *;
+@use '../../exhibit-typography' as *;
+
+.two-column {
+  position: relative;
+  display: flex;
+  color: $clr-gray;
+  //height: 200vh;
+  flex-wrap: wrap;
+  @media screen and (max-width: 48em) {
+    //margin-top: -100vh;
+    //height: 275vh;
+  }
+  @media screen and (min-width: 48em) {
+    flex-wrap: nowrap;
+  }
+  > div {
+    width: 100%;
+    overflow: hidden;
+    flex-grow: 1;
+  }
+  &__image {
+    aspect-ratio: 1;
+    @media screen and (max-width: 48em) {
+      position: sticky;
+      height: 100vh;
+    }
+    @media screen and (min-width: 48em) {
+      aspect-ratio: auto;
+      position: sticky;
+      height: 100vh;
+    }
+    top: 0px;
+    //z-index: -1;
+    img {
+      display: block;
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+    }
+  }
+  &__content-wrapper {
+    display: flex;
+    align-items: flex-start;
+    background-color: $white;
+    //padding-top: 100vh;
+    z-index: 1;
+  }
+  &__content {
+    padding: 55px;
+    @media screen and (min-width: 48em) {
+      margin-top: 50vh;
+      padding: 0px 18% 50vh 18%;
+    }
+    p {
+      @extend .paragraph;
+    }
+  }
+
+  @media screen and (min-width: 48em) {
+    &--image-left {
+      .two-column__image {
+        order: 1;
+      }
+
+      .two-column__content-wrapper {
+        order: 2;
+      }
+    }
+    &--image-right {
+      .two-column__image {
+        order: 2;
+      }
+
+      .two-column__content-wrapper {
+        order: 1;
+      }
+    }
+  }
+
+
+  &--variation-1 {
+    //height: 150vh;
+    .two-column__image {
+      @media screen and (min-width: 48em) {
+        margin-top: -100vh
+      }
+    }
+    .two-column__content-wrapper {
+      //padding-top: 0px;
+      //padding-bottom: 16vh;
+    }
+  }
+
+  &--variation-2 {
+    //height: 150vh;
+    .two-column__image {
+      //margin-top: -100vh
+    }
+    .two-column__content-wrapper {
+      //padding-top: 0px;
+      //padding-bottom: 16vh;
+    }
+  }
+
+  &--variation-3 {
+    //height: 150vh;
+    .two-column__image {
+      @media screen and (min-width: 48em) {
+        margin-top: -100vh
+      }
+    }
+    .two-column__content-wrapper {
+      //padding-top: 0px;
+      //padding-bottom: 16vh;
+    }
+  }
+
+  &--variation-4 {
+    //height: 150vh;
+    .two-column__image {
+      //margin-top: -100vh
+    }
+    .two-column__content-wrapper {
+      //padding-top: 0px;
+      //padding-bottom: 16vh;
+    }
+  }
+}

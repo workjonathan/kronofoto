@@ -1,0 +1,132 @@
+@use '../../colors' as *;
+@use '../../exhibit-typography' as *;
+@use '../../typography' as *;
+
+.page-editor {
+
+  .card {
+    transition: all 0.3s ease;
+  }
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: row;
+  align-items: flex-start;
+  background-color: #D6D6D6;
+  padding: 30px 30px 30px 70px;
+
+  [contenteditable=true] {
+    cursor: pointer;
+    transition: outline-color ease-in-out 200ms;
+    outline: 2px solid rgba(110, 134, 188, 0);
+    &:hover, &:focus-visible {
+      outline: 2px solid rgba(110, 134, 188, 1);
+    }
+    &:focus-visible {
+      cursor: auto;
+    }
+  }
+
+  &__page-wrapper {
+    margin-right: 50px;
+    flex: 1;
+  }
+
+  &__toolbar {
+    position: sticky !important;
+    top: 30px;
+  }
+
+}
+
+.toolbar {
+  box-sizing: border-box;
+  width: 130px;
+  padding: 15px;
+  background-color: $white;
+  position: relative;
+  overflow: hidden;
+
+  .toolbar__button {
+    margin-bottom: 10px;
+    padding: 0px;
+    width: 100%;
+  }
+
+  .toolbar__button--icon {
+    appearance: none;
+    padding: 0px;
+    width: 100px;
+    height: 69px;
+    background-color: $white;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all ease-in-out 200ms;
+    border: 1px solid #D6D6D6;
+    &:hover {
+      box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .16);
+    }
+    &:last-child {
+      margin-bottom: 0px;
+    }
+    i {
+      font-size: 0px;
+      display: block;
+    }
+  }
+
+  .toolbar__button--icon.toolbar__button--small {
+    width: 50px;
+    height: 50px;
+    border: none;
+    position: relative;
+    &:hover {
+      box-shadow: none;
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+        height: 2px;
+        width: 35px;
+        background-color: #D6D6D6;
+        transform: translateX(-50%);
+      }
+    }
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    padding-top: 15px;
+    &:first-child {
+      padding-top: 0px;
+    }
+    &:after {
+      content: '';
+      display: block;
+      min-width: 300px;
+      height: 1px;
+      background-color: #D6D6D6;
+      position: absolute;
+      bottom: 0px;
+    }
+    &:last-child:after {
+      display: none;
+    }
+  }
+
+  label {
+    color: #838383;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+}

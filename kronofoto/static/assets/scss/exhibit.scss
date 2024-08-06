@@ -1,0 +1,159 @@
+@use 'typography' as *;
+@use 'scrollbar' as *;
+@use 'components/exhibit/content-area';
+@use 'components/exhibit/page-editor';
+@use 'components/exhibit/full-image-area';
+@use 'components/exhibit/container';
+@use 'components/exhibit/header';
+@use 'components/exhibit/hero';
+@use 'components/exhibit/image-collection';
+@use 'components/exhibit/info-button';
+@use 'components/exhibit/two-column';
+
+@import 'colors';
+@import 'keyframes';
+
+//@import 'foundation-sites/scss/typography/typography';
+@import 'foundation-sites/scss/util/util';
+@import 'foundation-sites/scss/global';
+@import 'foundation-sites/scss/typography/typography';
+@import "foundation-sites/scss/util/breakpoint";
+@import 'foundation-sites/scss/components/reveal';
+//@import 'foundation-sites/scss/components/close-button';
+
+@import 'components/button';
+@import 'components/navigation';
+@import 'components/hamburger';
+@import 'components/search';
+
+//@import 'typography';
+//@import 'components/exhibit/container';
+//$reveal-width: 600px;
+
+@include foundation-reveal;
+//@include foundation-close-button;
+
+#add-image-modal {
+  width: 1024px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+  .close-button {
+    width: 50px;
+    height: 50px;
+    border: none;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg id='X' transform='translate(-1102 -100)'%3E%3Cpath id='Path_48' data-name='Path 48' d='M0,0V20' transform='translate(1124.071 107.929) rotate(45)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_49' data-name='Path 49' d='M0,0V20' transform='translate(1124.071 122.071) rotate(135)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Crect id='Rectangle_65' data-name='Rectangle 65' width='30' height='30' transform='translate(1102 100)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 35px;
+    right: 0px;
+    margin-right: 20px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    &:hover {
+      background-color: #eeeeee;
+    }
+  }
+  h1 {
+    margin: 0px;
+    padding: 0px 20px;
+    font-size: 16px;
+    line-height: 70px;
+    color: #707070;
+    font-weight: $font-weight-regular;
+    border-bottom: 1px solid #DBDBDB;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: "montserrat", sans-serif;
+  font-weight: $font-weight-regular;
+  font-style: normal;
+}
+
+.site-wrapper {
+  position: relative;
+}
+
+.hide {
+  //display: block !important;
+}
+
+.component-menu--off-canvas {
+  position: absolute;
+  top: 50%;
+  left: -50px;
+  height: 120px;
+  width: 40px;
+  button {
+    font-size: 0px;
+    border: none;
+    border-radius: 0px;
+    background-color: white;
+    width: 40px;
+    padding: 0;
+    height: 40px;
+    &:hover {
+      background-color: #eeeeee !important;
+    }
+    &.up {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='move-up_arrow' data-name='move-up arrow' transform='translate(127 420) rotate(180)'%3E%3Cpath id='arrow' d='M.884.884l9,9,9-9' transform='translate(96.616 391.615)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(87 380)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    }
+    &.down {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='move-down-arrow' transform='translate(-87 -380)'%3E%3Cpath id='arrow' d='M.884.884l9,9,9-9' transform='translate(97.616 391.616)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(87 380)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    }
+    &.delete {
+      margin-top: 4px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='trash' transform='translate(-11.918 -138.901)'%3E%3Cpath id='Path_484' data-name='Path 484' d='M36.838,150.884l-1.576,16.78a.663.663,0,0,1-.617.7H23.818a.663.663,0,0,1-.616-.7l-1.576-16.78' transform='translate(2.859 1.239)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_485' data-name='Path 485' d='M34.981,150.212s-.024-.679-.024-2.05-1.2-3.011-2.524-3.011H28.266c-1.326,0-2.524,1.64-2.524,3.011s-.025,2.05-.025,2.05' transform='translate(1.741 1.586)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cline id='Line_70' data-name='Line 70' x2='23.509' transform='translate(20.336 151.798)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(11.918 138.901)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    }
+    &:hover {
+      background-color: #cccccc;
+    }
+  }
+}
+
+[contenteditable=true][role=textbox]:not(:focus):empty {
+  color: #BBBBBB;
+  user-select: none;
+  &:before {
+    content: "Click to enter text";
+    user-select: none;
+  }
+}
+
+.add-image-button {
+  width: 40px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cg id='Group_104' data-name='Group 104' transform='translate(-305.5 -907.5)'%3E%3Cpath id='Path_481' data-name='Path 481' d='M318,907.5v15' transform='translate(-5 0)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_482' data-name='Path 482' d='M0,0V15' transform='translate(320.5 915) rotate(90)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+  background-repeat: no-repeat;
+  background-color: #ffffff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  background-position: center;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.photo-tiles {
+  overflow: auto;
+  @include hover-scrollbar(#999999);
+  &__tiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: calc((181px * 5) + (12px * 4));
+    margin: auto;
+  }
+  img {
+    margin-top: 12px;
+    width: 181px;
+    height: 181px;
+  }
+}
