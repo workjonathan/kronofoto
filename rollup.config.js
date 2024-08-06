@@ -29,5 +29,15 @@ export default [
         },
         plugins: [terser(), resolve(), commonjs()],
         onwarn: warnHandler
+    },
+    {
+      input: './kronofoto/static/assets/js/exhibit.js',
+      output: {
+        file: './kronofoto/static/assets/dist/js/exhibit.js',
+        sourcemap: true,
+        format: 'iife'
+      },
+      plugins: [terser(), resolve(), commonjs()],
+      onwarn: warnHandler
     }
 ]
