@@ -39,7 +39,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
     if card_type == "text":
         context['form'] = CardForm(initial={'card_type': "text"}, prefix=str(uuid.uuid1()))
         return TemplateResponse(
-            template="archive/components/card-form.html",
+            template="archive/components/text-card.html",
             request=request,
             context=context,
         )
