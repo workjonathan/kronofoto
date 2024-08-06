@@ -3,21 +3,26 @@
     {% if card.figure_set.all.exists %}
     {% include "archive/components/figure-card.html" with figures=card.figure_set.all photos=card.exhibit.collection.photos.all parent=form.prefix zindex=zindex edit=edit %}
     {% endif %}
-    <div id="card-{{ card.id }}" class="container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+    <div id="card-{{ card.id }}" class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
-                {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
-                <span contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</span>
+                {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
+                {% if form or card.description %}<span contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</span>{% endif %}
             </div>
         </div>
         {% if form %}
-            <div class="hide">
+        <div class="component-menu--off-canvas">
+            <button type="button" class="up" aria-label="Move up">Move up</button>
+            <button type="button" class="down" aria-label="Move down">Move down</button>
+            <button type="button" class="delete" aria-label="Delete">Delete</button>
+        </div>
+        <div class="hide">
             {{ form }}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
             <input type="submit" name="up" value="Up">
             <input type="submit" name="down" value="Down">
             <input type="submit" name="delete" value="Delete">
-            <button value="Add Figure" hx-get="{% krono_url "kronofoto:exhibit-figure-form" pk=card.exhibit.id parent=form.prefix %}" hx-target="#card-{{ card.id }}" hx-swap="beforebegin">Add Figure</button>
-            </div>
+            {#          <button value="Add Figure" hx-get="{% krono_url "kronofoto:exhibit-figure-form" pk=card.exhibit.id parent=form.prefix %}" hx-target="#card-{{ card.id }}" hx-swap="beforebegin">Add Figure</button> #}
+        </div>
         {% endif %}
     </div>

@@ -1,5 +1,12 @@
 {% load widgets %}
-    <div class="container" style="z-index: {{ zindex }}">
+<div id="card-{{ card.id }}" class="card container" style="z-index: {{ zindex }}">
+        {% if form %}
+        <div class="component-menu--off-canvas">
+            <button type="button" class="up" aria-label="Move up">Move up</button>
+            <button type="button" class="down" aria-label="Move down">Move down</button>
+            <button type="button" class="delete" aria-label="Delete">Delete</button>
+        </div>
+        {% endif %}
         <div class="image-collection image-collection--{{ figures.count }}">
         {% for figure in figures %}
             <figure>
@@ -12,19 +19,21 @@
                         </a>
                     </div>
                 </div>
-                <figcaption contenteditable="true" role="textbox">{{ figure.caption | linebreaksbr }}</figcaption>
                 {% if edit %}
-                    <div class="hide">
                     {% with form=figure|with_parent:parent|figure_form:photos %}
-                    {{ form.as_p }}<input type="hidden" name="prefix" value="{{ form.prefix }}">
-                    {% for photo in form.fields.photo.queryset %}
+                    <figcaption contenteditable="true" role="textbox" data-target="{{ form.prefix }}-caption">{{ figure.caption | linebreaksbr }}</figcaption>
+                    <div class="hide">
+                        {{ form.as_p }}<input type="hidden" name="prefix" value="{{ form.prefix }}">
+                        {% for photo in form.fields.photo.queryset %}
                         <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
-                    {% endfor %}
+                        {% endfor %}
+                        <input type="submit" name="up" value="Up">
+                        <input type="submit" name="down" value="Down">
+                        <input type="submit" name="delete" value="Delete">
+                    </div>
                     {% endwith %}
-                    <input type="submit" name="up" value="Up">
-                    <input type="submit" name="down" value="Down">
-                    <input type="submit" name="delete" value="Delete">
-                </div>
+                {% else %}
+                    <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
                 {% endif %}
             </figure>
         {% endfor %}
