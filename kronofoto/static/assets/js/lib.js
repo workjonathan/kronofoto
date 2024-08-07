@@ -391,7 +391,7 @@ class PageEditor {
         const $field = $("[name='" + targetName + "']", this.context);
 
         if ($field.length) {
-          $field.val(contentEditable.innerHTML)
+          $field.val(contentEditable.innerText)
         }
       }
     }
