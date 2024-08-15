@@ -13,6 +13,24 @@ from .collection import AddToList, CollectionCreate, CollectionDelete, profile_v
 from .grid import GridView
 from .categories import category_list
 from .submission import submission, list_terms, define_terms
-from .exhibit import exhibit, exhibit_list, exhibit_create, exhibit_edit, exhibit_card_form, exhibit_figure_form
+from .exhibit import exhibit, exhibit_list, exhibit_create, exhibit_edit, exhibit_card_form, exhibit_figure_form, exhibit_images, exhibit_figure_image, exhibit_full_image, exhibit_two_column_image
 from .images import resize_image
 from .data import datadump
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404
+from ..models import Photo
+from django.template.response import TemplateResponse
+
+def attribution(request: HttpRequest) -> HttpResponse:
+    html_name = request.GET.get("html_name", "")
+    try:
+        photo_id = int(request.GET.get(html_name, ""))
+        photo = get_object_or_404(Photo.objects.all(), pk=photo_id)
+        context = {
+            "form": True,
+            "edit": True,
+            "object": photo,
+        }
+        return TemplateResponse(request=request, context=context, template="archive/snippets/attribution.html")
+    except ValueError:
+        return HttpResponse("", status=400)

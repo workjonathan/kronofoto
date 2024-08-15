@@ -12,7 +12,7 @@ from ..models.photosphere import IncompleteGPSInfo
 from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
-from .card import CardForm, PhotoCardForm, FigureForm, CardFormType
+from .card import CardForm, PhotoCardForm, FigureForm, CardFormType, PhotoCardFormWrapper, CardFormWrapper, FigureFormWrapper
 from typing import Any, List, Dict, Optional, Union, Generator, Tuple
 
 class AgreementForm(forms.Form):

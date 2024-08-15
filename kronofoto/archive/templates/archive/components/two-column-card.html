@@ -3,17 +3,15 @@
 
     <div id="card-{{ card.id }}" class="card container container--no-padding" style="z-index: {{ zindex }}">
         <div class="two-column {{ image_area_classes | join:" "}}">
-            <div class="two-column__image">
-                <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=1000 %}">
-                <a class="two-column__info-button info-button info-button--top" href="#" target="_blank">
-                    <span class="info-button__icon"></span>
-                    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
-                </a>
+            {% with target_id=form.photo.auto_id photo=card.photo %}
+            <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id}}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>
+            {% include "archive/components/two-column-image.html" %}
             </div>
+            {% endwith %}
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
-                    {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>{% endif %}
-                    <div contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</div>
+                    {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+                    <div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
                 </div>
             </div>
         </div>
@@ -23,16 +21,9 @@
                 <button type="button" class="down" aria-label="Move down">Move down</button>
                 <button type="button" class="delete" aria-label="Delete">Delete</button>
             </div>
-            <div class="hide">
-            {{ form }}
-            {% for photo in form.fields.photo.queryset %}
-                <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
+            {% for field in form %}
+                {{ field.as_hidden }}
             {% endfor %}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
-            <input type="submit" name="save" value="Save">
-            <input type="submit" name="up" value="Up">
-            <input type="submit" name="down" value="Down">
-            <input type="submit" name="delete" value="Delete">
-            </div>
         {% endif %}
     </div>

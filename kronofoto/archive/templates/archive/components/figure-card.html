@@ -1,4 +1,5 @@
 {% load widgets %}
+{% load krono_urls %}
 <div id="card-{{ card.id }}" class="card container" style="z-index: {{ zindex }}">
         {% if form %}
         <div class="component-menu--off-canvas">
@@ -7,30 +8,22 @@
             <button type="button" class="delete" aria-label="Delete">Delete</button>
         </div>
         {% endif %}
-        <div class="image-collection image-collection--{{ figures.count }}">
+        <div class="image-collection image-collection--{{ figures|length }}">
         {% for figure in figures %}
             <figure>
                 <div class="image-collection__wrapper">
-                    <div class="image-collection__inner-wrapper">
-                        <img loading="lazy" src="{% image_url id=figure.photo.id path=figure.photo.original.name height=450 width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">
-                        <a class="image-collection__info info-button info-button--bottom" href="#" target="_blank">
-                            <span class="info-button__icon"></span>
-                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=figure.photo %}</div>
-                        </a>
+                    {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
+                    <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>
+                        {% include "archive/components/figure-image.html" %}
                     </div>
+                    {% endwith %}
                 </div>
                 {% if edit %}
-                    {% with form=figure|with_parent:parent|figure_form:photos %}
-                    <figcaption contenteditable="true" role="textbox" data-target="{{ form.prefix }}-caption">{{ figure.caption | linebreaksbr }}</figcaption>
-                    <div class="hide">
-                        {{ form.as_p }}<input type="hidden" name="prefix" value="{{ form.prefix }}">
-                        {% for photo in form.fields.photo.queryset %}
-                        <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
-                        {% endfor %}
-                        <input type="submit" name="up" value="Up">
-                        <input type="submit" name="down" value="Down">
-                        <input type="submit" name="delete" value="Delete">
-                    </div>
+                    {% with form=figure.form %}
+                    <figcaption contenteditable="true" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption | linebreaksbr }}</figcaption>
+                    {% for field in form %}
+                        {{ field.as_hidden }}
+                    {% endfor %}<input type="hidden" name="prefix" value="{{ form.prefix }}">
                     {% endwith %}
                 {% else %}
                     <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>

@@ -322,9 +322,25 @@ class PageEditor {
     this.context = context
   }
   install({elem}) {
+    for (const modal of this.context.querySelectorAll('#add-image-modal')) {
+      this.context.addEventListener("kronofoto:modal:reveal", evt => {
+        $(modal).foundation("open")
+      })
+    }
+    for (const img of elem.querySelectorAll("[data-photo-target]")) {
+      img.addEventListener("click", evt => {
+        const id = img.getAttribute("data-photo-target")
+        $('#add-image-modal', this.context).foundation('close')
+        const target = this.context.querySelector(`#${id}`)
+        target.value = img.getAttribute("data-id")
+        target.dispatchEvent(new Event("change", {
+            bubbles: false
+        }))
+      })
+    }
     for (const elem2 of elem.querySelectorAll(".page-editor")) {
       elem2.addEventListener("input", this.updateHiddenField.bind(this))
-      $('.add-image-button', this.context).click(this.selectImage.bind(this))
+      //$('.add-image-button', this.context).click(this.selectImage.bind(this))
       $('.component-menu--off-canvas .up', this.context).click(this.moveComponentUp.bind(this))
       $('.component-menu--off-canvas .down', this.context).click(this.moveComponentDown.bind(this))
       $('.component-menu--off-canvas .delete', this.context).click(this.deleteComponent.bind(this))
@@ -388,7 +404,7 @@ class PageEditor {
       const contentEditable = event.target;
       const targetName = contentEditable.getAttribute('data-target');
       if (targetName) {
-        const $field = $("[name='" + targetName + "']", this.context);
+        const $field = $(`#${targetName}`, this.context);
 
         if ($field.length) {
           $field.val(contentEditable.innerText)
@@ -798,6 +814,11 @@ export const initHTMXListeners = (_htmx, context, {
         instance.onLoad(context)
     }
     _htmx.onLoad(instance.onLoad.bind(instance))
+    _htmx.onLoad(() => {
+        if (window['AOS']) {
+            AOS.refreshHard()
+        }
+    })
 }
 export function initFoundation(context) {
 

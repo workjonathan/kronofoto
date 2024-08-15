@@ -1,20 +1,21 @@
 {% load widgets %}
 {% load krono_urls %}
+
     <div id="card-{{ card.id }}" class="card container container--full-width container--no-padding" style="z-index: {{zindex}}">
         <div class="full-image-area {{ image_area_classes | join:" " }}">
             {% if form %}
-            <div class="add-image-button" data-images="{{ form.fields.photo.image_urls }}" data-target="{{ form.prefix }}-photo"></div>
+            <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
             {% endif %}
-            <a class="full-image-area__info info-button info-button--top" href="#" target="_blank">
+            <a class="full-image-area__info info-button info-button--top" href="#" target="_blank"> 
                 <span class="info-button__icon"></span>
-                <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
+                <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
             </a>
             <div class="full-image-area__text">
-                <h2 contenteditable="true" role="textbox" data-target="{{ form.prefix }}-title">{{ card.title }}</h2>
-                <span contenteditable="true" role="textbox" data-target="{{ form.prefix }}-description">{{ card.description }}</span>
+                <h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+                <span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
             </div>
-            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0">
-                <img loading="lazy" src="{% image_url id=card.photo.id path=card.photo.original.name width=2000 %}">
+            <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>
+                {% include "archive/components/full-image.html" with photo=card.photo %}
             </div>
             {% if form %}
                 <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.prefix }}_alignment" data-toggle="{{ form.prefix }}_alignment" data-toggle-focus="{{ form.prefix }}_alignment">

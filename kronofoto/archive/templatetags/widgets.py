@@ -28,14 +28,14 @@ def with_parent(figure: Figure, parent: str) -> Tuple[Figure, str]:
 def figure_form(figure_parent: Tuple[Figure, str], photos: QuerySet[Photo]) -> forms.Form:
     figure, parent = figure_parent
     from ..forms.card import FigureForm
-    form = FigureForm(prefix=str(uuid.uuid1()), initial={"parent": parent, 'card_type': 'figure'}, instance=figure)
+    form = FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent, 'card_type': 'figure'}, instance=figure)
     assert hasattr(form.fields['photo'], 'queryset')
     form.fields['photo'].queryset = photos
     return form
 
 @register.inclusion_tag('archive/components/card.html', takes_context=False)
 def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
-    from ..forms import CollectionForm, CardForm, PhotoCardForm
+    from ..forms import CollectionForm, CardForm, PhotoCardForm, CardFormWrapper, PhotoCardFormWrapper
     obj : Dict[str, Any] = {
         'zindex': zindex,
         'edit': edit,
@@ -43,12 +43,15 @@ def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
     if hasattr(card, 'photocard'):
         card = card.photocard
         if edit:
-            photoform = PhotoCardForm(instance=card, initial={'card_type': "photo"}, prefix=str(uuid.uuid1()))
+            photoform = PhotoCardForm(instance=card, initial={'card_type': "photo"}, prefix=str(uuid.uuid4()))
             if hasattr(photoform.fields['photo'], 'queryset'):
                 photo_queryset = Photo.objects.filter(card.photo_choices() | Q(id=card.photo.id))
                 photoform.fields['photo'].queryset = photo_queryset
                 photoform.fields['photo'].image_urls = json.dumps({photo.id: image_url(id=photo.id, path=photo.original.name, height=200, width=200) for photo in photo_queryset})
             obj['form'] = photoform
+            obj['card'] = PhotoCardFormWrapper(form=photoform)
+        else:
+            obj['card'] = card
         if card.alignment == PhotoCard.Alignment.FULL:
             obj['template'] = 'archive/components/full-image-card.html'
             obj['image_area_classes'] = ['full-image-area--contain']
@@ -60,10 +63,12 @@ def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
                 else ['two-column--image-right', 'two-column--variation-2']
             )
     else:
-        card = card
         if edit:
-            form = CardForm(instance=card, initial={"card_type": "text"}, prefix=str(uuid.uuid1()))
+            form = CardForm(instance=card, initial={"card_type": "text"}, prefix=str(uuid.uuid4()))
             obj['form'] = form
+            obj['card'] = CardFormWrapper(form=form)
+        else:
+            obj['card'] = card
         obj['template'] = 'archive/components/text-card.html'
         if card.figure_set.all().exists():
             obj['styles'] = {
@@ -73,7 +78,7 @@ def card_tag(card: Card, zindex: int, edit: bool=False) -> Dict[str, Any]:
             'data-aos': 'fade-up',
             'data-aos-duration': '1000',
         }
-    obj['card'] = card
+    #obj['card'] = card
     return obj
 
 

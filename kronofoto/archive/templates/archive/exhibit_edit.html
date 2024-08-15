@@ -21,7 +21,6 @@
 	<meta name="msapplication-config" content="https://fortepan.us/static/assets/favicon/browserconfig.xml">
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script src="{% static "assets/dist/js/main.js" %}"></script>
     <script type="module">
 
@@ -110,9 +109,6 @@
         const target = document.querySelector(evt.detail.target)
         target.insertAdjacentElement(evt.detail.swapStyle, elem)
       })
-      htmx.onLoad(() =>
-        AOS.refreshHard()
-      )
 
     </script>
     <style>
@@ -174,7 +170,7 @@
                     </div>
 
                     {% for card in cards %}
-                    {% card_tag card=card zindex=forloop.revcounter|add:10 edit=True %}
+                    {% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit %}
                     {% endfor %}
 
                 </div>
@@ -191,7 +187,7 @@
                 <div class="toolbar__section">
                     <label class="toolbar__label">Content blocks</label>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}"><i class="icon--add-text-image">Photo Card</i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
                     <button class="toolbar__button--icon"><i class="icon--add-text-image-2"></i></button>
                     <button class="toolbar__button--icon"><i class="icon--add-text-image-3"></i></button>
                     <button class="toolbar__button--icon"><i class="icon--add-image-left"></i></button>
@@ -204,16 +200,6 @@
         </div>
     </form>
     <div class="reveal tiny" id="add-image-modal" data-reveal>
-        <h1>My List - Title of the list that is selected</h1>
-        <div class="photo-tiles">
-            <div class="photo-tiles__tiles">
-            {% for i in "........................." %}
-            <img src="https://picsum.photos/200?random={{ forloop.counter }}">
-            {% endfor %}
-            </div>
-        </div>
-        <button class="close-button" data-close aria-label="Close modal" type="button">
-        </button>
     </div>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
