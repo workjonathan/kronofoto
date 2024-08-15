@@ -18,14 +18,14 @@
                 {% include "archive/components/full-image.html" with photo=card.photo %}
             </div>
             {% if form %}
-                <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.prefix }}_alignment" data-toggle="{{ form.prefix }}_alignment" data-toggle-focus="{{ form.prefix }}_alignment">
-                    <div data-toggle="{{ form.prefix }}_alignment">
-                        <input type="radio" name="{{ form.prefix }}_alignment" id="{{ form.prefix }}_alignment_1" value="1" checked="checked">
-                        <label for="{{ form.prefix }}_alignment_1">fit to page</label>
+                <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.alignment.auto_id }}" data-toggle="{{ form.alignment.auto_id }}" data-toggle-focus="{{ form.alignment.auto_id }}">
+                    <div data-toggle="{{ form.alignment.auto_id }}">
+                        {{ form.alignment.0.tag }}
+                        <label for="{{ form.alignment.0.id_for_label }}">fit to page</label>
                     </div>
-                    <div data-toggle="{{ form.prefix }}_alignment">
-                        <input type="radio" name="{{ form.prefix }}_alignment" id="{{ form.prefix }}_alignment_2" value="2">
-                        <label for="{{ form.prefix }}_alignment_2">fill page</label>
+                    <div data-toggle="{{ form.alignment.auto_id }}">
+                        {{ form.alignment.3.tag }}
+                        <label for="{{ form.alignment.3.id_for_label }}">fill page</label>
                     </div>
                 </div>
             {% endif %}
@@ -37,9 +37,10 @@
                 <button type="button" class="delete" aria-label="Delete">Delete</button>
             </div>
             <div class="hide">
-            {{ form }}
-            {% for photo in form.fields.photo.queryset %}
-                <img src="{% image_url id=photo.id path=photo.original.name height=75 width=75 %}" height="75" width="75">
+            {% for field in form %}
+            {% if field != form.alignment %}
+            {{ field.as_hidden }}
+            {% endif %}
             {% endfor %}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
 {#          <input type="submit" name="save" value="Save"> #}

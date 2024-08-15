@@ -1,4 +1,4 @@
-from django.forms import ModelForm, Form, CharField, HiddenInput
+from django.forms import ModelForm, Form, CharField, HiddenInput, RadioSelect
 from django.db.models import QuerySet
 from ..models import Card, PhotoCard, Figure, Photo
 from dataclasses import dataclass
@@ -24,6 +24,9 @@ class PhotoCardForm(ModelForm, CardFormType):
     class Meta:
         model = PhotoCard
         fields = ['title', 'description', 'photo', 'alignment']
+        widgets = {
+            "alignment": RadioSelect,
+        }
 
 @dataclass
 class CardFormWrapper:

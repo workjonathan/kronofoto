@@ -18,6 +18,9 @@ class Exhibit(models.Model):
     def str(self) -> str:
         return self.name
 
+    class Meta:
+        db_table = "kronofoto_exhibit"
+
 class Card(models.Model):
     PLAIN_TEXT = 0
     NO_BORDER = 1
@@ -31,6 +34,7 @@ class Card(models.Model):
         indexes = (
             models.Index(fields=['exhibit', 'order']),
         )
+        db_table = "kronofoto_card"
 
 class PhotoCard(Card):
     photo = models.ForeignKey(Photo, on_delete=models.PROTECT)
@@ -39,13 +43,19 @@ class PhotoCard(Card):
         return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
 
     class Alignment(models.IntegerChoices):
-        FULL = 1
+        CONTAIN = 1
         LEFT = 2
         RIGHT = 3
-    alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.FULL)
+        COVER = 4
+    alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.CONTAIN)
+
+    class Meta:
+        db_table = "kronofoto_photocard"
 
 class Figure(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     caption = models.TextField(blank=True, default="")
     photo = models.ForeignKey(Photo, on_delete=models.PROTECT)
     order = models.IntegerField(default=0)
+    class Meta:
+        db_table = "kronofoto_figure"

@@ -155,18 +155,22 @@
                                 {{ exhibit.description | linebreaks }}
                             </div>
                         </div>
-                        <div class="hero__background">
+                        <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
+                        <div class="hero__background"
+                            hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">
                             <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
                         </div>
 
                         <div class="hero__info-button info-button info-button--bottom">
                             <span class="info-button__icon"></span>
-                            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
+                            <div class="info-button__text" hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
                         </div>
                     </div>
 
                     <div class="hide">
-                    {{ form }}
+                    {% for field in form %}
+                        {{ field.as_hidden }}
+                    {% endfor %}
                     </div>
 
                     {% for card in cards %}

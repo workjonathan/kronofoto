@@ -228,7 +228,6 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             figure_forms : Dict[str, List[Form]] = defaultdict(list)
             for form in forms:
                 if form['card_type'].value() == 'figure':
-                    print("FORM")
                     matching_forms = figure_forms[form['parent'].value() or ""]
                     matching_forms.append(form)
                     figure_forms[form['parent'].value() or ""] = matching_forms
@@ -287,15 +286,15 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
         if hasattr(card, 'photocard'):
             card = card.photocard
             photoform = PhotoCardForm(instance=card, initial={"card_type": "photo"}, prefix=str(uuid.uuid4()))
-            if hasattr(photoform.fields['photo'], 'queryset'):
-                photo_queryset = Photo.objects.filter(card.photo_choices() | Q(id=card.photo.id))
-                photoform.fields['photo'].queryset = photo_queryset
-                setattr(photoform.fields['photo'], "image_urls", json.dumps({photo.id: image_url(id=photo.id, path=photo.original.name, height=200, width=200) for photo in photo_queryset}))
+            print(photoform['alignment'])
             obj['form'] = photoform
             obj['card'] = PhotoCardFormWrapper(form=photoform)
-            if card.alignment == PhotoCard.Alignment.FULL:
+            if card.alignment == PhotoCard.Alignment.CONTAIN:
                 obj['template'] = 'archive/components/full-image-card.html'
                 obj['image_area_classes'] = ['full-image-area--contain']
+            elif card.alignment == PhotoCard.Alignment.COVER:
+                obj['template'] = 'archive/components/full-image-card.html'
+                obj['image_area_classes'] = ['full-image-area--cover']
             else:
                 obj['template'] = 'archive/components/two-column-card.html'
                 obj['image_area_classes'] = (
