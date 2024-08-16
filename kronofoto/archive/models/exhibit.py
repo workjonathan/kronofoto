@@ -30,6 +30,9 @@ class Card(models.Model):
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
     order = models.IntegerField()
 
+    def figures(self):
+        return self.figure_set.all().order_by("order")
+
     class Meta:
         indexes = (
             models.Index(fields=['exhibit', 'order']),
@@ -41,6 +44,7 @@ class PhotoCard(Card):
 
     def photo_choices(self) -> models.Q:
         return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
+
 
     class Alignment(models.IntegerChoices):
         CONTAIN = 1

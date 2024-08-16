@@ -5,12 +5,15 @@
         <div class="two-column {{ image_area_classes | join:" "}}">
             {% with target_id=form.photo.auto_id photo=card.photo %}
             <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id}}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>
+            {{ form.photo.errors }}
             {% include "archive/components/two-column-image.html" %}
             </div>
             {% endwith %}
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
+                    {{ form.title.errors }}
                     {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+                    {{ form.description.errors }}
                     <div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
                 </div>
             </div>

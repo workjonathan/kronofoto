@@ -3,9 +3,6 @@
 <div id="card-{{ card.id }}" class="card container" style="z-index: {{ zindex }}">
         {% if form %}
         <div class="component-menu--off-canvas">
-            <button type="button" class="up" aria-label="Move up">Move up</button>
-            <button type="button" class="down" aria-label="Move down">Move down</button>
-            <button type="button" class="delete" aria-label="Delete">Delete</button>
         </div>
         {% endif %}
         <div class="image-collection image-collection--{{ figures|length }}">
@@ -20,6 +17,7 @@
                 </div>
                 {% if edit %}
                     {% with form=figure.form %}
+                    {{ form.caption.errors }}
                     <figcaption contenteditable="true" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption | linebreaksbr }}</figcaption>
                     {% for field in form %}
                         {{ field.as_hidden }}

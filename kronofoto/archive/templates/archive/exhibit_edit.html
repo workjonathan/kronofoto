@@ -93,14 +93,6 @@
         once: true
       });
 
-      // Add alt classes for two-column components
-      const twoColumnComponents = document.querySelectorAll('.two-column');
-      twoColumnComponents.forEach((component, i) => {
-        if(!(i % 2)) {
-          component.classList.add('two-column--alt');
-        }
-      });
-
       // Add event listeners
       window.addEventListener('scroll', updateScrollOpacity);
       window.addEventListener('resize', updateVH);
@@ -174,7 +166,7 @@
                     </div>
 
                     {% for card in cards %}
-                    {% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit %}
+                    {% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}
                     {% endfor %}
 
                 </div>
@@ -192,11 +184,11 @@
                     <label class="toolbar__label">Content blocks</label>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
-                    <button class="toolbar__button--icon"><i class="icon--add-text-image-2"></i></button>
-                    <button class="toolbar__button--icon"><i class="icon--add-text-image-3"></i></button>
-                    <button class="toolbar__button--icon"><i class="icon--add-image-left"></i></button>
-                    <button class="toolbar__button--icon"><i class="icon--add-image-right"></i></button>
-                    <button class="toolbar__button--icon"><i class="icon--add-image-full"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
 
                 </div>
 

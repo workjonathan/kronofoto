@@ -90,14 +90,6 @@
         once: true
       });
 
-      // Add alt classes for two-column components
-      const twoColumnComponents = document.querySelectorAll('.two-column');
-      twoColumnComponents.forEach((component, i) => {
-        if(!(i % 2)) {
-          component.classList.add('two-column--alt');
-        }
-      });
-
       // Add event listeners
       window.addEventListener('scroll', updateScrollOpacity);
       window.addEventListener('resize', updateVH);
@@ -136,7 +128,7 @@
         </div>
 
         {% for card in cards %}
-            {% card_tag card=card zindex=forloop.revcounter|add:10 %}
+            {% include card.template with card=card.card zindex=card.zindex edit=False exhibit=exhibit image_area_classes=card.image_area_classes %}
         {% endfor %}
 
     </div>

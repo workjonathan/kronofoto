@@ -42,12 +42,17 @@ class CardFormWrapper:
         return self.form['title'].value() or ""
 
     @property
+    def card(self) -> "CardFormWrapper":
+        return self
+
+    @property
     def id(self) -> int:
         return self.form.instance.id
 
     @property
     def description(self) -> str:
         return self.form['description'].value() or ""
+
 
 
 @dataclass
@@ -58,6 +63,12 @@ class PhotoCardFormWrapper:
     def title(self) -> str:
         return self.form['title'].value() or ""
 
+    @property
+    def alignment(self) -> int:
+        try:
+            return int(self.form['alignment'].value())
+        except ValueError:
+            return 1
     @property
     def photo(self) -> Optional[Photo]:
         val = self.form['photo'].value()
@@ -90,6 +101,5 @@ class FigureFormWrapper:
                 return Photo.objects.get(pk=val)
             except Photo.DoesNotExist:
                 return None
-
         else:
             return None
