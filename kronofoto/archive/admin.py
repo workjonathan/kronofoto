@@ -15,11 +15,11 @@ from .models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Do
 from .models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
 from .models.photo import Submission
-from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement
+from .models.archive import Archive, ArchiveUserPermission, ArchiveAgreement, ArchiveGroupPermission
 from .models.category import Category, ValidCategory
 from .models.csvrecord import ConnecticutRecord
 from .forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm
-from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey, Model
+from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey, Model, Manager
 from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
 from django.db.models.options import Options
@@ -1322,6 +1322,17 @@ class EscalationBlocker:
         self.changeable_archive_permissions = self.editor.get_archive_permissions()
         self.changeable_perms = set(self.editor.get_changeable_permissions())
 
+    def create_archive_relation(self, *, archive: Archive, target_data: Union[UserData, GroupData]) -> Union[ArchiveUserPermission, ArchiveGroupPermission]:
+        if isinstance(target_data, UserData):
+            return Archive.users.through.objects.create(archive=archive, user=target_data.user)
+        return Archive.groups.through.objects.create(archive=archive, group=target_data.group)
+
+    def get_archive_relation(self, *, archive: Archive, target_data: Union[UserData, GroupData]) -> Union[ArchiveUserPermission, ArchiveGroupPermission]:
+        if isinstance(target_data, UserData):
+            return target_data.user.archiveuserpermission_set.get(archive__id=archive.id)
+        assert hasattr(target_data.group, "archivegrouppermission_set")
+        return target_data.group.archivegrouppermission_set.get(archive__id=archive.id)
+
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         if isinstance(self.target_data, UserData):
             new_perms = set(self.target_data.user.user_permissions.all())
@@ -1335,14 +1346,14 @@ class EscalationBlocker:
             for related in changed_archive_perms:
                 assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
                 try:
-                    obj = self.target_data.user.archiveuserpermission_set.get(archive__id=related.id)
+                    obj : Union[ArchiveUserPermission, ArchiveGroupPermission] = self.get_archive_relation(archive=related, target_data=self.target_data)
                     if len(assign) == 0:
                         obj.delete()
                     else:
                         obj.permission.set(assign)
                 except ObjectDoesNotExist:
                     if assign:
-                        obj = Archive.users.through.objects.create(archive=related, user=self.user) # type: ignore
+                        obj = self.create_archive_relation(archive=related, target_data=self.target_data)
                         obj.permission.set(assign)
         elif isinstance(self.target_data, GroupData):
             new_perms = set(self.target_data.group.permissions.all())
@@ -1354,14 +1365,14 @@ class EscalationBlocker:
             for related in changed_archive_perms:
                 assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
                 try:
-                    obj = self.target_data.group.archivegrouppermission_set.get(archive__id=related.id) # type: ignore
+                    obj = self.get_archive_relation(archive=related, target_data=self.target_data)
                     if len(assign) == 0:
                         obj.delete()
                     else:
                         obj.permission.set(assign)
                 except ObjectDoesNotExist:
                     if assign:
-                        obj = Archive.groups.through.objects.create(archive=related, group=self.target_data.group) # type: ignore
+                        obj = self.create_archive_relation(archive=related, target_data=self.target_data)
                         obj.permission.set(assign)
 
 
