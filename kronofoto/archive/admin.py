@@ -1333,6 +1333,12 @@ class EscalationBlocker:
         assert hasattr(target_data.group, "archivegrouppermission_set")
         return target_data.group.archivegrouppermission_set.get(archive__id=archive.id)
 
+    def get_assigned_archive_permissions(self, *, target_data: Union[UserData, GroupData]) -> Dict[int, Set[Any]]:
+        if isinstance(target_data, UserData):
+            return target_data.user_analyst.get_archive_permissions()
+        else:
+            return target_data.group_analyst.get_archive_permissions()
+
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         if isinstance(self.target_data, UserData):
             new_perms = set(self.target_data.user.user_permissions.all())
@@ -1341,7 +1347,7 @@ class EscalationBlocker:
             self.target_data.user.groups.set((self.old_groups - self.changeable_groups) | (self.changeable_groups & new_groups))
 
             new_archives = set(aup.archive for aup in self.target_data.user.archiveuserpermission_set.all())
-            new_archive_permissions = self.target_data.user_analyst.get_archive_permissions()
+            new_archive_permissions = self.get_assigned_archive_permissions(target_data=self.target_data)
             changed_archive_perms = self.old_archives | new_archives
             for related in changed_archive_perms:
                 assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
@@ -1360,7 +1366,7 @@ class EscalationBlocker:
             self.target_data.group.permissions.set((self.old_perms - self.changeable_perms) | (self.changeable_perms & new_perms))
             new_archives = set(agp.archive for agp in self.target_data.group.archivegrouppermission_set.all()) # type: ignore
 
-            new_archive_permissions = self.target_data.group_analyst.get_archive_permissions()
+            new_archive_permissions = self.get_assigned_archive_permissions(target_data=self.target_data)
             changed_archive_perms = self.old_archives | new_archives
             for related in changed_archive_perms:
                 assign = (self.old_archive_permissions[related.id] - (self.changeable_archive_permissions[related.id] | self.changeable_perms)) | ((self.changeable_archive_permissions[related.id] | self.changeable_perms) & new_archive_permissions[related.id]) # type: ignore
