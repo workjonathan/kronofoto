@@ -41,7 +41,6 @@
                 <button type="button" class="down" aria-label="Move down">Move down</button>
                 <button type="button" class="delete" aria-label="Delete">Delete</button>
             </div>
-            <div class="hide">
             {% for field in form %}
             {% if field != form.alignment %}
             {{ field.as_hidden }}
@@ -49,6 +48,5 @@
             {% endfor %}
             <input type="hidden" name="prefix" value="{{ form.prefix }}">
 {#          <input type="submit" name="save" value="Save"> #}
-            </div>
         {% endif %}
     </div>
