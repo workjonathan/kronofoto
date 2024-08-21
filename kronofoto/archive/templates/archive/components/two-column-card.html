@@ -1,7 +1,7 @@
 {% load widgets %}
 {% load krono_urls %}
 
-    <div id="card-{{ card.id }}" class="card container container--no-padding" style="z-index: {{ zindex }}">
+    <div class="card container container--no-padding" style="z-index: {{ zindex }}">
         <div class="two-column {{ image_area_classes | join:" "}}">
             {% with target_id=form.photo.auto_id photo=card.photo %}
             <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id}}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>

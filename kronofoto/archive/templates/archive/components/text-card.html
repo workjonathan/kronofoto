@@ -3,7 +3,7 @@
     {% if card.figures %}
     {% include "archive/components/figure-card.html" with figures=card.figures photos=photos.all parent=form.prefix zindex=zindex edit=edit %}
     {% endif %}
-    <div id="card-{{ card.id }}" class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+    <div class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
         <div class="content-area">
             <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
                 {{ form.title.errors }}

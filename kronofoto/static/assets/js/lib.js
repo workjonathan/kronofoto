@@ -338,11 +338,14 @@ class PageEditor {
         }))
       })
     }
+    for (const btn of elem.querySelectorAll('.component-menu--off-canvas .up')) {
+        btn.addEventListener("click", this.moveComponentUp.bind(this))
+    }
+    for (const btn of elem.querySelectorAll('.component-menu--off-canvas .down')) {
+        btn.addEventListener("click", this.moveComponentDown.bind(this))
+    }
     for (const elem2 of elem.querySelectorAll(".page-editor")) {
       elem2.addEventListener("input", this.updateHiddenField.bind(this))
-      //$('.add-image-button', this.context).click(this.selectImage.bind(this))
-      $('.component-menu--off-canvas .up', this.context).click(this.moveComponentUp.bind(this))
-      $('.component-menu--off-canvas .down', this.context).click(this.moveComponentDown.bind(this))
       $('.component-menu--off-canvas .delete', this.context).click(this.deleteComponent.bind(this))
     }
   }
@@ -350,20 +353,34 @@ class PageEditor {
   moveComponentUp(event) {
     const button = event.target
     const card = button.closest('.card')
-    const parent = card.parentElement
-    const previous = card.previousElementSibling
-    if(previous) {
-      parent.before(card, previous)
+    let previous = card
+    while (previous = previous.previousElementSibling) {
+        if (previous.classList.contains("card")) {
+            break
+        }
+    }
+    if (previous !== card) {
+      previous.insertAdjacentElement("beforebegin", card)
+      previous.style['z-index']--
+      card.style['z-index']++
+      AOS.refreshHard()
     }
   }
 
   moveComponentDown(event) {
     const button = event.target
     const card = button.closest('.card')
-    const parent = card.parentElement
-    const next = card.nextElementSibling
-    if(next) {
-      parent.after(card, next)
+    let next = card
+    while (next = next.nextElementSibling) {
+        if (next.classList.contains("card")) {
+            break
+        }
+    }
+    if (next !== card) {
+      next.insertAdjacentElement("afterend", card)
+      card.style['z-index']--
+      next.style['z-index']++
+      AOS.refreshHard()
     }
   }
 
@@ -373,32 +390,6 @@ class PageEditor {
     card.remove()
   }
 
-  selectImage(event) {
-    const selectImageBtn = event.target
-    const images = $(selectImageBtn).data('images')
-    const target = $(selectImageBtn).data('target')
-    const $target = $('[name="' + target + '"]', this.context)
-    const $modal = $('#add-image-modal', this.context)
-    const $photos = $modal.find('.photo-tiles__tiles')
-    $photos.empty()
-    for(let i in images) {
-      let url = images[i]
-      let img = new Image()
-      img.src = url
-      if($target.val() == i) {
-        img.classList.add('active')
-      }
-      img.setAttribute('data-id', i)
-      img.addEventListener('click', (event) => {
-        if($target.length) {
-          $target.val(event.currentTarget.getAttribute('data-id'))
-        }
-        $('#add-image-modal', this.context).foundation('close')
-      })
-      $photos.append(img)
-    }
-    $('#add-image-modal', this.context).foundation('open')
-  }
   updateHiddenField(event) {
     if (event.target.getAttribute('contenteditable') !== null) {
       const contentEditable = event.target;

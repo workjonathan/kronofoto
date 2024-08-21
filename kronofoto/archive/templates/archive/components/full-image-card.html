@@ -1,7 +1,7 @@
 {% load widgets %}
 {% load krono_urls %}
 
-    <div id="card-{{ card.id }}" class="card container container--full-width container--no-padding" style="z-index: {{zindex}}">
+    <div class="card container container--full-width container--no-padding" style="z-index: {{zindex}}">
         <div class="full-image-area {{ image_area_classes | join:" " }}">
             {% if form %}
             {{ form.photo.errors }}

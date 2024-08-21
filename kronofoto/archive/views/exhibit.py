@@ -405,7 +405,7 @@ def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     objs = []
     two_column_count = 0
     for i, card in enumerate(cards):
-        obj = {
+        obj : Dict[str, Any] = {
             "zindex": 20 - i,
             "edit": True
         }
@@ -430,7 +430,6 @@ def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
 
                 two_column_count += 1
         else:
-            figures = []
             if card.figure_set.all().exists():
                 obj['styles'] = {
                     'border-top': '1px solid #ffffff',
