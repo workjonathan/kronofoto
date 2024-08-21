@@ -1,17 +1,19 @@
 import {
-  installButtons,
-  markerDnD,
-  initHTMXListeners,
-  initEventHandlers,
-  initGalleryNav,
-  initFoundation,
-  initNavSearch,
-  initClipboardJS,
-  initAutocomplete, initPopups, initDraggableThumbnails, initTimeline
+    installButtons,
+    markerDnD,
+    initHTMXListeners,
+    initEventHandlers,
+    initGalleryNav,
+    initFoundation,
+    initNavSearch,
+    initClipboardJS,
+    initAutocomplete,
+    initPopups,
+    initDraggableThumbnails,
+    initTimeline
 } from "./lib.js"
 
 import HTMX from "./htmx.js"
-
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -179,8 +181,8 @@ class FortepanViewer extends HTMLElement {
 
 `
         body.appendChild(f)
-        const mode = 'cors'
-        const headers = new Headers([['Embedded', '1']])
+        const mode = "cors"
+        const headers = new Headers([["Embedded", "1"]])
         if (constraint) {
             headers.append("Constraint", constraint)
         }
@@ -197,6 +199,6 @@ class FortepanViewer extends HTMLElement {
     }
 }
 
-if (!customElements.get('fortepan-viewer')) {
+if (!customElements.get("fortepan-viewer")) {
     customElements.define("fortepan-viewer", FortepanViewer)
 }
