@@ -56,7 +56,7 @@ class TimelineScroller {
     initDraggableThumbnails(newElems) {
         let elem = undefined
         let released = false
-        const handler = evt => {
+        const handler = (evt) => {
             if (
                 !released ||
                 !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")
@@ -82,11 +82,11 @@ class TimelineScroller {
                 this.dropTimelineCoin(ui.position.left)
                 released = true
                 for (const temp of this.context.querySelectorAll(
-                    "#fi-thumbnail-carousel-images li[data-active] a"
+                    "#fi-thumbnail-carousel-images li[data-active] a",
                 )) {
                     trigger("click", {}, temp, true)
                 }
-            }
+            },
         })
     }
     moveTimelineCoin(deltaX, drag = true) {
@@ -97,11 +97,11 @@ class TimelineScroller {
         }
         let widthOfThumbnail = $(
             "#fi-thumbnail-carousel-images li",
-            this.context
+            this.context,
         ).outerWidth()
         let preItemNum = $(
             "#fi-thumbnail-carousel-images [data-origin]",
-            this.context
+            this.context,
         ).index()
         let quantizedPositionX = Math.round(deltaX / widthOfThumbnail) * -1
         let currentPosition = preItemNum + quantizedPositionX + 1
@@ -119,7 +119,7 @@ class TimelineScroller {
         $("#fi-thumbnail-carousel-images li", this.context).removeAttr("data-active")
         $(
             "#fi-thumbnail-carousel-images li:nth-child(" + currentPosition + ")",
-            this.context
+            this.context,
         ).attr("data-active", "")
     }
     gotoTimelinePosition(delta) {
@@ -132,7 +132,7 @@ class TimelineScroller {
         let quantizedX = Math.round(deltaX / width)
         let itemNum = quantizedX
         $("#fi-thumbnail-carousel-images", this.context).css({
-            left: itemNum * width
+            left: itemNum * width,
         })
     }
     getNumVisibleTimelineTiles() {
@@ -150,7 +150,7 @@ class DirectionalScroller extends TimelineScroller {
             let numToZip = Math.floor(this.getNumVisibleTimelineTiles() - 0.5)
             let $activeLi = $(
                 "#fi-thumbnail-carousel-images li[data-active]",
-                this.context
+                this.context,
             )
             let $nextLi = this.nextElements({active: $activeLi}).eq(numToZip)
             trigger("click", {}, $nextLi.find("a").get(0), true)
@@ -161,14 +161,14 @@ class DirectionalScroller extends TimelineScroller {
         const id = setTimeout(() => {
             let currentPosition = $(
                 "#fi-thumbnail-carousel-images",
-                this.context
+                this.context,
             ).position().left
             const intervalId = setInterval(() => {
                 if (this.canCrawl()) {
                     currentPosition += this.getTimelineShiftPixels()
                     $("#fi-thumbnail-carousel-images", this.context).css(
                         "left",
-                        currentPosition
+                        currentPosition,
                     )
                     this.moveTimelineCoin(currentPosition, true)
                 }
@@ -184,13 +184,13 @@ class DirectionalScroller extends TimelineScroller {
             // only execute when we're crawling
             clearInterval(this.getTimelineCrawlInterval())
             this.dropTimelineCoin(
-                $("#fi-thumbnail-carousel-images", this.context).position().left
+                $("#fi-thumbnail-carousel-images", this.context).position().left,
             )
             trigger(
                 "click",
                 {},
                 $("#fi-thumbnail-carousel-images li[data-active] a", this.context).get(0),
-                true
+                true,
             )
             setTimeout(() => {
                 this.setTimelineCrawlInterval({id: undefined})
@@ -217,19 +217,19 @@ class DirectionalScroller extends TimelineScroller {
             "kronofoto:loadThumbnails",
             {},
             $("#fi-thumbnail-carousel-images", this.context).get(0),
-            true
+            true,
         )
     }
     canCrawl() {
         let length = this.nextElements({
-            active: $("#fi-thumbnail-carousel-images [data-active]", this.context)
+            active: $("#fi-thumbnail-carousel-images [data-active]", this.context),
         }).length
         return length > 10
     }
     install({elem}) {
         for (const elem2 of querySelectorAll({
             node: elem,
-            selector: this.elementSelector()
+            selector: this.elementSelector(),
         })) {
             elem2.addEventListener("click", this.timelineZip.bind(this))
             elem2.addEventListener("mousedown", this.timelineCrawl.bind(this))
@@ -339,9 +339,9 @@ class CopyLink {
             },
             () => {
                 showToast(
-                    "ERROR: The collection link has not been copied to the clipboard."
+                    "ERROR: The collection link has not been copied to the clipboard.",
                 )
-            }
+            },
         )
     }
 }
@@ -352,20 +352,20 @@ class PageEditor {
     }
     install({elem}) {
         for (const modal of this.context.querySelectorAll("#add-image-modal")) {
-            this.context.addEventListener("kronofoto:modal:reveal", evt => {
+            this.context.addEventListener("kronofoto:modal:reveal", (evt) => {
                 $(modal).foundation("open")
             })
         }
         for (const img of elem.querySelectorAll("[data-photo-target]")) {
-            img.addEventListener("click", evt => {
+            img.addEventListener("click", (evt) => {
                 const id = img.getAttribute("data-photo-target")
                 $("#add-image-modal", this.context).foundation("close")
                 const target = this.context.querySelector(`#${id}`)
                 target.value = img.getAttribute("data-id")
                 target.dispatchEvent(
                     new Event("change", {
-                        bubbles: false
-                    })
+                        bubbles: false,
+                    }),
                 )
             })
         }
@@ -375,11 +375,21 @@ class PageEditor {
         for (const btn of elem.querySelectorAll(".component-menu--off-canvas .down")) {
             btn.addEventListener("click", this.moveComponentDown.bind(this))
         }
+        for (const btn of elem.querySelectorAll(".component-menu--off-canvas .delete")) {
+            btn.addEventListener("click", this.deleteComponent.bind(this))
+        }
         for (const elem2 of elem.querySelectorAll(".page-editor")) {
             elem2.addEventListener("input", this.updateHiddenField.bind(this))
-            $(".component-menu--off-canvas .delete", this.context).click(
-                this.deleteComponent.bind(this)
-            )
+        }
+        for (const elem2 of elem.querySelectorAll("[data-on-check-target]")) {
+            const target = elem2.getAttribute("data-on-check-target")
+            const add = elem2.getAttribute("data-on-check-add")
+            const remove = elem2.getAttribute("data-on-check-remove")
+            elem2.addEventListener("change", (evt) => {
+                const targetElem = evt.target.closest(target)
+                targetElem.classList.remove(remove)
+                targetElem.classList.add(add)
+            })
         }
     }
 
@@ -547,15 +557,15 @@ class PhotoSpherePlugin {
                             dataMode: "server",
                             positionMode: "gps",
                             startNodeId,
-                            getNode: async nodeId => {
+                            getNode: async (nodeId) => {
                                 const url = new URL(api_url)
                                 url.searchParams.append(param_name, nodeId)
                                 const resp = await fetch(url.toString())
                                 return resp.json()
-                            }
-                        }
-                    ]
-                ]
+                            },
+                        },
+                    ],
+                ],
             })
             viewer
                 .getPlugin(VirtualTourPlugin)
@@ -567,8 +577,8 @@ class PhotoSpherePlugin {
                         input.value = node.id
                         elem2.dispatchEvent(
                             new Event("node-changed", {
-                                bubbles: true
-                            })
+                                bubbles: true,
+                            }),
                         )
                     }
                 })
@@ -584,7 +594,7 @@ class Zoom {
     install({elem}) {
         for (const elem2 of querySelectorAll({
             selector: "#follow-zoom-timeline-version",
-            node: elem
+            node: elem,
         })) {
             this.addZoom(elem2)
         }
@@ -607,17 +617,17 @@ class Zoom {
                 width: "calc(100vw)",
                 backgroundPosition: "top",
                 backgroundSize: "contain",
-                backgroundRepeat: "no-repeat"
+                backgroundRepeat: "no-repeat",
             })
 
             let removeZoom = () => {
                 Object.assign(container.style, {
                     backgroundPosition: "top",
-                    backgroundSize: "contain"
+                    backgroundSize: "contain",
                 })
             }
 
-            container.addEventListener("click", e => {
+            container.addEventListener("click", (e) => {
                 zoomed = !zoomed
 
                 if (zoomed) {
@@ -626,7 +636,7 @@ class Zoom {
                     img2.src = imgsrc
                     img2.onload = () => {
                         Object.assign(container.style, {
-                            backgroundImage: `url("${fullsize}")`
+                            backgroundImage: `url("${fullsize}")`,
                         })
                     }
                     container.onmousemove(e)
@@ -636,7 +646,7 @@ class Zoom {
                 }
             })
 
-            container.onmousemove = e => {
+            container.onmousemove = (e) => {
                 if (zoomed) {
                     let rect = e.target.getBoundingClientRect(),
                         xPos = e.clientX - rect.left,
@@ -646,7 +656,7 @@ class Zoom {
 
                     Object.assign(container.style, {
                         backgroundPosition: xPercent + " " + yPercent,
-                        backgroundSize: window.innerWidth * 1.5 + "px"
+                        backgroundSize: window.innerWidth * 1.5 + "px",
                     })
                 }
             }
@@ -666,7 +676,7 @@ class KronofotoContext {
             const $input = $(input)
             $input.autocomplete({
                 source: $input.data("autocomplete-url"),
-                minLength: $input.data("autocomplete-min-length")
+                minLength: $input.data("autocomplete-min-length"),
             })
         })
         $("[data-select2-url]", elem).each((_, input) => {
@@ -679,23 +689,21 @@ class KronofotoContext {
                 ajax: {
                     delay: 250,
                     url: $input.data("select2-url"),
-                    dataType: "json"
-                }
+                    dataType: "json",
+                },
             })
         })
         $(elem)
             .find(".form--add-tag .link--icon")
-            .on("click", e => {
+            .on("click", (e) => {
                 let $form = $(e.currentTarget).closest("form")
                 $form.addClass("expanded")
-                $("input[type=text]", $form)
-                    .get(0)
-                    .focus()
+                $("input[type=text]", $form).get(0).focus()
             })
         // this logic should not be client side
         $(elem)
             .find("[data-save-list]")
-            .on("submit", e => {
+            .on("submit", (e) => {
                 // Check if logged in
                 if ($("#login-btn", this.context).length) {
                     $("#login-btn", this.context).trigger("click")
@@ -705,23 +713,23 @@ class KronofotoContext {
                 }
             })
         // the next three have some broken state.
-        $("#overlay", elem).on("click", e => {
+        $("#overlay", elem).on("click", (e) => {
             this.htmx.trigger("#hamburger-button", "click")
             $("#overlay", this.context).fadeOut()
         })
         $("#hamburger-menu", elem)
-            .on("off.zf.toggler", e => {
+            .on("off.zf.toggler", (e) => {
                 $("#login", this.context).addClass("collapse")
                 $("#overlay", this.context).fadeIn()
             })
-            .on("on.zf.toggler", e => {
+            .on("on.zf.toggler", (e) => {
                 if ($("#login", this.context).hasClass("collapse")) {
                     $("#overlay", this.context).fadeOut()
                 }
             })
 
         // Close all dropdowns when clicking outside of a dropdown
-        $(elem).on("click", e => {
+        $(elem).on("click", (e) => {
             // Get the closest dropdown menu, if it exists
             var $parentDropdownMenu = $(e.target, elem).closest(".collection__item-menu")
             $(".collection__item-menu.expanded", elem).each((i, f) => {
@@ -735,16 +743,16 @@ class KronofotoContext {
         })
 
         $("#login", elem)
-            .on("off.zf.toggler", e => {
+            .on("off.zf.toggler", (e) => {
                 $("#hamburger-menu", this.context).addClass("collapse")
                 $("#overlay", this.context).fadeIn()
             })
-            .on("on.zf.toggler", e => {
+            .on("on.zf.toggler", (e) => {
                 if ($("#hamburger-menu", this.context).hasClass("collapse")) {
                     $("#overlay", this.context).fadeOut()
                 }
             })
-        $("#auto-play-image-control-button", elem).on("click", e => {
+        $("#auto-play-image-control-button", elem).on("click", (e) => {
             let $btn = e.currentTarget
             $btn.classList.toggle("active")
             if ($btn.classList.contains("active")) {
@@ -755,7 +763,7 @@ class KronofotoContext {
         })
         $(elem)
             .find(".image-control-button--toggle")
-            .on("click", e => {
+            .on("click", (e) => {
                 let $btn = $(e.currentTarget)
                 $("img", $btn).toggleClass("hide")
             })
@@ -769,7 +777,7 @@ class KronofotoContext {
             ImagePreviewInput,
             PhotoSpherePlugin,
             CopyLink,
-            PageEditor
+            PageEditor,
         ]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})
@@ -793,13 +801,13 @@ class KronofotoContext {
             const slideScroller = new TimelineScroller({context: this.context})
             slideScroller.slideToId({
                 fi: elem.getAttribute("data-slide-id"),
-                target: "[data-fi-thumbnail-carousel-images]"
+                target: "[data-fi-thumbnail-carousel-images]",
             })
             setTimeout(() => {
                 let html = elem.innerHTML
                 // let firstId = $(html).find('li:first-child span').attr('hx-get')
                 const carouselImages = elem.parentNode.querySelector(
-                    "#fi-thumbnail-carousel-images"
+                    "#fi-thumbnail-carousel-images",
                 )
                 carouselImages.innerHTML = html
                 carouselImages.classList.add("dragging")
@@ -838,7 +846,7 @@ class KronofotoContext {
     autoplayStart(elem) {
         // should change `window` to `this`
         window.autoplayTimer = setInterval(
-            elem => {
+            (elem) => {
                 if (elem.isConnected) {
                     this.htmx.trigger("#fi-arrow-right", "click")
                 } else {
@@ -846,7 +854,7 @@ class KronofotoContext {
                 }
             },
             5000,
-            elem
+            elem,
         )
     }
     autoplayStop() {
@@ -856,7 +864,7 @@ class KronofotoContext {
 export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
     // context here means our root element
     // necessary?
-    $(context).on("click", e => {
+    $(context).on("click", (e) => {
         if (!$(".form--add-tag input", context).is(":focus")) {
             let $form = $(".form--add-tag input", context).closest("form")
             $form.removeClass("expanded")
@@ -864,10 +872,10 @@ export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
     })
 
     // context here means our root element and this would probably be simpler with server side templates.
-    $(context).on("on.zf.toggler", function(e) {
+    $(context).on("on.zf.toggler", function (e) {
         if ($(e.target).hasClass("gallery__popup")) {
             $(
-                ".gallery__popup.expanded:not(#" + $(e.target).attr("id") + ")"
+                ".gallery__popup.expanded:not(#" + $(e.target).attr("id") + ")",
             ).removeClass("expanded")
         }
     })
@@ -897,7 +905,7 @@ export function initFoundation(context) {
 }
 
 export function initClipboardJS(context) {
-    $(context).on("click", ".copy-button", e => {
+    $(context).on("click", ".copy-button", (e) => {
         let target = $(e.currentTarget).attr("data-clipboard-target")
         let text = $(target).val()
         ClipboardActionCopy(text)
@@ -912,9 +920,7 @@ export function collapseNavSearch(elem) {
         $("#search-box", elem).val("")
         $(".search-icon", elem).css("filter", "none")
         $(".carrot", elem).css("filter", "none")
-        $("#search-box", elem)
-            .removeClass("placeholder-light")
-            .css("color", "#333")
+        $("#search-box", elem).removeClass("placeholder-light").css("color", "#333")
     }
 }
 
@@ -924,13 +930,11 @@ export function expandNavSearch(elem) {
         $(".search-form", elem).show()
         $(".search-icon", elem).css("filter", "brightness(0) invert(1)")
         $(".carrot", elem).css("filter", "brightness(0) invert(1)")
-        $("#search-box", elem)
-            .addClass("placeholder-light")
-            .css("color", "white")
+        $("#search-box", elem).addClass("placeholder-light").css("color", "white")
     }
 }
 export function initNavSearch(elem) {
-    $(".search-form__clear-btn", elem).click(e => {
+    $(".search-form__clear-btn", elem).click((e) => {
         e.preventDefault()
         $("#search-box", elem).val("")
         $(".search-form input[type=text]", elem).val("")
@@ -979,7 +983,7 @@ function toggleElement(el) {
     }
 }
 
-export const installButtons = root => content => {
+export const installButtons = (root) => (content) => {
     const elems = Array.from(content.querySelectorAll("[data-popup-target]"))
 
     if (content.hasAttribute("data-popup-target")) {
@@ -988,7 +992,7 @@ export const installButtons = root => content => {
 
     for (const elem of elems) {
         const datatarget = elem.getAttribute("data-popup-target")
-        elem.addEventListener("click", evt => {
+        elem.addEventListener("click", (evt) => {
             for (const target of root.querySelectorAll("[data-popup]")) {
                 if (target.hasAttribute(datatarget)) {
                     target.classList.remove("hidden")
@@ -998,8 +1002,8 @@ export const installButtons = root => content => {
             }
             elem.dispatchEvent(
                 new Event(datatarget, {
-                    bubbles: true
-                })
+                    bubbles: true,
+                }),
             )
         })
     }

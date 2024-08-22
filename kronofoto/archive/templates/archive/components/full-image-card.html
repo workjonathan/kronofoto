@@ -24,11 +24,11 @@
             </div>
             {% if form %}
                 <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.alignment.auto_id }}" data-toggle="{{ form.alignment.auto_id }}" data-toggle-focus="{{ form.alignment.auto_id }}">
-                    <div data-toggle="{{ form.alignment.auto_id }}">
+                    <div data-toggle="{{ form.alignment.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
                         {{ form.alignment.0.tag }}
                         <label for="{{ form.alignment.0.id_for_label }}">fit to page</label>
                     </div>
-                    <div data-toggle="{{ form.alignment.auto_id }}">
+                    <div data-toggle="{{ form.alignment.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--contain" data-on-check-add="full-image-area--cover">
                         {{ form.alignment.3.tag }}
                         <label for="{{ form.alignment.3.id_for_label }}">fill page</label>
                     </div>
