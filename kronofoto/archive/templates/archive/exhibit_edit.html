@@ -133,7 +133,7 @@
                     <header class="header">
                         <div class="header__logo">
                         </div>
-                        <div class="header__title" contenteditable="true" role="textbox" data-target="name">
+                        <div class="header__title" contenteditable="true" role="textbox" data-target="{{ form.name.auto_id }}">
                             {{ exhibit.name }}
                         </div>
                     </header>
@@ -141,9 +141,9 @@
                     <div class="hero">
                         <div class="hero__content-wrapper" >
                             <div class="hero__title">
-                                <h1 contenteditable="true" role="textbox" data-target="title">{{ exhibit.title }}</h1>
+                                <h1 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
                             </div>
-                            <div class="hero__content" contenteditable="true" role="textbox" data-target="description">
+                            <div class="hero__content" contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">
                                 {{ exhibit.description | linebreaks }}
                             </div>
                         </div>
