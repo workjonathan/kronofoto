@@ -133,6 +133,7 @@
                     <header class="header">
                         <div class="header__logo">
                         </div>
+                        {{ form.name.errors }}
                         <div class="header__title" contenteditable="true" role="textbox" data-target="{{ form.name.auto_id }}">
                             {{ exhibit.name }}
                         </div>
@@ -141,12 +142,15 @@
                     <div class="hero">
                         <div class="hero__content-wrapper" >
                             <div class="hero__title">
+                                {{ form.title.errors }}
                                 <h1 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
                             </div>
+                            {{ form.description.errors }}
                             <div class="hero__content" contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">
                                 {{ exhibit.description | linebreaks }}
                             </div>
                         </div>
+                        {{ form.photo.errors }}
                         <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
                         <div class="hero__background"
                             hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">
@@ -159,11 +163,9 @@
                         </div>
                     </div>
 
-                    <div class="hide">
                     {% for field in form %}
                         {{ field.as_hidden }}
                     {% endfor %}
-                    </div>
 
                     {% for card in cards %}
                     {% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}

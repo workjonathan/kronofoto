@@ -263,6 +263,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                     forms.append(card_form)
             context['cards'] = cards
             form = ExhibitForm(request.POST, instance=exhibit)
+            context['exhibit'] = ExhibitFormWrapper(form)
             if all(form_.is_valid() for form_ in forms) and form.is_valid():
                 form.save()
                 from archive.models import Figure
