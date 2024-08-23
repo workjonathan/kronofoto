@@ -184,13 +184,13 @@
                 </div>
                 <div class="toolbar__section">
                     <label class="toolbar__label">Content blocks</label>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=2"><i class="icon--add-text-image-2"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=3"><i class="icon--add-text-image-3"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
 
                 </div>
 
