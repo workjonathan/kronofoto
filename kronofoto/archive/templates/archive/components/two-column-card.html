@@ -12,9 +12,9 @@
             <div class="two-column__content-wrapper">
                 <div class="two-column__content">
                     {{ form.title.errors }}
-                    {% if card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+                    {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
                     {{ form.description.errors }}
-                    <div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
+                    {% if form or card.title %}<div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>{% endif %}
                 </div>
             </div>
         </div>
