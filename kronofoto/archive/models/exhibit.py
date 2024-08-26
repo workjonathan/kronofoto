@@ -22,11 +22,8 @@ class Exhibit(models.Model):
         db_table = "kronofoto_exhibit"
 
 class Card(models.Model):
-    PLAIN_TEXT = 0
-    NO_BORDER = 1
-    card_style = models.IntegerField(default=0)
     title = models.TextField(blank=True, default="")
-    description = models.TextField()
+    description = models.TextField(blank=True, default="")
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
     order = models.IntegerField()
 
@@ -47,11 +44,14 @@ class PhotoCard(Card):
 
 
     class Alignment(models.IntegerChoices):
-        CONTAIN = 1
+        FULL = 1
         LEFT = 2
         RIGHT = 3
-        COVER = 4
-    alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.CONTAIN)
+    class Fill(models.IntegerChoices):
+        CONTAIN = 1
+        COVER = 2
+    alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.FULL)
+    fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
     class Meta:
         db_table = "kronofoto_photocard"

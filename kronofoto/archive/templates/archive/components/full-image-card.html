@@ -23,14 +23,14 @@
                 {% endif %}
             </div>
             {% if form %}
-                <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.alignment.auto_id }}" data-toggle="{{ form.alignment.auto_id }}" data-toggle-focus="{{ form.alignment.auto_id }}">
-                    <div data-toggle="{{ form.alignment.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
-                        {{ form.alignment.0.tag }}
-                        <label for="{{ form.alignment.0.id_for_label }}">fit to page</label>
+                <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.fill_style.auto_id }}" data-toggle="{{ form.fill_style.auto_id }}" data-toggle-focus="{{ form.fill_style.auto_id }}">
+                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
+                        {{ form.fill_style.0.tag }}
+                        <label for="{{ form.fill_style.0.id_for_label }}">fit to page</label>
                     </div>
-                    <div data-toggle="{{ form.alignment.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--contain" data-on-check-add="full-image-area--cover">
-                        {{ form.alignment.3.tag }}
-                        <label for="{{ form.alignment.3.id_for_label }}">fill page</label>
+                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--contain" data-on-check-add="full-image-area--cover">
+                        {{ form.fill_style.1.tag }}
+                        <label for="{{ form.fill_style.1.id_for_label }}">fill page</label>
                     </div>
                 </div>
             {% endif %}
@@ -42,7 +42,7 @@
                 <button type="button" class="delete" aria-label="Delete">Delete</button>
             </div>
             {% for field in form %}
-            {% if field != form.alignment %}
+            {% if field != form.fill_style %}
             {{ field.as_hidden }}
             {% endif %}
             {% endfor %}

@@ -1,14 +1,5 @@
 {% load widgets %}
 {% load krono_urls %}
 
-{% if edit %}
-<div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
-{% endif %}
-{% if photo %}
-<img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=1000 %}">
-<a class="two-column__info-button info-button info-button--top" href="#" target="_blank">
-    <span class="info-button__icon"></span>
-    <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=photo %}</div>
-</a>
-{% endif %}
 
+<img{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-swap="outerHTML" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %} loading="lazy" {% if photo %}src="{% image_url id=photo.id path=photo.original.name width=1000 %}"{% endif %}>

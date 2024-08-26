@@ -23,9 +23,9 @@ class FigureForm(ModelForm, CardFormType):
 class PhotoCardForm(ModelForm, CardFormType):
     class Meta:
         model = PhotoCard
-        fields = ['title', 'description', 'photo', 'alignment']
+        fields = ['title', 'description', 'photo', 'fill_style', "alignment"]
         widgets = {
-            "alignment": RadioSelect,
+            "fill_style": RadioSelect,
         }
 
 @dataclass
@@ -62,6 +62,13 @@ class PhotoCardFormWrapper:
     @property
     def title(self) -> str:
         return self.form['title'].value() or ""
+
+    @property
+    def fill_style(self) -> int:
+        try:
+            return int(self.form['fill_style'].value())
+        except ValueError:
+            return 1
 
     @property
     def alignment(self) -> int:
