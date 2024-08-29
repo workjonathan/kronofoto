@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpRequest, HttpResponseRedirect, QueryDi
 from django.core.exceptions import PermissionDenied
 from ..reverse import reverse
 from .base import ArchiveRequest
-from typing import Dict, Any, Iterator, Union, List, Optional
+from typing import Dict, Any, Iterator, Union, List, Optional, Tuple
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm, ModelChoiceField, Form, IntegerField
@@ -230,10 +230,8 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
     form = ExhibitForm(instance=exhibit) # type: ignore
     context['exhibit'] = ExhibitFormWrapper(form)
     cards : Union[QuerySet[Card], List[Any]]
-    obj : Dict[str, Any]
     if request.method == 'POST':
-        body_data = QueryDict(request.body)
-        card_types = [CardFormType(request.POST, prefix=prefix) for prefix in body_data.getlist("prefix")]
+        card_types = [CardFormType(request.POST, prefix=prefix) for prefix in request.POST.getlist("prefix")]
         if all(typeform.is_valid() for typeform in card_types):
             forms = [
                 CardForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'text'
@@ -287,40 +285,9 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             else:
                 two_column_count = 0
                 objs = []
+                obj_context = CardContext()
                 for i, card in enumerate(cards):
-                    obj = {
-                        "zindex": 20 - i,
-                        "edit": True
-                    }
-                    if card.form['card_type'].value() == 'text':
-                        obj['form'] = card.form
-                        obj['card'] = card
-                        obj['template'] = 'archive/components/text-card.html'
-                        obj['content_attrs'] = {
-                            'data-aos': 'fade-up',
-                            'data-aos-duration': '1000',
-                        }
-                    else:
-                        obj['form'] = card.form
-                        obj['card'] = card
-                        obj['image_area_classes'] = []
-                        if card.alignment == PhotoCard.Alignment.FULL:
-                            obj['template'] = 'archive/components/full-image-card.html'
-                        else:
-                            obj['template'] = 'archive/components/two-column-card.html'
-                            obj['image_area_classes'] += (
-                                ['two-column--image-left', 'two-column--variation-1']
-                                if card.alignment == PhotoCard.Alignment.LEFT
-                                else ['two-column--image-right', 'two-column--variation-2']
-                            )
-                            if two_column_count % 2 == 0:
-                                obj['image_area_classes'].append("two-column--alt")
-                            two_column_count += 1
-                        if card.fill_style == PhotoCard.Fill.CONTAIN:
-                            obj['image_area_classes'] += ['full-image-area--contain']
-                        else:
-                            obj['image_area_classes'] += ['full-image-area--cover']
-
+                    obj, two_column_count = obj_context.context(card=card, i=i, two_column_count=two_column_count, mode="EDIT_POST")
                     objs.append(obj)
                 context['cards'] = objs
                 context['form'] = form
@@ -333,65 +300,140 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
     )
     objs = []
     two_column_count = 0
+    obj_context = CardContext()
     for i, card in enumerate(cards):
-        obj = {
-            "zindex": 20 - i,
-            "edit": True
-        }
-        if hasattr(card, 'photocard'):
-            card = card.photocard
-            photoform = PhotoCardForm(instance=card, initial={"card_type": "photo"}, prefix=str(uuid.uuid4()))
-            obj['form'] = photoform
-            obj['card'] = PhotoCardFormWrapper(form=photoform)
-            obj['image_area_classes'] = []
-            print(card.alignment)
-            if card.alignment == PhotoCard.Alignment.FULL:
-                obj['template'] = 'archive/components/full-image-card.html'
-            else:
-                obj['template'] = 'archive/components/two-column-card.html'
-                obj['image_area_classes'] += (
-                    ['two-column--image-left', 'two-column--variation-1']
-                    if card.alignment == PhotoCard.Alignment.LEFT
-                    else ['two-column--image-right', 'two-column--variation-2']
-                )
-                if two_column_count % 2 == 0:
-                    obj['image_area_classes'].append("two-column--alt")
-                two_column_count += 1
-            if card.fill_style == PhotoCard.Fill.CONTAIN:
-                obj['image_area_classes'] += ['full-image-area--contain']
-            else:
-                obj['image_area_classes'] += ['full-image-area--cover']
-        else:
-            figures = []
-            parent_uuid = str(uuid.uuid4())
-            for figure in card.figure_set.all().order_by('order'):
-                obj['styles'] = {
-                    'border-top': '1px solid #ffffff',
-                }
-                figures.append(
-                    FigureFormWrapper(
-                        FigureForm(
-                            prefix=str(uuid.uuid4()),
-                            initial={"parent": parent_uuid, "card_type": "figure"},
-                            instance=figure,
-                        )
-                    )
-                )
-
-            cardform = CardForm(instance=card, initial={"card_type": "text"}, prefix=parent_uuid)
-            obj['form'] = cardform
-            obj['card'] = CardFormWrapper(form=cardform, figures=figures)
-            obj['template'] = 'archive/components/text-card.html'
-            obj['content_attrs'] = {
-                'data-aos': 'fade-up',
-                'data-aos-duration': '1000',
-            }
+        obj, two_column_count = obj_context.context(card=card, two_column_count=two_column_count, i=i, mode="EDIT_GET")
         objs.append(obj)
     context['form'] = form
     context['cards'] = objs
     context['exhibit'] = exhibit
     return TemplateResponse(request, "archive/exhibit_edit.html", context=context)
 
+@dataclass
+class CardContext:
+    def context(self, *, card: Union[Card, CardFormWrapper, PhotoCardFormWrapper], i: int, two_column_count: int, mode: str) -> Tuple[Dict[str, Any], int]:
+        is_edit = mode is not "DISPLAY"
+        obj : Dict[str, Any] = {
+            "zindex": 20 - i,
+            "edit": is_edit,
+        }
+        if mode == "DISPLAY":
+            assert isinstance(card, Card)
+            if hasattr(card, 'photocard'):
+                card = card.photocard
+                obj['card'] = card
+                obj['image_area_classes'] = []
+                if card.alignment == PhotoCard.Alignment.FULL:
+                    obj['template'] = 'archive/components/full-image-card.html'
+                else:
+                    obj['template'] = 'archive/components/two-column-card.html'
+                    obj['image_area_classes'] += (
+                        ['two-column--image-left', 'two-column--variation-1']
+                        if card.alignment == PhotoCard.Alignment.LEFT
+                        else ['two-column--image-right', 'two-column--variation-2']
+                    )
+                    if two_column_count % 2 == 0:
+                        obj['image_area_classes'].append("two-column--alt")
+                    two_column_count += 1
+                if card.fill_style == PhotoCard.Fill.CONTAIN:
+                    obj['image_area_classes'] += ['full-image-area--contain']
+                else:
+                    obj['image_area_classes'] += ['full-image-area--cover']
+            else:
+                if card.figure_set.all().exists():
+                    obj['styles'] = {
+                        'border-top': '1px solid #ffffff',
+                    }
+
+                obj['card'] = card
+                obj['template'] = 'archive/components/text-card.html'
+                obj['content_attrs'] = {
+                    'data-aos': 'fade-up',
+                    'data-aos-duration': '1000',
+                }
+        elif mode == "EDIT_GET":
+            assert isinstance(card, Card)
+            if hasattr(card, 'photocard'):
+                card = card.photocard
+                photoform = PhotoCardForm(instance=card, initial={"card_type": "photo"}, prefix=str(uuid.uuid4()))
+                obj['form'] = photoform
+                obj['card'] = PhotoCardFormWrapper(form=photoform)
+                obj['image_area_classes'] = []
+                print(card.alignment)
+                if card.alignment == PhotoCard.Alignment.FULL:
+                    obj['template'] = 'archive/components/full-image-card.html'
+                else:
+                    obj['template'] = 'archive/components/two-column-card.html'
+                    obj['image_area_classes'] += (
+                        ['two-column--image-left', 'two-column--variation-1']
+                        if card.alignment == PhotoCard.Alignment.LEFT
+                        else ['two-column--image-right', 'two-column--variation-2']
+                    )
+                    if two_column_count % 2 == 0:
+                        obj['image_area_classes'].append("two-column--alt")
+                    two_column_count += 1
+                if card.fill_style == PhotoCard.Fill.CONTAIN:
+                    obj['image_area_classes'] += ['full-image-area--contain']
+                else:
+                    obj['image_area_classes'] += ['full-image-area--cover']
+            else:
+                figures = []
+                parent_uuid = str(uuid.uuid4())
+                for figure in card.figure_set.all().order_by('order'):
+                    obj['styles'] = {
+                        'border-top': '1px solid #ffffff',
+                    }
+                    figures.append(
+                        FigureFormWrapper(
+                            FigureForm(
+                                prefix=str(uuid.uuid4()),
+                                initial={"parent": parent_uuid, "card_type": "figure"},
+                                instance=figure,
+                            )
+                        )
+                    )
+
+                cardform = CardForm(instance=card, initial={"card_type": "text"}, prefix=parent_uuid)
+                obj['form'] = cardform
+                obj['card'] = CardFormWrapper(form=cardform, figures=figures)
+                obj['template'] = 'archive/components/text-card.html'
+                obj['content_attrs'] = {
+                    'data-aos': 'fade-up',
+                    'data-aos-duration': '1000',
+                }
+        else: # EDIT_POST
+            assert not isinstance(card, Card)
+            if card.form['card_type'].value() == 'text':
+                assert isinstance(card, CardFormWrapper)
+                obj['form'] = card.form
+                obj['card'] = card
+                obj['template'] = 'archive/components/text-card.html'
+                obj['content_attrs'] = {
+                    'data-aos': 'fade-up',
+                    'data-aos-duration': '1000',
+                }
+            else:
+                assert isinstance(card, PhotoCardFormWrapper)
+                obj['form'] = card.form
+                obj['card'] = card
+                obj['image_area_classes'] = []
+                if card.alignment == PhotoCard.Alignment.FULL:
+                    obj['template'] = 'archive/components/full-image-card.html'
+                else:
+                    obj['template'] = 'archive/components/two-column-card.html'
+                    obj['image_area_classes'] += (
+                        ['two-column--image-left', 'two-column--variation-1']
+                        if card.alignment == PhotoCard.Alignment.LEFT
+                        else ['two-column--image-right', 'two-column--variation-2']
+                    )
+                    if two_column_count % 2 == 0:
+                        obj['image_area_classes'].append("two-column--alt")
+                    two_column_count += 1
+                if card.fill_style == PhotoCard.Fill.CONTAIN:
+                    obj['image_area_classes'] += ['full-image-area--contain']
+                else:
+                    obj['image_area_classes'] += ['full-image-area--cover']
+        return obj, two_column_count
 
 @user_passes_test(lambda user: user.is_staff) # type: ignore
 def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
@@ -406,44 +448,10 @@ def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
         'photocard__photo__place',
     )
     objs = []
+    obj_context = CardContext()
     two_column_count = 0
     for i, card in enumerate(cards):
-        obj : Dict[str, Any] = {
-            "zindex": 20 - i,
-            "edit": True
-        }
-        if hasattr(card, 'photocard'):
-            card = card.photocard
-            obj['card'] = card
-            obj['image_area_classes'] = []
-            if card.alignment == PhotoCard.Alignment.FULL:
-                obj['template'] = 'archive/components/full-image-card.html'
-            else:
-                obj['template'] = 'archive/components/two-column-card.html'
-                obj['image_area_classes'] += (
-                    ['two-column--image-left', 'two-column--variation-1']
-                    if card.alignment == PhotoCard.Alignment.LEFT
-                    else ['two-column--image-right', 'two-column--variation-2']
-                )
-                if two_column_count % 2 == 0:
-                    obj['image_area_classes'].append("two-column--alt")
-                two_column_count += 1
-            if card.fill_style == PhotoCard.Fill.CONTAIN:
-                obj['image_area_classes'] += ['full-image-area--contain']
-            else:
-                obj['image_area_classes'] += ['full-image-area--cover']
-        else:
-            if card.figure_set.all().exists():
-                obj['styles'] = {
-                    'border-top': '1px solid #ffffff',
-                }
-
-            obj['card'] = card
-            obj['template'] = 'archive/components/text-card.html'
-            obj['content_attrs'] = {
-                'data-aos': 'fade-up',
-                'data-aos-duration': '1000',
-            }
+        obj, two_column_count = obj_context.context(card=card, two_column_count=two_column_count, i=i, mode="DISPLAY")
         objs.append(obj)
     context['cards'] = objs
     return TemplateResponse(request, "archive/exhibit.html", context=context)
