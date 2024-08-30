@@ -1,6 +1,6 @@
 {% load krono_urls %}
 {% load widgets %}
-    <div class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex }}">
+    <div class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex|default:0 }}">
         {% if card.figures %}
         {% include "archive/components/figure-card.html" with figures=card.figures photos=photos.all parent=form.prefix zindex=zindex edit=edit %}
         {% endif %}

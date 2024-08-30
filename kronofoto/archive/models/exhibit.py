@@ -12,6 +12,7 @@ class Exhibit(models.Model):
     photo = models.ForeignKey(Photo, null=False, on_delete=models.PROTECT)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
+    credits = models.TextField(blank=True, null=False)
 
     def get_absolute_url(self) -> str:
         return reverse('kronofoto:exhibit-view', kwargs={'pk': self.pk, 'title': slugify(self.name)})

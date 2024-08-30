@@ -105,7 +105,7 @@ class ExhibitForm(ModelForm):
 
     class Meta:
         model = Exhibit
-        fields = ['name', 'title', 'description', 'photo']
+        fields = ['name', 'title', 'description', 'photo', "credits"]
 
 @dataclass
 class ExhibitFormWrapper:
@@ -122,6 +122,11 @@ class ExhibitFormWrapper:
     @property
     def name(self) -> str:
         return self.form['name'].value() or ""
+
+    @property
+    def credits(self) -> str:
+        print(f"{self.form['credits'].value()=}")
+        return self.form['credits'].value() or ""
 
     @property
     def title(self) -> str:
@@ -312,7 +317,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
 @dataclass
 class CardContext:
     def context(self, *, card: Union[Card, CardFormWrapper, PhotoCardFormWrapper], i: int, two_column_count: int, mode: str) -> Tuple[Dict[str, Any], int]:
-        is_edit = mode is not "DISPLAY"
+        is_edit = mode != "DISPLAY"
         obj : Dict[str, Any] = {
             "zindex": 20 - i,
             "edit": is_edit,
@@ -359,7 +364,6 @@ class CardContext:
                 obj['form'] = photoform
                 obj['card'] = PhotoCardFormWrapper(form=photoform)
                 obj['image_area_classes'] = []
-                print(card.alignment)
                 if card.alignment == PhotoCard.Alignment.FULL:
                     obj['template'] = 'archive/components/full-image-card.html'
                 else:

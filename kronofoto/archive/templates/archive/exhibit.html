@@ -132,6 +132,16 @@
         {% endfor %}
 
     </div>
+    <div class="card container" style="z-index: 0">
+        <div class="content-area">
+            <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
+                {{ form.title.errors }}
+                <h2>Credits</h2>
+                {{ form.description.errors }}
+                {% if form or exhibit.credits %}<span contenteditable="true" role="textbox" data-target="{{ form.credits.auto_id }}">{{ exhibit.credits }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
