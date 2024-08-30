@@ -537,6 +537,99 @@ class Gallery {
     }
 }
 
+class ExhibitPlugin {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const siteWrapper of elem.querySelectorAll(".site-wrapper")) {
+            // Function to update the --vh custom property
+            const updateVH = () => {
+                if (!elem.contains(siteWrapper)) {
+                    window.removeEventListener("resize", updateVH)
+                    return
+                }
+                if (siteWrapper) {
+                    let vh = window.innerHeight / 100
+                    siteWrapper.style.setProperty("--vh", `${vh}px`)
+                }
+            }
+
+            // Scroll event handler for dynamically fading content
+            const updateScrollOpacity = () => {
+                if (!elem.contains(siteWrapper)) {
+                    window.removeEventListener("scroll", updateVH)
+                    return
+                }
+
+                let elements = elem.querySelectorAll(
+                    ".scroll-opacity, .two-column__content",
+                )
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 30
+                    const end = 50
+                    const opacity = (percentageFromBottom - start) * (100 / (end - start))
+                    element.style.opacity = opacity / 100
+                })
+
+                elements = elem.querySelectorAll(".scroll-opacity, .two-column__content")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 30
+                    const end = 50
+                    const opacity = (percentageFromBottom - start) * (100 / (end - start))
+                    element.style.opacity = opacity / 100
+                })
+
+                elements = elem.querySelectorAll(".hero__title")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 80
+                    const end = 100
+                    const opacity =
+                        100 - (percentageFromBottom - start) * (100 / (end - start))
+                    element.style.opacity = opacity / 100
+                })
+
+                elements = elem.querySelectorAll(".hero__content")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 50
+                    const end = 80
+                    const opacity =
+                        100 - (percentageFromBottom - start) * (100 / (end - start))
+                    element.style.opacity = opacity / 100
+                })
+            }
+
+            AOS.init({
+                disable: "mobile",
+                once: true,
+            })
+
+            // Add event listeners
+            window.addEventListener("scroll", updateScrollOpacity)
+            window.addEventListener("resize", updateVH)
+        }
+    }
+}
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -778,6 +871,7 @@ class KronofotoContext {
             PhotoSpherePlugin,
             CopyLink,
             PageEditor,
+            ExhibitPlugin,
         ]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})
