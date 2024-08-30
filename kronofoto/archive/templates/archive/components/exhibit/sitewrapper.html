@@ -1,0 +1,35 @@
+{% load widgets %}
+<div class="site-wrapper">
+    <header class="header">
+        <div class="header__logo">
+
+        </div>
+        <div class="header__title">
+            {{ exhibit.name }}
+        </div>
+
+    </header>
+
+    <div class="hero">
+        <div class="hero__content-wrapper" >
+            <div class="hero__title">
+                <h1>{{ exhibit.title }}</h1>
+            </div>
+            <div class="hero__content">
+                {{ exhibit.description | linebreaks }}
+            </div>
+        </div>
+        <div class="hero__background">
+            <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+        </div>
+
+        <div class="hero__info-button info-button info-button--bottom">
+            <span class="info-button__icon"></span>
+            <div class="info-button__text">{% include "archive/snippets/attribution.html" with object=exhibit.photo %}</div>
+        </div>
+    </div>
+
+    {% for card in cards %}
+        {% include card.template with card=card.card zindex=card.zindex edit=False exhibit=exhibit image_area_classes=card.image_area_classes %}
+    {% endfor %}
+</div>
