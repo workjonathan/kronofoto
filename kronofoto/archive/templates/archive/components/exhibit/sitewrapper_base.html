@@ -10,13 +10,13 @@
     <div class="hero">
         <div class="hero__content-wrapper" >
             {% block hero_content_wrapper %}{% endblock %}
-            {% block hero_background %}{% endblock %}
-            <div class="hero__info-button info-button info-button--bottom">
-                <span class="info-button__icon"></span>
-                {% block info_text %}{% endblock %}
-            </div>
-            {% block hero_formfields %}{% endblock %}
         </div>
+        {% block hero_background %}{% endblock %}
+        <div class="hero__info-button info-button info-button--bottom">
+            <span class="info-button__icon"></span>
+            {% block info_text %}{% endblock %}
+        </div>
+        {% block hero_formfields %}{% endblock %}
     </div>
 </div>
 
