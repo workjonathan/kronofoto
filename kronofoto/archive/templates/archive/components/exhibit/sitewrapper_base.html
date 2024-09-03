@@ -18,8 +18,8 @@
         </div>
         {% block hero_formfields %}{% endblock %}
     </div>
+    {% for card in cards %}
+    {% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}
+    {% endfor %}
 </div>
 
-{% for card in cards %}
-{% include card.template with card=card.card zindex=card.zindex edit=True form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}
-{% endfor %}
