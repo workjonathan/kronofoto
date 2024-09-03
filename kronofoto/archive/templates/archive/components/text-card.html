@@ -1,26 +1,18 @@
+{% extends "archive/components/exhibit/card_base.html" %}
+
 {% load krono_urls %}
 {% load widgets %}
-    <div class="card container" style="{% for name, value in styles.items %}{{ name}}: {{value }}; {% endfor %}z-index: {{ zindex|default:0 }}">
-        {% if card.figures %}
+
+{% block content_body %}
+    {% if card.figures %}
         {% include "archive/components/figure-card.html" with figures=card.figures photos=photos.all parent=form.prefix zindex=zindex edit=edit %}
-        {% endif %}
-        <div class="content-area">
-            <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
-                {{ form.title.errors }}
-                {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
-                {{ form.description.errors }}
-                {% if form or card.description %}<span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>{% endif %}
-            </div>
+    {% endif %}
+    <div class="content-area">
+        <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
+            {{ form.title.errors }}
+            {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+            {{ form.description.errors }}
+            {% if form or card.description %}<span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>{% endif %}
         </div>
-        {% if form %}
-        <div class="component-menu--off-canvas">
-            <button type="button" class="up" aria-label="Move up">Move up</button>
-            <button type="button" class="down" aria-label="Move down">Move down</button>
-            <button type="button" class="delete" aria-label="Delete">Delete</button>
-        </div>
-            {% for field in form %}
-            {{ field.as_hidden }}
-            {% endfor %}
-            <input type="hidden" name="prefix" value="{{ form.prefix }}">
-        {% endif %}
     </div>
+{% endblock content_body %}

@@ -1,10 +1,13 @@
+{% extends "archive/components/exhibit/card_base.html" %}
 {% load widgets %}
 {% load krono_urls %}
 
-    <div class="card container container--no-padding" style="z-index: {{ zindex }}">
-        <div class="two-column {{ image_area_classes | join:" "}}">
-            {% with target_id=form.photo.auto_id photo=card.photo %}
-            <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="chage from:#{{ target_id }}"{% endif %}>
+{% block container_classes %}container--no-padding{% endblock %}
+
+{% block content_body %}
+    <div class="two-column {{ image_area_classes | join:" "}}">
+        {% with target_id=form.photo.auto_id photo=card.photo %}
+        <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="chage from:#{{ target_id }}"{% endif %}>
             {% if edit %}
             <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
             {% endif %}
@@ -26,28 +29,15 @@
                     </div>
                 </div>
             {% endif %}
-            </div>
-            {% endwith %}
-            <div class="two-column__content-wrapper">
-                <div class="two-column__content">
-                    {{ form.title.errors }}
-                    {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
-                    {{ form.description.errors }}
-                    {% if form or card.title %}<div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>{% endif %}
-                </div>
+        </div>
+        {% endwith %}
+        <div class="two-column__content-wrapper">
+            <div class="two-column__content">
+                {{ form.title.errors }}
+                {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+                {{ form.description.errors }}
+                {% if form or card.title %}<div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>{% endif %}
             </div>
         </div>
-        {% if form %}
-            <div class="component-menu--off-canvas">
-                <button type="button" class="up" aria-label="Move up">Move up</button>
-                <button type="button" class="down" aria-label="Move down">Move down</button>
-                <button type="button" class="delete" aria-label="Delete">Delete</button>
-            </div>
-            {% for field in form %}
-                {% if field != form.fill_style %}
-                {{ field.as_hidden }}
-                {% endif %}
-            {% endfor %}
-            <input type="hidden" name="prefix" value="{{ form.prefix }}">
-        {% endif %}
     </div>
+{% endblock content_body %}
