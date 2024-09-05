@@ -9,10 +9,15 @@
     {% endif %}
     <div class="content-area">
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
+            {% if edit %}
             {{ form.title.errors }}
-            {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+            <h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
             {{ form.description.errors }}
-            {% if form or card.description %}<span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>{% endif %}
+            <span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            {% else %}
+            {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
+            {% if card.description %}<span>{{ card.description }}</span>{% endif %}
+            {% endif %}
         </div>
     </div>
 {% endblock content_body %}

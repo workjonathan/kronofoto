@@ -33,10 +33,17 @@
         {% endwith %}
         <div class="two-column__content-wrapper">
             <div class="two-column__content">
+                {% if edit %}
                 {{ form.title.errors }}
-                {% if form or card.title %}<h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>{% endif %}
+                <h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+                {% elif card.title %}<h2>{{ card.title }}</h2>
+                {% endif %}
+                {% if edit %}
                 {{ form.description.errors }}
-                {% if form or card.title %}<div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>{% endif %}
+                <div contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
+                {% elif card.description %}
+                <div>{{ card.description }}</div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -15,10 +15,15 @@
             <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "archive/snippets/attribution.html" with object=card.photo %}</div>
         </a>
         <div class="full-image-area__text">
+            {% if edit %}
             {{ form.title.errors }}
             <h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
             {{ form.description.errors }}
             <span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            {% else %}
+                {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
+                {% if card.description %}<span>{{ card.description }}</span>{% endif %}
+            {% endif %}
         </div>
         <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>
             {% if card.photo %}
