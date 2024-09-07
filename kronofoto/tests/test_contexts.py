@@ -16,7 +16,7 @@ from archive.models.donor import Donor
 from archive.models import Category
 from archive.views.photo import PhotoView
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .util import photos, donors, archives, small_gif
+from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair
 
 class Tests(TestCase):
 
@@ -89,12 +89,10 @@ class Tests(TestCase):
                 photoview.get_object(Archive.objects.all())
 
 
+@pytest.mark.django_db
+def test_photosphere_context(a_photosphere_pair):
+    resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={a_photosphere_pair.id}")
 
-    @settings(max_examples=1)
-    @given(from_model(PhotoSphere.photos.through, photo=photos(), photosphere=from_model(PhotoSphere, id=st.none(), image=st.builds(lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')))))
-    def test_photosphere_context(self, pair):
-        resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={pair.id}")
-
-        assertTemplateUsed(resp, 'archive/photosphere_detail.html')
-        assert resp.status_code == 200
-        assert 'object' in resp.context and resp.context['object'].id == pair.photosphere.id
+    assertTemplateUsed(resp, 'archive/photosphere_detail.html')
+    assert resp.status_code == 200
+    assert 'object' in resp.context and resp.context['object'].id == a_photosphere_pair.photosphere.id

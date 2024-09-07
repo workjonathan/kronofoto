@@ -1,7 +1,7 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from django.db import transaction
-from archive.models import Photo, Donor, PhotoTag, Category
+from archive.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
@@ -11,6 +11,7 @@ from archive.models.tag import Tag, LowerCaseCharField
 from archive.models.term import Term
 from typing import NamedTuple, List
 from archive.search import expression as expr
+import pytest
 
 small_gif = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21\xf9\x04'
@@ -71,6 +72,35 @@ terms = lambda **kwargs: from_model(Term, id=st.none(), **kwargs)
 tags = lambda **kwargs: from_model(Tag, id=st.none(), **kwargs)
 archives = lambda slug=None, id=st.none(), **kwargs: from_model(Archive)
 donors = lambda archive=None, id=st.none(), **kwargs: from_model(Donor, archive=archives(), **kwargs)
+
+@pytest.fixture
+def a_category():
+    return Category.objects.create()
+
+@pytest.fixture
+def an_archive():
+    return Archive.objects.create()
+
+@pytest.fixture
+def a_photo(a_category, an_archive):
+    return Photo.objects.create(
+        original=SimpleUploadedFile("small.gif", small_gif, content_type="image/gif"),
+        archive=an_archive,
+        category=a_category,
+    )
+
+@pytest.fixture
+def a_photosphere():
+    return PhotoSphere.objects.create(
+        image=SimpleUploadedFile("small.gif", small_gif, content_type="image/gif"),
+    )
+
+@pytest.fixture
+def a_photosphere_pair(a_photo, a_photosphere):
+    return PhotoSpherePair.objects.create(
+        photo=a_photo,
+        photosphere=a_photosphere,
+    )
 
 def photos(*, archive=None, **kwargs):
     return from_model(

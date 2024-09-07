@@ -17,6 +17,16 @@ from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachin
 from django.contrib.contenttypes.models import ContentType
 import pytest
 
+#@given(st.sets(st.integers()), st.sets(st.integers()), st.sets(st.integers()), st.sets(st.integers()))
+#def test_set_theory(a, b, c, d):
+#    assert  (a - (b | c)) | ((b | c) & d) == (a - (b & c)) | ((b | c) & d)
+
+
+#@given(st.sets(st.integers()), st.sets(st.integers()), st.sets(st.integers()))
+#def test_set_theory(a, b, c):
+#    assert  (a - b) | (b & c) == (a - b) | (b | c)
+
+
 def test_permissionmixin_hasadd():
     class Base:
         opts = Mock()
@@ -423,123 +433,165 @@ class UserPrivilegeEscalationTest(TransactionalRuleBasedStateMachine):
         with block_group_escalation(editor=self.editor, group=group):
             group.permissions.set(perms)
 
-UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 1, stateful_step_count = 3, deadline=None)
+UserPrivilegeEscalationTest.TestCase.settings = hsettings(max_examples = 5, stateful_step_count = 5, deadline=None)
 
-class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
-    pass
+# This was very useful for finding things users could do to escalate their privileges.
+# It's slow and has been replaced by a bunch of fast tests.
+# It would be nice to restore this if database access is ever not required for the checks.
+#class TestUserPrivileges(TestCase, UserPrivilegeEscalationTest.TestCase):
+#    pass
 
 class UserAdminTests(TestCase):
-    @hsettings(max_examples=10)
-    @given(st.data())
-    def test_changeable_permissions(self, data):
-        permissions = data.draw(st.sets(st.sampled_from(list(Permission.objects.all()[:10]))))
+    def test_can_remove_archive_permission_from_group_with_universal_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user1.user_permissions.set([permission])
+        group = Group.objects.create(name="group")
+        archive_perms = Archive.groups.through.objects.create(archive=archive, group=group)
+        archive_perms.permission.set([permission])
+        with block_group_escalation(editor=user1, group=group):
+            archive_perms.permission.set([])
+        assert not archive_perms.permission.filter(pk=permission.pk).exists()
+
+    def test_cannot_add_permission_to_group_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        group = Group.objects.create(name="group")
+        with block_group_escalation(editor=user1, group=group):
+            group.permissions.set([permission])
+        assert not group.permissions.filter(pk=permission.pk).exists()
+
+    def test_cannot_remove_permission_from_group_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        group = Group.objects.create(name="group")
+        group.permissions.set([permission])
+        with block_group_escalation(editor=user1, group=group):
+            group.permissions.set([])
+        assert group.permissions.filter(pk=permission.pk).exists()
+
+    def test_cannot_delete_archive_permission_from_group_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        group = Group.objects.create(name="group")
+        archive_perms = Archive.groups.through.objects.create(archive=archive, group=group)
+        archive_perms.permission.set([permission])
+        with block_group_escalation(editor=user1, group=group):
+            archive_perms.delete()
+        assert Archive.groups.through.objects.filter(archive=archive, group=group).exists()
+
+
+    def test_cannot_add_second_archive_permission_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        archive2 = Archive.objects.create(slug="slug2")
         user1 = User.objects.create_user("test1")
         user2 = User.objects.create_user("test2")
-        user1.user_permissions.add(*permissions)
-        group = Group.objects.create(name='groupname')
-        group.permissions.add(*permissions)
-        user2.groups.add(group)
-        self.assertQuerySetEqual(PermissionAnalyst(user1).get_changeable_permissions(), PermissionAnalyst(user2).get_changeable_permissions())
+        archive_perms = Archive.users.through.objects.create(archive=archive, user=user2)
+        archive_perms.permission.set([permission])
+        with block_escalation(editor=user1, user=user2):
+            archive_perms2 = Archive.users.through.objects.create(archive=archive2, user=user2)
+            archive_perms2.permission.set([permission])
+        assert not archive_perms2.permission.filter(pk=permission.pk).exists()
 
-    @hsettings(max_examples=10)
-    @given(st.data(), from_model(Archive, id=st.none()))
-    def test_changeable_groups(self, data, archive):
-        permissions = list(Permission.objects.all()[:10])
-        perms1 = data.draw(st.sets(st.sampled_from(permissions)))
-        perms2 = data.draw(st.sets(st.sampled_from(permissions)))
-        perms3 = data.draw(st.sets(st.sampled_from(permissions)))
-        group1 = Group.objects.create(name='group1')
-        group1.permissions.add(*perms1)
-        group2 = Group.objects.create(name='group2')
-        group2.permissions.add(*perms2)
-        group3 = Group.objects.create(name='group3')
-        through = group3.archive_set.through.objects.create(archive=archive, group=group3)
-        through.permission.set(perms3)
+    def test_removing_all_archive_permissions_removes_m2m_db_object(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        user1.user_permissions.add(permission)
+        archive_perms = Archive.users.through.objects.create(archive=archive, user=user2)
+        archive_perms.permission.set([permission])
+        with block_escalation(editor=user1, user=user2):
+            archive_perms.permission.clear()
+        assert not Archive.users.through.objects.filter(archive=archive, user=user2).exists()
+
+    def test_can_add_archive_permissions_to_group_if_have_it_through_a_group(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        group = Group.objects.create(name="group")
+        group2 = Group.objects.create(name="group2")
+        archive_perms = Archive.groups.through.objects.create(archive=archive, group=group)
+        archive_perms.permission.set([permission])
+        user1.groups.add(group)
+        with block_group_escalation(editor=user1, group=group2):
+            archive_perms2 = Archive.groups.through.objects.create(archive=archive, group=group2)
+            archive_perms2.permission.set([permission])
+        assert archive_perms2.permission.filter(pk=permission.pk).exists()
+
+    def test_can_add_archive_permissions_if_have_universal_permissions(self):
+        permissions = Permission.objects.all()[:3]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        archive_perms = Archive.users.through.objects.create(archive=archive, user=user2)
+        archive_perms.permission.set(permissions)
+        user1.user_permissions.set(permissions)
+        with block_escalation(editor=user1, user=user2):
+            archive_perms.permission.set(permissions)
+        assert archive_perms.permission.filter(pk=permissions[0].pk).exists()
+
+    def test_cannot_add_group_to_user_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        group1 = Group.objects.create(name="group1")
+        group1.permissions.set([permission])
+        with block_escalation(editor=user1, user=user2):
+            user2.groups.add(group1)
+        assert not user2.groups.filter(pk=group1.pk).exists()
+
+    def test_cannot_add_permission_to_user_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        with block_escalation(editor=user1, user=user2):
+            user2.user_permissions.set([permission])
+        assert not user2.user_permissions.filter(pk=permission.pk).exists()
+
+    def test_cannot_remove_permission_from_user_without_permission(self):
+        permission = Permission.objects.all()[0]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        user2.user_permissions.set([permission])
+        with block_escalation(editor=user1, user=user2):
+            user2.user_permissions.set([])
+        assert user2.user_permissions.filter(pk=permission.pk).exists()
+
+    def test_can_remove_archive_permissions_if_have_universal_permissions(self):
+        permissions = Permission.objects.all()[:3]
+        archive = Archive.objects.create(slug="slug")
+        user1 = User.objects.create_user("test1")
+        user2 = User.objects.create_user("test2")
+        archive_perms = Archive.users.through.objects.create(archive=archive, user=user2)
+        archive_perms.permission.set(permissions)
+        user1.user_permissions.set(permissions)
+        with block_escalation(editor=user1, user=user2):
+            archive_perms.permission.clear()
+        assert not archive_perms.permission.exists()
+
+    def test_cannot_remove_group_from_other(self):
+        permissions = Permission.objects.all()
+        group1 = Group.objects.create(name="group1")
+        group1.permissions.add(*permissions[:5])
+        group2 = Group.objects.create(name="group2")
+        group2.permissions.add(*permissions[5:10])
         user1 = User.objects.create_user("test1")
         user2 = User.objects.create_user("test2")
         user1.groups.add(group1)
-        user1.groups.add(group3)
-        user2.user_permissions.add(*perms1)
-        through = user2.archive_set.through.objects.create(archive=archive, user=user2)
-        through.permission.set(perms3)
-        ma = KronofotoUserAdmin(model=User, admin_site=AdminSite())
-        self.assertQuerySetEqual(PermissionAnalyst(user1).get_changeable_groups(), PermissionAnalyst(user2).get_changeable_groups(), ordered=False)
-
-    @hsettings(deadline=None, max_examples=1)
-    @given(
-        st.booleans(),
-        st.booleans(),
-        st.lists(st.builds(Group), unique_by=lambda g: g.name),
-        st.lists(st.builds(Archive), unique_by=lambda a: a.slug, min_size=1),
-        st.data(),
-    )
-    def test_users_cannot_change_privileges_they_do_not_have(self, su1, su2, groups, archives, data):
-        u1 = (User.objects.create_superuser if su1 else User.objects.create_user)("test1")
-        u2 = (User.objects.create_superuser if su2 else User.objects.create_user)("test2")
-        Group.objects.bulk_create(groups)
-        Archive.objects.bulk_create(archives)
-        archives = list(Archive.objects.all())
-        perms = list(Permission.objects.filter(content_type__app_label='archive')[:10])
-        groups = list(Group.objects.all())
-        note('drawing u1 perms')
-        u1.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
-        note('drawing u2 perms')
-        u2.user_permissions.set(data.draw(st.sets(st.sampled_from(perms))))
-        for group in groups:
-            note(f'drawing group {group.id} perms')
-            group.permissions.set(data.draw(st.sets(st.sampled_from(perms))))
-
-        if groups:
-            note(f'drawing groups for u1')
-            u1.groups.set(data.draw(st.sets(st.sampled_from(groups))))
-            note(f'drawing groups for u2')
-            u2.groups.set(data.draw(st.sets(st.sampled_from(groups))))
-
-        if archives:
-            note('drawing archives for u1 perms')
-            for archive in data.draw(st.sets(st.sampled_from(archives))):
-                obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u1)
-                note('drawing archive perms for u1')
-                userperms = data.draw(st.sets(st.sampled_from(perms)))
-                obj.permission.set(userperms)
-            note('drawing archives for u2 perms')
-            for archive in data.draw(st.sets(st.sampled_from(archives))):
-                note('drawing archive perms for u2')
-                obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
-                userperms = data.draw(st.sets(st.sampled_from(perms)))
-                obj.permission.set(userperms)
-        u1 = User.objects.get(pk=u1.id)
-        u1_perm_set = u1.get_all_permissions()
-        u2_perm_set_pre = u2.get_all_permissions()
-
-        with block_escalation(editor=u1, user=u2):
-            note('drawing new perms for u2')
-            assign_perms = data.draw(st.sets(st.sampled_from(perms)))
-            u2.user_permissions.set(assign_perms)
-            assign_groups = []
-            if groups:
-                note('drawing new groups for u2')
-                assign_groups = data.draw(st.sets(st.sampled_from(groups)))
-                u2.groups.set(assign_groups)
-            u2.archiveuserpermission_set.all().delete()
-            assign_archive_perms = {}
-            if archives:
-                note('drawing new archives for u2 perms')
-                for archive in data.draw(st.sets(st.sampled_from(archives))):
-                    obj, created = Archive.users.through.objects.get_or_create(archive=archive, user=u2)
-                    note('drawing new archive perms for u2')
-                    userperms = data.draw(st.sets(st.sampled_from(perms)))
-                    assign_archive_perms[archive.slug] = userperms
-                    if created:
-                        obj.permission.add(*userperms)
-                    else:
-                        obj.permission.set(userperms)
-            requested_set = User.objects.get(pk=u2.id).get_all_permissions()
-        u2 = User.objects.get(pk=u2.id)
-        u2_perm_set_post = u2.get_all_permissions()
-        assert u2_perm_set_pre.symmetric_difference(u2_perm_set_post) <= u1_perm_set
-        # every permission which is assigned should be there either because it was there before or because it was requested.
-        assert u2_perm_set_post <= (u2_perm_set_pre | requested_set)
+        user2.groups.add(group2)
+        user2.save()
+        with block_escalation(editor=user1, user=user2):
+            user2.groups.clear()
+        assert group2 in user2.groups.all()
 
 
 def test_taginline_submitter():
