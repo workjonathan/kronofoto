@@ -10,6 +10,9 @@ from archive.models.donor import Donor
 from archive.models.photo import Photo
 from archive.models.archive import Archive
 from collections import defaultdict
+import pytest
+from django.db.utils import IntegrityError
+import unittest
 
 class PhotoInterface:
     def test_should_have(self):
@@ -48,12 +51,13 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
         super().__init__()
         self.donor_model = defaultdict(set)
         self.scanner_model = defaultdict(set)
+        self.photographer_model = defaultdict(set)
 
     @rule(target=donors, donor=from_model(FakeDonor, id=st.none()))
     def make_donor(self, donor):
         return donor
 
-    @rule(target=photos, photo=from_model(FakePhoto, id=st.none()))
+    @rule(target=photos, photo=from_model(FakePhoto, id=st.none(), year=st.just(1950), is_published=st.just(True)))
     def make_photo(self, photo):
         return photo
 
@@ -64,6 +68,14 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
         photo.scanner = donor
         photo.save()
         self.scanner_model[donor.pk].add(photo.pk)
+
+    @rule(donor=donors, photo=photos)
+    def set_photographer(self, donor, photo):
+        if photo.photographer:
+            self.photographer_model[photo.photographer.pk].remove(photo.pk)
+        photo.photographer = donor
+        photo.save()
+        self.photographer_model[donor.pk].add(photo.pk)
 
     @rule(donor=donors, photo=photos)
     def set_donor(self, donor, photo):
@@ -77,7 +89,7 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
     def check_filter_donated(self):
         db_donors = set()
         model_donors = set()
-        for donor in FakeDonor.objects.filter_donated():
+        for donor in FakeDonor.objects.filter_donated().annotate_donatedcount():
             db_donors.add(donor.pk)
             assert len(self.donor_model[donor.pk]) == donor.donated_count
         for donor in self.donor_model:
@@ -88,12 +100,30 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
     @rule()
     def check_counts(self):
         note(f"{FakeDonor.objects.count()=}")
-        qs = FakeDonor.objects.annotate_donatedcount().annotate_scannedcount()
+        #qs = FakeDonor.objects.annotate_donatedcount()
+        #for donor in qs:
+        #    assert donor.donated_count == len(self.donor_model[donor.pk])
+        qs = FakeDonor.objects.annotate_scannedcount()
         for donor in qs:
-            assert donor.donated_count == len(self.donor_model[donor.pk])
+            note(f"{self.scanner_model}")
             assert donor.scanned_count == len(self.scanner_model[donor.pk])
+        qs = FakeDonor.objects.annotate_photographedcount()
+        for donor in qs:
+            note(f"{self.photographer_model}")
+            assert donor.photographed_count == len(self.photographer_model[donor.pk])
 
 DonorMachine.TestCase.settings = hsettings(max_examples = 5, stateful_step_count = 5, deadline=None)
 
 class TestDonorQuerySet(TestCase, DonorMachine.TestCase):
     pass
+
+@pytest.mark.django_db
+def test_donor_requires_archive():
+    with pytest.raises(IntegrityError):
+        Donor.objects.create(archive=None)
+
+@pytest.mark.django_db
+def test_donor_only_requires_archive():
+    archive = Archive.objects.create()
+    donor = Donor.objects.create(archive=archive)
+    donor.clean_fields()

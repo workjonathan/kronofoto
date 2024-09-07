@@ -5,19 +5,23 @@ from django.core.exceptions import ValidationError
 import urllib
 import json
 import re
+from django.db.models import QuerySet
+from typing import Any, List, Dict, Union, Optional
 
 archive_id_tag = re.compile(r"\[\s*([^\[\]]*[^\[\]\s]+)\s*-\s*(\d+)\s*\]")
 id_tag = re.compile(r"\[\s*(\d+)\s*\]")
 
 
 class AutocompleteField(forms.CharField):
-    def __init__(self, *args, queryset, to_field_name="pk", widget=AutocompleteWidget, **kwargs):
+    def __init__(self, *args: Any, queryset: QuerySet, to_field_name: str="pk", widget: Any=AutocompleteWidget, **kwargs: Any):
         super().__init__(*args, widget=widget, **kwargs)
         self.queryset = queryset
         self.to_field_name = to_field_name
 
-    def to_python(self, value):
+    def to_python(self, value: Optional[Any]) -> Optional[str]:
         value = super().to_python(value)
+        if value is None:
+            raise ValidationError("No value")
 
         for match in reversed(list(re.finditer(archive_id_tag, value))):
             start = match.start()
@@ -49,13 +53,13 @@ class AutocompleteField(forms.CharField):
 
 class RecaptchaField(forms.CharField):
     widget = RecaptchaWidget
-    def __init__(self, required_score=0.7, label=False, *args, **kwargs):
-        super().__init__(label=label, *args, **kwargs)
+    def __init__(self, required_score: float=0.7, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
         self.required = True
         self.widget.attrs['data-sitekey'] = settings.GOOGLE_RECAPTCHA3_SITE_KEY
         self.required_score = required_score
 
-    def check_captcha(self, value):
+    def check_captcha(self, value: Any) -> Dict[str, Any]:
         data = {
             'secret': settings.GOOGLE_RECAPTCHA3_SECRET_KEY,
             'response': value,
@@ -65,7 +69,7 @@ class RecaptchaField(forms.CharField):
         response = urllib.request.urlopen(req)
         return json.loads(response.read().decode())
 
-    def validate(self, value):
+    def validate(self, value: Any) -> None:
         super().validate(value)
         result = self.check_captcha(value)
         if not result['success']:

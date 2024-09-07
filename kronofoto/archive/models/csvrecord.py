@@ -5,6 +5,8 @@ from PIL import Image, UnidentifiedImageError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .photo import Photo
 from .donor import Donor
+from .archive import Archive
+from typing_extensions import Self
 
 class ConnecticutRecordQuerySet(models.QuerySet):
     pass
@@ -28,7 +30,7 @@ class ConnecticutRecord(models.Model):
 
     objects = ConnecticutRecordQuerySet.as_manager()
 
-    def hq_jpeg(self):
+    def hq_jpeg(self) -> bytes:
         resp = requests.get(self.tiff_url())
         resp.raise_for_status()
         img = Image.open(BytesIO(resp.content))
@@ -36,7 +38,7 @@ class ConnecticutRecord(models.Model):
         img.save(jpgData, "jpeg", optimize=True, quality=95)
         return jpgData.getvalue()
 
-    def photo_record(self, *, archive):
+    def photo_record(self, *, archive: Archive) -> Photo:
         photo = Photo(
             archive=archive,
             donor=Donor.objects.get_or_create(last_name=self.contributor, archive=archive)[0],
@@ -55,10 +57,10 @@ class ConnecticutRecord(models.Model):
         self.save()
         return photo
 
-    def tiff_url(self):
+    def tiff_url(self) -> str:
         return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(str(self))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '{}:{}'.format(self.file_id1, self.file_id2)
 
     class Meta:
@@ -68,12 +70,13 @@ class ConnecticutRecord(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['file_id1', 'file_id2'], name='unique_id_combo'),
         ]
+        db_table = 'kronofoto_connecticutrecord'
 
 
 
 
 class CSVRecordQuerySet(models.QuerySet):
-    def bulk_clean(self):
+    def bulk_clean(self) -> None:
         records = list(self.all())
         for record in records:
             record.clean_whitespace()
@@ -93,7 +96,7 @@ class CSVRecordQuerySet(models.QuerySet):
             ],
         )
 
-    def exclude_geocoded(self):
+    def exclude_geocoded(self) -> Self:
         return self.filter(photo__isnull=False, photo__location_point__isnull=True)
 
 class CSVRecord(models.Model):
@@ -119,7 +122,7 @@ class CSVRecord(models.Model):
 
     objects = CSVRecordQuerySet.as_manager()
 
-    def location(self):
+    def location(self) -> str:
         components = []
         if self.country:
             components.append(self.country)
@@ -134,7 +137,7 @@ class CSVRecord(models.Model):
         return ' '.join(reversed(components))
 
 
-    def clean_whitespace(self):
+    def clean_whitespace(self) -> None:
         self.donorFirstName = self.donorFirstName.strip()
         self.donorLastName = self.donorLastName.strip()
         self.scanner = self.scanner.strip()
@@ -145,3 +148,6 @@ class CSVRecord(models.Model):
         self.country = self.country.strip()
         self.state = self.state.strip()
         self.comments = self.comments.strip()
+
+    class Meta:
+        db_table = 'kronofoto_csvrecord'

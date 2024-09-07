@@ -153,7 +153,10 @@ class BasicParser:
 
     @classmethod
     def tokenize(cls, s):
-        return cls(basic_tokenize.parse(s))
+        try:
+            return cls(basic_tokenize.parse(s))
+        except parsy.ParseError:
+            raise NoExpression
 
     def parse(self):
         if len(self.tokens):

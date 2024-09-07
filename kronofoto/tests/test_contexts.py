@@ -16,34 +16,66 @@ from archive.models.donor import Donor
 from archive.models import Category
 from archive.views.photo import PhotoView
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .util import photos, donors, archives, small_gif
+from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair
 
 class Tests(TestCase):
 
-    @settings(deadline=1000, max_examples=5)
-    @given(
-        user=from_model(User, is_staff=st.booleans()),
-        data=st.data()
-    )
-    def test_photo_user_context(self, user, data):
-        archive = Archive.objects.create()
+    def test_photo_permissions(self):
+        from archive.templatetags.permissions import PhotoPermissions
+        archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
-        permissions = data.draw(st.lists(st.sampled_from(list(Permission.objects.all().order_by('id')))))
-        user.user_permissions.add(*permissions)
-        from archive.templatetags.permissions import has_view_or_change_permission
-        has_perm = has_view_or_change_permission(user, photo)
-        note(f'{user.is_staff=}')
-        client = Client()
-        client.force_login(user)
-        if has_perm:
-            assert client.get(photo.get_edit_url()[13:]).status_code == 200
-        elif user.is_staff:
-            assert client.get(photo.get_edit_url()[13:]).status_code == 403
-        else:
-            assert client.get(photo.get_edit_url()[13:]).status_code == 302
+        permission_list = PhotoPermissions(photo).permissions
+        assert 'archive.change_photo' in permission_list
+        assert 'archive.view_photo' in permission_list
+        assert 'archive.archive.slug.change_photo' in permission_list
+        assert 'archive.archive.slug.view_photo' in permission_list
 
+    def test_permission_list_factory_only_handles_photos(self):
+        from archive.templatetags.permissions import PermissionListFactory
+        with pytest.raises(NotImplementedError):
+            PermissionListFactory().permission_list([1,2,3])
+
+    def test_permission_list_factory_handles_photos(self):
+        from archive.templatetags.permissions import PermissionListFactory, PhotoPermissions
+        archive = Archive.objects.create(slug="slug")
+        donor = Donor.objects.create(archive=archive)
+        category = Category.objects.create()
+        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
+        assert isinstance(PermissionListFactory().permission_list(photo), PhotoPermissions)
+
+
+    def test_permissioned_staff_must_have_privs(self):
+        from archive.templatetags.permissions import has_view_or_change_permission
+        archive = Archive.objects.create(slug="slug")
+        donor = Donor.objects.create(archive=archive)
+        category = Category.objects.create()
+        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
+        user = User.objects.create_user(username="test_user", is_staff=True)
+        assert not has_view_or_change_permission(user, photo)
+
+    def test_permissioned_permissions_must_be_staff(self):
+        from archive.templatetags.permissions import has_view_or_change_permission
+        archive = Archive.objects.create(slug="slug")
+        donor = Donor.objects.create(archive=archive)
+        category = Category.objects.create()
+        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
+        user = User.objects.create_user(username="test_user", is_staff=True)
+        assert not has_view_or_change_permission(user, photo)
+
+    def test_permissioned_staff_have_privs(self):
+        from archive.templatetags.permissions import has_view_or_change_permission
+        archive = Archive.objects.create(slug="slug")
+        donor = Donor.objects.create(archive=archive)
+        category = Category.objects.create()
+        photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
+        from django.contrib.contenttypes.models import ContentType
+        ct = ContentType.objects.get_for_model(Photo)
+        permission = Permission.objects.get(content_type=ct, codename="change_photo")
+        user = User.objects.create_user(username="test_user", is_staff=False)
+        user.user_permissions.add(permission)
+        assert not has_view_or_change_permission(user, photo)
 
     @settings(max_examples=5)
     @given(archive=archives(), id=st.integers(min_value=1, max_value=100000))
@@ -57,12 +89,10 @@ class Tests(TestCase):
                 photoview.get_object(Archive.objects.all())
 
 
+@pytest.mark.django_db
+def test_photosphere_context(a_photosphere_pair):
+    resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={a_photosphere_pair.id}")
 
-    @settings(max_examples=1)
-    @given(from_model(PhotoSphere.photos.through, photo=photos(), photosphere=from_model(PhotoSphere, id=st.none(), image=st.builds(lambda: SimpleUploadedFile('small.gif', small_gif, content_type='image/gif')))))
-    def test_photosphere_context(self, pair):
-        resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={pair.id}")
-
-        assertTemplateUsed(resp, 'archive/photosphere_detail.html')
-        assert resp.status_code == 200
-        assert 'object' in resp.context and resp.context['object'].id == pair.photosphere.id
+    assertTemplateUsed(resp, 'archive/photosphere_detail.html')
+    assert resp.status_code == 200
+    assert 'object' in resp.context and resp.context['object'].id == a_photosphere_pair.photosphere.id

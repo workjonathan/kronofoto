@@ -8,9 +8,12 @@ from django.conf import settings
 import urllib
 import urllib.request
 import json
+from django.forms import Form
+from django.http import HttpResponse
 from ..views import BaseTemplateMixin
 from .token import UserEmailVerifier
 from .forms import RegisterUserForm, FortepanAuthenticationForm
+from typing import Any, Dict, List, Union, Optional
 
 class LoginView(BaseTemplateMixin, django_views.LoginView):
     form_class = FortepanAuthenticationForm
@@ -44,7 +47,7 @@ class VerifyToken(RedirectView):
     pattern_name = 'kronofoto:random-image'
     verifier = UserEmailVerifier()
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args: Any, **kwargs: Any) -> Optional[str]:
         user = self.verifier.verify_token(uid=kwargs['uid'], token=kwargs['token'])
         if user:
             login(self.request, user)
@@ -55,12 +58,12 @@ class RegisterAccount(BaseTemplateMixin, FormView):
     template_name = 'archive/register.html'
     success_url = '/'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['RECAPTCHA_SITE_KEY'] = settings.GOOGLE_RECAPTCHA_SITE_KEY
         return context
 
-    def user_is_human(self):
+    def user_is_human(self) -> bool:
         recaptcha_response = self.request.POST.get('g-recaptcha-response')
         data = {
             'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
@@ -72,11 +75,11 @@ class RegisterAccount(BaseTemplateMixin, FormView):
         result = json.loads(response.read().decode())
         return result['success']
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> Dict[str, Any]:
         kwargs = super().get_form_kwargs()
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: RegisterUserForm) -> HttpResponse:
         if self.user_is_human():
             form.create_user()
             self.success_url = reverse('email-sent')
