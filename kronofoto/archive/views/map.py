@@ -2,7 +2,7 @@ from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
 from typing import Optional, Any
-from .base import ArchiveRequest
+from .base import ArchiveRequest, PhotoQuerySet
 from ..forms import BoundsSearchForm, Bounds
 from django.contrib.gis.geos import Polygon
 from functools import cached_property
@@ -29,7 +29,7 @@ class MapRequest(ArchiveRequest):
     def map_bounds(self) -> Bounds:
         return self.form.cleaned_data['map_bounds']
 
-    def get_photo_queryset(self) -> QuerySet[Photo]:
+    def get_photo_queryset(self) -> PhotoQuerySet:
         qs = super().get_photo_queryset().order_by()
         if (self.form.is_valid() and
             self.form.cleaned_data['search_bounds'] is not None

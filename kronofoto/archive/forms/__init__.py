@@ -13,7 +13,7 @@ from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
 from dataclasses import dataclass
-from typing import Any, List, Dict, Optional, Union, Generator, Tuple
+from typing import Any, List, Dict, Optional, Union, Generator, Tuple, TypeVar, Type
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")
@@ -199,6 +199,8 @@ class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())
     year.widget.attrs['data-timeline-target'] = 'formYear'
 
+T = TypeVar("T", bound="Bounds")
+
 @dataclass
 class Bounds:
     west: float
@@ -207,10 +209,10 @@ class Bounds:
     north: float
 
     @classmethod
-    def full_bounds(cls):
+    def full_bounds(cls: Type[T]) -> T:
         return cls(west=-180, east=180, south=-90, north=90)
 
-    def as_tuple(self):
+    def as_tuple(self) -> Tuple[float, float, float, float]:
         return (self.west, self.south, self.east, self.north)
 
 
@@ -220,8 +222,10 @@ class BoundsSearchForm(SearchForm):
     locals()["bounds:south"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
     locals()["bounds:north"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
 
-    def clean(self):
+    def clean(self) -> Optional[Dict[str, Any]]:
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return None
         directions = ['west', 'east', 'north', 'south']
         fields = [f'bounds:{name}' for name in directions]
         if any(cleaned_data[field] is None for field in fields):
