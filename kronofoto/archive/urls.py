@@ -100,6 +100,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
     *directory('collections', views.collections_view, name='collection-create', children=include([
         *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([
+            path("remove/<int:photo>", views.collection.remove, name="collection-remove"),
             path('delete', views.CollectionDelete.as_view(), name='collection-delete'),
         ])),
     ])),

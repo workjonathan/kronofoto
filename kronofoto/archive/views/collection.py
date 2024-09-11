@@ -2,6 +2,7 @@ from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
 from django.core.exceptions import PermissionDenied
 from ..reverse import reverse
+from django.views.decorators.http import require_http_methods
 from django.http import QueryDict, HttpResponse, HttpResponseForbidden, HttpRequest, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.forms import formset_factory, Form, BaseFormSet
@@ -128,6 +129,21 @@ class CollectionBehaviorSelection:
         else:
             return CollectionGetBehaviorSelection(areq=areq)
 
+@require_http_methods(["DELETE", "POST"])
+@login_required
+def remove(request: HttpRequest, pk: int, photo: int) -> HttpResponse:
+    areq = ArchiveRequest(request)
+    assert not request.user.is_anonymous
+    collection = get_object_or_404(Collection.objects.all(), owner=request.user, id=pk)
+    relations = Collection.photos.through.objects.filter(collection__owner=request.user, collection__id=pk, photo__id=photo)
+    if 'choice' in request.POST and request.POST['choice'] == 'Yes':
+        relations.delete()
+    context = areq.common_context
+    context['collection'] = collection
+    if areq.is_hx_request:
+        return TemplateResponse(request=request, template="archive/collection_edit.html", context=context)
+    else:
+        return HttpResponseRedirect(reverse("kronofoto:collection-edit", kwargs={'pk':pk}))
 
 @login_required
 def collections_view(

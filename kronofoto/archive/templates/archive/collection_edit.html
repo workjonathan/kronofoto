@@ -27,10 +27,13 @@
                                 <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
                                 <li><a href="#">Embed List</a></li>
                                 <li><a
-                                        href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                    href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                     hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                     hx-target="#app"
-                                    >Delete List</a></li>
+                                    >
+                                        Delete List
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -66,18 +69,23 @@
             <div class="columns small-12">
                 <div class="thumbnail-collection thumbnail-collection--3">
                     {% for photo in collection.photos.all %}
-                    <div class="thumbnail-collection__item">
-                        <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
-                        <details>
-                        <summary class="thumbnail-collection__delete"></summary>
-                        <form method="post" hx-post hx-target="closest .thumbnail-collection__item">
-                            {% csrf_token %}
-                            <p>Are you sure you want to remove this photo?</p>
-                            <input type="submit" value="Yes">
-                            <input type="submit" value="No">
-                        </form>
-                        </details>
-                    </div>
+                        <div class="thumbnail-collection__item">
+                            <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
+                            <details>
+                                <summary class="thumbnail-collection__delete"></summary>
+                                <form 
+                                    method="post" 
+                                    action="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}" 
+                                    hx-post="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}" 
+                                    hx-push-url="false"
+                                >
+                                    {% csrf_token %}
+                                    <p>Are you sure you want to remove this photo?</p>
+                                    <input type="submit" name="choice" value="Yes">
+                                    <input type="submit" name="choice" value="No">
+                                </form>
+                            </details>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
