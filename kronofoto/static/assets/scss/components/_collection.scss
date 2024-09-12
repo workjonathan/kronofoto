@@ -5,7 +5,8 @@
 
   &--list {
     margin-top: -20px;
-    column-fill: balance;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     > div {
       border-bottom: 1px solid #DDDDDD;
       position: relative;
