@@ -1,6 +1,7 @@
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
 from django.core.exceptions import PermissionDenied
+from django.utils.html import escape
 from ..reverse import reverse
 from django.views.decorators.http import require_http_methods
 from django.http import QueryDict, HttpResponse, HttpResponseForbidden, HttpRequest, HttpResponseRedirect
@@ -17,7 +18,7 @@ from ..models.photo import Photo
 from ..models import Exhibit
 from django.db.models import QuerySet
 from ..models.collection import Collection
-from ..forms import AddToListForm, ListMemberForm, ListForm, CollectionForm
+from ..forms import AddToListForm, ListMemberForm, ListVisibilityForm, ListForm, CollectionForm
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
 from dataclasses import dataclass
@@ -41,6 +42,7 @@ def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         context = ArchiveRequest(request=request).common_context
         context['collection'] = collection
+        context['visibility_form'] = ListVisibilityForm(initial={'is_private': collection.visibility != "PU"})
         return TemplateResponse(request=request, context=context, template="archive/collection_edit.html")
 
 class Responder(Protocol):
@@ -129,7 +131,39 @@ class CollectionBehaviorSelection:
         else:
             return CollectionGetBehaviorSelection(areq=areq)
 
-@require_http_methods(["DELETE", "POST"])
+
+@require_http_methods(["POST"])
+@login_required
+def change_name(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    collections = Collection.objects.filter(owner__id=request.user.id, pk=pk)
+    if 'collection-name' in request.POST and len(request.POST['collection-name'].strip()) > 0:
+        name = request.POST['collection-name']
+        collections.update(name=name)
+    for c in collections:
+        return HttpResponse(escape(c.name))
+    return HttpResponse("forbidden", status=403)
+
+@require_http_methods(["POST"])
+@login_required
+def change_visibility(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    areq = ArchiveRequest(request)
+    collection = get_object_or_404(Collection.objects.all(), owner=request.user, id=pk)
+    form = ListVisibilityForm(request.POST)
+    if form.is_valid():
+        collection.visibility = "PR" if form.cleaned_data['is_private'] else "PU"
+        collection.save()
+    context = areq.common_context
+    context['collection'] = collection
+    context['visibility_form'] = form
+    if areq.is_hx_request:
+        return TemplateResponse(request=request, template="archive/collection_edit.html", context=context)
+    else:
+        return HttpResponseRedirect(reverse("kronofoto:collection-edit", kwargs={'pk':pk}))
+
+
+@require_http_methods(["POST"])
 @login_required
 def remove(request: HttpRequest, pk: int, photo: int) -> HttpResponse:
     areq = ArchiveRequest(request)
@@ -140,6 +174,7 @@ def remove(request: HttpRequest, pk: int, photo: int) -> HttpResponse:
         relations.delete()
     context = areq.common_context
     context['collection'] = collection
+    context['visibility_form'] = ListVisibilityForm(initial={'is_private': collection.visibility != "PU"})
     if areq.is_hx_request:
         return TemplateResponse(request=request, template="archive/collection_edit.html", context=context)
     else:

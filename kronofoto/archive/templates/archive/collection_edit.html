@@ -9,7 +9,11 @@
 
         <div class="row">
             <div class="columns small-12">
-                <a href="#" class="back-link">My Profile</a>
+                <a 
+                    href="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+                    hx-get="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+                    class="back-link"
+                >My Profile</a>
             </div>
         </div>
 
@@ -17,14 +21,28 @@
 
             <div class="columns medium-8 small-12">
                 <div class="header-group">
-                    <h2 class="header-group__header">{{ collection }}</h2>
+                    <form 
+                        hx-post="{% krono_url "kronofoto:collection-name" pk=collection.pk %}"
+                        hx-trigger="keydown delay:500ms"
+                        hx-swap="none"
+                        hx-push-url="false"
+                    >
+                        {% csrf_token %}
+                        <input type="text" autocomplete="off" class="header-group__header" name="collection-name" value="{{ collection }}"></input>
+                    </form>
                     <div class="header-group__context-menu context-menu" id="exhibit-{{ collection.uuid }}" data-toggler=".expanded">
                         <div class="context-menu__button" data-toggle="exhibit-{{ collection.uuid }}"></div>
                         <div class="context-menu__items">
                             <ul>
-                                <li><a href="#">Edit List Name</a></li>
-                                <li><a href="#">Add Photos</a></li>
-                                <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
+                                <li><a
+                                    href="{% krono_url "kronofoto:random-image" %}"
+                                    {% comment %}
+                                    hx-get="{% krono_url "kronofoto:random-image" %}"
+                                    hx-target="#app"
+                                    hx-swap="innerHTML"
+                                    {% endcomment %}
+                                >Add Photos</a></li>
+                                <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share Album</a></li>
                                 <li><a href="#">Embed List</a></li>
                                 <li><a
                                     href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
@@ -39,22 +57,32 @@
                     </div>
 
                     <div class="header-group__subtitle">
-                        <form class="form margin-right-auto">
+                        <form class="form margin-right-auto" hx-post="{% krono_url "kronofoto:collection-visibility" pk=collection.pk %}" hx-trigger="change" hx-push-url="false" hx-swap="innerHTML swap:200ms">
+                            {% csrf_token %}
                             <div class="switch-group">
                                 <div class="switch">
-                                    <input type="checkbox" name="is_private" class="switch-input" id="id_is_private" data-toggle="id_is_private_active id_is_private_inactive">
-                                    <label class="switch-paddle" for="id_is_private">
+                                    {{ visibility_form.is_private }}
+                                    <label class="switch-paddle" for="{{ visibility_form.is_private.auto_id }}">
                                         <span class="show-for-sr">List Privacy</span>
                                     </label>
                                 </div>
                                 <label class="switch-group__left-label-with-subtitle" for="id_is_private">
                                     List Privacy
-                                    <span id="id_is_private_inactive" class="invisible" data-toggler=".invisible">Anyone with the url can view the list</span>
-                                    <span id="id_is_private_active" data-toggler=".invisible">Only you can view the list</span>
+                                    <span>
+                                        {% if collection.visibility == "PU" %}
+                                            Anyone can view the list
+                                        {% elif collection.visibility == "UL" %}
+                                            Anyone with the url can view the list
+                                        {% else %}
+                                          Only you can view the list
+                                        {% endif %}
+                                    </span>
                                 </label>
                             </div>
                         </form>
-                        <div role="doc-subtitle" class="margin-left-auto">{{ collection.photos.all|length }} photos</div>
+                        {% with photo_count=collection.photos.all.count %}
+                        <div role="doc-subtitle" class="margin-left-auto">{{ photo_count }} photo{{ photo_count|pluralize }}</div>
+                        {% endwith %}
                     </div>
                 </div>
 

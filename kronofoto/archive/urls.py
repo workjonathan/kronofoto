@@ -101,6 +101,8 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     *directory('collections', views.collections_view, name='collection-create', children=include([
         *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([
             path("remove/<int:photo>", views.collection.remove, name="collection-remove"),
+            path("change-visibility", views.collection.change_visibility, name="collection-visibility"),
+            path("change-name", views.collection.change_name, name="collection-name"),
             path('delete', views.CollectionDelete.as_view(), name='collection-delete'),
         ])),
     ])),

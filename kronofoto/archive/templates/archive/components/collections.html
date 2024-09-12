@@ -46,7 +46,11 @@
                             <div class="context-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
                             <div class="context-menu__items">
                                 <ul>
-                                    <li><a href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}">Edit</a></li>
+                                    <li><a 
+                                        href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}"
+                                        hx-get="{% krono_url "kronofoto:collection-edit" pk=collection.id %}"
+                                        hx-target="#app"
+                                    >Edit</a></li>
                                     <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share Album</a></li>
                                     <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Embed Album</a></li>
                                     <li><a

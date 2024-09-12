@@ -46,6 +46,12 @@ class WebComponentForm(forms.Form):
         required=False
     )
 
+class ListVisibilityForm(forms.Form):
+    is_private = forms.BooleanField(label="Make Private", label_suffix="", required=False)
+    is_private.widget.attrs.update({
+        "class": "switch-input",
+    })
+
 class ListForm(forms.Form):
     name = forms.CharField(label="create a new list")
     name.widget.attrs['placeholder'] = "new list name"
