@@ -213,6 +213,14 @@ $font-weight-thin: 100;
     height: 55px;
     background-image: url("data:image/svg+xml,%3Csvg id='location-icon' xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect id='Rectangle_32' data-name='Rectangle 32' width='40' height='40' fill='none'/%3E%3Cg id='Group_48' data-name='Group 48' transform='translate(9 9)'%3E%3Crect id='Rectangle_87' data-name='Rectangle 87' width='2' height='23' transform='translate(21)' fill='%237f7f7f'/%3E%3Cpath id='Path_83' data-name='Path 83' d='M10.838,15.757h1.324v3.191H10.838Zm0-5.64h1.324v3.191H10.838Zm0-5.64h1.324V7.669H10.838ZM12.162,0V2.031H10.838V0H4V23h6.838V21.4h1.324V23H19V0Z' transform='translate(0)' fill='%237f7f7f'/%3E%3Crect id='Rectangle_88' data-name='Rectangle 88' width='2' height='23' fill='%237f7f7f'/%3E%3C/g%3E%3C/svg%3E%0A");
   }
+  &.edit-account-icon {
+    display: block;
+    width: 27px;
+    height: 27px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='27.166' height='27.108' viewBox='0 0 27.166 27.108'%3E%3Cdefs%3E%3CclipPath id='clip-path'%3E%3Crect id='Rectangle_126' data-name='Rectangle 126' width='27.166' height='27.108' transform='translate(0 0)' fill='none'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg id='Group_74' data-name='Group 74' transform='translate(0 0)'%3E%3Cg id='Group_73' data-name='Group 73' clip-path='url(%23clip-path)'%3E%3Cpath id='Path_110' data-name='Path 110' d='M11.135,4.914H1.35V25.758H22.195V15.974' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.7'/%3E%3Cpath id='Path_111' data-name='Path 111' d='M21.413,1.768,15.787,7.394l-.365.365-5.076,5.076L8.618,18.548,14.33,16.82l5.077-5.077.364-.364L25.4,5.752a1.222,1.222,0,0,0,.12-1.716L23.129,1.648A1.223,1.223,0,0,0,21.413,1.768Z' fill='none' stroke='%237f7f7f' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.7'/%3E%3Cline id='Line_46' data-name='Line 46' x2='3.67' y2='3.67' transform='translate(18.441 4.999)' fill='none' stroke='%237f7f7f' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.7'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A");
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
   &--add-text {
     width: 27px;
     height: 23px;

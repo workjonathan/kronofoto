@@ -13,7 +13,7 @@
 
         {% if profile_user == request.user %}
         <div class="user-header__edit-button">
-            <a href="{% url "password_change" %}"><i class="fas fa-edit"></i><span class="sr-only">Edit</span></a>
+            <a class="icon edit-account-icon" href="{% url "password_change" %}"><span class="sr-only">Edit</span></a>
         </div>
 
         <div class="user-header__logout">
