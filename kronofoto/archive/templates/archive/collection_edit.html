@@ -9,7 +9,7 @@
 
         <div class="row">
             <div class="columns small-12">
-                <a 
+                <a
                     href="{% krono_url "kronofoto:user-page" username=request.user.username %}"
                     hx-get="{% krono_url "kronofoto:user-page" username=request.user.username %}"
                     class="back-link"
@@ -19,11 +19,11 @@
 
         <div class="row">
 
-            <div class="columns medium-8 small-12">
+            <div class="columns small-12">
                 <div class="header-group">
                         {% csrf_token %}
-                        <h2 
-                            class="header-group__header" 
+                        <h2
+                            class="header-group__header"
                             contenteditable="true"
                             hx-post="{% krono_url "kronofoto:collection-name" pk=collection.pk %}"
                             hx-swap="none"
@@ -70,7 +70,6 @@
                                     </label>
                                 </div>
                                 <label class="switch-group__left-label-with-subtitle" for="id_is_private">
-                                    List Privacy
                                     <span>
                                         {% if collection.visibility == "PU" %}
                                             Anyone can view the list
@@ -104,10 +103,10 @@
                             <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
                             <details>
                                 <summary class="thumbnail-collection__delete"></summary>
-                                <form 
-                                    method="post" 
-                                    action="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}" 
-                                    hx-post="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}" 
+                                <form
+                                    method="post"
+                                    action="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
+                                    hx-post="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
                                     hx-push-url="false"
                                 >
                                     {% csrf_token %}
