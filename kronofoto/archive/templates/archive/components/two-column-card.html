@@ -17,7 +17,7 @@
                 <span class="info-button__icon"></span>
                 <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "archive/snippets/attribution.html" with object=photo %}</div>
             </a>
-            {% if form %}
+            {% if edit %}
                 <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.fill_style.auto_id }}" data-toggle="{{ form.fill_style.auto_id }}" data-toggle-focus="{{ form.fill_style.auto_id }}">
                     <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
                         {{ form.fill_style.0.tag }}

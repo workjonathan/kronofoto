@@ -542,6 +542,11 @@ class ExhibitPlugin {
         this.context = context
     }
     install({elem}) {
+        for (const btn of elem.querySelectorAll("[data-form-target]")) {
+            btn.addEventListener("click", evt => {
+                btn.closest("form").setAttribute("target", btn.getAttribute("data-form-target"))
+            })
+        }
         for (const siteWrapper of elem.querySelectorAll(".site-wrapper")) {
             // Function to update the --vh custom property
             const updateVH = () => {

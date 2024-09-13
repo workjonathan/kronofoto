@@ -267,7 +267,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             context['cards'] = cards
             form = ExhibitForm(request.POST, instance=exhibit)
             context['exhibit'] = ExhibitFormWrapper(form)
-            if all(form_.is_valid() for form_ in forms) and form.is_valid():
+            if all(form_.is_valid() for form_ in forms) and form.is_valid() and 'save' in request.POST and request.POST['save'] == "Save":
                 form.save()
                 from archive.models import Figure
                 exhibit.card_set.all().delete()
@@ -292,11 +292,18 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                 objs = []
                 obj_context = CardContext()
                 for i, card in enumerate(cards):
-                    obj, two_column_count = obj_context.context(card=card, i=i, two_column_count=two_column_count, mode="EDIT_POST")
+                    if 'preview' in request.POST:
+                        obj, two_column_count = obj_context.context(card=card, i=i, two_column_count=two_column_count, mode="PREVIEW")
+                    else:
+                        obj, two_column_count = obj_context.context(card=card, i=i, two_column_count=two_column_count, mode="EDIT_POST")
                     objs.append(obj)
                 context['cards'] = objs
                 context['form'] = form
-                return TemplateResponse(request, "archive/exhibit_edit.html", context=context)
+                if 'preview' in request.POST:
+                    context['edit'] = False
+                    return TemplateResponse(request, "archive/exhibit.html", context=context)
+                else:
+                    return TemplateResponse(request, "archive/exhibit_edit.html", context=context)
     cards = exhibit.card_set.all().order_by('order').select_related(
         'photocard',
         'photocard__photo',
@@ -317,7 +324,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
 @dataclass
 class CardContext:
     def context(self, *, card: Union[Card, CardFormWrapper, PhotoCardFormWrapper], i: int, two_column_count: int, mode: str) -> Tuple[Dict[str, Any], int]:
-        is_edit = mode != "DISPLAY"
+        is_edit = mode != "DISPLAY" and mode != "PREVIEW"
         obj : Dict[str, Any] = {
             "zindex": 20 - i,
             "edit": is_edit,
