@@ -21,15 +21,18 @@
 
             <div class="columns medium-8 small-12">
                 <div class="header-group">
-                    <form 
-                        hx-post="{% krono_url "kronofoto:collection-name" pk=collection.pk %}"
-                        hx-trigger="keydown delay:500ms"
-                        hx-swap="none"
-                        hx-push-url="false"
-                    >
                         {% csrf_token %}
-                        <input type="text" autocomplete="off" class="header-group__header" name="collection-name" value="{{ collection }}"></input>
-                    </form>
+                        <h2 
+                            class="header-group__header" 
+                            contenteditable="true"
+                            hx-post="{% krono_url "kronofoto:collection-name" pk=collection.pk %}"
+                            hx-swap="none"
+                            hx-trigger="keyup delay:500ms"
+                            hx-push-url="false"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            data-textContent-name="collection-name"
+
+                        >{{ collection }}</h2>
                     <div class="header-group__context-menu context-menu" id="exhibit-{{ collection.uuid }}" data-toggler=".expanded">
                         <div class="context-menu__button" data-toggle="exhibit-{{ collection.uuid }}"></div>
                         <div class="context-menu__items">

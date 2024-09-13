@@ -768,6 +768,11 @@ class KronofotoContext {
     constructor({htmx, context}) {
         this.htmx = htmx
         this.context = context
+        this.context.addEventListener("htmx:configRequest", evt => {
+            if (evt.target.hasAttribute("data-textcontent-name")) {
+                evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] = evt.target.textContent
+            }
+        })
     }
     onLoad(elem) {
         $("[data-autocomplete-url]", elem).each((_, input) => {
