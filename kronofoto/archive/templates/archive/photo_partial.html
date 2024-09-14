@@ -22,8 +22,7 @@
 </ul>
 
 <div hx-swap-oob="innerHTML:#metadata-popup">
-    {% block metadata %}
-    {% endblock %}
+    {% include "archive/components/popups/metadata.html" %}
 </div>
 
 <div hx-swap-oob="innerHTML:[data-fpi-fpilink]">
@@ -42,20 +41,13 @@
 <div hx-swap-oob="innerHTML:[data-forward-arrows]">
 {% include "archive/components/photo-link/forward-arrows.html" %}
 </div>
-
 {% block image %}
 {% endblock %}
-
 <div hx-swap-oob="innerHTML:#zoom-popup">
     {% block zoom_popup %}
     {% endblock %}
 </div>
 
-{% block add_to_list %}
-{% endblock %}
-
-{% block download_popup %}
-{% endblock %}
-
-{% block share_popup %}
-{% endblock %}
+{% include "archive/components/popups/add-to-list.html" %}
+{% include "archive/components/popups/download.html" %}
+{% include "archive/components/popups/share.html" %}

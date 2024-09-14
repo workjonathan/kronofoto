@@ -1,0 +1,25 @@
+{% extends base_template %}
+{% load krono_urls %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<form hx-trigger="kronofoto:bounds_changed" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#fi-map-result">
+{% for field in form %}
+    {{ field.as_hidden }}
+{% endfor %}
+<div data-map 
+    data-west="{{ bounds.west }}" 
+    data-south="{{ bounds.south }}" 
+    data-east="{{ bounds.east }}" 
+    data-north="{{ bounds.north }}" 
+    style="width:100%; height:30vh;"></div>
+</form>
+<main class="container-center" id="fi-map-result">
+<figure id="fi-map-figure">
+{% block map_figure %}
+{% endblock %}
+</figure>
+    {% include "archive/map/map_partial.html" %}
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock content %}

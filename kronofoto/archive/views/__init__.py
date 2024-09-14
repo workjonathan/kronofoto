@@ -16,3 +16,4 @@ from .submission import submission, list_terms, define_terms
 from .exhibit import exhibit
 from .images import resize_image
 from .data import datadump
+from .map import map_list, map_detail

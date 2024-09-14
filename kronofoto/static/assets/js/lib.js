@@ -388,12 +388,14 @@ class Gallery {
     }
 }
 
-class MapPlugin {
+// somehow this plugin was copied across branches and modified in both.
+// These two map plugins work slightly differently.
+class MapPlugin2 {
     constructor({context}) {
         this.context = context
     }
     install({elem}) {
-        for (const map_elem of querySelectorAll({node: elem, selector:"[data-map]"})) {
+        for (const map_elem of querySelectorAll({node: elem, selector:"[data-map2]"})) {
             const map = L.map(map_elem)
             const x = map_elem.getAttribute("data-x")
             const y = map_elem.getAttribute("data-y")
@@ -408,6 +410,42 @@ class MapPlugin {
                 const position = [evt.detail.y, evt.detail.x]
                 marker.setLatLng(position)
                 map.setView(position, 20)
+            })
+        }
+    }
+}
+
+class MapPlugin {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const mapelem of elem.querySelectorAll("[data-map]")) {
+            const bounds = L.latLngBounds(
+                L.latLng(mapelem.getAttribute("data-south"), mapelem.getAttribute("data-west")),
+                L.latLng(mapelem.getAttribute("data-north"), mapelem.getAttribute("data-east")),
+            )
+            const map = L.map(document.querySelector('[data-map]'))
+            var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map)
+            map.fitBounds(bounds)
+            map.on("moveend", (evt) => {
+                const bounds = evt.target.getBounds()
+                const w = bounds.getWest()
+                const e = bounds.getEast()
+                const n = bounds.getNorth()
+                const s = bounds.getSouth()
+                const form = mapelem.closest("form")
+                form.querySelector("[name='bounds:west']").value = w
+                form.querySelector("[name='bounds:east']").value = e
+                form.querySelector("[name='bounds:north']").value = n
+                form.querySelector("[name='bounds:south']").value = s
+                mapelem.dispatchEvent(new Event("kronofoto:bounds_changed", {
+                    bubbles: true
+                }))
+
             })
         }
     }
@@ -618,7 +656,7 @@ class KronofotoContext {
             let $btn = $(e.currentTarget)
             $('img', $btn).toggleClass('hide')
         })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, MapPlugin]
+        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, MapPlugin, MapPlugin2]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context}) 
             plugin.install({elem})

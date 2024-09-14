@@ -45,7 +45,7 @@ class PhotoWrapper:
         return self.photo.id
 
     @property
-    def active(self):
+    def active(self) -> bool:
         return hasattr(self.photo, "active") and self.photo.active
 
     @property
@@ -153,8 +153,8 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         if archiverequest.is_hx_request:
             response['HX-Trigger'] = json.dumps({
                 "kronofoto:map:marker:change": {
-                    "x": object.location.x,
-                    "y": object.location.y,
+                    "x": object.location.x if object.location else 0,
+                    "y": object.location.y if object.location else 0,
                 }
             })
         return response
