@@ -1,0 +1,5 @@
+{% load krono_urls %}
+
+<div {% if base_template == "archive/photo_partial.html" %}hx-swap-oob="outerHTML:#add-to-list-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper no-scroll" hx-swap="innerHTML" hx-target="this" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-add-to-list" photo=photo.id %}" hx-trigger="intersect">
+    Loading...
+</div>

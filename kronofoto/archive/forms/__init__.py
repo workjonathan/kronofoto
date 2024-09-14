@@ -13,7 +13,8 @@ from ..fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
 from ..reverse import reverse_lazy
 from .card import CardForm, PhotoCardForm, FigureForm, CardFormType, PhotoCardFormWrapper, CardFormWrapper, FigureFormWrapper
-from typing import Any, List, Dict, Optional, Union, Generator, Tuple
+from dataclasses import dataclass
+from typing import Any, List, Dict, Optional, Union, Generator, Tuple, TypeVar, Type
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms")
@@ -204,6 +205,49 @@ class CarouselForm(SearchForm):
 class TimelineForm(SearchForm):
     year = forms.IntegerField(widget=forms.HiddenInput())
     year.widget.attrs['data-timeline-target'] = 'formYear'
+
+T = TypeVar("T", bound="Bounds")
+
+@dataclass
+class Bounds:
+    west: float
+    south: float
+    east: float
+    north: float
+
+    @classmethod
+    def full_bounds(cls: Type[T]) -> T:
+        return cls(west=-180, east=180, south=-90, north=90)
+
+    def as_tuple(self) -> Tuple[float, float, float, float]:
+        return (self.west, self.south, self.east, self.north)
+
+
+class BoundsSearchForm(SearchForm):
+    locals()["bounds:west"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
+    locals()["bounds:east"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
+    locals()["bounds:south"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
+    locals()["bounds:north"] = forms.FloatField(widget=forms.HiddenInput(), required=False)
+
+    def clean(self) -> Optional[Dict[str, Any]]:
+        cleaned_data = super().clean()
+        if cleaned_data is None:
+            return None
+        directions = ['west', 'east', 'north', 'south']
+        fields = [f'bounds:{name}' for name in directions]
+        if any(cleaned_data[field] is None for field in fields):
+            cleaned_data['search_bounds'] = None
+            cleaned_data['map_bounds'] = Bounds.full_bounds()
+        else:
+            init_kwargs = {
+                direction: cleaned_data[field]
+                for (direction, field) in zip(directions, fields)
+            }
+            bounds = Bounds(**init_kwargs)
+            cleaned_data['search_bounds'] = bounds
+            cleaned_data['map_bounds'] = bounds
+        return cleaned_data
+
 
 
 class TagForm(forms.Form):

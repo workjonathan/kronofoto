@@ -536,7 +536,6 @@ class Gallery {
         $(".gallery", this.context).addClass("hide-nav")
     }
 }
-
 class ExhibitPlugin {
     constructor({context}) {
         this.context = context
@@ -632,6 +631,42 @@ class ExhibitPlugin {
             // Add event listeners
             window.addEventListener("scroll", updateScrollOpacity)
             window.addEventListener("resize", updateVH)
+        }
+    }
+}
+
+class MapPlugin {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const mapelem of elem.querySelectorAll("[data-map]")) {
+            const bounds = L.latLngBounds(
+                L.latLng(mapelem.getAttribute("data-south"), mapelem.getAttribute("data-west")),
+                L.latLng(mapelem.getAttribute("data-north"), mapelem.getAttribute("data-east")),
+            )
+            const map = L.map(document.querySelector('[data-map]'))
+            var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map)
+            map.fitBounds(bounds)
+            map.on("moveend", (evt) => {
+                const bounds = evt.target.getBounds()
+                const w = bounds.getWest()
+                const e = bounds.getEast()
+                const n = bounds.getNorth()
+                const s = bounds.getSouth()
+                const form = mapelem.closest("form")
+                form.querySelector("[name='bounds:west']").value = w
+                form.querySelector("[name='bounds:east']").value = e
+                form.querySelector("[name='bounds:north']").value = n
+                form.querySelector("[name='bounds:south']").value = s
+                mapelem.dispatchEvent(new Event("kronofoto:bounds_changed", {
+                    bubbles: true
+                }))
+
+            })
         }
     }
 }
@@ -882,6 +917,7 @@ class KronofotoContext {
             CopyLink,
             PageEditor,
             ExhibitPlugin,
+            MapPlugin
         ]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})

@@ -20,6 +20,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from ..models import Photo
 from django.template.response import TemplateResponse
+from .map import map_list, map_detail
 
 def attribution(request: HttpRequest) -> HttpResponse:
     html_name = request.GET.get("html_name", "")
