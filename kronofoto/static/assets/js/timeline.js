@@ -1,4 +1,4 @@
-import { setAppState, removeAppState, getURLParams, trigger } from "./utils"
+import {setAppState, removeAppState, getURLParams, trigger} from "./utils"
 // import photoManager from "../../js/photo-manager"
 //import HTMX from "./htmx.js"
 //const htmx = HTMX(document)
@@ -10,7 +10,7 @@ export default class {
         this.context = context
     }
     install({elem}) {
-        $('.photos-timeline', elem).each((i, e) => {
+        $(".photos-timeline", elem).each((i, e) => {
             this.connect(e)
         })
     }
@@ -33,8 +33,6 @@ export default class {
     }
 
     connect(element) {
-
-
         // slider status
         this.sliderDragged = null
         this.sliderDragStartX = 0
@@ -56,38 +54,55 @@ export default class {
     }
 
     initEventHandlers() {
+        $(this.yearStartTarget, this.context).on("click", (e) => {
+            this.jumpToStart.call(this, e)
+        })
+        $(this.yearEndTarget, this.context).on("click", (e) => {
+            this.jumpToEnd.call(this, e)
+        })
 
-        $(this.yearStartTarget, this.context).on('click', (e) => { this.jumpToStart.call(this, e) })
-        $(this.yearEndTarget, this.context).on('click', (e) => { this.jumpToEnd.call(this, e) })
+        $(this.sliderTarget, this.context).on("mouseenter", (e) => {
+            this.onTimelineOver.call(this, e)
+        })
+        $("#app", this.context).on("mousemove", (e) => {
+            this.onTimelineMove.call(this, e)
+        })
+        $(this.sliderTarget, this.context).on("mouseleave", (e) => {
+            this.onTimelineOut.call(this, e)
+        })
+        $(this.sliderTarget, this.context).on("click", (e) => {
+            this.seek.call(this, e)
+        })
 
-        $(this.sliderTarget, this.context).on('mouseenter', (e) => { this.onTimelineOver.call(this, e) })
-        $('#app', this.context).on('mousemove', (e) => { this.onTimelineMove.call(this, e) })
-        $(this.sliderTarget, this.context).on('mouseleave',  (e) => { this.onTimelineOut.call(this, e) })
-        $(this.sliderTarget, this.context).on('click', (e) => { this.seek.call(this, e) })
-
-        $(this.sliderKnobTarget, this.context).on('touchstart mousedown', (e) => { this.sliderStartDrag.call(this, e) })
-        $('#app', this.context).on('touchmove mousemove', (e) => { this.sliderMoved.call(this, e) })
-        $('#app', this.context).on('touchend mouseup', (e) => { this.sliderStopDrag.call(this, e) })
+        $(this.sliderKnobTarget, this.context).on("touchstart mousedown", (e) => {
+            this.sliderStartDrag.call(this, e)
+        })
+        $("#app", this.context).on("touchmove mousemove", (e) => {
+            this.sliderMoved.call(this, e)
+        })
+        $("#app", this.context).on("touchend mouseup", (e) => {
+            this.sliderStopDrag.call(this, e)
+        })
 
         new ResizeObserver(this.onResize.bind(this)).observe(this.sliderTarget)
     }
 
     initTargets() {
         this.targets.forEach((target, index) => {
-            let targets = [];
-            $('[data-timeline-target]', this.context).each(function(i,e) {
-                let items = $(e).attr('data-timeline-target');
-                items = items.split(' ')
-                for(let i in items) {
+            let targets = []
+            $("[data-timeline-target]", this.context).each(function (i, e) {
+                let items = $(e).attr("data-timeline-target")
+                items = items.split(" ")
+                for (let i in items) {
                     let item = items[i]
-                    if(item == target) {
+                    if (item == target) {
                         targets.push(e)
                         break
                     }
                 }
-            });
-            this[target + 'Target'] = targets[0]
-            this[target + 'Targets'] = targets
+            })
+            this[target + "Target"] = targets[0]
+            this[target + "Targets"] = targets
         }, this)
     }
 
@@ -103,7 +118,8 @@ export default class {
 
     // TODO
     setSlider(e) {
-        if (true) { //if (photoManager.hasData()) {
+        if (true) {
+            //if (photoManager.hasData()) {
             this.yearStart = +this.yearStartTarget.textContent //photoManager.getFirstYearInContext().year
             this.yearEnd = +this.yearEndTarget.textContent //photoManager.getLastYearInContext().year
             this.year = +this.sliderYearLabelTarget.textContent
@@ -128,11 +144,11 @@ export default class {
     }
 
     get range() {
-      return this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
+        return this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
     }
 
     getRange() {
-        return { from: this.yearStart, to: this.yearEnd }
+        return {from: this.yearStart, to: this.yearEnd}
     }
 
     setTimelineLabels() {
@@ -143,16 +159,14 @@ export default class {
         // console.log(this.year)
         // console.log(this.yearStart)
         // console.log(this.yearEnd)
-        let numberOfThumbnailsPerYear= 1000
+        let numberOfThumbnailsPerYear = 1000
         let yearDiff = this.year - this.yearOriginal
         let yearDiffX = yearDiff * numberOfThumbnailsPerYear
         yearDiffX = this.yearOriginalX - yearDiffX
         yearDiffX = Math.floor(yearDiffX / 95) * 95
-        $('#fi-thumbnail-carousel-images', this.context).stop().animate(
-            {left: yearDiffX},
-            800,
-            'swing'
-        );
+        $("#fi-thumbnail-carousel-images", this.context)
+            .stop()
+            .animate({left: yearDiffX}, 800, "swing")
 
         // check if selected year (this.year) has photos at all (not already loaded)
         // and if not, grey out the slider
@@ -176,10 +190,14 @@ export default class {
             const start = Math.max(
                 left,
                 left +
-                Math.min(
-                    Math.round(((this.year - this.yearStart) / (this.yearEnd - this.yearStart)) * this.range),
-                    this.range
-                )
+                    Math.min(
+                        Math.round(
+                            ((this.year - this.yearStart) /
+                                (this.yearEnd - this.yearStart)) *
+                                this.range,
+                        ),
+                        this.range,
+                    ),
             )
 
             this.sliderYearTarget.style.left = `${start - left}px`
@@ -193,7 +211,9 @@ export default class {
             // creating the ruler indicators if they're not created yet
             while (this.rulerIndicatorTargets.length <= Math.floor(yearsCount / 10)) {
                 // clone template
-                const indicator = this.context.querySelectorAll(".photos-timeline__ruler-indicator")[0].cloneNode(true)
+                const indicator = this.context
+                    .querySelectorAll(".photos-timeline__ruler-indicator")[0]
+                    .cloneNode(true)
                 this.rulerTarget.appendChild(indicator)
                 this.initTargets()
             }
@@ -203,7 +223,9 @@ export default class {
             const firstDecade = {}
             while (counter < this.yearEnd) {
                 if (counter % 10 === 0) {
-                    firstDecade.left = left + Math.round((this.range / yearsCount) * (counter - this.yearStart))
+                    firstDecade.left =
+                        left +
+                        Math.round((this.range / yearsCount) * (counter - this.yearStart))
                     firstDecade.year = counter
                     break
                 }
@@ -211,7 +233,10 @@ export default class {
             }
 
             this.rulerIndicatorTargets.forEach((item, index) => {
-                if (index <= Math.floor(yearsCount / 10) && firstDecade.year + index * 10 <= this.yearEnd) {
+                if (
+                    index <= Math.floor(yearsCount / 10) &&
+                    firstDecade.year + index * 10 <= this.yearEnd
+                ) {
                     item.style.left = `${firstDecade.left + Math.round((this.range / yearsCount) * index * 10)}px`
                     item.classList.add("visible")
                 } else {
@@ -228,7 +253,11 @@ export default class {
 
     calcYear() {
         this.year =
-            this.yearStart + Math.round((this.sliderYearTarget.offsetLeft / this.range) * (this.yearEnd - this.yearStart))
+            this.yearStart +
+            Math.round(
+                (this.sliderYearTarget.offsetLeft / this.range) *
+                    (this.yearEnd - this.yearStart),
+            )
 
         return this.year
     }
@@ -257,13 +286,21 @@ export default class {
         this.fixSlider()
         this.setTimelineLabels()
 
-        if ((this.sliderDragged && this.year !== this.sliderDragStartYear) || !this.sliderDragged) {
+        if (
+            (this.sliderDragged && this.year !== this.sliderDragStartYear) ||
+            !this.sliderDragged
+        ) {
             // if we are in a year context, let's clear the context
             if (getURLParams().year > 0 || getURLParams().id > 0) {
                 //trigger("photos:historyPushState", { url: "?q=", resetPhotosGrid: true, jumpToYearAfter: this.year })
             } else {
-                if(triggerHTMX) {
-                 trigger("timeline:yearSelected", { year: this.year }, this.sliderYearLabelTarget, true)
+                if (triggerHTMX) {
+                    trigger(
+                        "timeline:yearSelected",
+                        {year: this.year},
+                        this.sliderYearLabelTarget,
+                        true,
+                    )
                 }
             }
         }
@@ -280,12 +317,12 @@ export default class {
         setAppState("disable--selection") // TODO
         this.sliderDragged = e.currentTarget
 
-        trigger("timeline:startDrag", { year: this.year })
+        trigger("timeline:startDrag", {year: this.year})
     }
 
     sliderStopDrag() {
         if (this.sliderDragged) {
-            this.sliderKnobTargets.forEach(knob => {
+            this.sliderKnobTargets.forEach((knob) => {
                 knob.classList.remove("is-active", "is-empty")
             })
 
@@ -295,16 +332,19 @@ export default class {
             this.setYear()
             this.sliderDragged = null
 
-            trigger("timeline:stopDrag", { year: this.year })
+            trigger("timeline:stopDrag", {year: this.year})
         }
     }
 
     sliderMoved(e) {
-        if (this.sliderDragged === this.sliderYearTarget && this.sliderYearTarget.offsetLeft >= 0) {
+        if (
+            this.sliderDragged === this.sliderYearTarget &&
+            this.sliderYearTarget.offsetLeft >= 0
+        ) {
             const px = e.touches ? e.touches[0].pageX : e.pageX
             const x = Math.min(
                 Math.max(px - this.sliderDragStartX, 0),
-                this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth
+                this.sliderTarget.offsetWidth - this.sliderYearTarget.offsetWidth,
             )
 
             this.sliderYearTarget.style.left = `${x}px`
@@ -359,7 +399,7 @@ export default class {
 
                 const x = Math.min(
                     Math.max(px - this.sliderTarget.getBoundingClientRect().left, 0),
-                    this.sliderTarget.offsetWidth
+                    this.sliderTarget.offsetWidth,
                 )
 
                 this.yearIndicatorTarget.style.left = `${x}px`
@@ -375,11 +415,16 @@ export default class {
 
     calcIndicatorYear() {
         const knobBounds = this.sliderYearTarget.getBoundingClientRect()
-        const targetX = this.yearIndicatorTarget.offsetLeft - Math.floor(knobBounds.width / 2)
+        const targetX =
+            this.yearIndicatorTarget.offsetLeft - Math.floor(knobBounds.width / 2)
 
         return Math.max(
             this.yearStart,
-            Math.min(this.yearEnd, this.yearStart + Math.round((targetX / this.range) * (this.yearEnd - this.yearStart)))
+            Math.min(
+                this.yearEnd,
+                this.yearStart +
+                    Math.round((targetX / this.range) * (this.yearEnd - this.yearStart)),
+            ),
         )
     }
 
@@ -388,8 +433,8 @@ export default class {
         // check if selected year has photos at all (not already loaded)
         // and if not, grey out the slider
         // if (photoManager.getYearsInContext().find(item => item.year === year)) {
-            this.yearIndicatorTarget.classList.remove("is-empty")
-            this.yearIndicatorLabelTarget.innerHTML = `${year}`
+        this.yearIndicatorTarget.classList.remove("is-empty")
+        this.yearIndicatorLabelTarget.innerHTML = `${year}`
         // } else {
         //     this.yearIndicatorTarget.classList.add("is-empty")
         //     this.yearIndicatorLabelTarget.innerHTML = `${year}`

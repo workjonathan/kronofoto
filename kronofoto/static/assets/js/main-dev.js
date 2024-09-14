@@ -9,7 +9,7 @@ import {
     initAutocomplete,
     initClipboardJS,
     initFoundation,
-    initHTMXListeners
+    initHTMXListeners,
 } from "./lib.js"
 window.kfcontext = document
 import HTMX from "./htmx.js"
@@ -24,7 +24,7 @@ const init = () => {
     initClipboardJS(document)
 }
 
-const ready = fn => {
+const ready = (fn) => {
     if (document.readyState !== "loading") {
         fn()
     } else {

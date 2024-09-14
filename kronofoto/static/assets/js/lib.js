@@ -520,7 +520,10 @@ class Gallery {
     }
     initGalleryNav(elem) {
         // When the mouse moves
-        for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
+        for (const gallery of querySelectorAll({
+            node: elem,
+            selector: ".control",
+        })) {
             let hideGalleryTimeout = null
             gallery.addEventListener("mousemove", () => {
                 this.showGalleryNav()
@@ -542,8 +545,11 @@ class ExhibitPlugin {
     }
     install({elem}) {
         for (const btn of elem.querySelectorAll("[data-form-target]")) {
-            btn.addEventListener("click", evt => {
-                btn.closest("form").setAttribute("target", btn.getAttribute("data-form-target"))
+            btn.addEventListener("click", (evt) => {
+                btn.closest("form").setAttribute(
+                    "target",
+                    btn.getAttribute("data-form-target"),
+                )
             })
         }
         for (const siteWrapper of elem.querySelectorAll(".site-wrapper")) {
@@ -642,14 +648,24 @@ class MapPlugin {
     install({elem}) {
         for (const mapelem of elem.querySelectorAll("[data-map]")) {
             const bounds = L.latLngBounds(
-                L.latLng(mapelem.getAttribute("data-south"), mapelem.getAttribute("data-west")),
-                L.latLng(mapelem.getAttribute("data-north"), mapelem.getAttribute("data-east")),
+                L.latLng(
+                    mapelem.getAttribute("data-south"),
+                    mapelem.getAttribute("data-west"),
+                ),
+                L.latLng(
+                    mapelem.getAttribute("data-north"),
+                    mapelem.getAttribute("data-east"),
+                ),
             )
-            const map = L.map(document.querySelector('[data-map]'))
-            var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map)
+            const map = L.map(document.querySelector("[data-map]"))
+            var OpenStreetMap_Mapnik = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                },
+            ).addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()
@@ -662,10 +678,11 @@ class MapPlugin {
                 form.querySelector("[name='bounds:east']").value = e
                 form.querySelector("[name='bounds:north']").value = n
                 form.querySelector("[name='bounds:south']").value = s
-                mapelem.dispatchEvent(new Event("kronofoto:bounds_changed", {
-                    bubbles: true
-                }))
-
+                mapelem.dispatchEvent(
+                    new Event("kronofoto:bounds_changed", {
+                        bubbles: true,
+                    }),
+                )
             })
         }
     }
@@ -803,9 +820,10 @@ class KronofotoContext {
     constructor({htmx, context}) {
         this.htmx = htmx
         this.context = context
-        this.context.addEventListener("htmx:configRequest", evt => {
+        this.context.addEventListener("htmx:configRequest", (evt) => {
             if (evt.target.hasAttribute("data-textcontent-name")) {
-                evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] = evt.target.textContent
+                evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] =
+                    evt.target.textContent
             }
         })
     }
@@ -917,7 +935,7 @@ class KronofotoContext {
             CopyLink,
             PageEditor,
             ExhibitPlugin,
-            MapPlugin
+            MapPlugin,
         ]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context})

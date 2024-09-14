@@ -10,7 +10,7 @@ import {
     initAutocomplete,
     initPopups,
     initDraggableThumbnails,
-    initTimeline
+    initTimeline,
 } from "./lib.js"
 
 import HTMX from "./htmx.js"
@@ -188,8 +188,8 @@ class FortepanViewer extends HTMLElement {
         }
         const req = new Request(host, {mode, headers})
         fetch(req)
-            .then(response => response.text())
-            .then(response => {
+            .then((response) => response.text())
+            .then((response) => {
                 this.shadowRoot.innerHTML = response
                 this.htmx = HTMX(this.shadowRoot)
                 initFoundation(this.shadowRoot.querySelector("#kfroot"))
