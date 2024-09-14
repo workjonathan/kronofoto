@@ -1,18 +1,20 @@
 import GUI from "./lil-gui.esm.min.js"
-import { AbstractPlugin, events } from "@photo-sphere-viewer/core"
+import {AbstractPlugin, events} from "@photo-sphere-viewer/core"
 import * as THREE from "three"
 
-const toRadians = degrees => 2*Math.PI*degrees/360
+const toRadians = (degrees) => (2 * Math.PI * degrees) / 360
 
 export class ImagePlanePlugin extends AbstractPlugin {
-    static id = 'image-plane-plugin'
+    static id = "image-plane-plugin"
     constructor(viewer, config) {
         super(viewer)
         this.config = config
         this.meshes = []
     }
     init() {
-        this.viewer.addEventListener(events.PanoramaLoadedEvent.type, this, { once: true })
+        this.viewer.addEventListener(events.PanoramaLoadedEvent.type, this, {
+            once: true,
+        })
     }
     destroy() {
         this.viewer.removeEventListener(events.PanoramaLoadedEvent.type, this)
@@ -30,9 +32,15 @@ export class ImagePlanePlugin extends AbstractPlugin {
             this.azimuth_el = photo.azimuth_el
             this.inclination_el = photo.inclination_el
             this.distance_el = photo.distance_el
-            new THREE.TextureLoader().load(photo.url, texture => {
-                this.geometry = new THREE.PlaneGeometry(photo.width/2000, photo.height/2000)
-                this.material = new THREE.MeshBasicMaterial({transparent: true, map: texture})
+            new THREE.TextureLoader().load(photo.url, (texture) => {
+                this.geometry = new THREE.PlaneGeometry(
+                    photo.width / 2000,
+                    photo.height / 2000,
+                )
+                this.material = new THREE.MeshBasicMaterial({
+                    transparent: true,
+                    map: texture,
+                })
                 this.material.opacity = 1
                 this.mesh = new THREE.Mesh(this.geometry, this.material)
                 this.meshes.push(this.mesh)
@@ -41,12 +49,22 @@ export class ImagePlanePlugin extends AbstractPlugin {
                 this.viewer.needsUpdate()
                 if (photo.container) {
                     const gui = new GUI({container: photo.container, width: 400})
-                    gui.domElement.addEventListener('mousedown', evt => evt.stopPropagation())
-                    gui.add(this.material, "opacity", 0, 1).onChange(this.viewer.needsUpdate.bind(this.viewer))
+                    gui.domElement.addEventListener("mousedown", (evt) =>
+                        evt.stopPropagation(),
+                    )
+                    gui.add(this.material, "opacity", 0, 1).onChange(
+                        this.viewer.needsUpdate.bind(this.viewer),
+                    )
                     const posFolder = gui.addFolder("Position")
-                    posFolder.add(this, "azimuth", -180, 180).onChange(this.updatePosition.bind(this))
-                    posFolder.add(this, "inclination", -90, 90).onChange(this.updatePosition.bind(this))
-                    posFolder.add(this, "distance", 10, 2000).onChange(this.updatePosition.bind(this))
+                    posFolder
+                        .add(this, "azimuth", -180, 180)
+                        .onChange(this.updatePosition.bind(this))
+                    posFolder
+                        .add(this, "inclination", -90, 90)
+                        .onChange(this.updatePosition.bind(this))
+                    posFolder
+                        .add(this, "distance", 10, 2000)
+                        .onChange(this.updatePosition.bind(this))
                 }
             })
         }
@@ -57,14 +75,14 @@ export class ImagePlanePlugin extends AbstractPlugin {
         }
     }
     updatePosition() {
-        const distance = this.distance/2000
+        const distance = this.distance / 2000
         const theta = toRadians(this.inclination - 90)
         const phi = toRadians(this.azimuth + 90)
         const z = Math.cos(phi) * Math.sin(theta) * distance
         const x = Math.sin(phi) * Math.sin(theta) * distance
         const y = Math.cos(theta) * distance
         this.mesh.position.set(x, y, z)
-		this.mesh.lookAt(0,0,0)
+        this.mesh.lookAt(0, 0, 0)
         if (this.azimuth_el) {
             this.azimuth_el.setAttribute("value", this.azimuth)
         }
@@ -76,7 +94,6 @@ export class ImagePlanePlugin extends AbstractPlugin {
         }
         this.viewer.needsUpdate()
     }
-
 }
 /*export default class PhotoSphere {
     constructor({element, sphere, input=undefined, azimuth_el=undefined, inclination_el=undefined, distance_el=undefined}) {
@@ -144,4 +161,3 @@ export class ImagePlanePlugin extends AbstractPlugin {
     }
 }
 */
-

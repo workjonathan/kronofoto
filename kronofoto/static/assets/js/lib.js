@@ -1,45 +1,26 @@
-"use strict";
+"use strict"
 
-import {
-    trigger
-} from "./utils"
-import timeline from "./timeline";
+import {trigger} from "./utils"
+import timeline from "./timeline"
 import $ from "jquery"
-import ClipboardActionCopy from 'clipboard/src/actions/copy'
-import 'jquery-ui-pack'
-import * as Select2 from 'select2'
+import ClipboardActionCopy from "clipboard/src/actions/copy"
+import "jquery-ui-pack"
+import * as Select2 from "select2"
 Select2.default(window, $)
-import { Viewer } from "@photo-sphere-viewer/core";
-import { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
-import { ImagePlanePlugin } from './photosphere.js'
+import {Viewer} from "@photo-sphere-viewer/core"
+import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
+import {ImagePlanePlugin} from "./photosphere.js"
 
 // Foundation
-import {
-    Foundation
-} from './foundation-sites/js/foundation.core';
-import * as CoreUtils from './foundation-sites/js/foundation.core.utils';
-import {
-    Motion,
-    Move
-} from './foundation-sites/js/foundation.util.motion';
-import {
-    Touch
-} from './foundation-sites/js/foundation.util.touch';
-import {
-    Toggler
-} from './foundation-sites/js/foundation.toggler';
-import {
-    Tooltip
-} from './foundation-sites/js/foundation.tooltip';
-import {
-    Box
-} from './foundation-sites/js/foundation.util.box';
-import {
-    MediaQuery
-} from './foundation-sites/js/foundation.util.mediaQuery';
-import { 
-    Triggers 
-} from './foundation-sites/js/foundation.util.triggers';
+import {Foundation} from "./foundation-sites/js/foundation.core"
+import * as CoreUtils from "./foundation-sites/js/foundation.core.utils"
+import {Motion, Move} from "./foundation-sites/js/foundation.util.motion"
+import {Touch} from "./foundation-sites/js/foundation.util.touch"
+import {Toggler} from "./foundation-sites/js/foundation.toggler"
+import {Tooltip} from "./foundation-sites/js/foundation.tooltip"
+import {Box} from "./foundation-sites/js/foundation.util.box"
+import {MediaQuery} from "./foundation-sites/js/foundation.util.mediaQuery"
+import {Triggers} from "./foundation-sites/js/foundation.util.triggers"
 
 class TimelineScroller {
     constructor({context}) {
@@ -47,7 +28,8 @@ class TimelineScroller {
     }
     slideToId({target, fi}) {
         for (const targets of this.context.querySelectorAll(target)) {
-            let destination, candidate = undefined
+            let destination,
+                candidate = undefined
             for (const elem of targets.querySelectorAll(`:scope > [data-fi="${fi}"]`)) {
                 candidate = elem
                 for (const img of elem.querySelectorAll(":scope a img")) {
@@ -73,8 +55,11 @@ class TimelineScroller {
     initDraggableThumbnails(newElems) {
         let elem = undefined
         let released = false
-        const handler = evt => {
-            if (!released || !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")) {
+        const handler = (evt) => {
+            if (
+                !released ||
+                !evt.detail.elt.parentElement.attributes.getNamedItem("data-active")
+            ) {
                 console.log("preventing", evt)
                 evt.preventDefault()
             } else {
@@ -82,8 +67,8 @@ class TimelineScroller {
                 setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
             }
         }
-        $('#fi-thumbnail-carousel-images', newElems).draggable({
-            axis: 'x',
+        $("#fi-thumbnail-carousel-images", newElems).draggable({
+            axis: "x",
             drag: (event, ui) => {
                 if (!elem) {
                     elem = event.target
@@ -95,24 +80,32 @@ class TimelineScroller {
             stop: (event, ui) => {
                 this.dropTimelineCoin(ui.position.left)
                 released = true
-                for (const temp of this.context.querySelectorAll('#fi-thumbnail-carousel-images li[data-active] a')) {
+                for (const temp of this.context.querySelectorAll(
+                    "#fi-thumbnail-carousel-images li[data-active] a",
+                )) {
                     trigger("click", {}, temp, true)
                 }
-            }
+            },
         })
     }
     moveTimelineCoin(deltaX, drag = true) {
         if (drag) {
-            $('#fi-thumbnail-carousel-images', this.context).addClass('dragging')
+            $("#fi-thumbnail-carousel-images", this.context).addClass("dragging")
         } else {
-            $('#fi-thumbnail-carousel-images', this.context).removeClass('dragging')
+            $("#fi-thumbnail-carousel-images", this.context).removeClass("dragging")
         }
-        let widthOfThumbnail = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
-        let preItemNum = $('#fi-thumbnail-carousel-images [data-origin]', this.context).index()
-        let quantizedPositionX = (Math.round(deltaX / widthOfThumbnail) * -1)
+        let widthOfThumbnail = $(
+            "#fi-thumbnail-carousel-images li",
+            this.context,
+        ).outerWidth()
+        let preItemNum = $(
+            "#fi-thumbnail-carousel-images [data-origin]",
+            this.context,
+        ).index()
+        let quantizedPositionX = Math.round(deltaX / widthOfThumbnail) * -1
         let currentPosition = preItemNum + quantizedPositionX + 1
 
-        let numThumbnails = $('#fi-thumbnail-carousel-images li', this.context).length
+        let numThumbnails = $("#fi-thumbnail-carousel-images li", this.context).length
         let scroller = undefined
         if (drag && numThumbnails - currentPosition < 20) {
             scroller = new ForwardScroller({context: this.context})
@@ -122,25 +115,28 @@ class TimelineScroller {
         if (scroller !== undefined) {
             scroller.doThumbnailForm()
         }
-        $('#fi-thumbnail-carousel-images li', this.context).removeAttr('data-active')
-        $('#fi-thumbnail-carousel-images li:nth-child(' + currentPosition + ')', this.context).attr('data-active', '')
+        $("#fi-thumbnail-carousel-images li", this.context).removeAttr("data-active")
+        $(
+            "#fi-thumbnail-carousel-images li:nth-child(" + currentPosition + ")",
+            this.context,
+        ).attr("data-active", "")
     }
     gotoTimelinePosition(delta) {
-        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
+        let width = $("#fi-thumbnail-carousel-images li", this.context).outerWidth()
         this.moveTimelineCoin(delta * -1 * width, false)
         this.dropTimelineCoin(delta * -1 * width)
     }
     dropTimelineCoin(deltaX) {
-        let width = $('#fi-thumbnail-carousel-images li', this.context).outerWidth()
-        let quantizedX = (Math.round(deltaX / width))
+        let width = $("#fi-thumbnail-carousel-images li", this.context).outerWidth()
+        let quantizedX = Math.round(deltaX / width)
         let itemNum = quantizedX
-        $('#fi-thumbnail-carousel-images', this.context).css({
-            left: itemNum * width
+        $("#fi-thumbnail-carousel-images", this.context).css({
+            left: itemNum * width,
         })
     }
     getNumVisibleTimelineTiles() {
-        let widthOfTimeline = $('#fi-image', this.context).width() // assumes the timeline is the same width as gallery image
-        let $li = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
+        let widthOfTimeline = $("#fi-image", this.context).width() // assumes the timeline is the same width as gallery image
+        let $li = $("#fi-thumbnail-carousel-images li[data-active]", this.context)
         let widthOfTile = $li.outerWidth()
         return Math.floor(widthOfTimeline / widthOfTile)
     }
@@ -148,21 +144,31 @@ class TimelineScroller {
 
 class DirectionalScroller extends TimelineScroller {
     timelineZip() {
-        if (this.getTimelineCrawlInterval() === undefined) { // only zip if we're not already crawling
-            let numToZip = Math.floor((this.getNumVisibleTimelineTiles() - 0.5))
-            let $activeLi = $('#fi-thumbnail-carousel-images li[data-active]', this.context)
+        if (this.getTimelineCrawlInterval() === undefined) {
+            // only zip if we're not already crawling
+            let numToZip = Math.floor(this.getNumVisibleTimelineTiles() - 0.5)
+            let $activeLi = $(
+                "#fi-thumbnail-carousel-images li[data-active]",
+                this.context,
+            )
             let $nextLi = this.nextElements({active: $activeLi}).eq(numToZip)
-            trigger("click", {}, $nextLi.find('a').get(0), true)
+            trigger("click", {}, $nextLi.find("a").get(0), true)
         }
         return false
     }
     timelineCrawl() {
         const id = setTimeout(() => {
-            let currentPosition = $('#fi-thumbnail-carousel-images', this.context).position().left
+            let currentPosition = $(
+                "#fi-thumbnail-carousel-images",
+                this.context,
+            ).position().left
             const intervalId = setInterval(() => {
                 if (this.canCrawl()) {
                     currentPosition += this.getTimelineShiftPixels()
-                    $('#fi-thumbnail-carousel-images', this.context).css('left', currentPosition)
+                    $("#fi-thumbnail-carousel-images", this.context).css(
+                        "left",
+                        currentPosition,
+                    )
                     this.moveTimelineCoin(currentPosition, true)
                 }
             }, 50)
@@ -172,18 +178,28 @@ class DirectionalScroller extends TimelineScroller {
     }
     timelineCrawlRelease() {
         clearTimeout(this.getTimelineCrawlTimeout())
-        this.setTimelineCrawlTimeout({id:undefined})
-        if (this.getTimelineCrawlInterval()) { // only execute when we're crawling
+        this.setTimelineCrawlTimeout({id: undefined})
+        if (this.getTimelineCrawlInterval()) {
+            // only execute when we're crawling
             clearInterval(this.getTimelineCrawlInterval())
-            this.dropTimelineCoin($('#fi-thumbnail-carousel-images', this.context).position().left)
-            trigger("click", {}, $('#fi-thumbnail-carousel-images li[data-active] a', this.context).get(0), true)
+            this.dropTimelineCoin(
+                $("#fi-thumbnail-carousel-images", this.context).position().left,
+            )
+            trigger(
+                "click",
+                {},
+                $("#fi-thumbnail-carousel-images li[data-active] a", this.context).get(0),
+                true,
+            )
             setTimeout(() => {
                 this.setTimelineCrawlInterval({id: undefined})
             }, 750)
         }
     }
     doThumbnailForm() {
-        const form = $('#fi-thumbnail-carousel-images', this.context).closest("form").get(0)
+        const form = $("#fi-thumbnail-carousel-images", this.context)
+            .closest("form")
+            .get(0)
         form.querySelector("[name='forward']").value = this.isForward()
         form.setAttribute("hx-swap", this.swapType())
 
@@ -196,14 +212,24 @@ class DirectionalScroller extends TimelineScroller {
         form.querySelector("[name='width']").value = width
 
         form.querySelector("[name='id']").value = lastFI
-        trigger("kronofoto:loadThumbnails", {}, $("#fi-thumbnail-carousel-images", this.context).get(0), true)
+        trigger(
+            "kronofoto:loadThumbnails",
+            {},
+            $("#fi-thumbnail-carousel-images", this.context).get(0),
+            true,
+        )
     }
     canCrawl() {
-        let length = this.nextElements({active: $('#fi-thumbnail-carousel-images [data-active]', this.context)}).length
+        let length = this.nextElements({
+            active: $("#fi-thumbnail-carousel-images [data-active]", this.context),
+        }).length
         return length > 10
     }
     install({elem}) {
-        for (const elem2 of querySelectorAll({node: elem, selector: this.elementSelector()})) {
+        for (const elem2 of querySelectorAll({
+            node: elem,
+            selector: this.elementSelector(),
+        })) {
             elem2.addEventListener("click", this.timelineZip.bind(this))
             elem2.addEventListener("mousedown", this.timelineCrawl.bind(this))
             elem2.addEventListener("mouseup", this.timelineCrawlRelease.bind(this))
@@ -277,7 +303,7 @@ class ForwardScroller extends DirectionalScroller {
     }
 }
 class ImageLoader {
-    constructor({img, file, reader=FileReader}) {
+    constructor({img, file, reader = FileReader}) {
         this.img = img
         this.file = file
         this.reader = reader
@@ -304,7 +330,7 @@ class ImagePreviewInput {
         }
     }
     imageChange(evt) {
-        const img = this.getPrevious({elem: evt.target, tagName: "IMG"}) 
+        const img = this.getPrevious({elem: evt.target, tagName: "IMG"})
         this.selectLoader({img, input: evt.target}).loadImage()
     }
     getPrevious({elem, tagName}) {
@@ -316,8 +342,7 @@ class ImagePreviewInput {
     selectLoader({img, input}) {
         if (img && input.files && input.files[0]) {
             return new ImageLoader({img, file: input.files[0]})
-        }
-        else {
+        } else {
             return new NullLoader()
         }
     }
@@ -352,7 +377,7 @@ class ImagePreviewInput {
 function* querySelectorAll({node, selector}) {
     // This generator is like querySelectorAll except that it can also match the current node.
     // It is tempting to stick this into Document and HTMLElement prototypes under some weird name.
-    if ('matches' in node && node.matches(selector)) {
+    if ("matches" in node && node.matches(selector)) {
         yield node
     }
     for (const match of node.querySelectorAll(selector)) {
@@ -368,21 +393,23 @@ class Gallery {
     }
     initGalleryNav(elem) {
         // When the mouse moves
-        for (const gallery of querySelectorAll({node: elem, selector: ".control"})) {
-            let hideGalleryTimeout = null;
-            gallery.addEventListener('mousemove', () => {
+        for (const gallery of querySelectorAll({
+            node: elem,
+            selector: ".control",
+        })) {
+            let hideGalleryTimeout = null
+            gallery.addEventListener("mousemove", () => {
                 this.showGalleryNav()
-                if (hideGalleryTimeout)
-                    clearTimeout(hideGalleryTimeout)
+                if (hideGalleryTimeout) clearTimeout(hideGalleryTimeout)
                 hideGalleryTimeout = setTimeout(this.hideGalleryNav.bind(this), 5000)
             })
         }
     }
     showGalleryNav() {
-        $(".gallery", this.context).removeClass('hide-nav')
+        $(".gallery", this.context).removeClass("hide-nav")
     }
     hideGalleryNav() {
-        $(".gallery", this.context).addClass('hide-nav')
+        $(".gallery", this.context).addClass("hide-nav")
     }
 }
 
@@ -393,14 +420,24 @@ class MapPlugin {
     install({elem}) {
         for (const mapelem of elem.querySelectorAll("[data-map]")) {
             const bounds = L.latLngBounds(
-                L.latLng(mapelem.getAttribute("data-south"), mapelem.getAttribute("data-west")),
-                L.latLng(mapelem.getAttribute("data-north"), mapelem.getAttribute("data-east")),
+                L.latLng(
+                    mapelem.getAttribute("data-south"),
+                    mapelem.getAttribute("data-west"),
+                ),
+                L.latLng(
+                    mapelem.getAttribute("data-north"),
+                    mapelem.getAttribute("data-east"),
+                ),
             )
-            const map = L.map(document.querySelector('[data-map]'))
-            var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map)
+            const map = L.map(document.querySelector("[data-map]"))
+            var OpenStreetMap_Mapnik = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                },
+            ).addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()
@@ -413,10 +450,11 @@ class MapPlugin {
                 form.querySelector("[name='bounds:east']").value = e
                 form.querySelector("[name='bounds:north']").value = n
                 form.querySelector("[name='bounds:south']").value = s
-                mapelem.dispatchEvent(new Event("kronofoto:bounds_changed", {
-                    bubbles: true
-                }))
-
+                mapelem.dispatchEvent(
+                    new Event("kronofoto:bounds_changed", {
+                        bubbles: true,
+                    }),
+                )
             })
         }
     }
@@ -434,31 +472,38 @@ class PhotoSpherePlugin {
             const viewer = new Viewer({
                 container: elem2,
                 plugins: [
-                    [ImagePlanePlugin, { photos: [] }],
-                    [VirtualTourPlugin, {
-                        dataMode: "server",
-                        positionMode: "gps",
-                        startNodeId,
-                        getNode: async (nodeId) => {
-                            const url = new URL(api_url)
-                            url.searchParams.append(param_name, nodeId)
-                            const resp = await fetch(url.toString())
-                            return resp.json()
+                    [ImagePlanePlugin, {photos: []}],
+                    [
+                        VirtualTourPlugin,
+                        {
+                            dataMode: "server",
+                            positionMode: "gps",
+                            startNodeId,
+                            getNode: async (nodeId) => {
+                                const url = new URL(api_url)
+                                url.searchParams.append(param_name, nodeId)
+                                const resp = await fetch(url.toString())
+                                return resp.json()
+                            },
                         },
-                    }],
+                    ],
                 ],
             })
-            viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({ node, data }) => {
-                viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
-                if (data.fromNode && node.id != data.fromNode.id) {
-                    const form = elem2.closest('form')
-                    const input = form.querySelector("[name='id']")
-                    input.value = node.id
-                    elem2.dispatchEvent(new Event("node-changed", {
-                        bubbles: true
-                    }))
-                }
-            })
+            viewer
+                .getPlugin(VirtualTourPlugin)
+                .addEventListener("node-changed", ({node, data}) => {
+                    viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                    if (data.fromNode && node.id != data.fromNode.id) {
+                        const form = elem2.closest("form")
+                        const input = form.querySelector("[name='id']")
+                        input.value = node.id
+                        elem2.dispatchEvent(
+                            new Event("node-changed", {
+                                bubbles: true,
+                            }),
+                        )
+                    }
+                })
         }
     }
 }
@@ -469,47 +514,48 @@ class Zoom {
     }
 
     install({elem}) {
-        for (const elem2 of querySelectorAll({selector: "#follow-zoom-timeline-version", node: elem})) {
+        for (const elem2 of querySelectorAll({
+            selector: "#follow-zoom-timeline-version",
+            node: elem,
+        })) {
             this.addZoom(elem2)
         }
     }
     addZoom(container) {
-        let imgsrc = container.currentStyle || window.getComputedStyle(container, false);
-        imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+        let imgsrc = container.currentStyle || window.getComputedStyle(container, false)
+        imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "")
         const fullsize = container.getAttribute("data-fullsize")
 
-        let img = new Image();
+        let img = new Image()
         let zoomOpened = false
         let zoomed = false
-        let galleryElem = this.context.querySelector('.gallery')
-        img.src = imgsrc;
+        let galleryElem = this.context.querySelector(".gallery")
+        img.src = imgsrc
         img.onload = () => {
-
-
-            let ratio = img.naturalWidth / img.naturalHeight;
+            let ratio = img.naturalWidth / img.naturalHeight
 
             Object.assign(container.style, {
                 height: "calc(100vh)",
                 width: "calc(100vw)",
                 backgroundPosition: "top",
                 backgroundSize: "contain",
-                backgroundRepeat: "no-repeat"
-            });
+                backgroundRepeat: "no-repeat",
+            })
 
             let removeZoom = () => {
                 Object.assign(container.style, {
                     backgroundPosition: "top",
-                    backgroundSize: "contain"
-                });
+                    backgroundSize: "contain",
+                })
             }
 
-            container.addEventListener('click', (e) => {
-                zoomed = !zoomed;
+            container.addEventListener("click", (e) => {
+                zoomed = !zoomed
 
                 if (zoomed) {
-                    galleryElem.classList.add('zoomed')
-                    const img2 = new Image();
-                    img2.src = imgsrc;
+                    galleryElem.classList.add("zoomed")
+                    const img2 = new Image()
+                    img2.src = imgsrc
                     img2.onload = () => {
                         Object.assign(container.style, {
                             backgroundImage: `url("${fullsize}")`,
@@ -517,7 +563,7 @@ class Zoom {
                     }
                     container.onmousemove(e)
                 } else {
-                    galleryElem.classList.remove('zoomed')
+                    galleryElem.classList.remove("zoomed")
                     removeZoom()
                 }
             })
@@ -527,18 +573,17 @@ class Zoom {
                     let rect = e.target.getBoundingClientRect(),
                         xPos = e.clientX - rect.left,
                         yPos = e.clientY - rect.top,
-                        xPercent = ((xPos / container.clientWidth) * 100) + "%",
-                        yPercent = ((yPos / container.clientHeight) * 100) + "%";
+                        xPercent = (xPos / container.clientWidth) * 100 + "%",
+                        yPercent = (yPos / container.clientHeight) * 100 + "%"
 
                     Object.assign(container.style, {
                         backgroundPosition: xPercent + " " + yPercent,
-                        backgroundSize: (window.innerWidth * 1.5) + "px"
-                    });
+                        backgroundSize: window.innerWidth * 1.5 + "px",
+                    })
                 }
-            };
+            }
 
             // container.onmouseleave = removeZoom
-
         }
     }
 }
@@ -562,80 +607,103 @@ class KronofotoContext {
                 width: "300px",
                 allowClear: true,
                 minimumInputLength: 2,
-                placeholder: $input.attr('placeholder'),
+                placeholder: $input.attr("placeholder"),
                 ajax: {
                     delay: 250,
-                    url: $input.data('select2-url'),
+                    url: $input.data("select2-url"),
                     dataType: "json",
                 },
             })
         })
-        $(elem).find(".form--add-tag .link--icon").on('click', (e) => {
-            let $form = $(e.currentTarget).closest('form')
-            $form.addClass('expanded')
-            $('input[type=text]', $form).get(0).focus()
-        })
+        $(elem)
+            .find(".form--add-tag .link--icon")
+            .on("click", (e) => {
+                let $form = $(e.currentTarget).closest("form")
+                $form.addClass("expanded")
+                $("input[type=text]", $form).get(0).focus()
+            })
         // this logic should not be client side
-        $(elem).find('[data-save-list]').on('submit', e => {
-            // Check if logged in
-            if ($('#login-btn', this.context).length) {
-                $('#login-btn', this.context).trigger('click')
-                showToast('You must login to continue')
-            } else {
-                showToast('Updated photo lists')
-            }
-        })
+        $(elem)
+            .find("[data-save-list]")
+            .on("submit", (e) => {
+                // Check if logged in
+                if ($("#login-btn", this.context).length) {
+                    $("#login-btn", this.context).trigger("click")
+                    showToast("You must login to continue")
+                } else {
+                    showToast("Updated photo lists")
+                }
+            })
         // the next three have some broken state.
-        $('#overlay', elem).on('click', (e) => {
+        $("#overlay", elem).on("click", (e) => {
             this.htmx.trigger("#hamburger-button", "click")
-            $('#overlay', this.context).fadeOut()
+            $("#overlay", this.context).fadeOut()
         })
-        $('#hamburger-menu', elem).on('off.zf.toggler', (e) => {
-            $('#login', this.context).addClass('collapse')
-            $('#overlay', this.context).fadeIn()
-        }).on('on.zf.toggler', (e) => {
-            if ($('#login', this.context).hasClass('collapse')) {
-                $('#overlay', this.context).fadeOut()
-            }
-        })
-        $('#login', elem).on('off.zf.toggler', (e) => {
-            $('#hamburger-menu', this.context).addClass('collapse')
-            $('#overlay', this.context).fadeIn()
-        }).on('on.zf.toggler', (e) => {
-            if ($('#hamburger-menu', this.context).hasClass('collapse')) {
-                $('#overlay', this.context).fadeOut()
-            }
-        })
-        $('#auto-play-image-control-button', elem).on('click', (e) => {
+        $("#hamburger-menu", elem)
+            .on("off.zf.toggler", (e) => {
+                $("#login", this.context).addClass("collapse")
+                $("#overlay", this.context).fadeIn()
+            })
+            .on("on.zf.toggler", (e) => {
+                if ($("#login", this.context).hasClass("collapse")) {
+                    $("#overlay", this.context).fadeOut()
+                }
+            })
+        $("#login", elem)
+            .on("off.zf.toggler", (e) => {
+                $("#hamburger-menu", this.context).addClass("collapse")
+                $("#overlay", this.context).fadeIn()
+            })
+            .on("on.zf.toggler", (e) => {
+                if ($("#hamburger-menu", this.context).hasClass("collapse")) {
+                    $("#overlay", this.context).fadeOut()
+                }
+            })
+        $("#auto-play-image-control-button", elem).on("click", (e) => {
             let $btn = e.currentTarget
-            $btn.classList.toggle('active')
-            if ($btn.classList.contains('active')) {
+            $btn.classList.toggle("active")
+            if ($btn.classList.contains("active")) {
                 this.autoplayStart($btn)
             } else {
                 this.autoplayStop()
             }
         })
-        $(elem).find(".image-control-button--toggle").on('click', (e) => {
-            let $btn = $(e.currentTarget)
-            $('img', $btn).toggleClass('hide')
-        })
-        const plugins = [BackwardScroller, ForwardScroller, timeline, TimelineScroller, Zoom, Gallery, ImagePreviewInput, PhotoSpherePlugin, MapPlugin]
+        $(elem)
+            .find(".image-control-button--toggle")
+            .on("click", (e) => {
+                let $btn = $(e.currentTarget)
+                $("img", $btn).toggleClass("hide")
+            })
+        const plugins = [
+            BackwardScroller,
+            ForwardScroller,
+            timeline,
+            TimelineScroller,
+            Zoom,
+            Gallery,
+            ImagePreviewInput,
+            PhotoSpherePlugin,
+            MapPlugin,
+        ]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context}) 
+            const plugin = new cls({context: this.context})
             plugin.install({elem})
         }
-        
+
         initNavSearch(elem)
         // modified this foundation function to attach a "rootNode" variable to all plugin objects.
         // The foundation function already accepts one optional argument, so undefined is passed to preserve
         // the old behavior.
         $(elem).foundation(undefined, this.context)
-        if (window.st && elem.querySelectorAll('.sharethis-inline-share-buttons').length) {
+        if (
+            window.st &&
+            elem.querySelectorAll(".sharethis-inline-share-buttons").length
+        ) {
             st.initialize()
         }
 
         // Init gallery thumbnails
-        if (elem.id == 'fi-preload-zone') {
+        if (elem.id == "fi-preload-zone") {
             const slideScroller = new TimelineScroller({context: this.context})
             slideScroller.slideToId({
                 fi: elem.getAttribute("data-slide-id"),
@@ -644,12 +712,14 @@ class KronofotoContext {
             setTimeout(() => {
                 let html = elem.innerHTML
                 // let firstId = $(html).find('li:first-child span').attr('hx-get')
-                const carouselImages = elem.parentNode.querySelector('#fi-thumbnail-carousel-images')
+                const carouselImages = elem.parentNode.querySelector(
+                    "#fi-thumbnail-carousel-images",
+                )
                 carouselImages.innerHTML = html
                 carouselImages.classList.add("dragging")
                 carouselImages.style.left = "0px"
                 setTimeout(() => {
-                    carouselImages.classList.remove('dragging')
+                    carouselImages.classList.remove("dragging")
                 }, 100)
 
                 this.htmx.process(carouselImages)
@@ -674,42 +744,45 @@ class KronofotoContext {
         */
     }
     initTimeline(elem) {
-        $('.photos-timeline', elem).each((i, e) => {
-            const timelineInstance = new timeline();
-            timelineInstance.connect(e, this.context);
+        $(".photos-timeline", elem).each((i, e) => {
+            const timelineInstance = new timeline()
+            timelineInstance.connect(e, this.context)
         })
     }
     autoplayStart(elem) {
         // should change `window` to `this`
-        window.autoplayTimer = setInterval(elem => {
-            if (elem.isConnected) {
-                this.htmx.trigger('#fi-arrow-right', 'click')
-            } else {
-                clearInterval(window.autoplayTimer)
-            }
-        }, 5000, elem)
+        window.autoplayTimer = setInterval(
+            (elem) => {
+                if (elem.isConnected) {
+                    this.htmx.trigger("#fi-arrow-right", "click")
+                } else {
+                    clearInterval(window.autoplayTimer)
+                }
+            },
+            5000,
+            elem,
+        )
     }
     autoplayStop() {
         clearInterval(window.autoplayTimer)
     }
 }
-export const initHTMXListeners = (_htmx, context, {
-    lateLoad = false
-} = {}) => {
-
+export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
     // context here means our root element
     // necessary?
-    $(context).on('click', (e) => {
-        if (!$('.form--add-tag input', context).is(":focus")) {
-            let $form = $('.form--add-tag input', context).closest('form')
-            $form.removeClass('expanded')
+    $(context).on("click", (e) => {
+        if (!$(".form--add-tag input", context).is(":focus")) {
+            let $form = $(".form--add-tag input", context).closest("form")
+            $form.removeClass("expanded")
         }
     })
 
     // context here means our root element and this would probably be simpler with server side templates.
-    $(context).on('on.zf.toggler', function(e) {
-        if ($(e.target).hasClass('gallery__popup')) {
-            $('.gallery__popup.expanded:not(#' + $(e.target).attr('id') + ')').removeClass('expanded')
+    $(context).on("on.zf.toggler", function (e) {
+        if ($(e.target).hasClass("gallery__popup")) {
+            $(
+                ".gallery__popup.expanded:not(#" + $(e.target).attr("id") + ")",
+            ).removeClass("expanded")
         }
     })
 
@@ -720,21 +793,20 @@ export const initHTMXListeners = (_htmx, context, {
     _htmx.onLoad(instance.onLoad.bind(instance))
 }
 export function initFoundation(context) {
-
-    Foundation.addToJquery($);
-    Foundation.Box = Box;
-    Foundation.MediaQuery = MediaQuery;
-    Foundation.Motion = Motion;
-    Foundation.Move = Move;
+    Foundation.addToJquery($)
+    Foundation.Box = Box
+    Foundation.MediaQuery = MediaQuery
+    Foundation.Motion = Motion
+    Foundation.Move = Move
 
     Triggers.Initializers.addToggleListener($(context))
-    Foundation.plugin(Toggler, 'Toggler');
-    Foundation.plugin(Tooltip, 'Tooltip');
+    Foundation.plugin(Toggler, "Toggler")
+    Foundation.plugin(Tooltip, "Tooltip")
 }
 
 export function initClipboardJS(context) {
-    $(context).on('click', '.copy-button', (e) => {
-        let target = $(e.currentTarget).attr('data-clipboard-target')
+    $(context).on("click", ".copy-button", (e) => {
+        let target = $(e.currentTarget).attr("data-clipboard-target")
         let text = $(target).val()
         ClipboardActionCopy(text)
         $(target).select()
@@ -743,40 +815,40 @@ export function initClipboardJS(context) {
 }
 export function collapseNavSearch(elem) {
     return () => {
-        $('#search-box-container', elem).removeClass('expanded')
-        $('.search-form', elem).hide()
-        $('#search-box', elem).val('')
-        $('.search-icon', elem).css('filter', 'none')
-        $('.carrot', elem).css('filter', 'none')
-        $('#search-box', elem).removeClass('placeholder-light').css('color', '#333')
+        $("#search-box-container", elem).removeClass("expanded")
+        $(".search-form", elem).hide()
+        $("#search-box", elem).val("")
+        $(".search-icon", elem).css("filter", "none")
+        $(".carrot", elem).css("filter", "none")
+        $("#search-box", elem).removeClass("placeholder-light").css("color", "#333")
     }
 }
 
 export function expandNavSearch(elem) {
     return () => {
-        $('#search-box-container', elem).addClass('expanded')
-        $('.search-form', elem).show()
-        $('.search-icon', elem).css('filter', 'brightness(0) invert(1)')
-        $('.carrot', elem).css('filter', 'brightness(0) invert(1)')
-        $('#search-box', elem).addClass('placeholder-light').css('color', 'white')
+        $("#search-box-container", elem).addClass("expanded")
+        $(".search-form", elem).show()
+        $(".search-icon", elem).css("filter", "brightness(0) invert(1)")
+        $(".carrot", elem).css("filter", "brightness(0) invert(1)")
+        $("#search-box", elem).addClass("placeholder-light").css("color", "white")
     }
 }
 export function initNavSearch(elem) {
-    $('.search-form__clear-btn', elem).click((e) => {
-        e.preventDefault();
-        $('#search-box', elem).val('')
-        $('.search-form input[type=text]', elem).val('')
-        $('.search-form select', elem).val('')
+    $(".search-form__clear-btn", elem).click((e) => {
+        e.preventDefault()
+        $("#search-box", elem).val("")
+        $(".search-form input[type=text]", elem).val("")
+        $(".search-form select", elem).val("")
     })
-    $('#search-box', elem).click(expandNavSearch(elem))
-    $('#search-box-container .close-icon', elem).click(collapseNavSearch(elem))
+    $("#search-box", elem).click(expandNavSearch(elem))
+    $("#search-box-container .close-icon", elem).click(collapseNavSearch(elem))
 }
 
 export function showToast(message) {
-    let content = $('#toast-template').html()
+    let content = $("#toast-template").html()
     let $message = $(content)
-    $message.prepend('<p>' + message + '</p>')
-    $('#messages').append($message)
+    $message.prepend("<p>" + message + "</p>")
+    $("#messages").append($message)
     setTimeout(() => {
         $message.fadeOut(() => {
             $message.remove()
@@ -786,10 +858,9 @@ export function showToast(message) {
 
 let moreThumbnailsLoading = false
 
-
 export function toggleLogin(evt) {
-    const el = document.querySelector('#login');
-    toggleElement(el);
+    const el = document.querySelector("#login")
+    toggleElement(el)
 }
 export function toggleMenu(evt) {
     // if(!$('.hamburger').hasClass('is-active')) {
@@ -807,31 +878,33 @@ export function toggleMenu(evt) {
 }
 
 function toggleElement(el) {
-    if (!el.classList.replace('hidden', 'gridden')) {
-        el.classList.replace('gridden', 'hidden')
+    if (!el.classList.replace("hidden", "gridden")) {
+        el.classList.replace("gridden", "hidden")
     }
 }
 
-export const installButtons = root => content => {
-    const elems = Array.from(content.querySelectorAll('[data-popup-target]'))
+export const installButtons = (root) => (content) => {
+    const elems = Array.from(content.querySelectorAll("[data-popup-target]"))
 
-    if (content.hasAttribute('data-popup-target')) {
+    if (content.hasAttribute("data-popup-target")) {
         elems.push(content)
     }
 
     for (const elem of elems) {
-        const datatarget = elem.getAttribute('data-popup-target')
-        elem.addEventListener("click", evt => {
-            for (const target of root.querySelectorAll('[data-popup]')) {
+        const datatarget = elem.getAttribute("data-popup-target")
+        elem.addEventListener("click", (evt) => {
+            for (const target of root.querySelectorAll("[data-popup]")) {
                 if (target.hasAttribute(datatarget)) {
                     target.classList.remove("hidden")
                 } else {
-                    target.classList.add('hidden')
+                    target.classList.add("hidden")
                 }
             }
-            elem.dispatchEvent(new Event(datatarget, {
-                bubbles: true
-            }))
+            elem.dispatchEvent(
+                new Event(datatarget, {
+                    bubbles: true,
+                }),
+            )
         })
     }
 }
