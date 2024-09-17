@@ -1,5 +1,6 @@
 @use '../../colors' as *;
 @use '../../exhibit-typography' as *;
+@use 'buttons' as *;
 
 .two-column {
   position: relative;
@@ -14,11 +15,30 @@
   @media screen and (min-width: 48em) {
     flex-wrap: nowrap;
   }
+
   > div {
     width: 100%;
     overflow: hidden;
     flex-grow: 1;
   }
+
+  &.empty {
+    img {
+      display: none;
+    }
+    .two-column__image {
+      background-color: #EEEEEE;
+    }
+    .two-column__edit-image-button {
+      @include edit-image-button--empty;
+    }
+  }
+
+
+  &__edit-image-button {
+    @include edit-image-button;
+  }
+
   &__image {
     aspect-ratio: 1;
     @media screen and (max-width: 48em) {
@@ -48,6 +68,9 @@
   }
   &__content {
     padding: 55px;
+    .page-editor & {
+      opacity: 1 !important;
+    }
     @media screen and (min-width: 48em) {
       margin-top: 50vh;
       padding: 0px 18% 50vh 18%;
@@ -78,52 +101,64 @@
     }
   }
 
+  // Parallax effects
+  .site-wrapper & {
+    &--variation-1 {
+      //height: 150vh;
+      .two-column__image {
+        @media screen and (min-width: 48em) {
+          margin-top: -100vh;
+          .page-editor & {
+            margin-top: 0px;
+          }
+        }
+      }
 
-  &--variation-1 {
-    //height: 150vh;
-    .two-column__image {
-      @media screen and (min-width: 48em) {
-        margin-top: -100vh
+      .two-column__content-wrapper {
+        //padding-top: 0px;
+        //padding-bottom: 16vh;
       }
     }
-    .two-column__content-wrapper {
-      //padding-top: 0px;
-      //padding-bottom: 16vh;
-    }
-  }
 
-  &--variation-2 {
-    //height: 150vh;
-    .two-column__image {
-      //margin-top: -100vh
-    }
-    .two-column__content-wrapper {
-      //padding-top: 0px;
-      //padding-bottom: 16vh;
-    }
-  }
+    &--variation-2 {
+      //height: 150vh;
+      .two-column__image {
+        //margin-top: -100vh
+      }
 
-  &--variation-3 {
-    //height: 150vh;
-    .two-column__image {
-      @media screen and (min-width: 48em) {
-        margin-top: -100vh
+      .two-column__content-wrapper {
+        //padding-top: 0px;
+        //padding-bottom: 16vh;
       }
     }
-    .two-column__content-wrapper {
-      //padding-top: 0px;
-      //padding-bottom: 16vh;
-    }
-  }
 
-  &--variation-4 {
-    //height: 150vh;
-    .two-column__image {
-      //margin-top: -100vh
+    &--variation-3 {
+      //height: 150vh;
+      .two-column__image {
+        @media screen and (min-width: 48em) {
+          margin-top: -100vh;
+          .page-editor & {
+            margin-top: 0px;
+          }
+        }
+      }
+
+      .two-column__content-wrapper {
+        //padding-top: 0px;
+        //padding-bottom: 16vh;
+      }
     }
-    .two-column__content-wrapper {
-      //padding-top: 0px;
-      //padding-bottom: 16vh;
+
+    &--variation-4 {
+      //height: 150vh;
+      .two-column__image {
+        //margin-top: -100vh
+      }
+
+      .two-column__content-wrapper {
+        //padding-top: 0px;
+        //padding-bottom: 16vh;
+      }
     }
   }
 }
