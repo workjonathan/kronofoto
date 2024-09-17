@@ -3,7 +3,7 @@
 
 {% if edit %}
     {{ form.photo.errors }}
-    <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
+    <div class="image-collection__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
 {% endif %}
 {% if photo %}
 <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name height=450 width=800 %}" alt="" data-aos="fade-up" data-aos-duration="1000">

@@ -12,29 +12,35 @@
                 <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">
                 </a>
             </div>
+            <div class="nav-title">Untitled Site</div>
         </div> <!-- end nav left -->
 
       <div class="main-nav__right">
 
-        <div class="login-container" data-tooltip title="My Account" data-position="bottom" data-alignment="center">
-          {% make_login %}
-        </div>
-        <div class="hamburger-container">
+          <button class="icon"><i class="icon--embed"></i></button>
+          <button class="icon"><i class="icon--link"></i></button>
+          <button class="icon"><i class="icon--preview"></i></button>
+          <button type="submit" name="save" value="Save" class="button">Save</button>
 
-          <button class="hamburger hamburger--squeeze" type="button" data-toggler="is-active" data-toggle="hamburger-button hamburger-menu" id="hamburger-button">
-              <span class="hamburger-box">
-                  <span class="hamburger-inner"></span>
-              </span>
-          </button>
+          <div class="login-container" data-tooltip title="My Account" data-position="bottom" data-alignment="center">
+            {% make_login %}
+          </div>
+          <div class="hamburger-container">
 
-            <div class="hamburger-menu collapse" id="hamburger-menu" data-toggler="collapse">
+            <button class="hamburger hamburger--squeeze" type="button" data-toggler="is-active" data-toggle="hamburger-button hamburger-menu" id="hamburger-button">
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
 
-            <ul class="navigation-menu">
-              {% include "archive/navigation-menu.html"%}
-            </ul>
-            <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
-            <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
-            <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
+              <div class="hamburger-menu collapse" id="hamburger-menu" data-toggler="collapse">
+
+              <ul class="navigation-menu">
+                {% include "archive/navigation-menu.html"%}
+              </ul>
+              <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
+              <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
+              <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
           </div>
 
         </div>
