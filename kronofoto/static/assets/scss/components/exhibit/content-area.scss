@@ -2,6 +2,7 @@
 @use '../../exhibit-typography' as *;
 
 .content-area {
+  padding-top: 4px;
   &__content {
     max-width: 600px;
     margin: auto;

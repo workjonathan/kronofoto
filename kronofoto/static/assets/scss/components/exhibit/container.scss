@@ -24,6 +24,10 @@ $container-max-width: 1280px;
     border-bottom: none;
     padding: 0px;
   }
+  &:not(&--no-padding) + &:not(&--no-padding) {
+    border-top: 0px;
+  }
+
   //overflow: hidden;
   //@media screen and (min-width: 48em) {
     overflow: initial;
