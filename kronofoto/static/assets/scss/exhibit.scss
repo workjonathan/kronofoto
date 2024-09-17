@@ -1,5 +1,6 @@
 @use 'typography' as *;
 @use 'scrollbar' as *;
+@use 'components/exhibit/buttons';
 @use 'components/exhibit/content-area';
 @use 'components/exhibit/page-editor';
 @use 'components/exhibit/full-image-area';
@@ -7,7 +8,7 @@
 @use 'components/exhibit/header';
 @use 'components/exhibit/hero';
 @use 'components/exhibit/image-collection';
-@use 'components/exhibit/info-button';
+@use 'components/exhibit/photo-tiles';
 @use 'components/exhibit/two-column';
 
 @import 'colors';
@@ -120,7 +121,7 @@ body {
   color: #BBBBBB;
   user-select: none;
   &:before {
-    content: "Click to enter text";
+    content: "Click to change text";
     user-select: none;
   }
 }
@@ -141,19 +142,7 @@ body {
   cursor: pointer;
 }
 
-.photo-tiles {
-  overflow: auto;
-  @include hover-scrollbar(#999999);
-  &__tiles {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    width: calc((181px * 5) + (12px * 4));
-    margin: auto;
-  }
-  img {
-    margin-top: 12px;
-    width: 181px;
-    height: 181px;
-  }
+header {
+  height: 50px;
+  align-content: center;
 }
