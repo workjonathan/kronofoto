@@ -31,7 +31,7 @@ from functools import reduce, update_wrapper, cached_property
 import operator
 from collections import defaultdict
 from .auth.forms import FortepanAuthenticationForm
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template.response import TemplateResponse
 from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, Tuple, TypedDict, Sequence, TYPE_CHECKING, TypeVar, Protocol, ContextManager, Union
 from django.urls import URLPattern
@@ -514,6 +514,12 @@ class ImportMap:
             }
         </script>"""
 
+import django.contrib.admin.views.main
+class MapChangeList(django.contrib.admin.views.main.ChangeList):
+    pass
+
+from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
+
 @admin.register(PhotoSphere)
 class PhotoSphereAdmin(admin.GISModelAdmin):
     form = PhotoSphereChangeForm
@@ -541,10 +547,94 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         info = self.model._meta.app_label, self.model._meta.model_name
         return [
             path("map_edit", wrap(self.map_edit_view), name="{}_{}_map_edit".format(*info)),
+            path("map_refresh_point/<int:pk>", wrap(self.map_refresh_point), name="{}_{}_map_refresh_point".format(*info)),
+            path("map_propose_connection/<int:pk>", wrap(self.map_propose_connection), name="{}_{}_map_propose_connection".format(*info)),
         ] + super().get_urls()
 
+    def map_propose_connection(self, request: HttpRequest, pk: int) -> HttpResponse:
+        photosphere_a = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
+        photosphere_b = get_object_or_404(PhotoSphere.objects.all(), pk=request.GET.get("pk", -1))
+        return JsonResponse({
+
+        })
+
+    def map_refresh_point(self, request: HttpRequest, pk: int) -> HttpResponse:
+        photosphere = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
+        assert photosphere.location
+
+        return JsonResponse({
+            "coordinates": [photosphere.location.y, photosphere.location.x],
+            "content": format_html("<h3>{}</h3>{}", photosphere.title, photosphere.description),
+            "pk": photosphere.pk,
+            "connect": reverse("admin:archive_photosphere_map_propose_connection", kwargs={"pk": photosphere.pk})
+        })
+
     def map_edit_view(self, request: HttpRequest) -> HttpResponse:
-        return HttpResponse("")
+        app_label = self.opts.app_label
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+        # Add the action checkboxes if any actions are available.
+        if self.get_actions(request):
+            list_display = ["action_checkbox", *list_display]
+        sortable_by = self.get_sortable_by(request)
+        ChangeList = MapChangeList
+        cl = ChangeList(
+            request,
+            self.model,
+            list_display,
+            list_display_links,
+            self.get_list_filter(request),
+            self.date_hierarchy,
+            self.get_search_fields(request),
+            self.get_list_select_related(request),
+            99999999,
+            99999999,
+            self.list_editable,
+            self,
+            None,
+            "",
+        )
+        serialized = GeoJSONSerializer().serialize(
+            [
+                {
+                    'geom': object.location,
+                    'refresh': reverse("admin:archive_photosphere_map_refresh_point", kwargs={"pk": object.pk}),
+                    'pk': object.pk,
+                }
+                for object in cl.get_queryset(request)
+            ],
+            with_modelname=False,
+        )
+        import json
+        context = {
+            **self.admin_site.each_context(request),
+            "module_name": str(self.opts.verbose_name_plural),
+            "selection_note": "",
+            "selection_note_all": "",
+            "title": cl.title,
+            "subtitle": None,
+            "is_popup": cl.is_popup,
+            "to_field": cl.to_field,
+            "cl": cl,
+            "media": self.media,
+            "has_add_permission": self.has_add_permission(request),
+            "map_points": json.loads(serialized),
+            "opts": cl.opts,
+            "actions_on_top": self.actions_on_top,
+            "actions_on_bottom": self.actions_on_bottom,
+            "actions_selection_counter": self.actions_selection_counter,
+            "preserved_filters": self.get_preserved_filters(request),
+        }
+
+        request.current_app = self.admin_site.name
+        return TemplateResponse(
+            request=request,
+            template="admin/archive/photosphere/map_edit.html",
+            context=context,
+        )
+
 
     def get_form(
         self, request: HttpRequest, obj: Optional[PhotoSphere] = None, change: bool=False, **kwargs: Any

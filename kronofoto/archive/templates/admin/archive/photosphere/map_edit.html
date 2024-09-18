@@ -1,0 +1,61 @@
+{% extends "admin/change_list.html" %}
+
+{% load widgets %}
+
+{% block object-tools-items %}
+    <li><a href="{% url "admin:archive_photosphere_changelist" %}">Switch to List Edit Mode</a></li>
+    {{ block.super }}
+{% endblock %}
+{% block search %}{% endblock %}
+{% block result_list %}
+   {{ map_points|json_script:"photosphere-points" }}
+   <div id="map" style="width:100%; height: 80vh; border: 1px solid black"></div>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+   <script>
+    const map = L.map('map').setView([43, -92], 8)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    map.addEventListener("popupclose", evt => {
+        if (evt.popup === activePopup) {
+            activePoint = undefined
+            activePopup = undefined
+        }
+    })
+    let activePoint
+    let activePopup
+    const points = L.geoJSON(
+        JSON.parse(document.querySelector("#photosphere-points").textContent),
+        {
+            onEachFeature: (feature, layer) => {
+                layer.addEventListener("click", evt => {
+                    fetch(evt.target.feature.properties.refresh).then(
+                        resp => resp.json()
+                    ).then(resp => {
+                        resp["autoClose"] = !!activePoint
+                        resp["closeOnClick"] = !!activePoint
+                        const popup = L.popup(resp.coordinates, resp)
+                        if (!activePoint) {
+                            map.addLayer(popup)
+                            activePopup = popup
+                            activePoint = resp
+                        } else {
+                            popup.openOn(map)
+                            const params = new URLSearchParams()
+                            params.append("pk", layer.feature.properties.pk)
+                            fetch(activePoint.connect + "?" + params.toString()).then(resp => 
+                                resp.json()
+                            ).then(resp =>
+                                console.log(resp)
+                            )
+                        }
+                    })
+                })
+            },
+        },
+    )
+    points.addTo(map)
+   </script>
+{% endblock %}
