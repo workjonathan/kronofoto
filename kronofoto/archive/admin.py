@@ -530,6 +530,22 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.min.css",
         ]}
 
+    def get_urls(self) -> List[URLPattern]:
+        from django.urls import path
+        def wrap(view: Callable[..., object]) -> Callable[..., HttpResponse]:
+            def wrapper(*args: Any, **kwargs: Any) -> HttpResponse:
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self # type: ignore
+            return update_wrapper(wrapper, view)
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        return [
+            path("map_edit", wrap(self.map_edit_view), name="{}_{}_map_edit".format(*info)),
+        ] + super().get_urls()
+
+    def map_edit_view(self, request: HttpRequest) -> HttpResponse:
+        return HttpResponse("")
+
     def get_form(
         self, request: HttpRequest, obj: Optional[PhotoSphere] = None, change: bool=False, **kwargs: Any
     ) -> "Type[forms.ModelForm[PhotoSphere]]":
