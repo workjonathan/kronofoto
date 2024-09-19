@@ -514,6 +514,24 @@ class ImportMap:
             }
         </script>"""
 
+@dataclass(frozen=True)
+class ResourceIntegrity:
+    src: str
+    integrity: str
+    crossorigin: str = ""
+    format_str: str = ""
+
+    def __html__(self) -> str:
+       return self.format_str.format(location=self.src, integrity=self.integrity, crossorigin=self.crossorigin) # type: ignore
+
+
+def JSWIntegrity(*, src: str, integrity: str, crossorigin: str="") -> ResourceIntegrity:
+    return ResourceIntegrity(src=src, integrity=integrity, crossorigin=crossorigin, format_str="""<script src="{location}" integrity="{integrity}" crossorigin="{crossorigin}"></script>""")
+
+def CSSWIntegrity(*, src: str, integrity: str, crossorigin: str="") -> ResourceIntegrity:
+    return ResourceIntegrity(src=src, integrity=integrity, crossorigin=crossorigin, format_str="""<link rel="stylesheet" href="{location}" integrity="{integrity}" crossorigin="{crossorigin}" />""")
+
+
 import django.contrib.admin.views.main
 class MapChangeList(django.contrib.admin.views.main.ChangeList):
     pass
@@ -530,10 +548,22 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
     inlines = (PhotoInline,)
 
     class Media:
-        js = [ImportMap()]
+        js = [
+            ImportMap(),
+            JSWIntegrity(
+                src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
+            ),
+            JSWIntegrity(
+                src="https://unpkg.com/htmx.org@2.0.2",
+                integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ",
+                crossorigin="anonymous",
+            ),
+        ]
         css = {"all": [
             "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css",
             "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.min.css",
+            CSSWIntegrity(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="),
         ]}
 
     def get_urls(self) -> List[URLPattern]:
@@ -607,6 +637,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             ],
             with_modelname=False,
         )
+        print(self.media)
         import json
         context = {
             **self.admin_site.each_context(request),
