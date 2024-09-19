@@ -1,6 +1,7 @@
 from django.contrib.gis import admin
 from urllib.parse import quote as urlquote
 from django.contrib import admin as base_admin
+from django.template import Template, RequestContext
 from django.contrib.admin.utils import quote
 from django.core.files.base import ContentFile
 from mptt.admin import MPTTModelAdmin # type: ignore
@@ -536,6 +537,9 @@ import django.contrib.admin.views.main
 class MapChangeList(django.contrib.admin.views.main.ChangeList):
     pass
 
+class ConfirmConnectForm(forms.Form):
+    pk_a = forms.IntegerField(widget=forms.HiddenInput)
+    pk_b = forms.IntegerField(widget=forms.HiddenInput)
 from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 
 @admin.register(PhotoSphere)
@@ -579,25 +583,113 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             path("map_edit", wrap(self.map_edit_view), name="{}_{}_map_edit".format(*info)),
             path("map_refresh_point/<int:pk>", wrap(self.map_refresh_point), name="{}_{}_map_refresh_point".format(*info)),
             path("map_propose_connection/<int:pk>", wrap(self.map_propose_connection), name="{}_{}_map_propose_connection".format(*info)),
+            path("map_confirm_connection", wrap(self.map_confirm_connection), name="{}_{}_map_confirm_connection".format(*info)),
+            path("map_propose_delete/<int:pk>", wrap(self.map_propose_delete), name="{}_{}_map_propose_delete".format(*info)),
+            path("map_confirm_delete", wrap(self.map_confirm_delete), name="{}_{}_map_confirm_delete".format(*info)),
         ] + super().get_urls()
 
+    def map_confirm_connection(self, request: HttpRequest) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        form = ConfirmConnectForm(request.POST)
+        if form.is_valid():
+            photosphere_a = get_object_or_404(PhotoSphere.objects.all(), pk=form.cleaned_data['pk_a'])
+            photosphere_b = get_object_or_404(PhotoSphere.objects.all(), pk=form.cleaned_data['pk_b'])
+            photosphere_a.links.add(photosphere_b)
+            links = PhotoSphere.links.through.objects.filter(
+                from_photosphere_id=photosphere_a.id,
+            )
+            response = HttpResponse()
+            import json
+            response['Hx-Trigger'] = json.dumps({
+                "admin:add_line": json.loads(GeoJSONSerializer().serialize([self.link_to_json(link) for link in links])),
+            })
+            return response
+        return HttpResponse()
+
+    def map_confirm_delete(self, request: HttpRequest) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        form = ConfirmConnectForm(request.POST)
+        if form.is_valid():
+            pk_a = form.cleaned_data['pk_a']
+            pk_b = form.cleaned_data['pk_b']
+            PhotoSphereThrough = PhotoSphere.links.through
+            PhotoSphereThrough.objects.filter(from_photosphere_id=pk_a, to_photosphere_id=pk_b).delete()
+            PhotoSphereThrough.objects.filter(from_photosphere_id=pk_b, to_photosphere_id=pk_a).delete()
+            response = HttpResponse()
+            import json
+            response['Hx-Trigger'] = json.dumps({
+                "admin:remove_line": {'a': pk_a, 'b': pk_b},
+            })
+            return response
+        return HttpResponse("", status=400)
+
+    def map_propose_delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        link = get_object_or_404(PhotoSphere.links.through.objects.all(), pk=pk)
+        template = Template("""
+            Delete this connection from {{ photosphere_a.title }} to {{ photosphere_b.title }}?<br>
+            <div>
+                <input type="hidden" name="pk_a" value="{{ photosphere_a.pk }}">
+                <input type="hidden" name="pk_b" value="{{ photosphere_b.pk }}">
+                <button hx-target="closest div" hx-include="closest div" hx-swap="none" hx-post="{% url "admin:archive_photosphere_map_confirm_delete" %}">Delete</button>
+            </div>
+        """)
+        return HttpResponse(template.render(
+            context=RequestContext(request, {'photosphere_a': link.from_photosphere, 'photosphere_b': link.to_photosphere})
+        ))
+
     def map_propose_connection(self, request: HttpRequest, pk: int) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
         photosphere_a = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
         photosphere_b = get_object_or_404(PhotoSphere.objects.all(), pk=request.GET.get("pk", -1))
+        template = Template("""
+            Connect {{ photosphere_a.title }} to {{ photosphere_b.title }}?<br>
+            <div>
+                <input type="hidden" name="pk_a" value="{{ photosphere_a.pk }}">
+                <input type="hidden" name="pk_b" value="{{ photosphere_b.pk }}">
+                <button hx-target="closest div" hx-include="closest div" hx-swap="none" hx-post="{% url "admin:archive_photosphere_map_confirm_connection" %}">Connect</button>
+            </div>
+        """)
         return JsonResponse({
-
+            "coordinates": [
+                [photosphere_a.location.y, photosphere_a.location.x],
+                [photosphere_b.location.y, photosphere_b.location.x],
+            ],
+            "content": template.render(
+                context=RequestContext(request, {"photosphere_a": photosphere_a, 'photosphere_b': photosphere_b}),
+            ),
         })
 
     def map_refresh_point(self, request: HttpRequest, pk: int) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
         photosphere = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
         assert photosphere.location
 
         return JsonResponse({
             "coordinates": [photosphere.location.y, photosphere.location.x],
-            "content": format_html("<h3>{}</h3>{}", photosphere.title, photosphere.description),
+            "content": format_html('<a href="{}" target="_blank">Edit (new tab)</a><h3>{}</h3><div>{}</div>', reverse("admin:archive_photosphere_change", kwargs={"object_id": photosphere.id}), photosphere.title, photosphere.description),
             "pk": photosphere.pk,
-            "connect": reverse("admin:archive_photosphere_map_propose_connection", kwargs={"pk": photosphere.pk})
+            "connect": reverse("admin:archive_photosphere_map_propose_connection", kwargs={"pk": photosphere.pk}),
+            "closeOnClick": False,
         })
+
+    def link_to_json(self, link: Any) -> Dict[str, Any]:
+        from django.contrib.gis.geos import LineString
+        return {
+            'geom': LineString([
+                [link.from_photosphere.location.x, link.from_photosphere.location.y],
+                [link.to_photosphere.location.x, link.to_photosphere.location.y],
+            ]),
+            'pk': link.pk,
+            'from_pk': link.from_photosphere.pk,
+            'to_pk': link.to_photosphere.pk,
+            'delete': reverse("admin:archive_photosphere_map_propose_delete", kwargs={"pk": link.pk}),
+        }
 
     def map_edit_view(self, request: HttpRequest) -> HttpResponse:
         app_label = self.opts.app_label
@@ -637,7 +729,13 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             ],
             with_modelname=False,
         )
-        print(self.media)
+        links_serialized = GeoJSONSerializer().serialize(
+            [
+                self.link_to_json(link)
+                for link in cl.opts.model.links.through.objects.all() # type: ignore
+            ],
+            with_modelname=False,
+        )
         import json
         context = {
             **self.admin_site.each_context(request),
@@ -652,6 +750,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             "media": self.media,
             "has_add_permission": self.has_add_permission(request),
             "map_points": json.loads(serialized),
+            "map_links": json.loads(links_serialized),
             "opts": cl.opts,
             "actions_on_top": self.actions_on_top,
             "actions_on_bottom": self.actions_on_bottom,
