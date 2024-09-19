@@ -546,7 +546,7 @@ from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 class PhotoSphereAdmin(admin.GISModelAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
-    list_filter = (MainstreetSetIsSetFilter,) # should be deleted when db constraint is enabled
+    list_filter = (MainstreetSetIsSetFilter, 'mainstreetset') # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline,)
@@ -732,7 +732,10 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         links_serialized = GeoJSONSerializer().serialize(
             [
                 self.link_to_json(link)
-                for link in cl.opts.model.links.through.objects.all() # type: ignore
+                for link in cl.opts.model.links.through.objects.filter(
+                    to_photosphere_id__in=cl.get_queryset(request),
+                    from_photosphere_id__in=cl.get_queryset(request)
+                ) # type: ignore
             ],
             with_modelname=False,
         )
