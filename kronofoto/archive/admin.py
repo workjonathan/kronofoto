@@ -672,6 +672,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
                 <button hx-target="closest div" hx-include="closest div" hx-swap="none" hx-post="{% url "admin:archive_photosphere_map_confirm_connection" %}">Connect</button>
             </div>
         """)
+        assert photosphere_a.location and photosphere_b.location
         return JsonResponse({
             "coordinates": [
                 [photosphere_a.location.y, photosphere_a.location.x],
@@ -747,6 +748,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
             ],
             with_modelname=False,
         )
+        assert hasattr(cl.opts.model, "links")
         links_serialized = GeoJSONSerializer().serialize(
             [
                 self.link_to_json(link)

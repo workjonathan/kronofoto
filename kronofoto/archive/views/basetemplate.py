@@ -57,6 +57,10 @@ class Theme:
             kwargs['short_name'] = self.archive
         return reverse('kronofoto:logosvg', kwargs=kwargs)
 
+    def logoicon(self) -> str:
+        kwargs = {'theme': self.name}
+        return reverse('kronofoto:logo-icon.svg', kwargs=kwargs)
+
     def logosmall(self) -> str:
         kwargs = {'theme': self.name}
         if self.archive:

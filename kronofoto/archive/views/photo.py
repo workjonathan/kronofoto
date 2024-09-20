@@ -1,6 +1,7 @@
 from django.views.generic import DetailView, ListView, View
 from django.views.generic.list import MultipleObjectMixin
 from django.http import Http404, HttpResponse, HttpRequest, HttpResponseBase
+from django.template.response import TemplateResponse
 from ..reverse import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.core.cache import cache
@@ -264,7 +265,23 @@ class TimelineSvg(TemplateView):
         response['Access-Control-Allow-Origin'] = '*'
         return response
 
-
+@cache_control(max_age=60*60, public=True)
+@vary_on_headers()
+def logo_icon_view(request: HttpRequest, theme: str) -> HttpResponse:
+    template = "archive/svg/logo-icon.svg"
+    context = {
+        'theme': Theme.select_named_theme(name=theme)
+    }
+    response = TemplateResponse(
+        request=request,
+        context=context,
+        template=template,
+        headers={
+            "Content-Type": "image/svg+xml",
+        },
+    )
+    setattr(response, "override_vary", "")
+    return response
 
 class LogoSvg(TemplateView):
     template_name = "archive/svg/logo.svg"
@@ -273,7 +290,6 @@ class LogoSvg(TemplateView):
         if 'short_name' in self.kwargs:
             templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
         templates.append(self.template_name)
-        print(templates)
         return templates
 
     def get_context_data(self, theme: str='skyblue', short_name: str='us') -> Dict[str, Any]: # type: ignore
