@@ -5,7 +5,6 @@ from django.views.generic.base import TemplateView
 from archive.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
 from archive.views.frontpage import RandomRedirect, YearRedirect
 from archive.views.photo import TimelineSvg, CarouselListView
-from archive.views.photo import LogoSvg, LogoSvgSmall
 from archive.views.agreement import AgreementView
 from archive.views.submission import submission, KronofotoTemplateView
 from archive.views.tagsearch import ContributorSearchView
@@ -96,8 +95,8 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
         *build_content_urls("all", with_names=False, kwargs={}),
         *build_content_urls("<slug:category>", with_names=False, kwargs={}),
     ])),
-    path('<str:theme>/logo.svg', LogoSvg.as_view(), name='logosvg'),
-    path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
+    path('<str:theme>/logo.svg', views.photo.logo_view, name='logosvg'),
+    path('<str:theme>/logo-small.svg', views.photo.logo_small_view, name='logosvgsmall'),
     path('<str:theme>/logo-icon.svg', views.photo.logo_icon_view, name='logo-icon.svg'),
     *directory('collections', views.collections_view, name='collection-create', children=include([
         *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([

@@ -265,64 +265,33 @@ class TimelineSvg(TemplateView):
         response['Access-Control-Allow-Origin'] = '*'
         return response
 
+def logo_icon_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo-icon")
+
+def logo_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo")
+
+def logo_small_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo-small")
+
 @cache_control(max_age=60*60, public=True)
 @vary_on_headers()
-def logo_icon_view(request: HttpRequest, theme: str) -> HttpResponse:
-    template = "archive/svg/logo-icon.svg"
+def svg_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None, name: str) -> HttpResponse:
+    template = f"archive/svg/{name}.svg"
     context = {
         'theme': Theme.select_named_theme(name=theme)
     }
+    templates = []
+    if short_name:
+        templates.append(f'archive/svg/{name}/{short_name}.svg')
+    templates.append(template)
     response = TemplateResponse(
         request=request,
         context=context,
-        template=template,
+        template=templates,
         headers={
             "Content-Type": "image/svg+xml",
         },
     )
     setattr(response, "override_vary", "")
     return response
-
-class LogoSvg(TemplateView):
-    template_name = "archive/svg/logo.svg"
-    def get_template_names(self) -> List[str]:
-        templates = []
-        if 'short_name' in self.kwargs:
-            templates.append('archive/svg/logo/{}.svg'.format(self.kwargs['short_name']))
-        templates.append(self.template_name)
-        return templates
-
-    def get_context_data(self, theme: str='skyblue', short_name: str='us') -> Dict[str, Any]: # type: ignore
-        context = {
-            'theme': Theme.select_named_theme(archive=short_name, name=theme),
-        }
-        return context
-
-    @method_decorator(cache_control(max_age=60*60, public=True))
-    @vary_on_headers()
-    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        response = super().dispatch(*args, **kwargs)
-        response['Content-Type'] = 'image/svg+xml'
-        response.override_vary = "" # type: ignore
-        return response
-
-class LogoSvgSmall(TemplateView):
-    template_name = "archive/svg/logo-small.svg"
-    def get_template_names(self) -> List[str]:
-        templates = []
-        if 'short_name' in self.kwargs:
-            templates.append('archive/svg/logo-small/{}.svg'.format(self.kwargs['short_name']))
-        templates.append(self.template_name)
-        return templates
-
-    def get_context_data(self, theme: str='skyblue', short_name: str='us') -> Dict[str, Any]: # type: ignore
-        context = {
-            'theme': Theme.select_named_theme(archive=short_name, name=theme),
-        }
-        return context
-
-    @method_decorator(cache_control(max_age=60*60, public=True))
-    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        response = super().dispatch(*args, **kwargs)
-        response['Content-Type'] = 'image/svg+xml'
-        return response
