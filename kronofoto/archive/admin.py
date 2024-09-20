@@ -675,8 +675,8 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         assert photosphere_a.location and photosphere_b.location
         return JsonResponse({
             "coordinates": [
-                [photosphere_a.location.y, photosphere_a.location.x],
-                [photosphere_b.location.y, photosphere_b.location.x],
+                [photosphere_a.location.y, photosphere_a.location.x], # type: ignore
+                [photosphere_b.location.y, photosphere_b.location.x], # type: ignore
             ],
             "content": template.render(
                 context=RequestContext(request, {"photosphere_a": photosphere_a, 'photosphere_b': photosphere_b}),
@@ -752,7 +752,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         links_serialized = GeoJSONSerializer().serialize(
             [
                 self.link_to_json(link)
-                for link in cl.opts.model.links.through.objects.filter(
+                for link in cl.opts.model.links.through.objects.filter( # type: ignore
                     to_photosphere_id__in=cl.get_queryset(request),
                     from_photosphere_id__in=cl.get_queryset(request)
                 ) # type: ignore
