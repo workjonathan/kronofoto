@@ -156,15 +156,16 @@ def exhibit_two_column_image(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         photo_id = int(request.GET.get(html_name, ""))
         photo = get_object_or_404(Photo.objects.all(), pk=photo_id)
+        form = {'photo': {'auto_id': target_id, 'html_name': html_name } }
         context = {
-            "form": True,
+            "form": form,
             "edit": True,
             "photo": photo,
             "target_id": target_id,
             "exhibit": exhibit,
             "html_name": html_name
         }
-        return TemplateResponse(request=request, context=context, template="archive/components/two-column-image.html")
+        return TemplateResponse(request=request, context=context, template="archive/components/two-column-image.html", headers={"Hx-Trigger": "remove-empty"})
     except ValueError:
         return HttpResponse("", status=400)
 
@@ -183,7 +184,7 @@ def exhibit_figure_image(request: HttpRequest, pk: int) -> HttpResponse:
             "exhibit": exhibit,
             "html_name": html_name
         }
-        return TemplateResponse(request=request, context=context, template="archive/components/figure-image.html")
+        return TemplateResponse(request=request, context=context, template="archive/components/figure-image.html", headers={"Hx-Trigger": "remove-empty"})
     except ValueError:
         return HttpResponse("", status=400)
 

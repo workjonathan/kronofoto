@@ -39,9 +39,9 @@
 </head>
 <body>
 
-    {% page_editor_header %}
 
     <form method="post">
+        {% page_editor_header %}
         {% csrf_token %}
 
         <div class="page-editor">
@@ -50,13 +50,6 @@
                 {% include "archive/components/exhibit/credits.html" %}
             </div>
             <div class="page-editor__toolbar toolbar">
-                 <div class="toolbar__section">
-                    <button data-form-target="" type="submit" name="save" value="Save" class="button toolbar__button">Publish</button>
-                    <button data-form-target="" class="toolbar__button--icon toolbar__button--small"><i class="icon--link"></i></button>
-                    <button data-form-target="_blank" name="preview" class="toolbar__button--icon toolbar__button--small"><i class="icon--preview"></i></button>
-                    <button data-form-target="" class="toolbar__button--icon toolbar__button--small"><i class="icon--undo-arrow"></i></button>
-                    <button data-form-target="" class="toolbar__button--icon toolbar__button--small"><i class="icon--redo-arrow"></i></button>
-                </div>
                 <div class="toolbar__section">
                     <label class="toolbar__label">Content blocks</label>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>

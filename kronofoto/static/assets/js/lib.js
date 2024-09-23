@@ -544,6 +544,12 @@ class ExhibitPlugin {
         this.context = context
     }
     install({elem}) {
+        document.body.addEventListener("remove-empty", evt => { 
+            const emptycard = evt.explicitOriginalTarget.closest(".empty")
+            if (emptycard) {
+                emptycard.classList.remove("empty")
+            }
+        })
         for (const btn of elem.querySelectorAll("[data-form-target]")) {
             btn.addEventListener("click", (evt) => {
                 btn.closest("form").setAttribute(
