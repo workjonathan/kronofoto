@@ -1,3 +1,6 @@
+@use "sass:map";
+@import 'foundation-sites/scss/global';
+
 .header {
   padding: 15px;
   width: calc(100% - 30px);
@@ -29,4 +32,56 @@
       color: white;
     }
   }
+}
+
+$height: ("small": 60px, "medium": 80px, "large": 80px);
+
+//header {
+//  /*max-height: 200px;
+//  grid-row: 1 / span 1;
+//  padding: 1.6vh;*/
+//
+//  @include breakpoint(small up) {
+//    height: map.get($height, 'small');
+//  }
+//  @include breakpoint(xlarge up) {
+//    height: map.get($height, 'medium');
+//  }
+//  padding: 6px 15px;
+//}
+
+.logo-img {
+  @include breakpoint(small up) {
+    width: 50px;
+  }
+  vertical-align: middle;
+  margin-right: 20px;
+}
+
+nav {
+  display: flex;
+  height: 100%;
+}
+
+nav ul {
+  display: flex;
+  display: -webkit-flex;
+  align-self: center;
+  flex-grow: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav ul li {
+  list-style: none;
+  text-transform: uppercase;
+}
+
+header nav div img {
+  width: 30px;
+}
+
+.nav-title {
+  color: #707070;
+  font-size: 16px;
 }

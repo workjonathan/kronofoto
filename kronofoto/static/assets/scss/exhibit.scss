@@ -146,3 +146,12 @@ header {
   height: 50px;
   align-content: center;
 }
+
+body, #kfroot {
+  container-type: inline-size;
+}
+
+.login-container {
+  width: 40px;
+  height: 40px;
+}
