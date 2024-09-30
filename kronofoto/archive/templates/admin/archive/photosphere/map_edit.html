@@ -13,10 +13,20 @@
    <div id="map" style="width:100%; height: 80vh; border: 1px solid black"></div>
    <script>
     const map = L.map('map').setView([43, -92], 8)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+    const base = {
+        "OpenStreetMaps": L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }),
+        "Positron": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+        }),
+    }
+    base.OpenStreetMaps.addTo(map)
+    L.control.layers(base, {}).addTo(map)
+
     let activePoint
     const links = L.geoJSON(
         JSON.parse(document.querySelector("#photosphere-links").textContent),
