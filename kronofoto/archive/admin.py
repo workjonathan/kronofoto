@@ -656,8 +656,8 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         """)
         return JsonResponse({
             "coordinates": [
-                [photosphere_a.location.y, photosphere_a.location.x],
-                [photosphere_b.location.y, photosphere_b.location.x],
+                [photosphere_a.location.y, photosphere_a.location.x], # type: ignore
+                [photosphere_b.location.y, photosphere_b.location.x], # type: ignore
             ],
             "content": template.render(
                 context=RequestContext(request, {"photosphere_a": photosphere_a, 'photosphere_b': photosphere_b}),
@@ -668,10 +668,14 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         if not self.has_view_or_change_permission(request):
             raise PermissionDenied
         photosphere = get_object_or_404(PhotoSphere.objects.all(), pk=pk)
+        PhotoSphereThrough = PhotoSphere.links.through
+        links = PhotoSphereThrough.objects.filter(Q(to_photosphere_id=pk) | Q(from_photosphere_id=pk))
         assert photosphere.location
+        import json
 
         return JsonResponse({
             "coordinates": [photosphere.location.y, photosphere.location.x],
+            "links": json.loads(GeoJSONSerializer().serialize([self.link_to_json(link) for link in links])),
             "content": format_html('<a href="{}" target="_blank">Edit (new tab)</a><h3>{}</h3><div>{}</div>', reverse("admin:archive_photosphere_change", kwargs={"object_id": photosphere.id}), photosphere.title, photosphere.description),
             "pk": photosphere.pk,
             "connect": reverse("admin:archive_photosphere_map_propose_connection", kwargs={"pk": photosphere.pk}),
@@ -732,7 +736,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         links_serialized = GeoJSONSerializer().serialize(
             [
                 self.link_to_json(link)
-                for link in cl.opts.model.links.through.objects.filter(
+                for link in cl.opts.model.links.through.objects.filter( # type: ignore
                     to_photosphere_id__in=cl.get_queryset(request),
                     from_photosphere_id__in=cl.get_queryset(request)
                 ) # type: ignore
