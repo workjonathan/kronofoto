@@ -6,6 +6,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from ..models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
+from archive.templatetags.widgets import image_url
 from typing import Any, Dict
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
@@ -35,7 +36,7 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
             "links": links,
             'data': {
                 "photos": [dict(
-                    url=position.photo.original.url,
+                    url=image_url(id=position.photo.id, path=position.photo.original.name, height=1400),
                     height=position.photo.h700.height if position.photo.h700 else 700,
                     width=position.photo.h700.width if position.photo.h700 else 400,
                     azimuth=position.azimuth+object.heading-90,

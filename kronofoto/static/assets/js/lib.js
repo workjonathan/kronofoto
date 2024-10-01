@@ -9,7 +9,7 @@ import * as Select2 from "select2"
 Select2.default(window, $)
 import {Viewer} from "@photo-sphere-viewer/core"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
-import {ImagePlanePlugin} from "./photosphere.js"
+import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -727,6 +727,20 @@ class PhotoSpherePlugin {
                 .getPlugin(VirtualTourPlugin)
                 .addEventListener("node-changed", ({node, data}) => {
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                    const animate = Math.random() > 0.5
+                    if (animate) {
+                        viewer.animate({
+                            yaw: `${90-node.data.photos[0].azimuth}deg`,
+                            pitch: `${node.data.photos[0].inclination}deg`,
+                            speed: "120rpm",
+                        })
+                        
+                    } else {
+                        viewer.rotate({
+                            yaw: `${90-node.data.photos[0].azimuth}deg`,
+                            pitch: `${node.data.photos[0].inclination}deg`,
+                        })
+                    }
                     if (data.fromNode && node.id != data.fromNode.id) {
                         const form = elem2.closest("form")
                         const input = form.querySelector("[name='id']")
