@@ -2,7 +2,7 @@ import GUI from "./lil-gui.esm.min.js"
 import {AbstractPlugin, events} from "@photo-sphere-viewer/core"
 import * as THREE from "three"
 
-const toRadians = (degrees) => (2 * Math.PI * degrees) / 360
+export const toRadians = (degrees) => (2 * Math.PI * degrees) / 360
 
 export class ImagePlanePlugin extends AbstractPlugin {
     static id = "image-plane-plugin"
