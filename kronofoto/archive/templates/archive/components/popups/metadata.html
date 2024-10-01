@@ -1,9 +1,0 @@
-{% load permissions %}
-
-{% if request.user|has_view_or_change_permission:photo %}
-<a href="{{ photo.get_edit_url }}" class="photo-menu-popup__edit-btn"></a>
-{% endif %}
-<a href="#" class="photo-menu-popup__close-btn" data-toggle="metadata-popup" data-toggler=".expanded"></a>
-<div class="photo-menu-popup__wrapper">
-    {% include "archive/photometadata.html" %}
-</div>

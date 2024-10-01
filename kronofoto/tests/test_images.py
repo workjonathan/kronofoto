@@ -1,4 +1,4 @@
-from archive.templatetags.widgets import image_url
+from fortepan_us.kronofoto.templatetags.widgets import image_url
 from django.test import Client, RequestFactory, TestCase
 from django.core.files.storage import default_storage
 from .util import small_gif

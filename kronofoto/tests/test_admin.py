@@ -7,11 +7,11 @@ from hypothesis.extra.django import TestCase, from_model
 from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
 from django.contrib.admin.sites import AdminSite
-from archive.admin import *
-from archive.models.donor import Donor
-from archive.models.archive import Archive
-from archive.models.photo import Photo
-from archive.models.photosphere import PhotoSphere
+from fortepan_us.kronofoto.admin import *
+from fortepan_us.kronofoto.models.donor import Donor
+from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models.photo import Photo
+from fortepan_us.kronofoto.models.photosphere import PhotoSphere
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachine
 from django.contrib.contenttypes.models import ContentType
@@ -250,9 +250,8 @@ def test_userarchivepermissionsinline_accepted():
 
 class SubmissionAdminTest(TestCase):
     def test_acceptance_logging(self):
-        from archive.admin import SubmissionLogger
         from django.contrib.admin.models import LogEntry, DELETION, ADDITION
-        from archive.models import Submission
+        from fortepan_us.kronofoto.models import Submission
         archive = Archive.objects.create(slug="any-slug")
         category = Category.objects.create(slug="any-slug")
         donor = Donor.objects.create(archive=archive)
@@ -284,8 +283,7 @@ class SubmissionAdminTest(TestCase):
         assert "Created from Submission" in entry.change_message
 
     def test_submission_to_photo(self):
-        from archive.admin import SaveRecord, SubmissionAdmin
-        from archive.models import Submission
+        from fortepan_us.kronofoto.models import Submission
         archive = Archive.objects.create(slug="any-slug")
         category = Category.objects.create(slug="any-slug")
         donor = Donor.objects.create(archive=archive)

@@ -1,0 +1,36 @@
+{% extends base_template %}
+{% load krono_urls %}
+
+{% block content %}
+<section class="user-page-content">
+    <div class="user-header">
+        <div>
+            <h2>{{ profile_user.username }}</h2>
+            <p>{{ profile_user.email }}</p>
+        {% if profile_user == request.user %}
+            <a href="#"><i class="fas fa-edit"></i> Edit</a>
+        {% endif %}
+        </div>
+        
+        {% if profile_user == request.user %}
+        <span class="logout-btn"><a href="{% url "logout"%}?next={% krono_url "kronofoto:random-image" %}">Logout</a></span> 
+        {% endif %}
+    </div>
+
+    <div class="user-content">
+        <h2>My Lists</h2>
+        <div class="collection-grid">
+            <ul>
+                {% for collection in object_list %}
+                    <li><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a>
+                    {% if profile_user == request.user %}
+                    <a href="{% url "kronofoto:collection-delete" collection.id %}" style="margin-left: 10px;"><i class="fas fa-times" title="Delete"></i></a>
+                    {% endif %}
+
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
+{% endblock %}

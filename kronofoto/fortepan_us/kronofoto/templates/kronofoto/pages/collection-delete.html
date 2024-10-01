@@ -1,0 +1,11 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="container-center collection_delete-container">
+    <form method="post">{% csrf_token %}
+        <p>Are you sure you want to delete {{ object.name }}?</p>
+        <input type="submit" value="Yes">
+        <span class="back-btn"><a href="{{ view.get_success_url }}">No</a></span>
+    </form>
+</div>
+{% endblock %}

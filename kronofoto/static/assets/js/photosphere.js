@@ -1,5 +1,6 @@
 import GUI from "./lil-gui.esm.min.js"
-import {AbstractPlugin, events} from "@photo-sphere-viewer/core"
+import {Viewer, AbstractPlugin, events} from "@photo-sphere-viewer/core"
+export {Viewer} from "@photo-sphere-viewer/core"
 import * as THREE from "three"
 
 export const toRadians = (degrees) => (2 * Math.PI * degrees) / 360

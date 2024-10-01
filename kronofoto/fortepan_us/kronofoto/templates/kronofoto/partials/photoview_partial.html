@@ -1,0 +1,55 @@
+{% load krono_urls %}
+{% load static %}
+<div hx-swap-oob="innerHTML:#navigation-menu">
+  {% include "kronofoto/components/navigation-menu.html" %}
+</div>
+
+<div hx-swap-oob="innerHTML:[data-timeline-target=sliderYearLabel]">
+    {{ object.year }}
+</div>
+
+<div hx-swap-oob="delete:#timeline-container"></div>
+
+<div hx-swap-oob="delete:#grid-icon"></div>
+
+<div hx-swap-oob="beforeend:[data-view-buttons-target]">
+    {% block viewbuttons %}
+    {% endblock %}
+</div>
+
+<ul hx-swap-oob="outerHTML:#fi-preload-zone" id="fi-preload-zone" data-slide-id="{{ photo.id }}">
+    {% include "kronofoto/components/thumbnails.html" %}
+</ul>
+
+<div hx-swap-oob="innerHTML:#metadata-popup">
+    {% include "kronofoto/components/popup-containers/metadata.html" %}
+</div>
+
+<div hx-swap-oob="innerHTML:[data-fpi-fpilink]">
+    {% block fpi_link %}
+    <a class="fpi-fpilink" href="{{ timeline_url }}"><img src="{% static "kronofoto/images/01-fi-logo.svg" %}" alt="Fortepan Iowa icon" title="Fortepan Iowa"></a>
+    {% endblock %}
+</div>
+
+{% block left_arrow %}
+{% endblock %}
+{% block right_arrow %}
+{% endblock %}
+<div hx-swap-oob="innerHTML:[data-back-arrows]">
+{% block back_arrows %}
+{% endblock %}
+</div>
+<div hx-swap-oob="innerHTML:[data-forward-arrows]">
+{% block forward_arrows %}
+{% endblock %}
+</div>
+{% block image %}
+{% endblock %}
+<div hx-swap-oob="innerHTML:#zoom-popup">
+    {% block zoom_popup %}
+    {% endblock %}
+</div>
+
+{% include "kronofoto/components/popup-containers/add-to-list.html" %}
+{% include "kronofoto/components/popup-containers/download.html" %}
+{% include "kronofoto/components/popup-containers/share.html" %}

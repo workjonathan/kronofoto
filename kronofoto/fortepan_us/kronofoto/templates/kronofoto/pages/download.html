@@ -1,0 +1,88 @@
+{% extends base_template %}
+{% load widgets %}
+{% load krono_urls %}
+
+{% block content %}
+    <div id="download-container">
+        <p>
+
+            <span class="back-btn">
+                <a href="{% object_url photo url_kwargs get_params %}" >
+                    <i class="fas fa-long-arrow-alt-left"></i>
+                    Go back
+                </a>
+            </span>
+
+
+            <span class="back-btn">
+                <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg" style="position:absolute; right: 10vw;">
+                    Continue to download
+                    <i class="fas fa-long-arrow-alt-right"></i>
+                </a>
+            </span>
+
+        </p>
+        <br/>
+        <p>Hover over image to zoom.</p>
+        <p>Please attribute this photo as follows: <em>
+            “{{ object.accession_number }},” {{ object.location }}, {{ object.year }} by {{ object.donor }}/Fortepan Iowa, “{{ citation_url }},” <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a></em>
+
+        </p>
+    </div>
+
+   <div style='background: url("{{ object.original.url }}");' id="follow-zoom">
+
+    </div>
+<!--        <img src="{{ object.original.url }}" id="download-img"/>-->
+
+    <script type="text/javascript">
+
+        /*Credits https://code-boxx.com/image-zoom-css-javascript/, https://www.cssscript.com/image-zoom-pan-hover-detail-view/*/
+        var addZoom = (target) => {
+            let container = window.kfcontext.getElementById(target),
+                imgsrc = container.currentStyle || window.getComputedStyle(container, false);
+                imgsrc = imgsrc.backgroundImage.slice(4, -1).replace(/"/g, "");
+
+          let img = new Image();
+          img.src = imgsrc;
+          img.onload = () => {
+
+
+            let ratio = img.naturalHeight / img.naturalWidth;
+
+                Object.assign(container.style, {
+                    width: "80vw",
+                    //margin: "0px auto 50px auto";
+                    height: 80*ratio +"vw",
+                    backgroundPosition: "top",
+                    backgroundSize: "cover"
+                  });
+
+            container.onmousemove = (e) => {
+              let rect = e.target.getBoundingClientRect(),
+                  xPos = e.clientX - rect.left,
+                  yPos = e.clientY - rect.top,
+                  xPercent = xPos / (container.clientWidth / 100) + "%",
+                  yPercent = yPos / ((container.clientWidth * ratio) / 100) + "%";
+
+              Object.assign(container.style, {
+                backgroundPosition: xPercent + " " + yPercent,
+                backgroundSize: img.naturalWidth + "px"
+              });
+            };
+
+            container.onmouseleave = (e) => {
+              Object.assign(container.style, {
+                backgroundPosition: "top",
+                backgroundSize: "cover"
+                  });
+                };
+              }
+            };
+
+            window.onload = () => { addZoom("follow-zoom"); };
+
+    </script>
+
+
+{% endblock %}

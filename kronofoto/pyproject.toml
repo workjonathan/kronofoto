@@ -1,0 +1,132 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kronofoto"
+dynamic = ["version"]
+description = ''
+readme = "../README.md"
+requires-python = ">=3.8"
+license = "GPL-3.0-or-later"
+keywords = []
+authors = [
+  { name = "fortepan-us" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "django>=4.2.13,<5.0.0",
+    "django-google-tag-manager",
+    "django-stubs",
+    "django-stubs-ext",
+    "deal",
+    "requests",
+    "Pillow",
+    "django-mptt",
+    "parsy",
+    "django-geojson",
+    "markdown",
+    "types-requests",
+    "python-decouple",
+    "django-cms==3.11.*",
+    "django-sekizai==4.0.*",
+    "djangocms-file==3.0.*",
+    "djangocms-link==3.1.*",
+    "djangocms-picture==4.1.*",
+    "djangocms-text-ckeditor==5.1.*",
+]
+[project.optional-dependencies]
+postgres = [
+    "psycopg2-binary",
+]
+gunicorn = [
+    "gunicorn",
+]
+
+[project.urls]
+Documentation = "https://github.com/fortepan-us/kronofoto#readme"
+Issues = "https://github.com/fortepan-us/kronofoto/issues"
+Source = "https://github.com/fortepan-us/kronofoto"
+
+[tool.hatch.version]
+path = "fortepan_us/kronofoto/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+  "pytest-django",
+  "hypothesis==6.84.3",
+  "mypy>=1.0.0",
+  "django-debug-toolbar",
+]
+[tool.hatch.envs.default.scripts]
+manage = "python -m fortepan_us.manage {args}"
+runserver = [
+    "manage migrate",
+    "manage runserver",
+]
+test = "pytest --nomigrations {args:tests}"
+test-cov = "coverage run -m pytest --nomigrations --durations=5 {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+
+check = "dmypy run -- -p fortepan_us.kronofoto"
+cov = [
+  "check",
+  "test-cov",
+  "cov-report",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.types]
+dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy -p fortepan_us.kronofoto"
+
+[tool.coverage.run]
+source_pkgs = ["fortepan_us.kronofoto", "tests"]
+branch = true
+parallel = true
+omit = [
+  "fortepan_us/kronofoto/__about__.py",
+]
+
+[tool.coverage.paths]
+kronofoto = ["fortepan_us"]
+tests = ["tests", "*/kronofoto/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+[tool.hatch.build]
+include = [
+    'fortepan_us',
+]
+packages = [
+    "fortepan_us",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "fortepan_us",
+]
