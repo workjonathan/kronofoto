@@ -1,12 +1,12 @@
-from archive.views.collection import UserPageRedirect, FormResponse, ListNullAction, ListSaver, CollectionPostBehaviorSelection, CollectionGetBehaviorSelection, CollectionBehaviorSelection
-from archive.views.base import ArchiveRequest
+from fortepan_us.kronofoto.views.collection import UserPageRedirect, FormResponse, ListNullAction, ListSaver, CollectionPostBehaviorSelection, CollectionGetBehaviorSelection, CollectionBehaviorSelection
+from fortepan_us.kronofoto.views.base import ArchiveRequest
 from django.urls import reverse
-from archive.forms import CollectionForm
+from fortepan_us.kronofoto.forms import CollectionForm
 from django.contrib.auth.models import User
 from django.test import RequestFactory, Client
 import pytest
 from pytest_django.asserts import assertRedirects, assertTemplateUsed
-from archive.models import Collection
+from fortepan_us.kronofoto.models import Collection
 
 @pytest.mark.django_db
 def test_redirect():

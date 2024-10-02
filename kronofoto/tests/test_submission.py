@@ -1,10 +1,10 @@
-from archive.views.submission import SubmissionFactory, TermListFactory, define_terms
+from fortepan_us.kronofoto.views.submission import SubmissionFactory, TermListFactory, define_terms
 from django.test import SimpleTestCase, TestCase, Client, RequestFactory
 from django.http import QueryDict
 from django.contrib.auth.models import AnonymousUser, User
 from .models import FakeSubmission
 from django.forms import ModelForm
-from archive.models import Archive, ArchiveAgreement, Term, ValidCategory, Category
+from fortepan_us.kronofoto.models import Archive, ArchiveAgreement, Term, ValidCategory, Category
 from django.urls import reverse
 
 class FakeSubmissionForm(ModelForm):

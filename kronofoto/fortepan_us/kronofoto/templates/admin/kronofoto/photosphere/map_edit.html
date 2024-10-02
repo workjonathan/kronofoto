@@ -1,0 +1,112 @@
+{% extends "admin/change_list.html" %}
+
+{% load widgets %}
+
+{% block object-tools-items %}
+    <li><a href="{% url "admin:kronofoto_photosphere_changelist" %}">Switch to List Edit Mode</a></li>
+    {{ block.super }}
+{% endblock %}
+{% block search %}{% endblock %}
+{% block result_list %}
+   {{ map_points|json_script:"photosphere-points" }}
+   {{ map_links|json_script:"photosphere-links" }}
+   <div id="map" style="width:100%; height: 80vh; border: 1px solid black"></div>
+   <script>
+    const map = L.map('map').setView([43, -92], 8)
+    const base = {
+        "OpenStreetMaps": L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }),
+        "Positron": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+        }),
+    }
+    base.OpenStreetMaps.addTo(map)
+    L.control.layers(base, {}).addTo(map)
+
+    let activePoint
+    const links = L.geoJSON(
+        JSON.parse(document.querySelector("#photosphere-links").textContent),
+        {
+        },
+    )
+    links.addEventListener("click", evt => {
+        fetch(evt.layer.feature.properties.delete).then(
+            resp => resp.text()
+        ).then(resp => {
+            evt.layer.bindPopup(resp).openPopup()
+            htmx.process(evt.layer.getPopup().getElement())
+        })
+    })
+    document.addEventListener("admin:remove_line", evt => {
+        const a = evt.detail.a
+        const b = evt.detail.b
+        const matches = []
+        for (const l of links.getLayers()) {
+            const f = l.feature
+            if (f.properties.from_pk === a && f.properties.to_pk === b || 
+                f.properties.from_pk === b && f.properties.to_pk === a
+            ) {
+                matches.push(l)
+            }
+        }
+        for (const l of matches) {
+            links.removeLayer(l)
+        }
+    })
+    document.addEventListener("admin:add_line", evt => {
+        links.addData(evt.detail)
+    })
+    links.addTo(map)
+    const points = L.geoJSON(
+        JSON.parse(document.querySelector("#photosphere-points").textContent),
+        {
+            onEachFeature: (feature, layer) => {
+                layer.addEventListener("popupclose", evt => {
+                    layer.unbindPopup()
+                    activePoint = undefined
+                })
+                layer.addEventListener("click", evt => {
+                    fetch(evt.target.feature.properties.refresh).then(
+                        resp => resp.json()
+                    ).then(resp => {
+                        if (!activePoint) {
+                            layer.setLatLng(resp.coordinates)
+                            layer.bindPopup(resp.content, resp).openPopup()
+                            for (const l of links.getLayers()) {
+                                const f = l.feature
+                                const matches = []
+                                if (f.properties.from_pk === feature.properties.pk || f.properties.to_pk === feature.properties.pk) {
+                                    matches.push(l)
+                                }
+                                for (const l of matches) {
+                                    links.removeLayer(l)
+                                }
+
+                            }
+                            links.addData(resp.links)
+                            activePoint = resp
+                        } else {
+                            const params = new URLSearchParams()
+                            params.append("pk", layer.feature.properties.pk)
+                            fetch(activePoint.connect + "?" + params.toString()).then(resp => 
+                                resp.json()
+                            ).then(resp => {
+                                const line = L.polyline(resp.coordinates, {color: "red"})
+                                line.addTo(map)
+                                line.bindPopup(resp.content).openPopup()
+                                htmx.process(line.getPopup().getElement())
+                                line.addEventListener("popupclose", closeEvent => line.remove())
+                            })
+                        }
+                    })
+                })
+            },
+        },
+    )
+    points.addTo(map)
+   </script>
+{% endblock %}

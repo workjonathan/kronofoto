@@ -3,12 +3,12 @@ from hypothesis import given, strategies as st, settings
 from hypothesis.extra.django import TestCase
 from django.core.exceptions import BadRequest
 from django.contrib.auth.models import AnonymousUser
-from archive.views.basetemplate import BaseTemplateMixin, BasePhotoTemplateMixin
+from fortepan_us.kronofoto.views.basetemplate import BaseTemplateMixin, BasePhotoTemplateMixin
 from unittest.mock import Mock, sentinel
 from .util import searchTerms, photos, donors
-from archive.forms import SearchForm
-from archive.models.photo import Photo
-from archive.search.expression import YearEquals, Caption
+from fortepan_us.kronofoto.forms import SearchForm
+from fortepan_us.kronofoto.models.photo import Photo
+from fortepan_us.kronofoto.search.expression import YearEquals, Caption
 
 class Base:
     def setup(self, request, *args, **kwargs):

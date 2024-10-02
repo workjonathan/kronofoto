@@ -1,16 +1,16 @@
 from django.test import SimpleTestCase, tag
 from django.db.models import Q
-from archive import models
+from fortepan_us.kronofoto import models
 from django.contrib.auth.models import AnonymousUser
 from hypothesis.extra.django import TestCase
 from hypothesis import given, strategies, note
-from archive.search import expression, evaluate, parser
-from archive.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
-from archive.search.expression import (
+from fortepan_us.kronofoto.search import expression, evaluate, parser
+from fortepan_us.kronofoto.search.parser import Lexer, OpenParen, SearchTerm, UnmatchedSearchTermQuote, TypedSearchTerm, MissingField, EmptyQuotedString
+from fortepan_us.kronofoto.search.expression import (
     And, CollectionExpr, Maximum, Tag, Term, City, State, Country, County, Caption, Or, Not, Donor, YearEquals, YearLTE, YearGTE, Description, TagExactly, TermExactly, DonorExactly, SingleWordTag, MultiWordCaption, IsNew, IndexContains
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from archive.models import Photo, Archive, Donor as DonorModel, Category, Tag as TagModel, PhotoTag, NewCutoff, Term as TermModel
+from fortepan_us.kronofoto.models import Photo, Archive, Donor as DonorModel, Category, Tag as TagModel, PhotoTag, NewCutoff, Term as TermModel
 from .util import small_gif
 import datetime
 

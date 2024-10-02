@@ -1,0 +1,5 @@
+{% load krono_urls %}
+
+<div {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:#download-popup .photo-menu-popup__wrapper" {% endif %}class="photo-menu-popup__wrapper" hx-target="this" hx-swap="innerHTML" hx-push-url="false" hx-get="{% krono_url "kronofoto:popup-download" photo=photo.id %}" hx-trigger="intersect">
+    Loading...
+</div>

@@ -1,0 +1,198 @@
+{% extends base_template %}
+{% load static %}
+{% load cache %}
+{% load widgets %}
+{% load permissions %}
+{% load krono_urls %}
+{% load searchform %}
+
+{% block opengraph %}
+    <meta property="og:title" content="{{ request.site.name }}: {{ photo.accession_number }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="{{ photo.h700.url }}" />
+    <meta property="og:url" content="{% object_url photo %}" />
+{% endblock %}
+
+{% block viewbuttons %}
+{% include "kronofoto/components/view-buttons.html" with timelineclass="current-view" %}
+{% endblock %}
+{% block content %}
+
+<main hx-swap="innerHTML" hx-target="#fi-image" data-photo-details>
+
+    <div class="gallery" id="gallery" data-toggler=".zoom-opened">
+
+        {% block left_arrow %}
+            <a
+                {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-left]"{% endif %}
+                id="fi-arrow-left"
+                data-fi-arrow-left
+                hx-trigger="click, keydown[code=='ArrowLeft'] from:#app"
+                class="control previous" 
+                href="{% object_url prev_photo url_kwargs get_params %}"
+                hx-get="{% object_url prev_photo url_kwargs get_params %}"
+            ></a>
+        {% endblock left_arrow %}
+        <div id="fi-image-preload" class="hide">
+        </div>
+        <article class="gallery__image fi-image" id="fi-image">
+            {% block image %}
+            <figure>
+                <img id="fi-image-tag" src="{{ photo.h700.url }}" alt="{{ photo|describe:request.user|join:", " }}" />
+            </figure>
+            {% endblock image %}
+        </article>
+
+        {% block right_arrow %}
+        <a
+            {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-right]"{% endif %}
+            id="fi-arrow-right"
+            hx-trigger="click, keydown[code=='ArrowRight'] from:#app"
+            data-fi-arrow-right
+            class="control forward" 
+            href="{% object_url next_photo url_kwargs get_params %}"
+            hx-get="{% object_url next_photo url_kwargs get_params %}"
+        ></a>
+        {% endblock right_arrow %}
+
+        <div id="zoom-popup" class="follow-zoom-popup">
+            {% block zoom_popup %}
+            <div style='background-image: url("{{ object.h700.url }}");' data-fullsize="{{ object.original.url }}" id="follow-zoom-timeline-version" class="follow-zoom-timeline-popup-img"></div>
+            {% endblock zoom_popup %}
+        </div>
+
+        <div class="gallery__controls">
+            {% block image_control_buttons %}
+
+            <div class="gallery__controls-top">
+                <!--Zoom Button-->
+                <button id="zoom-image-control-button" class="image-control-button image-control-button--toggle" data-toggle="gallery">
+                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/zoom.svg" %}">
+                    <img class="meta-info-icon hide" src="{% static "kronofoto/images/skyblue/zoom-out.svg" %}">
+                </button>
+                <!--Auto Play Button-->
+                <button id="auto-play-image-control-button" class="image-control-button image-control-button--toggle">
+                    <img id="autoplay--play" src="{% static "kronofoto/images/skyblue/auto-play.svg" %}">
+                    <img id="autoplay--pause" class="hide" src="{% static "kronofoto/images/skyblue/pause.svg" %}">
+                </button>
+            </div>
+            <div class="gallery__controls-bottom">
+                <!--Add to List Button-->
+                <button class="image-control-button" data-toggle="add-to-list-popup">
+                    <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}">
+                </button>
+                <!--Share Button-->
+                <button class="image-control-button" data-toggle="share-popup">
+                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/share.svg" %}">
+                </button>
+                <!--Download Button-->
+                <button class="image-control-button" data-toggle="download-popup">
+                    <img class="meta-dl-icon" src="{% static "kronofoto/images/skyblue/download.svg" %}">
+                </button>
+                <!--Info Button-->
+                <button class="image-control-button" data-toggle="metadata-popup">
+                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/info.svg" %}">
+                </button>
+
+            </div>
+            {% endblock image_control_buttons %}
+        </div>
+
+        <div class="gallery__popups">
+
+            <div id="metadata-popup" class="gallery__popup" data-toggler=".expanded">
+                {% include "kronofoto/components/popup-containers/metadata.html" %}
+            </div>
+            <div id="add-to-list-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="add-to-list-popup" data-toggler=".expanded"></a>
+                {% include "kronofoto/components/popup-containers/add-to-list.html" %}
+            </div>
+            <div id="share-popup" class="gallery__popup" data-toggler=".expanded">
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="share-popup" data-toggler=".expanded"></a>
+                {% include "kronofoto/components/popup-containers/share.html" %}
+            </div>
+            <div id="download-popup" class="gallery__popup" data-toggler=".expanded" >
+                <a href="#" class="photo-menu-popup__close-btn" data-toggle="download-popup" data-toggler=".expanded"></a>
+                {% include "kronofoto/components/popup-containers/download.html" %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="car-left-space"></div>
+
+
+    <nav class="fi-timeline" id="fi-timeline">
+    <form 
+        hx-trigger="kronofoto:loadThumbnails" 
+        hx-target="[data-fi-thumbnail-carousel-images]" 
+        hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}"
+        hx-push-url="false"
+        hx-swap="beforeend"
+        hx-sync="this:drop"
+    >
+        {% block thumbnails %}
+
+        {% carousel_form %}
+        <div class="fi-thumbnail-carousel" hx-target="#fi-image" hx-push-url="{{ push_url|yesno:"true,false"}}" hx-swap="innerHTML">
+            <div class="back-arrows" data-back-arrows>
+                {% block back_arrows %}
+                <a id="backward-zip"></a>
+                <a 
+                    id="backward"
+                    href="{% object_url prev_photo url_kwargs get_params %}"
+                    hx-get="{% object_url prev_photo url_kwargs get_params %}"
+                ></a>
+                {% endblock back_arrows %}
+            </div>
+
+            <div class="slide-container">
+                <ul id="fi-preload-zone"></ul>
+                <div data-fi-load-thumbnails class="hide"></div>
+                <ul id="fi-thumbnail-carousel-images" style="left: 0px;" data-fi-thumbnail-carousel-images>
+                    {% include "kronofoto/components/thumbnails.html" %}
+                </ul>
+            </div>
+
+            <div class="forward-arrows" data-forward-arrows>
+                {% block forward_arrows %}
+                <a 
+                    id="forward"
+                    href="{% object_url next_photo url_kwargs get_params %}"
+                    hx-get="{% object_url next_photo url_kwargs get_params %}"
+                ></a>
+                <a id="forward-zip">
+                    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
+                </a>
+                {% endblock forward_arrows %}
+            </div>
+
+        </div>
+
+    {% endblock thumbnails %}
+    </form>
+    </nav>
+
+
+
+    <form hx-trigger="timeline:yearSelected" hx-get="{% krono_url "kronofoto:year-redirect" url_kwargs %}">
+        {% timeline %}
+    </form>
+
+
+
+
+
+    <div class="car-right-space"></div>
+
+    <div id="messages">
+        <script type="template" id="toast-template">
+            <div class="callout success">
+                <button class="close-button" aria-label="Dismiss alert" type="button" data-close></button>
+            </div>
+        </script>
+    </div>
+
+</main>
+<script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=647a29d940353a0019caf1f7&product=inline-share-buttons&source=platform" async="async"></script>
+{% endblock content %}

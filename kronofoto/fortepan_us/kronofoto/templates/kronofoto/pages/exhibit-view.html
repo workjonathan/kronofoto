@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% load static %}
+{% load widgets %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortepan Exhibit</title>
+    <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="{% static "kronofoto/css/exhibit.css" %}" rel="stylesheet">
+	<link rel="apple-touch-icon" sizes="180x180" href="{% static "kronofoto/favicon/apple-touch-icon.png" %}">
+	<link rel="icon" type="image/png" sizes="32x32" href="{% static "kronofoto/favicon/favicon-32x32.png" %}">
+	<link rel="icon" type="image/png" sizes="16x16" href="{% static "kronofoto/favicon/favicon-16x16.png" %}">
+	<link rel="manifest" href="{% static "kronofoto/favicon/site.webmanifest" %}">
+	<link rel="mask-icon" href="{% static "kronofoto/favicon/safari-pinned-tab.svg" color="#5bbad5">
+	<link rel="shortcut icon" href="{% static "kronofoto/favicon/favicon.ico" %}">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="msapplication-config" content="{% static "kronofoto/favicon/browserconfig.xml" %}">
+	<meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="{% static "kronofoto/js/main.js" %}"></script>
+</head>
+<body>
+    {% include "kronofoto/components/exhibit/sitewrapper.html" %}
+    {% include "kronofoto/components/exhibit/credits.html" %}
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+</body>
+</html>

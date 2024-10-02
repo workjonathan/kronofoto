@@ -11,9 +11,9 @@
 @use 'components/timeline' as timeline;
 @use 'typography' as typography;
 @use 'components/user-header' as user-header;
-@use '@photo-sphere-viewer/core/index.css' as photoSphereViewerCore;
-@use '@photo-sphere-viewer/markers-plugin/index.css' as photoSphereViewerMarkers;
-@use '@photo-sphere-viewer/virtual-tour-plugin/index.css' as photospheretour;
+@import '@photo-sphere-viewer/core/index.css';
+@import '@photo-sphere-viewer/markers-plugin/index.css';
+@import '@photo-sphere-viewer/virtual-tour-plugin/index.css';
 
 body, #kfroot {
   container-type: inline-size;

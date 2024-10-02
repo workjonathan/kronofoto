@@ -6,9 +6,9 @@ from hypothesis.stateful import rule, invariant, Bundle, initialize, consumes, p
 from hypothesis.extra.django import TestCase, from_model
 from .util import TransactionalRuleBasedStateMachine, photos as gen_photos
 from .models import FakeDonor, FakePhoto
-from archive.models.donor import Donor
-from archive.models.photo import Photo
-from archive.models.archive import Archive
+from fortepan_us.kronofoto.models.donor import Donor
+from fortepan_us.kronofoto.models.photo import Photo
+from fortepan_us.kronofoto.models.archive import Archive
 from collections import defaultdict
 import pytest
 from django.db.utils import IntegrityError
@@ -32,8 +32,8 @@ class FakePhotoInterfaceTest(PhotoInterface, SimpleTestCase):
 class DonorInterface:
     def test_should_have(self):
         assert self.object._meta.get_field('photo')
-        assert self.object._meta.get_field("archive_photo_scanned")
-        assert self.object._meta.get_field("archive_photo_photographed")
+        assert self.object._meta.get_field("kronofoto_photo_scanned")
+        assert self.object._meta.get_field("kronofoto_photo_photographed")
 
 class DonorInterfaceTest(DonorInterface, SimpleTestCase):
     def setUp(self):

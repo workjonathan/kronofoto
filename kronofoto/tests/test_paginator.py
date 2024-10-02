@@ -1,7 +1,7 @@
 from django.test import TestCase, SimpleTestCase, tag
-from archive.views import EMPTY_PNG, FAKE_PHOTO, FakeTimelinePage, TimelinePaginator
-from archive.views.paginator import KeysetPaginator
-from archive.models.photo import Photo
+from fortepan_us.kronofoto.views import EMPTY_PNG, FAKE_PHOTO, FakeTimelinePage, TimelinePaginator
+from fortepan_us.kronofoto.views.paginator import KeysetPaginator
+from fortepan_us.kronofoto.models.photo import Photo
 from hypothesis.extra.django import TestCase as HypoTestCase
 from hypothesis import given, settings as hyposettings, HealthCheck, note
 from hypothesis import strategies as st

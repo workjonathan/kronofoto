@@ -5,8 +5,8 @@ from django.contrib.auth.models import AnonymousUser, User
 
 from django.views.generic import FormView
 from django import forms
-from archive.widgets import RecaptchaWidget
-from archive.fields import RecaptchaField
+from fortepan_us.kronofoto.widgets import RecaptchaWidget
+from fortepan_us.kronofoto.fields import RecaptchaField
 
 
 

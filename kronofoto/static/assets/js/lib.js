@@ -5,11 +5,12 @@ import timeline from "./timeline"
 import $ from "jquery"
 import ClipboardActionCopy from "clipboard/src/actions/copy"
 import "jquery-ui-pack"
-import * as Select2 from "select2"
-Select2.default(window, $)
+import Select2 from "select2"
+//Select2.default(window, $)
 import {Viewer} from "@photo-sphere-viewer/core"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
+
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"

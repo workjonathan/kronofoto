@@ -1,0 +1,16 @@
+{% load menu_tags %}
+{% load krono_urls %}
+
+{% if KF_DJANGOCMS_NAVIGATION %}
+{% show_menu_below_id cms_root 0 100 100 100 %}
+{% endif %}
+{# I think only li is valid within ul #}
+<div class="mobile-visible">
+{% if photo %}
+<li><a href="{% object_url photo url_kwargs get_params %}">Timeline View</a></li>
+<li><a href="{% grid_url photo url_kwargs get_params %}">Grid View</a></li>
+{% else %}
+<li><a href="#">Timeline View</a></li>
+<li><a href="{% krono_url "kronofoto:gridview" url_kwargs %}">Grid View</a></li>
+{% endif %}
+</div>
