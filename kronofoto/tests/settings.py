@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.contenttypes',
-    'archive.apps.ArchiveConfig',
+    'fortepan_us.kronofoto',
     'django.contrib.gis',
     'django.contrib.sites',
     'tests',
@@ -48,7 +48,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'archive.context_processors.kronofoto_context',
+                'fortepan_us.kronofoto.context_processors.kronofoto_context',
             ],
         },
     },
@@ -67,7 +67,7 @@ CACHES = {
     },
 }
 
-AUTHENTICATION_BACKENDS = ['archive.auth.backends.ArchiveBackend']
+AUTHENTICATION_BACKENDS = ['fortepan_us.kronofoto.auth.backends.ArchiveBackend']
 KF_URL_SCHEME = ""
 GOOGLE_RECAPTCHA3_SITE_KEY = 'google_test_key'
 GOOGLE_RECAPTCHA3_SECRET_KEY = 'google_secret_key'

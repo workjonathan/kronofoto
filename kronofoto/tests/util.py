@@ -1,16 +1,16 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from django.db import transaction
-from archive.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair
+from fortepan_us.kronofoto.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair, MainStreetSet
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
 from hypothesis import strategies as st, note
-from archive.models.archive import Archive
-from archive.models.tag import Tag, LowerCaseCharField
-from archive.models.term import Term
+from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models.tag import Tag, LowerCaseCharField
+from fortepan_us.kronofoto.models.term import Term
 from typing import NamedTuple, List
-from archive.search import expression as expr
+from fortepan_us.kronofoto.search import expression as expr
 import pytest
 
 small_gif = (
@@ -90,9 +90,15 @@ def a_photo(a_category, an_archive):
     )
 
 @pytest.fixture
-def a_photosphere():
+def a_mainstreetset():
+    return MainStreetSet.objects.create(name="a mainstreet set")
+
+@pytest.fixture
+def a_photosphere(a_mainstreetset):
     return PhotoSphere.objects.create(
         image=SimpleUploadedFile("small.gif", small_gif, content_type="image/gif"),
+        mainstreetset=a_mainstreetset,
+        location="POINT (1 0)",
     )
 
 @pytest.fixture

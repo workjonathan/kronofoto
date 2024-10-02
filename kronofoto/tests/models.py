@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from archive.models.donor import DonorQuerySet
-from archive.models.archive import Archive
+from fortepan_us.kronofoto.models.donor import DonorQuerySet
+from fortepan_us.kronofoto.models.archive import Archive
 
 class UserAgreement(models.Model):
     version = models.IntegerField()
@@ -30,10 +30,10 @@ class FakePhoto(models.Model):
     is_published = models.BooleanField()
     donor = models.ForeignKey(FakeDonor, models.PROTECT, null=True, related_name="photo")
     photographer = models.ForeignKey(
-        FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="archive_photo_photographed"
+        FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="kronofoto_photo_photographed"
     )
     scanner = models.ForeignKey(
-        FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="archive_photo_scanned"
+        FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="kronofoto_photo_scanned"
     )
     def __str__(self):
         return str(self.pk)

@@ -12,7 +12,7 @@ testpatterns = [
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('archive.auth.urls')),
+    path('accounts/', include('fortepan_us.kronofoto.auth.urls')),
     path('test/', include(testpatterns)),
-    path('kf/', include('archive.urls', namespace="kronofoto")),
+    path('kf/', include('fortepan_us.kronofoto.urls', namespace="kronofoto")),
 ]

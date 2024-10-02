@@ -1,0 +1,16 @@
+{% extends base_template %}
+{% load widgets %}
+
+{% block viewbuttons %}
+{% include "kronofoto/components/view-buttons.html" %}
+{% endblock %}
+
+{% block content %}
+<main class="container-center">
+    {{reason}} Your agreement will be stored with your account if you have one. If you proceed anonymously, you will need to do the agreement again.
+    <p>
+    <p><a href="{% url 'login' %}?next={{request.get_full_path | urlencode}}">Login</a></p>
+    <p><a href="{% url 'register-account' %}">Create an account</a></p>
+    <p><a href="{% url 'kronofoto:agreement-create' short_name=view.kwargs.short_name %}?next={{request.get_full_path | urlencode }}">Proceed anonymously</a></p>
+</main>
+{% endblock %}

@@ -3,9 +3,9 @@ from django.http import QueryDict
 from hypothesis.extra.django import from_model, register_field_strategy, TestCase
 from hypothesis import strategies as st, given, note, settings
 from unittest.mock import Mock, sentinel, MagicMock
-from archive.views.grid import GridView
-from archive.models.archive import Archive
-from archive.forms import SearchForm
+from fortepan_us.kronofoto.views.grid import GridView
+from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.forms import SearchForm
 from dataclasses import dataclass
 
 @dataclass

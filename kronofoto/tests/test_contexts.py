@@ -9,36 +9,36 @@ from unittest.mock import Mock
 from hypothesis import strategies as st, given, note, settings
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertRedirects
-from archive.models.photo import Photo
-from archive.models.photosphere import PhotoSphere
-from archive.models.archive import Archive
-from archive.models.donor import Donor
-from archive.models import Category
-from archive.views.photo import PhotoView
+from fortepan_us.kronofoto.models.photo import Photo
+from fortepan_us.kronofoto.models.photosphere import PhotoSphere
+from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models.donor import Donor
+from fortepan_us.kronofoto.models import Category
+from fortepan_us.kronofoto.views.photo import PhotoView
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair
+from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair, a_mainstreetset
 
 class Tests(TestCase):
 
     def test_photo_permissions(self):
-        from archive.templatetags.permissions import PhotoPermissions
+        from fortepan_us.kronofoto.templatetags.permissions import PhotoPermissions
         archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
         photo = Photo.objects.create(archive=archive, donor=donor, category=category, is_published=True, year=1900, original=SimpleUploadedFile('small.gif', small_gif, content_type='image/gif'))
         permission_list = PhotoPermissions(photo).permissions
-        assert 'archive.change_photo' in permission_list
-        assert 'archive.view_photo' in permission_list
-        assert 'archive.archive.slug.change_photo' in permission_list
-        assert 'archive.archive.slug.view_photo' in permission_list
+        assert 'kronofoto.change_photo' in permission_list
+        assert 'kronofoto.view_photo' in permission_list
+        assert 'kronofoto.archive.slug.change_photo' in permission_list
+        assert 'kronofoto.archive.slug.view_photo' in permission_list
 
     def test_permission_list_factory_only_handles_photos(self):
-        from archive.templatetags.permissions import PermissionListFactory
+        from fortepan_us.kronofoto.templatetags.permissions import PermissionListFactory
         with pytest.raises(NotImplementedError):
             PermissionListFactory().permission_list([1,2,3])
 
     def test_permission_list_factory_handles_photos(self):
-        from archive.templatetags.permissions import PermissionListFactory, PhotoPermissions
+        from fortepan_us.kronofoto.templatetags.permissions import PermissionListFactory, PhotoPermissions
         archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
@@ -47,7 +47,7 @@ class Tests(TestCase):
 
 
     def test_permissioned_staff_must_have_privs(self):
-        from archive.templatetags.permissions import has_view_or_change_permission
+        from fortepan_us.kronofoto.templatetags.permissions import has_view_or_change_permission
         archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
@@ -56,7 +56,7 @@ class Tests(TestCase):
         assert not has_view_or_change_permission(user, photo)
 
     def test_permissioned_permissions_must_be_staff(self):
-        from archive.templatetags.permissions import has_view_or_change_permission
+        from fortepan_us.kronofoto.templatetags.permissions import has_view_or_change_permission
         archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
@@ -65,7 +65,7 @@ class Tests(TestCase):
         assert not has_view_or_change_permission(user, photo)
 
     def test_permissioned_staff_have_privs(self):
-        from archive.templatetags.permissions import has_view_or_change_permission
+        from fortepan_us.kronofoto.templatetags.permissions import has_view_or_change_permission
         archive = Archive.objects.create(slug="slug")
         donor = Donor.objects.create(archive=archive)
         category = Category.objects.create()
@@ -93,6 +93,6 @@ class Tests(TestCase):
 def test_photosphere_context(a_photosphere_pair):
     resp = Client().get(f"{reverse('kronofoto:mainstreetview')}?id={a_photosphere_pair.id}")
 
-    assertTemplateUsed(resp, 'archive/photosphere_detail.html')
+    assertTemplateUsed(resp, 'kronofoto/pages/mainstreetview.html')
     assert resp.status_code == 200
     assert 'object' in resp.context and resp.context['object'].id == a_photosphere_pair.photosphere.id

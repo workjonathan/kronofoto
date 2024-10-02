@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'archive.apps.ArchiveConfig',
+    #'archive.apps.ArchiveConfig',
+    'fortepan_us.kronofoto',
     'django.contrib.gis',
     'django.contrib.sites',
     'gtm',
@@ -51,7 +52,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'archive.middleware.OverrideVaryMiddleware',
+    'fortepan_us.kronofoto.middleware.OverrideVaryMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,10 +62,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'archive.middleware.CorsMiddleware',
+    'fortepan_us.kronofoto.middleware.CorsMiddleware',
 ]
 
-ROOT_URLCONF = 'kronofoto.urls'
+ROOT_URLCONF = 'fortepan_us.settings.urls'
 
 TEMPLATES = [
     {
@@ -77,7 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'archive.context_processors.kronofoto_context',
+                'fortepan_us.kronofoto.context_processors.kronofoto_context',
             ],
             #'builtins': ['archive.builtins'],
         },

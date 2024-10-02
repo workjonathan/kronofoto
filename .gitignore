@@ -1,8 +1,13 @@
 kronofoto/testphotos/
-kronofoto/archive/templates/archive/give2.html
+kronofoto/fortepan_us/kronofoto/static/assets/js
+kronofoto/fortepan_us/kronofoto/static/kronofoto/js
+kronofoto/fortepan_us/kronofoto/static/kronofoto.js
+kronofoto/fortepan_us/kronofoto/static/kronofoto.js.LICENSE.txt
+kronofoto/fortepan_us/kronofoto/static/kronofoto/css
 package-lock.json
 node_modules
 *.swp
+dist
 
 
 # Byte-compiled / optimized / DLL files

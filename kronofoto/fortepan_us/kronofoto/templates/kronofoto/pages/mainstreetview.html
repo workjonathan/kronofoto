@@ -1,0 +1,39 @@
+{% extends base_template %}
+{% load static %}
+{% load widgets %}
+{% load krono_urls %}
+{% load searchform %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<div id="fi-photosphere-metadata">
+<h2>{{ object.title }}</h2>
+<div>{{ object.description | markdown }}</div>
+</div>
+<form hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
+<div id="fi-photosphere" data-photosphere-data data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh">
+</div>
+<input name="id" type="hidden">
+</form>
+
+<nav id="fi-timeline" class="fi-timeline">
+    <form 
+        hx-trigger="kronofoto:loadThumbnails" 
+        hx-target="#fi-photosphere-metadata" 
+        hx-get="{% krono_url "kronofoto:mainstreetview-carousel" %}"
+        hx-push-url="false"
+        hx-swap="beforeend"
+        hx-sync="this:drop"
+    >
+    {{ thumbnails_form }}
+    <ul id="fi-preload-zone"></ul>
+    <div data-fi-load-thumbnails class="hide"></div>
+    <div class="fi-thumbnail-carousel" hx-target="#fi-photosphere-metadata" hx-swap="innerHTML">
+        {% include "kronofoto/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" %}
+    </div>
+    </form>
+</nav>
+<div id="photosphere-map" style="width: 100vw; height: 50vh;" data-map2 data-x="{{ object.location.x }}" data-y="{{ object.location.y }}" >
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}

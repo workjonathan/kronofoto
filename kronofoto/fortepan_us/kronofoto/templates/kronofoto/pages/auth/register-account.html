@@ -1,0 +1,20 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="container-center register-container">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <script src="https://www.google.com/recaptcha/api.js"></script>
+        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+
+        <input type="submit" value="register">
+    </form>
+    {% if form.errors %}
+    <p>Your passwords did not match.</p>
+    {% endif %}
+
+    <p><a href="{% url 'password_reset' %}">Forgot password?</a></p>
+</div>
+{% endblock %}
