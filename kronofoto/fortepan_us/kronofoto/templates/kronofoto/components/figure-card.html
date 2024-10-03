@@ -10,7 +10,7 @@
             <figure{% if not figure.photo %} class="empty"{% endif %}>
                 <div class="image-collection__wrapper">
                     {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
-                    <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>
+                    <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}" hx-swap="innerHTML show:top"{% endif %}>
                         {% include "kronofoto/components/figure-image.html" %}
                     </div>
                     {% endwith %}
