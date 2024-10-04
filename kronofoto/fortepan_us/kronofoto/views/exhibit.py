@@ -223,6 +223,19 @@ def exhibit_images(request: HttpRequest, pk: int) -> HttpResponse:
         }
     )
 
+@login_required
+def delete(request : HttpRequest, pk: int) -> HttpResponse:
+    exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
+    if exhibit.owner.pk != request.user.pk:
+        return HttpResponse("", status=400)
+    if request.method == "POST":
+        exhibit.delete()
+        return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": request.user.username}))
+    else:
+        context = ArchiveRequest(request=request).common_context
+        context['exhibit'] = exhibit
+        return TemplateResponse(request=request, context=context, template="kronofoto/pages/exhibit-delete.html")
+
 @transaction.atomic
 @login_required
 def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
@@ -447,7 +460,7 @@ class CardContext:
         return obj, two_column_count
 
 @user_passes_test(lambda user: user.is_staff) # type: ignore
-def exhibit(request : HttpRequest, pk: int, title: str) -> HttpResponse:
+def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
 
     context: Dict[str, Any] = {}

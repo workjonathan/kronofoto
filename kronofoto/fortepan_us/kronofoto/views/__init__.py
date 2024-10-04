@@ -11,7 +11,7 @@ from .collection import AddToList, CollectionDelete, profile_view, collections_v
 from .grid import GridView
 from .categories import category_list
 from .submission import submission, list_terms, define_terms
-from .exhibit import exhibit, exhibit_list, exhibit_create, exhibit_edit, exhibit_card_form, exhibit_figure_form, exhibit_images, exhibit_figure_image, exhibit_full_image, exhibit_two_column_image
+from .exhibit import view as exhibit_view, exhibit_list, exhibit_create, exhibit_edit, exhibit_card_form, exhibit_figure_form, exhibit_images, exhibit_figure_image, exhibit_full_image, exhibit_two_column_image
 from .images import resize_image
 from .data import datadump
 from django.http import HttpRequest, HttpResponse

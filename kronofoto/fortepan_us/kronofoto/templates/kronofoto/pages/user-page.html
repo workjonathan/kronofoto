@@ -57,9 +57,9 @@
                         <div class="context-menu__items">
                             <ul>
                                 <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}">Copy Share Link</a></li>
+                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
                                 <li><a href="#">Add to List</a></li>
-                                <li><a href="">Delete</a></li>
+                                <li><a href="{% krono_url "kronofoto:exhibit-delete" pk=exhibit.pk %}">Delete</a></li>
                             </ul>
                         </div>
                     </div>
