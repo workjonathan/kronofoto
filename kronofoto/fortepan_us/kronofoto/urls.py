@@ -124,6 +124,7 @@ urlpatterns = urlpatterns + [
     path('attribution', views.attribution, name="attribution"),
     path("exhibits", views.exhibit_list, name="exhibit-list"),
     path("exhibits/<int:pk>-<slug:title>", views.exhibit.view, name='exhibit-view'),
+    path("exhibits/<int:pk>/embed", views.exhibit.embed, name='exhibit-embed'),
     path("exhibits/<int:pk>/edit", views.exhibit_edit, name='exhibit-edit'),
     path("exhibits/<int:pk>/delete", views.exhibit.delete, name='exhibit-delete'),
     path("exhibits/<int:pk>/images", views.exhibit_images, name='exhibit-images'),

@@ -4,6 +4,7 @@ from .collection import Collection
 from django.conf import settings
 from django.utils.text import slugify
 from fortepan_us.kronofoto.reverse import reverse
+from typing import Any
 
 class Exhibit(models.Model):
     name = models.CharField(max_length=256)
@@ -14,7 +15,7 @@ class Exhibit(models.Model):
     collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
     credits = models.TextField(blank=True, null=False)
 
-    def get_absolute_url(self) -> str:
+    def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
         return reverse('kronofoto:exhibit-view', kwargs={'pk': self.pk, 'title': slugify(self.name)})
 
     def str(self) -> str:

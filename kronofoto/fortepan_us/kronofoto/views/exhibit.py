@@ -459,6 +459,18 @@ class CardContext:
                     obj['image_area_classes'] += ['full-image-area--cover']
         return obj, two_column_count
 
+def embed(request : HttpRequest, pk: int) -> HttpResponse:
+    exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
+    context = ArchiveRequest(request=request).common_context
+    context['exhibit'] = exhibit
+    return TemplateResponse(
+        request=request,
+        context=context,
+        template="kronofoto/pages/exhibit-embed.html",
+    )
+
+
+
 @user_passes_test(lambda user: user.is_staff) # type: ignore
 def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
