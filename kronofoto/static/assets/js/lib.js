@@ -379,8 +379,24 @@ class PageEditor {
         for (const btn of elem.querySelectorAll(".component-menu--off-canvas .delete")) {
             btn.addEventListener("click", this.deleteComponent.bind(this))
         }
-        for (const elem2 of elem.querySelectorAll(".page-editor")) {
-            elem2.addEventListener("input", this.updateHiddenField.bind(this))
+        for (const elem2 of elem.querySelectorAll("[data-target]")) {
+            elem2.addEventListener("input", (event) => {
+                const id = elem2.getAttribute("data-target")
+                const target = this.context.querySelector(`#${id}`)
+                target.value = elem2.innerText
+            })
+        }
+        for (const elem2 of elem.querySelectorAll("[data-copy-source]")) {
+            const handleSourceChange = (event) => {
+                if (!this.context.contains(elem2)) {
+                    this.context.removeEventListener("input", handleSourceChange)
+                    return
+                }
+                if (event.target.id == elem2.getAttribute("data-copy-source")) {
+                    elem2.innerText = event.target.innerText
+                }
+            }
+            this.context.addEventListener("input", handleSourceChange)
         }
         for (const elem2 of elem.querySelectorAll("[data-on-check-target]")) {
             const target = elem2.getAttribute("data-on-check-target")
@@ -439,7 +455,7 @@ class PageEditor {
             const contentEditable = event.target
             const targetName = contentEditable.getAttribute("data-target")
             if (targetName) {
-                const $field = $(`#${targetName}`, this.context)
+                const $field = $(`#${targetName}`, this)
 
                 if ($field.length) {
                     $field.val(contentEditable.innerText)
