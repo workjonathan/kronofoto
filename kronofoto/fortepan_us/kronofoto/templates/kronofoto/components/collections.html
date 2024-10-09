@@ -52,7 +52,7 @@
                                         hx-target="#app"
                                     >Edit</a></li>
                                     <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share Album</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Embed Album</a></li>
+                                    <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed Album</a></li>
                                     <li><a
                                         href="{% krono_url "kronofoto:random-image" %}"
                                         {% comment %}

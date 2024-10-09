@@ -22,6 +22,18 @@ from django.views.decorators.csrf import csrf_exempt
 from dataclasses import dataclass
 from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type
 
+@login_required
+def embed(request: HttpRequest, pk: int) -> HttpResponse:
+    collection = get_object_or_404(Collection.objects.all(), id=pk, owner=request.user)
+    context = ArchiveRequest(request=request).common_context
+    context["constraint"] = "collection:{}".format(collection.uuid)
+    context['collection'] = collection
+    return TemplateResponse(
+        request=request,
+        context=context,
+        template="kronofoto/pages/collection-embed.html",
+    )
+
 def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
     context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
