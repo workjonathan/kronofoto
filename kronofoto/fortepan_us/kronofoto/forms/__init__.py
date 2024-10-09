@@ -11,7 +11,7 @@ from fortepan_us.kronofoto.widgets import HeadingWidget, PositioningWidget, Sele
 from fortepan_us.kronofoto.models.photosphere import IncompleteGPSInfo
 from fortepan_us.kronofoto.fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
-from .card import CardForm, PhotoCardForm, FigureForm, CardFormType, PhotoCardFormWrapper, CardFormWrapper, FigureFormWrapper
+from .card import CardForm, PhotoCardForm, FigureForm, CardFormType, PhotoCardFormWrapper, CardFormWrapper, FigureFormWrapper, FigureListForm, FigureListFormWrapper
 from fortepan_us.kronofoto.reverse import reverse_lazy
 from dataclasses import dataclass
 from typing import Any, List, Dict, Optional, Union, Generator, Tuple, TypeVar, Type

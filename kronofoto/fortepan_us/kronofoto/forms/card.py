@@ -1,7 +1,7 @@
 from django.forms import ModelForm, Form, CharField, HiddenInput, RadioSelect
 from django.db.models import QuerySet
 from fortepan_us.kronofoto.models import Card, PhotoCard, Figure, Photo
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List
 
 
@@ -13,6 +13,11 @@ class CardForm(ModelForm, CardFormType):
     class Meta:
         model = Card
         fields = ['title', 'description']
+
+class FigureListForm(ModelForm, CardFormType):
+    class Meta:
+        model = Card
+        fields: List[str] = []
 
 class FigureForm(ModelForm, CardFormType):
     parent = CharField(required=True, widget=HiddenInput)
@@ -29,9 +34,26 @@ class PhotoCardForm(ModelForm, CardFormType):
         }
 
 @dataclass
+class FigureListFormWrapper:
+    form: ModelForm
+    figures: "List[FigureFormWrapper]" = field(default_factory=list)
+
+    @property
+    def figure_set(self) -> QuerySet[Figure]:
+        return self.form.instance.figure_set
+
+    @property
+    def card(self) -> "FigureListFormWrapper":
+        return self
+
+    @property
+    def id(self) -> int:
+        return self.form.instance.id
+
+@dataclass
 class CardFormWrapper:
     form: ModelForm
-    figures: "List[FigureFormWrapper]"
+    figures: "List[FigureFormWrapper]" = field(default_factory=list)
 
     @property
     def figure_set(self) -> QuerySet[Figure]:
@@ -76,6 +98,7 @@ class PhotoCardFormWrapper:
             return int(self.form['alignment'].value())
         except ValueError:
             return 1
+
     @property
     def photo(self) -> Optional[Photo]:
         val = self.form['photo'].value()

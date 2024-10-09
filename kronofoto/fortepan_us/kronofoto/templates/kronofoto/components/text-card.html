@@ -4,9 +4,6 @@
 {% load widgets %}
 
 {% block content_body %}
-    {% if card.figures %}
-        {% include "kronofoto/components/figure-card.html" with figures=card.figures photos=photos.all parent=form.prefix zindex=zindex edit=edit %}
-    {% endif %}
     <div class="content-area">
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}

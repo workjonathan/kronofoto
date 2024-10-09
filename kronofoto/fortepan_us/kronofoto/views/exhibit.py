@@ -15,7 +15,7 @@ from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.decorators import login_required
 from django.forms import ModelForm, ModelChoiceField, Form, IntegerField
 from django import forms
-from fortepan_us.kronofoto.forms import CardForm, PhotoCardForm, FigureForm, CardFormType, CardFormWrapper, PhotoCardFormWrapper, FigureForm, FigureFormWrapper
+from fortepan_us.kronofoto.forms import CardForm, PhotoCardForm, FigureForm, CardFormType, CardFormWrapper, PhotoCardFormWrapper, FigureForm, FigureFormWrapper, FigureListForm, FigureListFormWrapper
 import json
 import uuid
 from dataclasses import dataclass
@@ -47,9 +47,19 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
     context['edit'] = True
     if card_type == "text":
         parent_uuid = str(uuid.uuid4())
-        cardform = CardForm(initial={'card_type': "text"}, prefix=parent_uuid)
+        cardform: Union[CardForm, FigureListForm] = CardForm(initial={'card_type': "text"}, prefix=parent_uuid)
+        context['card'] = CardFormWrapper(form=cardform, figures=[])
+        context['form'] = cardform
+        return TemplateResponse(
+            template="kronofoto/components/text-card.html",
+            request=request,
+            context=context,
+        )
+    elif card_type == "figure":
+        parent_uuid = str(uuid.uuid4())
+        cardform = FigureListForm(initial={'card_type': "figure_list"}, prefix=parent_uuid)
         figures = []
-        form = FigureCountForm(request.GET, initial={"count": 0})
+        form = FigureCountForm(request.GET, initial={"count": 1})
         if form.is_valid() and form.cleaned_data['count']:
             context['styles'] = {
                 'border-top': '1px solid #ffffff',
@@ -58,10 +68,10 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
                 FigureFormWrapper(FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent_uuid, "card_type": "figure"}))
                 for _ in range(form.cleaned_data['count'])
             ]
-        context['card'] = CardFormWrapper(form=cardform, figures=figures)
+        context['card'] = FigureListFormWrapper(form=cardform, figures=figures)
         context['form'] = cardform
         return TemplateResponse(
-            template="kronofoto/components/text-card.html",
+            template="kronofoto/components/figure-card.html",
             request=request,
             context=context,
         )
@@ -254,6 +264,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             forms = [
                 CardForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'text'
                 else FigureForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'figure'
+                else FigureListForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'figure_list'
                 else PhotoCardForm(request.POST, prefix=form.prefix)
                 for form in card_types
             ]
@@ -268,7 +279,11 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             for form in card_types:
                 if form.cleaned_data['card_type'] == "text":
                     card_form: ModelForm = CardForm(request.POST, prefix=form.prefix)
-                    cards.append(CardFormWrapper(form=card_form, figures=figure_forms[form.prefix])) # type: ignore
+                    cards.append(CardFormWrapper(form=card_form)) # type: ignore
+                    forms.append(card_form)
+                elif form.cleaned_data['card_type'] == "figure_list":
+                    card_form = FigureListForm(request.POST, prefix=form.prefix)
+                    cards.append(FigureListFormWrapper(form=card_form, figures=figure_forms[form.prefix])) # type: ignore
                     forms.append(card_form)
                 elif form.cleaned_data['card_type'] == "photo":
                     card_form = PhotoCardForm(request.POST, prefix=form.prefix)
@@ -370,12 +385,19 @@ class CardContext:
                         'border-top': '1px solid #ffffff',
                     }
 
-                obj['card'] = card
-                obj['template'] = 'kronofoto/components/text-card.html'
-                obj['content_attrs'] = {
-                    'data-aos': 'fade-up',
-                    'data-aos-duration': '1000',
-                }
+                    obj['card'] = card
+                    obj['template'] = 'kronofoto/components/figure-card.html'
+                    obj['content_attrs'] = {
+                        'data-aos': 'fade-up',
+                        'data-aos-duration': '1000',
+                    }
+                else:
+                    obj['card'] = card
+                    obj['template'] = 'kronofoto/components/text-card.html'
+                    obj['content_attrs'] = {
+                        'data-aos': 'fade-up',
+                        'data-aos-duration': '1000',
+                    }
         elif mode == "EDIT_GET":
             assert isinstance(card, Card)
             if hasattr(card, 'photocard'):
@@ -416,18 +438,36 @@ class CardContext:
                             )
                         )
                     )
-
-                cardform = CardForm(instance=card, initial={"card_type": "text"}, prefix=parent_uuid)
-                obj['form'] = cardform
-                obj['card'] = CardFormWrapper(form=cardform, figures=figures)
-                obj['template'] = 'kronofoto/components/text-card.html'
+                if len(figures):
+                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"card_type": "figure_list"}, prefix=parent_uuid)
+                    obj['form'] = cardform
+                    obj['card'] = FigureListFormWrapper(form=cardform, figures=figures)
+                    obj['template'] = 'kronofoto/components/figure-card.html'
+                    obj['content_attrs'] = {
+                        'data-aos': 'fade-up',
+                        'data-aos-duration': '1000',
+                    }
+                else:
+                    cardform = CardForm(instance=card, initial={"card_type": "text"}, prefix=parent_uuid)
+                    obj['form'] = cardform
+                    obj['card'] = CardFormWrapper(form=cardform, figures=figures)
+                    obj['template'] = 'kronofoto/components/text-card.html'
+                    obj['content_attrs'] = {
+                        'data-aos': 'fade-up',
+                        'data-aos-duration': '1000',
+                    }
+        else: # EDIT_POST
+            assert not isinstance(card, Card)
+            if card.form['card_type'].value() == 'figure_list':
+                assert isinstance(card, FigureListFormWrapper)
+                obj['form'] = card.form
+                obj['card'] = card
+                obj['template'] = 'kronofoto/components/figure-card.html'
                 obj['content_attrs'] = {
                     'data-aos': 'fade-up',
                     'data-aos-duration': '1000',
                 }
-        else: # EDIT_POST
-            assert not isinstance(card, Card)
-            if card.form['card_type'].value() == 'text':
+            elif card.form['card_type'].value() == 'text':
                 assert isinstance(card, CardFormWrapper)
                 obj['form'] = card.form
                 obj['card'] = card
