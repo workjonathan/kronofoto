@@ -194,7 +194,7 @@ class FortepanViewer extends HTMLElement {
                 this.htmx = HTMX(this.shadowRoot)
                 initFoundation(this.shadowRoot.querySelector("#kfroot"))
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
-                initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true})
+                initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true, rootSelector: "#kfroot"})
             })
     }
 }

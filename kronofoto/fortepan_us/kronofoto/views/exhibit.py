@@ -513,6 +513,7 @@ def embed(request : HttpRequest, pk: int) -> HttpResponse:
 
 @user_passes_test(lambda user: user.is_staff) # type: ignore
 def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
+    areq = ArchiveRequest(request)
     exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
 
     context: Dict[str, Any] = {}
@@ -530,7 +531,11 @@ def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
         obj, two_column_count = obj_context.context(card=card, two_column_count=two_column_count, i=i, mode="DISPLAY")
         objs.append(obj)
     context['cards'] = objs
-    return TemplateResponse(request, "kronofoto/pages/exhibit-view.html", context=context)
+    if areq.is_embedded:
+        template = "kronofoto/pages/exhibit-view-embedded.html"
+    else:
+        template = "kronofoto/pages/exhibit-view.html"
+    return TemplateResponse(request, template=template, context=context)
 
 class ExhibitCreateForm(ModelForm):
     class Meta:

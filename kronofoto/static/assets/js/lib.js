@@ -10,6 +10,7 @@ import Select2 from "select2"
 import {Viewer} from "@photo-sphere-viewer/core"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
+import AOS from "aos"
 
 
 // Foundation
@@ -557,8 +558,9 @@ class Gallery {
     }
 }
 class ExhibitPlugin {
-    constructor({context}) {
+    constructor({context, rootSelector}) {
         this.context = context
+        this.rootSelector = rootSelector
     }
     install({elem}) {
         document.body.addEventListener("remove-empty", evt => { 
@@ -578,6 +580,7 @@ class ExhibitPlugin {
         for (const siteWrapper of elem.querySelectorAll(".site-wrapper")) {
             // Function to update the --vh custom property
             const updateVH = () => {
+                //console.log(updateVH)
                 if (!elem.contains(siteWrapper)) {
                     window.removeEventListener("resize", updateVH)
                     return
@@ -590,14 +593,13 @@ class ExhibitPlugin {
 
             // Scroll event handler for dynamically fading content
             const updateScrollOpacity = () => {
-                if (!elem.contains(siteWrapper)) {
-                    window.removeEventListener("scroll", updateVH)
+                //console.log('updateScrollOpacity')
+                if (!this.context.contains(siteWrapper)) {
+                    document.removeEventListener("scroll", updateScrollOpacity, {capture: true})
                     return
                 }
 
-                let elements = elem.querySelectorAll(
-                    ".scroll-opacity, .two-column__content",
-                )
+                let elements = elem.querySelectorAll(".scroll-opacity, .two-column__content")
                 elements.forEach((element) => {
                     const viewportHeight = window.innerHeight
                     const elementTop = element.getBoundingClientRect().top
@@ -607,19 +609,7 @@ class ExhibitPlugin {
                     const start = 30
                     const end = 50
                     const opacity = (percentageFromBottom - start) * (100 / (end - start))
-                    element.style.opacity = opacity / 100
-                })
-
-                elements = elem.querySelectorAll(".scroll-opacity, .two-column__content")
-                elements.forEach((element) => {
-                    const viewportHeight = window.innerHeight
-                    const elementTop = element.getBoundingClientRect().top
-                    const distanceFromBottom = viewportHeight - elementTop
-                    const percentageFromBottom =
-                        (distanceFromBottom / viewportHeight) * 100
-                    const start = 30
-                    const end = 50
-                    const opacity = (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("two-column", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
                     element.style.opacity = opacity / 100
                 })
 
@@ -634,6 +624,7 @@ class ExhibitPlugin {
                     const end = 100
                     const opacity =
                         100 - (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("title", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
                     element.style.opacity = opacity / 100
                 })
 
@@ -648,17 +639,20 @@ class ExhibitPlugin {
                     const end = 80
                     const opacity =
                         100 - (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("hero__content", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
                     element.style.opacity = opacity / 100
                 })
             }
 
             AOS.init({
-                disable: "mobile",
+                disable: this.rootSelector === "#kfroot" || "mobile",
                 once: true,
+                rootNode: this.context,
+                rootSelector: this.rootSelector,
             })
 
             // Add event listeners
-            window.addEventListener("scroll", updateScrollOpacity)
+            document.addEventListener("scroll", updateScrollOpacity, {capture: true})
             window.addEventListener("resize", updateVH)
         }
     }
@@ -854,9 +848,10 @@ class Zoom {
 }
 
 class KronofotoContext {
-    constructor({htmx, context}) {
+    constructor({htmx, context, rootSelector}) {
         this.htmx = htmx
         this.context = context
+        this.rootSelector = rootSelector
         this.context.addEventListener("htmx:configRequest", (evt) => {
             if (evt.target.hasAttribute("data-textcontent-name")) {
                 evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] =
@@ -975,7 +970,7 @@ class KronofotoContext {
             MapPlugin,
         ]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context})
+            const plugin = new cls({context: this.context, rootSelector: this.rootSelector})
             plugin.install({elem})
         }
 
@@ -1056,7 +1051,7 @@ class KronofotoContext {
         clearInterval(window.autoplayTimer)
     }
 }
-export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
+export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelector = "body"} = {}) => {
     // context here means our root element
     // necessary?
     $(context).on("click", (e) => {
@@ -1075,7 +1070,7 @@ export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
         }
     })
 
-    const instance = new KronofotoContext({htmx: _htmx, context})
+    const instance = new KronofotoContext({htmx: _htmx, context, rootSelector})
     if (lateLoad) {
         instance.onLoad(context)
     }
