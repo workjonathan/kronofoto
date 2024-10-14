@@ -36,11 +36,11 @@ class PasswordResetCompleteView(BaseTemplateMixin, django_views.PasswordResetCom
 
 
 class PasswordChangeView(BaseTemplateMixin, django_views.PasswordChangeView):
-    template_name = 'kronofoto/views/auth/password_change_form.html'
+    template_name = 'kronofoto/pages/auth/password_change_form.html'
 
 
 class PasswordChangeDoneView(BaseTemplateMixin, django_views.PasswordChangeDoneView):
-    template_name = 'kronofoto/views/auth/password_change_done.html'
+    template_name = 'kronofoto/pages/auth/password_change_done.html'
 
 class VerifyToken(RedirectView):
     permanent = False
