@@ -14,3 +14,4 @@ from .archive import Archive, ArchiveAgreement
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
 from .key import Key
+from .activity import *

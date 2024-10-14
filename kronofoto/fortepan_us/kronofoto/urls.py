@@ -10,7 +10,7 @@ from fortepan_us.kronofoto.views.agreement import AgreementView
 from fortepan_us.kronofoto.views.submission import submission, KronofotoTemplateView
 from fortepan_us.kronofoto.views.tagsearch import ContributorSearchView
 from fortepan_us.kronofoto.views.donor import ContributorCreateView
-from fortepan_us.kronofoto.views import tags_view
+from fortepan_us.kronofoto.views import tags_view, activitypub
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -118,6 +118,12 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 
 urlpatterns = urlpatterns + [
     path('users/<str:username>', views.Profile.as_view(), name='user-page'),
+    path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
+    path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),
+    path('activitypub/service/outbox', views.activitypub.service_outbox, name="activitypub-main-service-outbox"),
+    path('activitypub/archives/<slug:short_name>', views.activitypub.archive_profile, name="activitypub-archive"),
+    path('activitypub/archives/<slug:short_name>/inbox', views.activitypub.archive_inbox, name="activitypub-archive-inbox"),
+    path('activitypub/archives/<slug:short_name>/outbox', views.activitypub.archive_outbox, name="activitypub-archive-outbox"),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="kronofoto/pages/contributor-created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement"),
