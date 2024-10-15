@@ -54,8 +54,8 @@ class ListVisibilityForm(forms.Form):
     })
 
 class ListForm(forms.Form):
-    name = forms.CharField(label="create a new list")
-    name.widget.attrs['placeholder'] = "new list name"
+    name = forms.CharField(label="create a new FotoAlbum")
+    name.widget.attrs['placeholder'] = "New FotoAlbum name"
     is_private = forms.BooleanField(label="Make Private", label_suffix="", required=False)
     is_private.widget.attrs.update({
         "class": "switch-input",
