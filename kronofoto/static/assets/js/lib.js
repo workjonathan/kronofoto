@@ -558,11 +558,13 @@ class Gallery {
     }
 }
 class ExhibitPlugin {
-    constructor({context, rootSelector}) {
+    constructor({context, rootSelector, exhibit_mode}) {
         this.context = context
         this.rootSelector = rootSelector
+        this.exhibit_mode = exhibit_mode
     }
     install({elem}) {
+        const scrollEventOptions = this.rootSelector === "#kfroot" ? {capture: true} : undefined
         document.body.addEventListener("remove-empty", evt => { 
             const emptycard = evt.explicitOriginalTarget.closest(".empty")
             if (emptycard) {
@@ -595,7 +597,7 @@ class ExhibitPlugin {
             const updateScrollOpacity = () => {
                 //console.log('updateScrollOpacity')
                 if (!this.context.contains(siteWrapper)) {
-                    document.removeEventListener("scroll", updateScrollOpacity, {capture: true})
+                    document.removeEventListener("scroll", updateScrollOpacity, scrollEventOptions)
                     return
                 }
 
@@ -645,14 +647,15 @@ class ExhibitPlugin {
             }
 
             AOS.init({
-                disable: this.rootSelector === "#kfroot" || "mobile",
+                disable: this.exhibit_mode === "light",
                 once: true,
                 rootNode: this.context,
                 rootSelector: this.rootSelector,
+                scrollEventOptions,
             })
 
             // Add event listeners
-            document.addEventListener("scroll", updateScrollOpacity, {capture: true})
+            document.addEventListener("scroll", updateScrollOpacity, scrollEventOptions)
             window.addEventListener("resize", updateVH)
         }
     }
@@ -848,10 +851,11 @@ class Zoom {
 }
 
 class KronofotoContext {
-    constructor({htmx, context, rootSelector}) {
+    constructor({htmx, context, rootSelector, exhibit_mode}) {
         this.htmx = htmx
         this.context = context
         this.rootSelector = rootSelector
+        this.exhibit_mode = exhibit_mode
         this.context.addEventListener("htmx:configRequest", (evt) => {
             if (evt.target.hasAttribute("data-textcontent-name")) {
                 evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] =
@@ -970,7 +974,7 @@ class KronofotoContext {
             MapPlugin,
         ]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context, rootSelector: this.rootSelector})
+            const plugin = new cls({context: this.context, rootSelector: this.rootSelector, exhibit_mode: this.exhibit_mode})
             plugin.install({elem})
         }
 
@@ -1051,7 +1055,7 @@ class KronofotoContext {
         clearInterval(window.autoplayTimer)
     }
 }
-export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelector = "body"} = {}) => {
+export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelector = "body", exhibit_mode=""} = {}) => {
     // context here means our root element
     // necessary?
     $(context).on("click", (e) => {
@@ -1070,7 +1074,7 @@ export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelecto
         }
     })
 
-    const instance = new KronofotoContext({htmx: _htmx, context, rootSelector})
+    const instance = new KronofotoContext({htmx: _htmx, context, rootSelector, exhibit_mode})
     if (lateLoad) {
         instance.onLoad(context)
     }
