@@ -300,3 +300,24 @@ $font-weight-thin: 100;
 .hide {
   display: none;
 }
+
+[contenteditable] {
+  cursor: pointer;
+  transition: outline-color ease-in-out 200ms;
+  outline: 2px solid rgba(110, 134, 188, 0);
+  &:hover, &:focus-visible {
+    outline: 2px solid rgba(110, 134, 188, 1);
+  }
+  &:focus-visible {
+    cursor: auto;
+  }
+}
+
+[contenteditable][role=textbox]:not(:focus):empty {
+  color: #BBBBBB;
+  user-select: none;
+  &:before {
+    content: "Click to change text";
+    user-select: none;
+  }
+}

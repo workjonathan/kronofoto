@@ -177,10 +177,6 @@
       vertical-align: middle;
     }
   }
-  .has-tip {
-    cursor: default;
-    border-bottom: none;
-  }
 }
 
 .main-nav__left {
@@ -363,4 +359,9 @@
     filter: brightness(0) invert(1);
   }
 
+}
+
+.has-tip {
+  cursor: default !important;
+  border-bottom: none !important;
 }

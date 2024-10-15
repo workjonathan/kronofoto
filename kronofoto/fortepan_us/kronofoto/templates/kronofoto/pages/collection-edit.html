@@ -45,14 +45,14 @@
                                     hx-swap="innerHTML"
                                     {% endcomment %}
                                 >Add Photos</a></li>
-                                <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share Album</a></li>
-                                <li><a href="#">Embed List</a></li>
+                                <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share FotoAlbum</a></li>
+                                <li><a href="#">Embed FotoAlbum</a></li>
                                 <li><a
                                     href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                     hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                     hx-target="#app"
                                     >
-                                        Delete List
+                                        Delete FotoAlbum
                                     </a>
                                 </li>
                             </ul>
@@ -72,11 +72,11 @@
                                 <label class="switch-group__left-label-with-subtitle" for="id_is_private">
                                     <span>
                                         {% if collection.visibility == "PU" %}
-                                            Anyone can view the list
+                                            Anyone can view the FotoAlbum
                                         {% elif collection.visibility == "UL" %}
-                                            Anyone with the url can view the list
+                                            Anyone with the url can view the FotoAlbum
                                         {% else %}
-                                          Only you can view the list
+                                          Only you can view the FotoAlbum
                                         {% endif %}
                                     </span>
                                 </label>
@@ -103,17 +103,22 @@
                             <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
                             <details>
                                 <summary class="thumbnail-collection__delete"></summary>
-                                <form
-                                    method="post"
-                                    action="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
-                                    hx-post="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
-                                    hx-push-url="false"
-                                >
-                                    {% csrf_token %}
-                                    <p>Are you sure you want to remove this photo?</p>
-                                    <input type="submit" name="choice" value="Yes">
-                                    <input type="submit" name="choice" value="No">
-                                </form>
+                                <div class="reveal-overlay" style="display: block;">
+                                    <div class="reveal tiny center" style="display: block; top: 42vh; width: 400px;">
+                                        <form
+                                                method="post"
+                                                action="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
+                                        hx-post="{% krono_url "kronofoto:collection-remove" pk=collection.id photo=photo.id %}"
+                                        hx-push-url="false"
+                                        >
+                                        {% csrf_token %}
+                                        <p>Are you sure you want to remove this photo?</p>
+                                        <p>&nbsp;</p>
+                                        <input type="submit" name="choice" value="Yes">
+                                        <input type="submit" name="choice" value="No">
+                                        </form>
+                                    </div>
+                                </div>
                             </details>
                         </div>
                     {% endfor %}

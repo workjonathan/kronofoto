@@ -1,6 +1,10 @@
 @use '../../colors' as *;
 @use 'buttons' as *;
 
+.image-collection-outer-wrapper + .content-area {
+  display: none;
+}
+
 .image-collection {
   max-width: 85%;
   margin: auto;
@@ -19,6 +23,9 @@
 
   img {
     width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    vertical-align: top;
   }
 
   figure {
@@ -51,6 +58,7 @@
   }
 
   &--1 {
+    max-width: 31vw;
     &__wrapper {
       padding: 0px 70px;
     }

@@ -1,0 +1,32 @@
+{% load widgets %}
+{% load krono_urls %}
+<div class="image-collection-outer-wrapper">
+        {% if form %}
+        <div class="component-menu--off-canvas">
+        </div>
+        {% endif %}
+        <div class="image-collection image-collection--{{ figures|length }}">
+        {% for figure in figures %}
+            <figure{% if not figure.photo %} class="empty"{% endif %}>
+                <div class="image-collection__wrapper">
+                    {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
+                    <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %}>
+                        {% include "archive/components/figure-image.html" %}
+                    </div>
+                    {% endwith %}
+                </div>
+                {% if edit %}
+                    {% with form=figure.form %}
+                    {{ form.caption.errors }}
+                    <figcaption contenteditable="true" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption | linebreaksbr }}</figcaption>
+                    {% for field in form %}
+                        {{ field.as_hidden }}
+                    {% endfor %}<input type="hidden" name="prefix" value="{{ form.prefix }}">
+                    {% endwith %}
+                {% else %}
+                    <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+        </div>
+</div>

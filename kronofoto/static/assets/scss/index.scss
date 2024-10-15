@@ -76,6 +76,7 @@ body, #kfroot {
 @import 'foundation-sites/scss/components/switch';
 @import 'foundation-sites/scss/components/tooltip';
 @import 'foundation-sites/scss/components/callout';
+@import 'foundation-sites/scss/components/reveal';
 
 // Foundation Helpers
 @import 'foundation-sites/scss/components/float';
@@ -86,6 +87,7 @@ body, #kfroot {
 @include foundation-switch;
 @include foundation-tooltip;
 @include foundation-callout;
+@include foundation-reveal;
 
 // Foundation Components
 @include foundation-visibility-classes;

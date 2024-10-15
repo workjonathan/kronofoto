@@ -24,7 +24,7 @@
         <div class="form">
             <h1 class="h1">Embed</h1>
             <form class="form" id="web-component-form" hx-target="#embed-input" hx-swap="outerHTML" hx-select="#embed-input" hx-get="{% krono_url "kronofoto:popup-web-component" view.kwargs %}?{{ params.urlencode }}" hx-push-url="false" hx-trigger="change">
-            <p>Embedding keeps the current filters such as a search or list.</p>
+            <p>Embedding keeps the current filters such as a search or FotoAlbum.</p>
 
             {% for field in form %}
             {% if field.label %}<label for="{{ field.name }}">{{ field.label }}</label>{% endif %}

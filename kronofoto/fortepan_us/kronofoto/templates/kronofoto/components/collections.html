@@ -5,14 +5,14 @@
     <div class="row">
 
         <div class="columns small-12">
-            <h2>My Lists</h2>
+            <h2>My FotoAlbums</h2>
             {% with collection_count=object_list.count %}
-            <div role="doc-subtitle">{{ collection_count }} list{{ collection_count|pluralize }}</div>
+            <div role="doc-subtitle">{{ collection_count }} FotoAlbum{{ collection_count|pluralize }}</div>
             {% endwith %}
         </div>
 
         {% if profile_user == request.user %}
-        <div class="columns small-12 large-4 small-push-8">
+        <div class="columns small-12 large-5 small-push-7">
             <form
                 class="form form--collection"
                 method="post"
@@ -23,11 +23,11 @@
                 hx-swap="outerHTML"
             >
                 {% csrf_token %}
-                <h3>Create a List</h3>
-                <p class="paragraph color-light">You can use lists to organize photos into your own curated collections.</p>
+                <h3>Create a FotoAlbum</h3>
+                <p class="paragraph color-light">You can use FotoAlbums to organize photos into your own curated collections.</p>
                 {% for field in form %}
                 <div class="form-item">
-                    <input class="border" type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" placeholder="List Name" />
+                    <input class="border" type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" placeholder="FotoAlbum Name" />
                 </div>
                 {% endfor %}
                 <input type="submit" class="button" value="Create" />
@@ -35,7 +35,7 @@
         </div>
         {% endif %}
 
-        <div class="columns small-12 large-8">
+        <div class="columns small-12 large-7">
             <div class="collection collection--list collection--2">
 
                 {% for collection in object_list %}
@@ -46,28 +46,20 @@
                             <div class="context-menu__button" data-toggle="list-{{ collection.uuid }}"></div>
                             <div class="context-menu__items">
                                 <ul>
-                                    <li><a 
+                                    <li><a
                                         href="{% krono_url "kronofoto:collection-edit" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-edit" pk=collection.id %}"
                                         hx-target="#app"
                                     >Edit</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share Album</a></li>
-                                    <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed Album</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share FotoAlbum</a></li>
+                                    <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed FotoAlbum</a></li>
+                                    <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Start a FotoStory</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}">View FotoAlbum</a></li>
                                     <li><a
-                                        href="{% krono_url "kronofoto:random-image" %}"
-                                        {% comment %}
-                                        hx-get="{% krono_url "kronofoto:random-image" %}"
-                                        hx-target="#app"
-                                        hx-swap="innerHTML"
-                                        {% endcomment %}
-                                    >Add to List</a></li>
-                                    <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Start Exhibit</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}">View Album</a></li>
-                                    <li><a 
                                         href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-target="#app"
-                                    >Delete</a></li>
+                                    >Delete FotoAlbum</a></li>
                                 </ul>
                             </div>
                         </div>

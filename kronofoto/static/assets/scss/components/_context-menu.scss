@@ -21,7 +21,7 @@
   &.expanded {
     z-index: 4;
     > .context-menu__items {
-      max-height: 200px;
+      max-height: 500px;
       opacity: 1;
       z-index: 4;
     }
@@ -47,7 +47,7 @@
       }
     }
     overflow: hidden;
-    width: 140px;
+    width: 160px;
     max-height: 0px;
     transition: max-height 0.1s ease-out, padding 0.1s ease-out, opacity 0.1s ease-out;
     height: auto;

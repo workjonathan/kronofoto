@@ -11,4 +11,18 @@
       @extend .paragraph;
     }
   }
+
+  &--credits {
+    padding: 90px 0px;
+    text-align: center;
+    background-color: #333333;
+    color: #E3E3E3;
+    small {
+      display: block;
+      margin-top: 40px;
+    }
+    * {
+      color: inherit;
+    }
+  }
 }

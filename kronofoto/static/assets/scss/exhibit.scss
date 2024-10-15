@@ -20,6 +20,8 @@
 @import 'foundation-sites/scss/typography/typography';
 @import "foundation-sites/scss/util/breakpoint";
 @import 'foundation-sites/scss/components/reveal';
+@import 'foundation-sites/scss/components/tooltip';
+
 //@import 'foundation-sites/scss/components/close-button';
 
 @import 'components/button';
@@ -32,6 +34,7 @@
 //$reveal-width: 600px;
 
 @include foundation-reveal;
+@include foundation-tooltip;
 //@include foundation-close-button;
 
 #add-image-modal {
@@ -117,15 +120,6 @@ body {
   }
 }
 
-[contenteditable=true][role=textbox]:not(:focus):empty {
-  color: #BBBBBB;
-  user-select: none;
-  &:before {
-    content: "Click to change text";
-    user-select: none;
-  }
-}
-
 .add-image-button {
   width: 40px;
   height: 40px;
@@ -154,4 +148,14 @@ body, #kfroot {
 .login-container {
   width: 40px;
   height: 40px;
+}
+
+.foundation-mq {
+  font-family: "small=0em&medium=40em&large=64em&xlarge=75em&xxlarge=90em";
+}
+
+.errorlist {
+  color: #e8a098;
+  list-style-type: none;
+  padding: 0px;
 }

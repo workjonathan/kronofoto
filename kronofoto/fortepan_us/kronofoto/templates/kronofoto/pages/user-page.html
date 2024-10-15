@@ -29,15 +29,17 @@
 
     <div class="row">
         <div class="columns small-12">
-            <h2>My Exhibits</h2>
-            <div role="doc-subtitle">3 exhibits</div>
+            <h2>My FotoStories</h2>
+            {% with exhibits_count=exhibits.count %}
+            <div role="doc-subtitle">{{ exhibits_count }} FotoStor{{ exhibits_count|pluralize:'y,ies' }}</div>
+            {% endwith %}
         </div>
 
-        <div class="columns small-12 large-4">
+        <div class="columns small-12 large-5">
             <form class="form form--collection" x-post="{% krono_url "kronofoto:exhibit-create" %}" method="post" action="{% krono_url "kronofoto:exhibit-create" %}">
                 {% csrf_token %}
-                <h3>Create an Exhibit</h3>
-                <p class="paragraph color-light">You can use exhibits to tell your own stories with Fortepan photos.</p>
+                <h3>Create a FotoStory</h3>
+                <p class="paragraph color-light">You can use FotoStories to tell your own stories with Fortepan photos.</p>
                 {% for field in form %}
                 {# <input class="border" type="text" id="exhibit_name" name="exhibit_name" placeholder="Exhibit Name" /> #}
                 {{ field }}
@@ -46,7 +48,7 @@
             </form>
         </div>
 
-        <div class="columns small-12 large-8">
+        <div class="columns small-12 large-7">
             <div class="collection collection--list collection--2">
                 {% for exhibit in exhibits %}
                 <div class="collection__item">
@@ -57,8 +59,9 @@
                         <div class="context-menu__items">
                             <ul>
                                 <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Copy Share Link</a></li>
-                                <li><a href="{% krono_url "kronofoto:exhibit-embed" pk=exhibit.id %}">Embed Exhibit</a></li>
+                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Share Link</a></li>
+                                <li><a href="{% krono_url "kronofoto:exhibit-embed" pk=exhibit.id %}">Embed FotoStory</a></li>
+                                <li><a href="#">View Published FotoStory</a></li>
                                 <li><a href="{% krono_url "kronofoto:exhibit-delete" pk=exhibit.pk %}">Delete</a></li>
                             </ul>
                         </div>

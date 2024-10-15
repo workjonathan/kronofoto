@@ -51,7 +51,7 @@
             </div>
             <div class="page-editor__toolbar toolbar">
                 <div class="toolbar__section">
-                    <label class="toolbar__label">Content blocks</label>
+                    <label class="toolbar__label" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center">Content blocks</label>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
                     <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
