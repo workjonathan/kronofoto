@@ -141,6 +141,13 @@ header {
   align-content: center;
 }
 
+body > form > header {
+  position: sticky;
+  top: 0px;
+  background-color: #ffffff;
+  z-index: 101;
+}
+
 body, #kfroot {
   container-type: inline-size;
 }

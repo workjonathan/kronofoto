@@ -73,7 +73,7 @@
     }
     @media screen and (min-width: 48em) {
       margin-top: 50vh;
-      padding: 0px 18% 50vh 18%;
+      padding: 0px 18% 85vh 18%;
     }
     p {
       @extend .paragraph;
@@ -159,6 +159,14 @@
         //padding-top: 0px;
         //padding-bottom: 16vh;
       }
+    }
+  }
+}
+
+.hero + .container {
+  .two-column__image {
+    @media screen and (min-width: 48em) {
+      margin-top: 0px;
     }
   }
 }

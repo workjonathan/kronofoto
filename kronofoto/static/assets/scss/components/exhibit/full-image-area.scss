@@ -100,7 +100,7 @@
     font-size: 12px;
     line-height: 18px;
     @media screen and (min-width: 48em) {
-      padding: 0px;
+      padding: 0px 0px 70vh;
       font-size: 18px;
       line-height: 28px;
       left: 50px;
@@ -140,6 +140,15 @@
   &--cover {
     .full-image-area__image > img {
       object-fit: cover;
+    }
+  }
+}
+
+
+.hero + .container {
+  .full-image-area {
+    @media screen and (min-width: 48em) {
+      margin-top: 0px;
     }
   }
 }
