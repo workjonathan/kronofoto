@@ -5,7 +5,7 @@
 
 {% block content_body %}
 <div class="content-area">
-    <div class="image-collection image-collection--{{ figures|length }}">
+    <div class="image-collection image-collection--{{ card.figures|length }}">
     {% for figure in card.figures %}
         <figure{% if not figure.photo %} class="empty"{% endif %}>
             <div class="image-collection__wrapper">

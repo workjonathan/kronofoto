@@ -14,16 +14,16 @@
   flex-wrap: wrap;
 
   @media screen and (min-width: 48em) {
-    justify-content: space-between;
+    justify-content: space-around;
     flex-wrap: nowrap;
     figure {
+      max-width: 40%;
       margin-top: 0px !important;
     }
   }
 
   img {
     width: 100%;
-    aspect-ratio: 1;
     object-fit: cover;
     vertical-align: top;
   }
@@ -32,6 +32,8 @@
     margin: 0px;
     margin-top: 25px !important;
     width: 100%;
+    flex-direction: column;
+    justify-content: center;
   }
 
   figcaption {
@@ -58,7 +60,6 @@
   }
 
   &--1 {
-    max-width: 31vw;
     &__wrapper {
       padding: 0px 70px;
     }
