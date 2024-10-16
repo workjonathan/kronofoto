@@ -511,7 +511,6 @@ def embed(request : HttpRequest, pk: int) -> HttpResponse:
 
 
 
-@user_passes_test(lambda user: user.is_staff) # type: ignore
 def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     areq = ArchiveRequest(request)
     exhibit = get_object_or_404(Exhibit.objects.all().select_related('photo', 'photo__place', 'photo__donor'), pk=pk)
