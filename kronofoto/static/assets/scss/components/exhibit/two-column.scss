@@ -41,6 +41,7 @@
 
   &__image {
     aspect-ratio: 1;
+    background-color: #EEEEEE;
     @media screen and (max-width: 48em) {
       position: sticky;
       height: 100vh;
@@ -159,6 +160,16 @@
         //padding-top: 0px;
         //padding-bottom: 16vh;
       }
+    }
+  }
+  &--contain {
+    .two-column__image > img {
+      object-fit: contain !important;
+    }
+  }
+  &--cover {
+    .two-column__image > img {
+      object-fit: cover !important;
     }
   }
 }

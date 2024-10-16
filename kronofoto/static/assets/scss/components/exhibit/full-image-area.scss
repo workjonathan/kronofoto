@@ -134,12 +134,12 @@
   }
   &--contain {
     .full-image-area__image > img {
-      object-fit: contain;
+      object-fit: contain !important;
     }
   }
   &--cover {
     .full-image-area__image > img {
-      object-fit: cover;
+      object-fit: cover !important;
     }
   }
 }

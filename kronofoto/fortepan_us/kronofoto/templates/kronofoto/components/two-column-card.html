@@ -19,11 +19,11 @@
             </a>
             {% if edit %}
                 <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.fill_style.auto_id }}" data-toggle="{{ form.fill_style.auto_id }}" data-toggle-focus="{{ form.fill_style.auto_id }}">
-                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
+                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".two-column" data-on-check-remove="two-column--cover" data-on-check-add="two-column--contain">
                         {{ form.fill_style.0.tag }}
                         <label for="{{ form.fill_style.0.id_for_label }}">fit to page</label>
                     </div>
-                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--contain" data-on-check-add="full-image-area--cover">
+                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".two-column" data-on-check-remove="two-column--contain" data-on-check-add="two-column--cover">
                         {{ form.fill_style.1.tag }}
                         <label for="{{ form.fill_style.1.id_for_label }}">fill page</label>
                     </div>
