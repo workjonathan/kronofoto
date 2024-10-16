@@ -17,7 +17,7 @@
     </div>
     {{ form.description.errors }}
     <p class="hero__content" contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">
-        {{ exhibit.description }}
+        {{ exhibit.description | linebreaksbr }}
     </p>
 {% endblock hero_content_wrapper %}
 
