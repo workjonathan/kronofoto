@@ -16,8 +16,7 @@ class ArchiveBase(models.Model):
         )
 
 
-class Archive(models.Model):
-    archivebase_ptr = models.OneToOneField(ArchiveBase, null=False, on_delete=models.CASCADE, unique=True)
+class Archive(ArchiveBase):
     cms_root = models.CharField(max_length=16, null=False, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
