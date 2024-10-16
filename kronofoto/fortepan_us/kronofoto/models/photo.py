@@ -110,7 +110,7 @@ class PlaceData:
         return " AND ".join(parts)
 
 class PhotoBase(models.Model):
-    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
+    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.PROTECT, null=False)
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)

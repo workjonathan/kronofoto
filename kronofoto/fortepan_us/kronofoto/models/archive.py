@@ -6,20 +6,22 @@ from django.contrib.auth.models import Permission, Group
 from .category import Category, ValidCategory
 
 
+class ArchiveBase(models.Model):
+    name = models.CharField(max_length=64, null=False, blank=False)
+    slug = models.SlugField(unique=True, blank=False, null=False)
+
+    class Meta:
+        indexes = (
+            models.Index(fields=['slug'], name="archivebase_slug_idx"),
+        )
 
 
 class Archive(models.Model):
-    name = models.CharField(max_length=64, null=False, blank=False)
+    archivebase_ptr = models.OneToOneField(ArchiveBase, null=False, on_delete=models.CASCADE, unique=True)
     cms_root = models.CharField(max_length=16, null=False, blank=False)
-    slug = models.SlugField(unique=True, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
-    class Meta:
-        indexes = (
-            models.Index(fields=['slug'], name="archive_slug_idx"),
-        )
-        db_table = 'kronofoto_archive'
 
 
     def __str__(self) -> str:
@@ -33,7 +35,7 @@ class ArchiveAgreementQuerySet(models.QuerySet):
 class ArchiveAgreement(models.Model):
     text = models.TextField(blank=False, null=False)
     version = models.DateTimeField(null=False, auto_now=True)
-    archive = models.OneToOneField(Archive, on_delete=models.CASCADE)
+    archive = models.OneToOneField(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
 
     objects = ArchiveAgreementQuerySet.as_manager()
 
@@ -66,7 +68,7 @@ class UserAgreement(models.Model):
 
 
 class ArchiveUserPermission(models.Model):
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
+    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 
@@ -85,7 +87,7 @@ class ArchiveUserPermission(models.Model):
         db_table = 'kronofoto_archiveuserpermission'
 
 class ArchiveGroupPermission(models.Model):
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
+    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 

@@ -15,7 +15,7 @@ class RemoteActor(models.Model):
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
     request_body = models.JSONField()
-    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, null=False)
+    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE, null=False)
 
     class Meta:
         constraints = [
