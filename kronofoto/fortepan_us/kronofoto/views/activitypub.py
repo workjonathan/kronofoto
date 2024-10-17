@@ -3,7 +3,7 @@ from typing import Any, Protocol
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse
 from django.shortcuts import get_object_or_404
-from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor
+from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive
 import json
 
 def JsonLDResponse(*args: Any, **kwargs: Any) -> JsonResponse:
@@ -36,6 +36,23 @@ def service(request: HttpRequest) -> HttpResponse:
 
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+        for activity in OutboxActivity.objects.filter(
+            body__id=data['object']['id'],
+            body__type="Follow",
+            body__actor=data['object']['actor'],
+        ):
+            print(data)
+            actor, created = RemoteActor.objects.get_or_create(
+                profile=data['actor'],
+                defaults={
+                    "actor_follows_app": False,
+                    "app_follows_actor": False,
+                }
+            )
+            RemoteArchive.objects.get_or_create(actor=actor)
+            return JsonLDResponse({})
     return HttpResponse(status=401)
 
 @require_json_ld

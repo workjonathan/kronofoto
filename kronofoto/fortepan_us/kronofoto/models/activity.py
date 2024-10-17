@@ -22,5 +22,6 @@ class FollowArchiveRequest(models.Model):
             models.UniqueConstraint(fields=["archive", "remote_actor"], name="unique_actor_archive_follows"),
         ]
 
-class Activity(models.Model):
+class OutboxActivity(models.Model):
     body = models.JSONField()
+    created = models.DateTimeField(auto_now=True)
