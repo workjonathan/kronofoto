@@ -8,8 +8,8 @@ from typing import Any
 
 class Exhibit(models.Model):
     name = models.CharField(max_length=256)
-    title = models.CharField(max_length=256)
-    description = models.TextField()
+    title = models.CharField(max_length=1024, blank=True)
+    description = models.TextField(blank=True)
     photo = models.ForeignKey(Photo, null=False, on_delete=models.PROTECT)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
@@ -40,19 +40,20 @@ class Card(models.Model):
         db_table = "kronofoto_card"
 
 class PhotoCard(Card):
-    photo = models.ForeignKey(Photo, on_delete=models.PROTECT)
+    photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
 
     def photo_choices(self) -> models.Q:
         return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
-
 
     class Alignment(models.IntegerChoices):
         FULL = 1
         LEFT = 2
         RIGHT = 3
+
     class Fill(models.IntegerChoices):
         CONTAIN = 1
         COVER = 2
+
     alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.FULL)
     fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
@@ -62,7 +63,7 @@ class PhotoCard(Card):
 class Figure(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     caption = models.TextField(blank=True, default="")
-    photo = models.ForeignKey(Photo, on_delete=models.PROTECT)
+    photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
     order = models.IntegerField(default=0)
 
     class Meta:
