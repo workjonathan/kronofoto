@@ -1,5 +1,5 @@
 from django.db import models
-from .archive import Archive
+from .archive import Archive, ArchiveBase
 
 class RemoteActor(models.Model):
     profile = models.URLField(unique=True)
@@ -9,8 +9,8 @@ class RemoteActor(models.Model):
     archives_followed = models.ManyToManyField(Archive)
     requested_archive_follows : models.ManyToManyField = models.ManyToManyField(Archive, through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
 
-#class RemoteArchive(ArchiveBase):
-#    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
+class RemoteArchive(ArchiveBase):
+    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
 
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
