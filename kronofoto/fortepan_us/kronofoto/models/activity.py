@@ -21,3 +21,6 @@ class FollowArchiveRequest(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["archive", "remote_actor"], name="unique_actor_archive_follows"),
         ]
+
+class Activity(models.Model):
+    body = models.JSONField()
