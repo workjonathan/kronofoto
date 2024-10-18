@@ -5,7 +5,7 @@
 {% block container_classes %}container--full-width container--no-padding{% endblock %}
 
 {% block content_body %}
-    <div class="full-image-area {{ image_area_classes | join:" " }}">
+    <div class="full-image-area {{ image_area_classes | join:" " }}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'full-image-area--cover': fitStyle == 1, 'full-image-area--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
         {% if edit %}
         {{ form.photo.errors }}
         <div class="add-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
@@ -31,14 +31,14 @@
             {% endif %}
         </div>
         {% if edit %}
-            <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.fill_style.auto_id }}" data-toggle="{{ form.fill_style.auto_id }}" data-toggle-focus="{{ form.fill_style.auto_id }}">
-                <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--cover" data-on-check-add="full-image-area--contain">
+            <div class="full-image-area__select-alignment" id="{{ form.fill_style.auto_id }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
+                <div x-model="fitStyle">
                     {{ form.fill_style.0.tag }}
-                    <label for="{{ form.fill_style.0.id_for_label }}">fit to page</label>
+                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
                 </div>
-                <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".full-image-area" data-on-check-remove="full-image-area--contain" data-on-check-add="full-image-area--cover">
+                <div x-model="fitStyle">
                     {{ form.fill_style.1.tag }}
-                    <label for="{{ form.fill_style.1.id_for_label }}">fill page</label>
+                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
                 </div>
             </div>
         {% endif %}

@@ -5,7 +5,7 @@
 {% block container_classes %}container--no-padding{% endblock %}
 
 {% block content_body %}
-    <div class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}">
+    <div class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'two-column--cover': fitStyle == 1, 'two-column--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
         {% with target_id=form.photo.auto_id photo=card.photo %}
         <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="chage from:#{{ target_id }}"{% endif %}>
             {% if edit %}
@@ -18,14 +18,14 @@
                 <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "kronofoto/components/attribution.html" with object=photo %}</div>
             </a>
             {% if edit %}
-                <div class="full-image-area__select-alignment" data-toggler=".expanded" id="{{ form.fill_style.auto_id }}" data-toggle="{{ form.fill_style.auto_id }}" data-toggle-focus="{{ form.fill_style.auto_id }}">
-                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".two-column" data-on-check-remove="two-column--cover" data-on-check-add="two-column--contain">
+                <div class="full-image-area__select-alignment" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
+                    <div x-model="fitStyle">
                         {{ form.fill_style.0.tag }}
-                        <label for="{{ form.fill_style.0.id_for_label }}">fit to page</label>
+                        <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fit to page</label>
                     </div>
-                    <div data-toggle="{{ form.fill_style.auto_id }}" data-on-check-target=".two-column" data-on-check-remove="two-column--contain" data-on-check-add="two-column--cover">
+                    <div x-model="fitStyle">
                         {{ form.fill_style.1.tag }}
-                        <label for="{{ form.fill_style.1.id_for_label }}">fill page</label>
+                        <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fill page</label>
                     </div>
                 </div>
             {% endif %}

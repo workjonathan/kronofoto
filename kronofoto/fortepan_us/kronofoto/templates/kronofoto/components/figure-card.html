@@ -7,7 +7,7 @@
 <div class="content-area">
     <div class="image-collection image-collection--{{ card.figures|length }}">
     {% for figure in card.figures %}
-        <figure{% if not figure.photo %} class="empty"{% endif %}>
+        <figure{% if not figure.photo %} class="empty"{% endif %}{% if edit %} x-data="{ 'empty': {{ figure.photo|yesno:"false,true" }} }" :class="{'empty': empty}" @remove-empty="empty=false"{% endif %}>
             <div class="image-collection__wrapper">
                 {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
                 <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}" hx-swap="innerHTML show:top"{% endif %}>

@@ -210,6 +210,7 @@ def exhibit_full_image(request: HttpRequest) -> HttpResponse:
             request=request,
             context=context,
             template="kronofoto/components/full-image.html",
+            headers={"Hx-Trigger": "remove-empty"},
         )
     except ValueError:
         return HttpResponse("", status=400)
