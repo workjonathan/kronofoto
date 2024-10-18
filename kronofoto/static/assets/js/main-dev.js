@@ -11,6 +11,9 @@ import {
     initFoundation,
     initHTMXListeners,
 } from "./lib.js"
+import AlpineJS from "alpinejs"
+window.AlpineJS = AlpineJS
+AlpineJS.start()
 window.kfcontext = document
 import HTMX from "./htmx.js"
 
