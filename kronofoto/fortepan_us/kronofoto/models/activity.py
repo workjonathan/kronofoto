@@ -6,13 +6,13 @@ from typing import Optional
 
 class RemoteActor(models.Model):
     profile = models.URLField(unique=True)
-    actor_follows_app = models.BooleanField()
-    app_follows_actor = models.BooleanField()
+    actor_follows_app = models.BooleanField(default=False)
+    app_follows_actor = models.BooleanField(default=False)
     follow_app_request = models.JSONField(null=True)
     archives_followed = models.ManyToManyField(Archive)
     requested_archive_follows : models.ManyToManyField = models.ManyToManyField(Archive, through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
 
-    def public_key(self) -> Optional[str]:
+    def public_key(self) -> Optional[bytes]:
         def _() -> Optional[str]:
             resp = requests.get(
                 self.profile,
@@ -24,8 +24,8 @@ class RemoteActor(models.Model):
             if resp.status_code == 200:
                 data = resp.json()
                 key = data.get('publicKey', {}).get('publicKeyPem', None)
-            return key
-        return cache.get_or_set(self.profile, _, timeout=7*24*60*60)
+            return key.encode('utf-8') if key else None
+        return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=7*24*60*60)
 
 class RemoteArchive(ArchiveBase):
     actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)

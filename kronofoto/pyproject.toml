@@ -44,6 +44,7 @@ dependencies = [
     "djangocms-link==3.1.*",
     "djangocms-picture==4.1.*",
     "djangocms-text-ckeditor==5.1.*",
+    "cryptography",
 ]
 [project.optional-dependencies]
 postgres = [

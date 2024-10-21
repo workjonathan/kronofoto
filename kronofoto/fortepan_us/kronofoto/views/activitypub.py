@@ -1,10 +1,27 @@
 from django.http import HttpResponse, HttpRequest, JsonResponse
-from typing import Any, Protocol
+from typing import Any, Protocol, Dict, List
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse
 from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive
 import json
+import parsy # type: ignore
+from django.core.cache import cache
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
+
+def decode_signature(signature: str) -> Dict[str, str]:
+    quoted_string = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
+    key = parsy.regex(r'[^=]*')
+    pair = parsy.seq(key << parsy.string("="), quoted_string)
+    return dict(pair.sep_by(parsy.string(",")).parse(signature))
+
+def decode_signature_headers(signature_headers: str) -> List[str]:
+    return parsy.regex('[^ ]*').sep_by(parsy.whitespace).parse(signature_headers)
+
 
 def JsonLDResponse(*args: Any, **kwargs: Any) -> JsonResponse:
     resp = JsonResponse(*args, **kwargs)
@@ -37,13 +54,40 @@ def service(request: HttpRequest) -> HttpResponse:
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
+        signature_parts = decode_signature(request.headers.get("Signature", ""))
+        if any(key not in signature_parts for key in ["signature", "headers", "keyId"]):
+            return HttpResponse(status=401)
+        signature_headers = []
+        for header in decode_signature_headers(signature_parts['headers']):
+            if header == "(request-target)":
+                signature_headers.append("(request-target): {} {}".format(request.method.lower(), request.path))
+            else:
+                signature_headers.append("{}: {}".format(header, request.headers.get(header)))
         data = json.loads(request.body.decode("utf-8"))
+        actor, _ = RemoteActor.objects.get_or_create(profile=data['actor'])
+        pubkey_str = actor.public_key()
+        if not pubkey_str:
+            return HttpResponse(status=401)
+
+        public_key = load_pem_public_key(pubkey_str)
+        assert isinstance(public_key, RSAPublicKey)
+        try:
+            public_key.verify(
+                signature_parts['signature'].encode("utf-8"),
+                '\n'.join(signature_headers).encode("utf-8"),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH,
+                ),
+                hashes.SHA256(),
+            )
+        except InvalidSignature:
+            return HttpResponse(status=401)
         for activity in OutboxActivity.objects.filter(
             body__id=data['object']['id'],
             body__type="Follow",
             body__actor=data['object']['actor'],
         ):
-            print(data)
             actor, created = RemoteActor.objects.get_or_create(
                 profile=data['actor'],
                 defaults={
