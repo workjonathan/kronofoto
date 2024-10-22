@@ -6,6 +6,11 @@ import json
 from django.core.cache import cache
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from datetime import datetime, timezone
+import base64
+import hashlib
 
 def test_decode_signature():
     signature = 'keyId="https://my-example.com/actor#main-key",headers="(request-target) host date digest",signature="asdf"'
@@ -54,7 +59,7 @@ def test_validates_request():
         data=json.dumps(message),
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": 'keyId="a",headers="a",signature="a"',
+            "Signature": 'keyId="a",headers="a",signature="{}"'.format(base64.b64encode(b'a')),
         },
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )
@@ -136,6 +141,22 @@ def test_service_inbox_accept_request():
         "actor": "https://example.com/kf/activitypub/service",
         "object": "https://anotherinstance.com/kf/activitypub/archives/asdf",
     }
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Accept",
+        "actor": "https://anotherinstance.com/activitypub/archive/asdf",
+        "object": follow,
+    }
+    msg_body = json.dumps(message)
+    request_target = 'post {}'.format(url)
+    host = "example.com"
+    date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %Z")
+    digester = hashlib.sha256()
+    digester.update(msg_body.encode('utf-8'))
+    digest = "SHA-256=" + base64.b64encode(digester.digest()).decode('utf-8')
+    signed_headers = f'(request-target): {request_target}\nhost: {host}\ndate: {date}\ndigest: {digest}'
+
     OutboxActivity.objects.create(body=follow)
     valid_private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -149,18 +170,23 @@ def test_service_inbox_accept_request():
         ),
         30,
     )
+    signature = valid_private_key.sign(
+        signed_headers.encode('utf-8'),
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH,
+        ),
+        hashes.SHA256()
+    )
     resp = client.post(
         url,
-        data=json.dumps({
-            "@context": "https://www.w3.org/ns/activitystreams",
-            "id": "https://anotherinstance.com/123",
-            "type": "Accept",
-            "actor": "https://anotherinstance.com/activitypub/archive/asdf",
-            "object": follow,
-        }),
+        data=msg_body,
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": 'keyId="a",headers="a",signature="a"',
+            "Signature": 'keyId="https://anotherinstance.com/activitypub/archive/asdf",headers="(request-target) host date digest",signature="{}"'.format(base64.b64encode(signature).decode("utf-8")),
+            "Host": host,
+            "Date": date,
+            "Digest": digest,
         },
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )

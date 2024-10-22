@@ -6,6 +6,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GOOGLE_RECAPTCHA_SECRET_KEY = 'fake-recaptcha-secret'
 GOOGLE_RECAPTCHA_SITE_KEY = 'fake-recaptcha-key'
 GOOGLE_TAG_ID = 'GTM-P4BQ99S'
+ALLOWED_HOSTS = ['example.com']
 
 GOOGLE_MAPS_KEY = 'fake-gmaps-key'
 GRID_DISPLAY_COUNT = 3

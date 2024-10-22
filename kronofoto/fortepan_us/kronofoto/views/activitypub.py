@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
+import base64
 
 def decode_signature(signature: str) -> Dict[str, str]:
     quoted_string = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
@@ -73,7 +74,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         assert isinstance(public_key, RSAPublicKey)
         try:
             public_key.verify(
-                signature_parts['signature'].encode("utf-8"),
+                base64.b64decode(signature_parts['signature']),
                 '\n'.join(signature_headers).encode("utf-8"),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
