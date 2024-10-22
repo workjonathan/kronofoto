@@ -337,7 +337,7 @@ class CopyLink {
         evt.preventDefault()
         navigator.clipboard.writeText(evt.target.getAttribute("href")).then(
             () => {
-                showToast("The collection link has been copied to the clipboard.")
+                showToast("The link has been copied to the clipboard.")
             },
             () => {
                 showToast(
@@ -1097,6 +1097,7 @@ export function initClipboardJS(context) {
         let target = $(e.currentTarget).attr("data-clipboard-target")
         let text = $(target).val()
         ClipboardActionCopy(text)
+        showToast("The link has been copied to the clipboard.")
         $(target).select()
         $(target)[0].setSelectionRange(0, 999999)
     })
