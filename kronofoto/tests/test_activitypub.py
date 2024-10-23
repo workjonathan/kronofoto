@@ -129,6 +129,56 @@ def test_archive_inbox_follow_request():
     assert FollowArchiveRequest.objects.exists()
     assert FollowArchiveRequest.objects.all()[0].request_body['id'] == 'https://anotherinstance.com/123'
 
+from dataclasses import dataclass, field
+from typing import Any
+
+@dataclass
+class SignatureHeaders:
+    url: str
+    msg_body: str
+    host: str
+    keyId: str
+    date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    verb: str = "post"
+
+    @property
+    def request_target(self) -> str:
+        return f'{self.verb} {self.url}'
+
+    @property
+    def date_format(self) -> str:
+        return self.date.strftime("%a, %d %b %Y %H:%M:%S %Z")
+
+    @property
+    def digest(self) -> str:
+        digester = hashlib.sha256()
+        digester.update(self.msg_body.encode('utf-8'))
+        digest = base64.b64encode(digester.digest()).decode("utf-8")
+        return f'SHA-256={digest}'
+
+    @property
+    def signed_headers(self) -> str:
+        return "\n".join(
+            f"{part}: {part_body}"
+            for (part, part_body) in [
+                ("(request-target)", self.request_target),
+                ("host", self.host),
+                ("date", self.date_format),
+                ("digest", self.digest),
+            ]
+        )
+    def signature(self, private_key: Any) -> str:
+        signed_headers = self.signed_headers
+        signature = private_key.sign(
+            signed_headers.encode('utf-8'),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256()
+        )
+        return 'keyId="{}",headers="(request-target) host date digest",signature="{}"'.format(self.keyId, base64.b64encode(signature).decode("utf-8"))
+
 
 @pytest.mark.django_db
 def test_service_inbox_accept_request():
@@ -149,19 +199,13 @@ def test_service_inbox_accept_request():
         "object": follow,
     }
     msg_body = json.dumps(message)
-    request_target = 'post {}'.format(url)
-    host = "example.com"
-    date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %Z")
-    digester = hashlib.sha256()
-    digester.update(msg_body.encode('utf-8'))
-    digest = "SHA-256=" + base64.b64encode(digester.digest()).decode('utf-8')
-    signed_headers = f'(request-target): {request_target}\nhost: {host}\ndate: {date}\ndigest: {digest}'
 
     OutboxActivity.objects.create(body=follow)
     valid_private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
     )
+
     valid_public_key = valid_private_key.public_key()
     cache.set(
         "kronofoto:keyId:https://anotherinstance.com/activitypub/archive/asdf",
@@ -170,23 +214,21 @@ def test_service_inbox_accept_request():
         ),
         30,
     )
-    signature = valid_private_key.sign(
-        signed_headers.encode('utf-8'),
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH,
-        ),
-        hashes.SHA256()
+    headers = SignatureHeaders(
+        url=url,
+        msg_body=msg_body,
+        host="example.com",
+        keyId="https://anotherinstance.com/activitypub/archive/asdf"
     )
     resp = client.post(
         url,
         data=msg_body,
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": 'keyId="https://anotherinstance.com/activitypub/archive/asdf",headers="(request-target) host date digest",signature="{}"'.format(base64.b64encode(signature).decode("utf-8")),
-            "Host": host,
-            "Date": date,
-            "Digest": digest,
+            "Signature": headers.signature(valid_private_key),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
         },
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )
