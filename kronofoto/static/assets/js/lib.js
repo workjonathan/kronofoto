@@ -8,6 +8,7 @@ import "jquery-ui-pack"
 import Select2 from "select2"
 //Select2.default(window, $)
 import {Viewer} from "@photo-sphere-viewer/core"
+import {MarkersPlugin} from "@photo-sphere-viewer/markers-plugin"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 
@@ -474,6 +475,7 @@ class PhotoSpherePlugin {
                 container: elem2,
                 plugins: [
                     [ImagePlanePlugin, {photos: []}],
+                    MarkersPlugin,
                     [
                         VirtualTourPlugin,
                         {
@@ -493,6 +495,22 @@ class PhotoSpherePlugin {
             viewer
                 .getPlugin(VirtualTourPlugin)
                 .addEventListener("node-changed", ({node, data}) => {
+                    const markersPlugin = viewer.getPlugin(MarkersPlugin)
+                    markersPlugin.clearMarkers()
+                    for (const infobox of node.data.infoboxes) {
+                        markersPlugin.addMarker({
+                            id: `marker-${infobox.id}`,
+                            html: infobox.info,
+                            position: {yaw: infobox.yaw, pitch: infobox.pitch},
+                            style: {
+                                "background-color": "white",
+                                "color": "black",
+                                "width": `${infobox.width}px`,
+                                "height": "initial",
+                                "padding": "5px",
+                            }
+                        })
+                    }
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
                     const animate = Math.random() > 0.5
                     if (animate) {

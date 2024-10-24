@@ -1,6 +1,7 @@
 from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
+from fortepan_us.kronofoto.templatetags.widgets import markdown
 from fortepan_us.kronofoto.reverse import reverse
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -43,6 +44,14 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                     inclination=position.inclination,
                     distance=position.distance,
                 ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
+                "infoboxes": [{
+                    "id": info.id,
+                    "info": markdown(info.text),
+                    "yaw": info.yaw+(90-object.heading)/180*3.1416,
+                    "pitch": info.pitch,
+                    "width": info.width,
+
+                } for info in object.photosphereinfo_set.all()]
             },
         }
         return JsonResponse(node)
