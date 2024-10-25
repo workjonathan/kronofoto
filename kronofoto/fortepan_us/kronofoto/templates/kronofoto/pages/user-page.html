@@ -59,9 +59,9 @@
                         <div class="context-menu__items">
                             <ul>
                                 <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Share Link</a></li>
-                                <li><a href="{% krono_url "kronofoto:exhibit-embed" pk=exhibit.id %}">Embed FotoStory</a></li>
-                                <li><a href="#">View Published FotoStory</a></li>
+                                <li><a href="{{ exhibit.get_absolute_url }}">View</a></li>
+                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Share</a></li>
+                                <li><a href="{% krono_url "kronofoto:exhibit-embed" pk=exhibit.id %}">Embed</a></li>
                                 <li><a href="{% krono_url "kronofoto:exhibit-delete" pk=exhibit.pk %}">Delete</a></li>
                             </ul>
                         </div>

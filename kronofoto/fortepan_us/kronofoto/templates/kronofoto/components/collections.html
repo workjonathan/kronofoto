@@ -51,15 +51,15 @@
                                         hx-get="{% krono_url "kronofoto:collection-edit" pk=collection.id %}"
                                         hx-target="#app"
                                     >Edit</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share FotoAlbum</a></li>
-                                    <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed FotoAlbum</a></li>
-                                    <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Start a FotoStory</a></li>
-                                    <li><a href="{{ collection.get_absolute_url }}">View FotoAlbum</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}">View</a></li>
+                                    <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share</a></li>
+                                    <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed</a></li>
                                     <li><a
-                                        href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                            href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-target="#app"
-                                    >Delete FotoAlbum</a></li>
+                                        >Delete</a></li>
+                                    <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Use in a FotoStory</a></li>
                                 </ul>
                             </div>
                         </div>
