@@ -488,6 +488,17 @@ class PhotoSpherePlugin {
                                 const resp = await fetch(url.toString())
                                 return resp.json()
                             },
+                            preload: true,
+                            transitionOptions: (toNode, fromNode, fromLink) => ({
+                                showLoader: true,
+                                speed: "10rpm",
+                                fadeIn: true,
+                                rotation: true,
+                                rotateTo: {
+                                    yaw: `${90-toNode.data.photos[0].azimuth}deg`,
+                                    pitch: `${toNode.data.photos[0].inclination}deg`,
+                                },
+                            }),
                         },
                     ],
                 ],
@@ -511,6 +522,7 @@ class PhotoSpherePlugin {
                         })
                     }
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
+                    /*
                     const animate = Math.random() > 0.5
                     if (animate) {
                         viewer.animate({
@@ -525,6 +537,7 @@ class PhotoSpherePlugin {
                             pitch: `${node.data.photos[0].inclination}deg`,
                         })
                     }
+                    */
                     if (data.fromNode && node.id != data.fromNode.id) {
                         const form = elem2.closest("form")
                         const input = form.querySelector("[name='id']")
