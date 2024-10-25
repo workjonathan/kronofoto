@@ -145,16 +145,16 @@ body > form > header {
   position: sticky;
   top: 0px;
   background-color: #ffffff;
-  z-index: 101;
+  z-index: 1001;
 }
 
 body, #kfroot {
   container-type: inline-size;
 }
 
-.login-container {
-  width: 40px;
-  height: 40px;
+.login-container, .login-container i {
+  width: 40px !important;
+  height: 40px !important;
 }
 
 .foundation-mq {

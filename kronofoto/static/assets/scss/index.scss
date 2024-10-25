@@ -4,6 +4,7 @@
 @use 'components/header' as header;
 @use 'components/header-group' as header-group;
 @use 'components/messages' as messages;
+@use 'components/reveal' as reveal;
 @use 'components/section' as section;
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
@@ -63,6 +64,7 @@ body, #kfroot {
 @import 'components/hamburger';
 @include header.styles;
 @include messages.styles;
+@include reveal.styles;
 @import 'components/input';
 @import 'components/navigation';
 @import 'components/photo-menu-popup';

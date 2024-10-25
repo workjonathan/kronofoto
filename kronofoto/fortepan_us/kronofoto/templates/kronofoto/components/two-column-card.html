@@ -9,9 +9,9 @@
         {% with target_id=form.photo.auto_id photo=card.photo %}
         <div class="two-column__image"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ form.photo.html_name }}" }' hx-trigger="chage from:#{{ target_id }}"{% endif %}>
             {% if edit %}
+            {{ form.photo.errors }}
             <div class="two-column__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
             {% endif %}
-            {{ form.photo.errors }}
             {% include "kronofoto/components/two-column-image.html" %}
             <a class="two-column__info-button info-button info-button--top" href="#" target="_blank">
                 <span class="info-button__icon"></span>
