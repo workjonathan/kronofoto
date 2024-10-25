@@ -16,10 +16,13 @@ class InfoPositionField(forms.MultiValueField):
         return dict(yaw=data_list[0], pitch=data_list[1])
 
 class PhotoSphereInfoInlineForm(forms.ModelForm):
-    position = InfoPositionField(required=True)
+    position = InfoPositionField(required=True, help_text="Double click to place the info icon. You must click 'Save and Continue Editing' before the interactive editor can work on new info objects.")
     class Meta:
         models = PhotoSphereInfo
         fields = ['text']
+        help_texts = {
+            "text": "This field is markdown enabled. Please check the Basic Syntax portion of https://www.markdownguide.org/cheat-sheet/ to find out what can be done."
+        }
 
     def __init__(self, *args: Any, **kwargs: Any):
         if 'instance' in kwargs and kwargs['instance']:
@@ -38,6 +41,7 @@ class PhotoSphereInfoInlineForm(forms.ModelForm):
             position = self.fields['position'].widget
             position.attrs['photosphere'] = instance.photosphere.image.url
             position.attrs['info-text'] = instance.text
+            textbox = self.fields['position'].widget
         else:
             super().__init__(
                 *args,
