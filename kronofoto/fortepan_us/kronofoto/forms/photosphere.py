@@ -19,7 +19,7 @@ class PhotoSphereInfoInlineForm(forms.ModelForm):
     position = InfoPositionField(required=True)
     class Meta:
         models = PhotoSphereInfo
-        fields = ['text', 'width', 'height']
+        fields = ['text']
 
     def __init__(self, *args: Any, **kwargs: Any):
         if 'instance' in kwargs and kwargs['instance']:
@@ -38,7 +38,6 @@ class PhotoSphereInfoInlineForm(forms.ModelForm):
             position = self.fields['position'].widget
             position.attrs['photosphere'] = instance.photosphere.image.url
             position.attrs['info-text'] = instance.text
-            position.attrs['info-width'] = instance.width
         else:
             super().__init__(
                 *args,

@@ -101,7 +101,6 @@ class InfoPositionWidget(MultiWidget):
             self.template_name = 'kronofoto/widgets/info-position-widget.html'
             context['sphere_image'] = self.attrs['photosphere']
             context['info_text'] = self.attrs['info-text']
-            context['info_width'] = self.attrs['info-width']
             context['id'] = attrs['id']
             context['sphere_width'] = self.sphere_width
             context['sphere_height'] = self.sphere_height

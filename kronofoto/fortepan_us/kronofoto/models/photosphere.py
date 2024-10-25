@@ -94,9 +94,6 @@ class PhotoSphereInfo(models.Model):
     text = models.TextField(blank=False, null=False)
     yaw = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-180), MaxValueValidator(limit_value=180)])
     pitch = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-90), MaxValueValidator(limit_value=90)])
-    width = models.IntegerField(default=100)
-    height = models.IntegerField(default=30)
-
 
 class PhotoSpherePair(models.Model):
     photo = models.ForeignKey("Photo", on_delete=models.CASCADE, help_text="Select a photo then click Save and Continue Editing to use the interactive tool")

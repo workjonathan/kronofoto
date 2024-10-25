@@ -488,7 +488,7 @@ class PhotoInfoInline(admin.StackedInline):
     model = PhotoSphereInfo
     extra = 0
     form = PhotoSphereInfoInlineForm
-    fields = ['text', 'position', 'width', 'height']
+    fields = ['text', 'position']
 
 class PhotoInline(admin.StackedInline):
     model = PhotoSpherePair

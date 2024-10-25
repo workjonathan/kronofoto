@@ -5,12 +5,6 @@
   #{{ id }}_sphere { width: {{ sphere_width }}px; height: {{ sphere_height }}px; }
   #{{ id }}_admin_sphere { position: relative; float: left; }
   #{{ id }}_gui { position: absolute; right: 0; z-index: 10;}
-  .marker-style {
-    background-color: white;
-    text: black;
-    height: initial;
-    width: {{ info_width }}px;
-  }
 {% for subwidget in widget.subwidgets %}
   #{{subwidget.attrs.id}} { display: none }
 {% endfor %}
@@ -31,8 +25,8 @@ const viewer = new Viewer({
             markers: [{
                 id: `marker-{{id}}`,
                 position: { yaw: yaw.value, pitch: pitch.value},
-                html: "{{ info_text | markdown | escapejs }}",
-                className: "marker-style",
+                size: { height: 32, width: 32 },
+                image: "{% static "kronofoto/images/info-icon.png" %}",
             }]
         }],
     ],

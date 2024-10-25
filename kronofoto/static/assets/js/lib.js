@@ -492,6 +492,10 @@ class PhotoSpherePlugin {
                     ],
                 ],
             })
+            const markersPlugin = viewer.getPlugin(MarkersPlugin)
+            markersPlugin.addEventListener("select-marker", ({marker}) => {
+                elem2.dispatchEvent(new CustomEvent("kronofoto-select-photosphere-marker", {detail: marker.data, bubbles: true}))
+            })
             viewer
                 .getPlugin(VirtualTourPlugin)
                 .addEventListener("node-changed", ({node, data}) => {
@@ -500,15 +504,10 @@ class PhotoSpherePlugin {
                     for (const infobox of node.data.infoboxes) {
                         markersPlugin.addMarker({
                             id: `marker-${infobox.id}`,
-                            html: infobox.info,
+                            data: {id: infobox.id},
+                            image: infobox.image,
                             position: {yaw: infobox.yaw, pitch: infobox.pitch},
-                            style: {
-                                "background-color": "white",
-                                "color": "black",
-                                "width": `${infobox.width}px`,
-                                "height": "initial",
-                                "padding": "5px",
-                            }
+                            size: {width: 32, height: 32},
                         })
                     }
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)

@@ -6,17 +6,31 @@ from fortepan_us.kronofoto.reverse import reverse
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
-from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet
+from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from typing import Any, Dict
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
 from django import forms
 from .base import ArchiveRequest
+from django.templatetags.static import static
 
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
 
+def info_text(request: HttpRequest) -> HttpResponse:
+    query = DataParams(request.GET)
+    if query.is_valid():
+        object = get_object_or_404(PhotoSphereInfo.objects.all(), pk=query.cleaned_data['id'])
+        return TemplateResponse(
+            template="kronofoto/components/mainstreet-info.html",
+            context={
+                "info": object,
+            },
+            request=request,
+        )
+    else:
+        return HttpResponse(status_code=400)
 
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
@@ -46,11 +60,9 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                 ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
                 "infoboxes": [{
                     "id": info.id,
-                    "info": markdown(info.text),
                     "yaw": info.yaw+(90-object.heading)/180*3.1416,
                     "pitch": info.pitch,
-                    "width": info.width,
-
+                    "image": static("kronofoto/images/info-icon.png"),
                 } for info in object.photosphereinfo_set.all()]
             },
         }
@@ -73,6 +85,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         archiverequest = PhotoSphereRequest(request)
         context = archiverequest.common_context
         context['object'] = object
+        context['hx_request'] = archiverequest.is_hx_request
 
         return TemplateResponse(request, "kronofoto/pages/mainstreetview.html", context=context)
     else:

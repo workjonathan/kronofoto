@@ -11,6 +11,7 @@ from fortepan_us.kronofoto.views.submission import submission, KronofotoTemplate
 from fortepan_us.kronofoto.views.tagsearch import ContributorSearchView
 from fortepan_us.kronofoto.views.donor import ContributorCreateView
 from fortepan_us.kronofoto.views import tags_view
+from fortepan_us.kronofoto.views import photosphere
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -109,6 +110,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     ])),
     path('mainstreet360', views.photosphere_view, name="mainstreetview"),
     path('mainstreet360/json', views.photosphere_data, name="mainstreetview.json"),
+    path('mainstreet360/infobox', photosphere.info_text, name="mainstreet-info"),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
     path('autocomplete/contributors/select2', views.contributor_search, name='contributor-search2'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
