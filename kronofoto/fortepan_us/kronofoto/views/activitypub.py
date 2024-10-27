@@ -18,64 +18,9 @@ from typing import Any, ClassVar
 import base64
 import hashlib
 from datetime import datetime, timezone, timedelta
-
-@dataclass
-class SignatureHeaders:
-    url: str
-    msg_body: str
-    host: str
-    date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    verb: str = "post"
-    date_format_str: ClassVar[str] = "%a, %d %b %Y %H:%M:%S %Z"
+from fortepan_us.kronofoto.middleware import SignatureHeaders, decode_signature, decode_signature_headers
 
 
-    @property
-    def request_target(self) -> str:
-        return f'{self.verb} {self.url}'
-
-    @property
-    def date_format(self) -> str:
-        return self.date.strftime(self.date_format_str)
-
-    @property
-    def digest(self) -> str:
-        digester = hashlib.sha256()
-        digester.update(self.msg_body.encode('utf-8'))
-        digest = base64.b64encode(digester.digest()).decode("utf-8")
-        return f'SHA-256={digest}'
-
-    @property
-    def signed_headers(self) -> str:
-        return "\n".join(
-            f"{part}: {part_body}"
-            for (part, part_body) in [
-                ("(request-target)", self.request_target),
-                ("host", self.host),
-                ("date", self.date_format),
-                ("digest", self.digest),
-            ]
-        )
-
-    def signature(self, *, private_key: Any, keyId: str) -> str:
-        signed_headers = self.signed_headers
-        signature = private_key.sign(
-            signed_headers.encode('utf-8'),
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH,
-            ),
-            hashes.SHA256()
-        )
-        return 'keyId="{}",headers="(request-target) host date digest",signature="{}"'.format(keyId, base64.b64encode(signature).decode("utf-8"))
-
-def decode_signature(signature: str) -> Dict[str, str]:
-    quoted_string = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
-    key = parsy.regex(r'[^=]*')
-    pair = parsy.seq(key << parsy.string("="), quoted_string)
-    return dict(pair.sep_by(parsy.string(",")).parse(signature))
-
-def decode_signature_headers(signature_headers: str) -> List[str]:
-    return parsy.regex('[^ ]*').sep_by(parsy.whitespace).parse(signature_headers)
 
 
 def JsonLDResponse(*args: Any, **kwargs: Any) -> JsonResponse:
@@ -108,64 +53,17 @@ def service(request: HttpRequest) -> HttpResponse:
 
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
+    if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
+        return HttpResponse(status=401)
     if request.method == "POST":
-        signature_parts = decode_signature(request.headers.get("Signature", ""))
-        if any(key not in signature_parts for key in ["signature", "headers", "keyId"]):
-            return HttpResponse(status=401)
-        signature_headers = []
-        for header in decode_signature_headers(signature_parts['headers']):
-            if header == "(request-target)":
-                signature_headers.append("(request-target): {} {}".format(request.method.lower(), request.path))
-            else:
-                signature_headers.append("{}: {}".format(header, request.headers.get(header)))
-        body = request.body.decode("utf-8")
-        if 'date' not in request.headers:
-            return HttpResponse(status=401)
-        request_date = datetime.strptime(request.headers['date'], SignatureHeaders.date_format_str).replace(tzinfo=timezone.utc)
-        if abs(request_date - datetime.now(timezone.utc)) > timedelta(minutes=10):
-            return HttpResponse(status=401)
-        headers = SignatureHeaders(
-            url=request.path,
-            msg_body=body,
-            host=request.headers.get('host', ""),
-            date=request_date,
-        )
-        if headers.digest != request.headers.get("Digest", ""):
-            return HttpResponse(status=401)
-        data = json.loads(body)
-        actor, _ = RemoteActor.objects.get_or_create(profile=data['actor'])
-        pubkey_str = actor.public_key()
-        if not pubkey_str:
-            return HttpResponse(status=401)
-
-        public_key = load_pem_public_key(pubkey_str)
-        assert isinstance(public_key, RSAPublicKey)
-        try:
-            public_key.verify(
-                base64.b64decode(signature_parts['signature']),
-                '\n'.join(signature_headers).encode("utf-8"),
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
-                ),
-                hashes.SHA256(),
-            )
-        except InvalidSignature:
-            return HttpResponse(status=401)
+        data = json.loads(request.body)
         if data['type'] == "Accept":
             for activity in OutboxActivity.objects.filter(
                 body__id=data['object']['id'],
                 body__type="Follow",
                 body__actor=data['object']['actor'],
             ):
-                actor, created = RemoteActor.objects.get_or_create(
-                    profile=data['actor'],
-                    defaults={
-                        "actor_follows_app": False,
-                        "app_follows_actor": False,
-                    }
-                )
-                RemoteArchive.objects.get_or_create(actor=actor)
+                RemoteArchive.objects.get_or_create(actor=request.actor)
                 return JsonLDResponse({})
         return JsonLDResponse({})
     return HttpResponse(status=401)

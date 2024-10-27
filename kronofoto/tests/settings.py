@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'fortepan_us.kronofoto.middleware.ActorAuthenticationMiddleware',
 ]
 LOCAL_CONTEXTS = 'https://anth-ja77-lc-dev-42d5.uc.r.appspot.com/api/v1/'
 CACHES = {
