@@ -1,7 +1,7 @@
 import pytest
 from django.test import Client, RequestFactory
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity, RemoteArchive
-from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers
+from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders
 import json
 from django.core.cache import cache
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -27,7 +27,7 @@ def test_decode_signature_headers():
     ]
 
 @pytest.mark.django_db
-def test_validates_request():
+def test_signature_requires_correct_key_pair():
     client = Client()
     url = "/kf/activitypub/service/inbox"
     message = {
@@ -53,13 +53,154 @@ def test_validates_request():
         public_exponent=65537,
         key_size=2048,
     )
+    body = json.dumps(message)
+    headers = SignatureHeaders(
+        url=url,
+        msg_body=body,
+        host="example.com",
+    )
 
     resp = client.post(
         url,
-        data=json.dumps(message),
+        data=body,
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": 'keyId="a",headers="a",signature="{}"'.format(base64.b64encode(b'a')),
+            "Signature": headers.signature(private_key=invalid_private_key, keyId="https://anotherinstance.com/activitypub/service"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
+        },
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+    )
+    assert resp.status_code == 401
+
+@pytest.mark.django_db
+def test_signature_requires_correct_url_path():
+    client = Client()
+    url = "/kf/activitypub/service/inbox"
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Follow",
+        "actor": "https://anotherinstance.com/kf/activitypub/service",
+        "object": "https://example.com/kf/activitypub/archives/asdf",
+    }
+    valid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    valid_public_key = valid_private_key.public_key()
+    cache.set(
+        "kronofoto:keyId:https://anotherinstance.com/kf/activitypub/service",
+        valid_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ),
+    )
+
+    body = json.dumps(message)
+    headers = SignatureHeaders(
+        url="/some/other/path",
+        msg_body=body,
+        host="example.com",
+    )
+
+    resp = client.post(
+        url,
+        data=body,
+        headers={
+            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/service"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
+        },
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+    )
+    assert resp.status_code == 401
+@pytest.mark.django_db
+def test_signature_requires_recent_date():
+    client = Client()
+    url = "/kf/activitypub/service/inbox"
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Follow",
+        "actor": "https://anotherinstance.com/kf/activitypub/service",
+        "object": "https://example.com/kf/activitypub/archives/asdf",
+    }
+    valid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    valid_public_key = valid_private_key.public_key()
+    cache.set(
+        "kronofoto:keyId:https://anotherinstance.com/kf/activitypub/service",
+        valid_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ),
+    )
+
+    body = json.dumps(message)
+    headers = SignatureHeaders(
+        url=url,
+        msg_body=body,
+        host="example.com",
+        date=datetime(2024, 2, 1, 1, 1, 1, tzinfo=timezone.utc)
+    )
+
+    resp = client.post(
+        url,
+        data=body,
+        headers={
+            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/service"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
+        },
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+    )
+    assert resp.status_code == 401
+
+@pytest.mark.django_db
+def test_signature_requires_correct_digest():
+    client = Client()
+    url = "/kf/activitypub/service/inbox"
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Follow",
+        "actor": "https://anotherinstance.com/kf/activitypub/service",
+        "object": "https://example.com/kf/activitypub/archives/asdf",
+    }
+    valid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    valid_public_key = valid_private_key.public_key()
+    cache.set(
+        "kronofoto:keyId:https://anotherinstance.com/kf/activitypub/service",
+        valid_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ),
+    )
+
+    body = json.dumps(message)
+    headers = SignatureHeaders(
+        url=url,
+        msg_body="{}",
+        host="example.com",
+    )
+
+    resp = client.post(
+        url,
+        data=body,
+        headers={
+            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/service"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
         },
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )
@@ -129,56 +270,6 @@ def test_archive_inbox_follow_request():
     assert FollowArchiveRequest.objects.exists()
     assert FollowArchiveRequest.objects.all()[0].request_body['id'] == 'https://anotherinstance.com/123'
 
-from dataclasses import dataclass, field
-from typing import Any
-
-@dataclass
-class SignatureHeaders:
-    url: str
-    msg_body: str
-    host: str
-    keyId: str
-    date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    verb: str = "post"
-
-    @property
-    def request_target(self) -> str:
-        return f'{self.verb} {self.url}'
-
-    @property
-    def date_format(self) -> str:
-        return self.date.strftime("%a, %d %b %Y %H:%M:%S %Z")
-
-    @property
-    def digest(self) -> str:
-        digester = hashlib.sha256()
-        digester.update(self.msg_body.encode('utf-8'))
-        digest = base64.b64encode(digester.digest()).decode("utf-8")
-        return f'SHA-256={digest}'
-
-    @property
-    def signed_headers(self) -> str:
-        return "\n".join(
-            f"{part}: {part_body}"
-            for (part, part_body) in [
-                ("(request-target)", self.request_target),
-                ("host", self.host),
-                ("date", self.date_format),
-                ("digest", self.digest),
-            ]
-        )
-    def signature(self, private_key: Any) -> str:
-        signed_headers = self.signed_headers
-        signature = private_key.sign(
-            signed_headers.encode('utf-8'),
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH,
-            ),
-            hashes.SHA256()
-        )
-        return 'keyId="{}",headers="(request-target) host date digest",signature="{}"'.format(self.keyId, base64.b64encode(signature).decode("utf-8"))
-
 
 @pytest.mark.django_db
 def test_service_inbox_accept_request():
@@ -218,14 +309,13 @@ def test_service_inbox_accept_request():
         url=url,
         msg_body=msg_body,
         host="example.com",
-        keyId="https://anotherinstance.com/activitypub/archive/asdf"
     )
     resp = client.post(
         url,
         data=msg_body,
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": headers.signature(valid_private_key),
+            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/archive/asdf"),
             "Host": headers.host,
             "Date": headers.date_format,
             "Digest": headers.digest,

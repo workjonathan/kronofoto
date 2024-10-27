@@ -13,6 +13,60 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 import base64
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+import base64
+import hashlib
+from datetime import datetime, timezone, timedelta
+
+@dataclass
+class SignatureHeaders:
+    url: str
+    msg_body: str
+    host: str
+    date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    verb: str = "post"
+    date_format_str: ClassVar[str] = "%a, %d %b %Y %H:%M:%S %Z"
+
+
+    @property
+    def request_target(self) -> str:
+        return f'{self.verb} {self.url}'
+
+    @property
+    def date_format(self) -> str:
+        return self.date.strftime(self.date_format_str)
+
+    @property
+    def digest(self) -> str:
+        digester = hashlib.sha256()
+        digester.update(self.msg_body.encode('utf-8'))
+        digest = base64.b64encode(digester.digest()).decode("utf-8")
+        return f'SHA-256={digest}'
+
+    @property
+    def signed_headers(self) -> str:
+        return "\n".join(
+            f"{part}: {part_body}"
+            for (part, part_body) in [
+                ("(request-target)", self.request_target),
+                ("host", self.host),
+                ("date", self.date_format),
+                ("digest", self.digest),
+            ]
+        )
+
+    def signature(self, *, private_key: Any, keyId: str) -> str:
+        signed_headers = self.signed_headers
+        signature = private_key.sign(
+            signed_headers.encode('utf-8'),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256()
+        )
+        return 'keyId="{}",headers="(request-target) host date digest",signature="{}"'.format(keyId, base64.b64encode(signature).decode("utf-8"))
 
 def decode_signature(signature: str) -> Dict[str, str]:
     quoted_string = parsy.string('"') >> parsy.regex(r'[^"]*') << parsy.string('"')
@@ -64,7 +118,21 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 signature_headers.append("(request-target): {} {}".format(request.method.lower(), request.path))
             else:
                 signature_headers.append("{}: {}".format(header, request.headers.get(header)))
-        data = json.loads(request.body.decode("utf-8"))
+        body = request.body.decode("utf-8")
+        if 'date' not in request.headers:
+            return HttpResponse(status=401)
+        request_date = datetime.strptime(request.headers['date'], SignatureHeaders.date_format_str).replace(tzinfo=timezone.utc)
+        if abs(request_date - datetime.now(timezone.utc)) > timedelta(minutes=10):
+            return HttpResponse(status=401)
+        headers = SignatureHeaders(
+            url=request.path,
+            msg_body=body,
+            host=request.headers.get('host', ""),
+            date=request_date,
+        )
+        if headers.digest != request.headers.get("Digest", ""):
+            return HttpResponse(status=401)
+        data = json.loads(body)
         actor, _ = RemoteActor.objects.get_or_create(profile=data['actor'])
         pubkey_str = actor.public_key()
         if not pubkey_str:
@@ -84,20 +152,22 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
             )
         except InvalidSignature:
             return HttpResponse(status=401)
-        for activity in OutboxActivity.objects.filter(
-            body__id=data['object']['id'],
-            body__type="Follow",
-            body__actor=data['object']['actor'],
-        ):
-            actor, created = RemoteActor.objects.get_or_create(
-                profile=data['actor'],
-                defaults={
-                    "actor_follows_app": False,
-                    "app_follows_actor": False,
-                }
-            )
-            RemoteArchive.objects.get_or_create(actor=actor)
-            return JsonLDResponse({})
+        if data['type'] == "Accept":
+            for activity in OutboxActivity.objects.filter(
+                body__id=data['object']['id'],
+                body__type="Follow",
+                body__actor=data['object']['actor'],
+            ):
+                actor, created = RemoteActor.objects.get_or_create(
+                    profile=data['actor'],
+                    defaults={
+                        "actor_follows_app": False,
+                        "app_follows_actor": False,
+                    }
+                )
+                RemoteArchive.objects.get_or_create(actor=actor)
+                return JsonLDResponse({})
+        return JsonLDResponse({})
     return HttpResponse(status=401)
 
 @require_json_ld
