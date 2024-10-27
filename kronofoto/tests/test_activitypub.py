@@ -250,18 +250,41 @@ def test_archive_actor_profile():
 def test_archive_inbox_follow_request():
     client = Client()
     Archive.objects.create(slug="asdf")
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Follow",
+        "actor": "https://anotherinstance.com/kf/activitypub/service",
+        "object": "https://example.com/kf/activitypub/archives/asdf",
+    }
     url = "/kf/activitypub/archives/asdf/inbox"
+    valid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    valid_public_key = valid_private_key.public_key()
+    cache.set(
+        "kronofoto:keyId:https://anotherinstance.com/kf/activitypub/service",
+        valid_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ),
+        30,
+    )
+    msg_body = json.dumps(message)
+    headers = SignatureHeaders(
+        url=url,
+        msg_body=msg_body,
+        host="example.com",
+    )
     resp = client.post(
         url,
-        data=json.dumps({
-            "@context": "https://www.w3.org/ns/activitystreams",
-            "id": "https://anotherinstance.com/123",
-            "type": "Follow",
-            "actor": "https://anotherinstance.com/kf/activitypub/service",
-            "object": "https://example.com/kf/activitypub/archives/asdf",
-        }),
+        data=msg_body,
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/archive/asdf"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
         },
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )

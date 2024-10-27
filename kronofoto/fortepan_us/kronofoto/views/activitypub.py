@@ -86,6 +86,8 @@ def archive_profile(request: HttpRequest, short_name: str) -> HttpResponse:
 
 @require_json_ld
 def archive_inbox(request: HttpRequest, short_name: str) -> HttpResponse:
+    if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
+        return HttpResponse(status=401)
     archive = get_object_or_404(Archive.objects.all(), slug=short_name)
     if request.method == "POST":
         data = json.loads(request.body.decode("utf-8"))
