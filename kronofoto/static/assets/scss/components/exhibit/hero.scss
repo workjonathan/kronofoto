@@ -2,6 +2,7 @@
 @use '../../typography' as *;
 
 .hero {
+  z-index: 1000;
   background-color: $primary-color;
   color: white;
   text-align: center;
