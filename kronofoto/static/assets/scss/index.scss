@@ -86,6 +86,7 @@ body, #kfroot {
 @import 'foundation-sites/scss/prototype/prototype';
 @import 'foundation-sites/scss/components/flex';
 
+@include foundation-prototype-spacing;
 @include foundation-switch;
 @include foundation-tooltip;
 @include foundation-callout;
