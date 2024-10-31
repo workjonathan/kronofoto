@@ -3,7 +3,7 @@
         <div class="content-area__content">
             <h2>Credits</h2>
             {{ form.credits.errors }}
-            {% if form or exhibit.credits %}<span contenteditable="true" role="textbox" data-target="{{ form.credits.auto_id }}">{{ exhibit.credits }}</span>{% endif %}
+            {% if form or exhibit.credits %}<span contenteditable="plaintext-only" role="textbox" data-target="{{ form.credits.auto_id }}">{{ exhibit.credits }}</span>{% endif %}
             <br/>
             <small>Exhibit created with FotoStory, a <a href="https://fortepan.us/" target="_blank">Fortepan.us</a> tool</small>
         </div>
