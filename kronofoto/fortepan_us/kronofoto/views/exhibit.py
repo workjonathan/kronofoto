@@ -174,7 +174,7 @@ def exhibit_two_column_image(request: HttpRequest, pk: int) -> HttpResponse:
             "exhibit": exhibit,
             "html_name": html_name
         }
-        return TemplateResponse(request=request, context=context, template="kronofoto/components/two-column-image.html", headers={"Hx-Trigger": "remove-empty"})
+        return TemplateResponse(request=request, context=context, template="kronofoto/components/two-column-image.html", headers={"Hx-Trigger": json.dumps({'remove-empty': {}})})
     except ValueError:
         return HttpResponse("", status=400)
 
