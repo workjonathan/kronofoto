@@ -220,6 +220,7 @@ def test_service_has_valid_response():
         headers={
             'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
         },
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     )
     assert resp.status_code == 200
     assert resp.headers['Content-Type'] == 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'

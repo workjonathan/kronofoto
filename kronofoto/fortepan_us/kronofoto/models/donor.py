@@ -4,10 +4,13 @@ from django_stubs_ext import WithAnnotations
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
+from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
-from typing import final, Any, Type, List
+from typing import final, Any, Type, List, Dict
+
+activity_stream_context = "https://www.w3.org/ns/activitystreams"
 
 class DonorQuerySet(models.QuerySet):
     def annotate_photographedcount(self) -> Self:
@@ -53,6 +56,16 @@ class Donor(Collectible, models.Model):
         )
         db_table = 'kronofoto_donor'
 
+    @property
+    def activity_dict(self) -> Dict[str, Any]:
+        return {
+            "@context": activity_stream_context,
+            "id": reverse("kronofoto:activitypub-data", kwargs={"type": "contributor", "pk": self.id}),
+            "type": "Person",
+            "name": self.display_format(),
+            "firstName": self.first_name,
+            "lastName": self.last_name,
+        }
 
     def display_format(self) -> str:
         return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name

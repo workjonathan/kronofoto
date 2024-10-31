@@ -3,7 +3,7 @@ from typing import Any, Protocol, Dict, List
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse
 from django.shortcuts import get_object_or_404
-from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive
+from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive, Donor
 import json
 import parsy # type: ignore
 from django.core.cache import cache
@@ -20,13 +20,12 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from fortepan_us.kronofoto.middleware import SignatureHeaders, decode_signature, decode_signature_headers
 
-
-
-
 def JsonLDResponse(*args: Any, **kwargs: Any) -> JsonResponse:
     resp = JsonResponse(*args, **kwargs)
     resp['Content-Type'] = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     return resp
+
+
 
 class ViewFunction(Protocol):
     def __call__(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -38,6 +37,19 @@ def require_json_ld(func: ViewFunction) -> ViewFunction:
             return HttpResponse(status=406)
         return func(request, *args, **kwargs)
     return wrapped
+
+def get_donor_data(*, pk: int) -> Dict[str, Any]:
+    donor : Donor = get_object_or_404(Donor.objects.all(), pk=pk)
+    return donor.activity_dict
+
+@require_json_ld
+def get_data(request:HttpRequest, type: str, pk: int) -> HttpResponse:
+    if type == "contributor":
+        object_data = get_donor_data(pk=pk)
+    else:
+        return HttpResponse(status=404)
+
+    return JsonLDResponse(object_data)
 
 @require_json_ld
 def service(request: HttpRequest) -> HttpResponse:

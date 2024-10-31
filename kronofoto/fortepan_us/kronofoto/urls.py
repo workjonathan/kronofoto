@@ -124,6 +124,7 @@ urlpatterns = urlpatterns + [
     path('activitypub/archives/<slug:short_name>', views.activitypub.archive_profile, name="activitypub-archive"),
     path('activitypub/archives/<slug:short_name>/inbox', views.activitypub.archive_inbox, name="activitypub-archive-inbox"),
     path('activitypub/archives/<slug:short_name>/outbox', views.activitypub.archive_outbox, name="activitypub-archive-outbox"),
+    path('activitypub/data/<str:type>/<int:pk>', views.activitypub.get_data, name="activitypub-data"),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="kronofoto/pages/contributor-created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement"),
