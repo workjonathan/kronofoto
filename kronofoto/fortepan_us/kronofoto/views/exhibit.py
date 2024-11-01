@@ -193,7 +193,7 @@ def exhibit_figure_image(request: HttpRequest, pk: int) -> HttpResponse:
             "exhibit": exhibit,
             "html_name": html_name
         }
-        return TemplateResponse(request=request, context=context, template="kronofoto/components/figure-image.html", headers={"Hx-Trigger": "remove-empty"})
+        return TemplateResponse(request=request, context=context, template="kronofoto/components/figure-image.html", headers={"Hx-Trigger": json.dumps({"remove-empty": {}})})
     except ValueError:
         return HttpResponse("", status=400)
 
@@ -210,7 +210,7 @@ def exhibit_full_image(request: HttpRequest) -> HttpResponse:
             request=request,
             context=context,
             template="kronofoto/components/full-image.html",
-            headers={"Hx-Trigger": "remove-empty"},
+            headers={"Hx-Trigger": json.dumps({"remove-empty": {}})},
         )
     except ValueError:
         return HttpResponse("", status=400)
