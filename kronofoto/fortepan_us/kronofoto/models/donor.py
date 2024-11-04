@@ -10,7 +10,6 @@ from .archive import Archive
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict
 
-activity_stream_context = "https://www.w3.org/ns/activitystreams"
 
 class DonorQuerySet(models.QuerySet):
     def annotate_photographedcount(self) -> Self:
@@ -59,9 +58,9 @@ class Donor(Collectible, models.Model):
     @property
     def activity_dict(self) -> Dict[str, Any]:
         return {
-            "@context": activity_stream_context,
-            "id": reverse("kronofoto:activitypub-data", kwargs={"type": "contributor", "pk": self.id}),
+            "id": reverse("kronofoto:activitypub-donor", kwargs={"short_name": self.archive.slug, "pk": self.id}),
             "type": "Person",
+            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": self.archive.slug})],
             "name": self.display_format(),
             "firstName": self.first_name,
             "lastName": self.last_name,

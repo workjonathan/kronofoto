@@ -45,6 +45,7 @@ dependencies = [
     "djangocms-picture==4.1.*",
     "djangocms-text-ckeditor==5.1.*",
     "cryptography",
+    "marshmallow",
 ]
 [project.optional-dependencies]
 postgres = [

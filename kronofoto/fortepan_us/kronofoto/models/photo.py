@@ -337,6 +337,15 @@ class Photo(PhotoBase):
             models.Index(fields=['category', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_archive_pyear_id_sort"),
         )
 
+    @property
+    def activity_dict(self) -> Dict[str, Any]:
+        return {
+            "id": reverse("kronofoto:activitypub-photo", kwargs={"short_name": self.archive.slug, "pk": self.id}),
+            "type": "Image",
+            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": self.archive.slug})],
+            "content": self.caption,
+            "url": self.original.url,
+        }
     def page_number(self) -> Dict[str, Optional[int]]:
         return {'year:gte': self.year, 'id:gt': self.id-1}
 
