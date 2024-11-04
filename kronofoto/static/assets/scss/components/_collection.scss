@@ -13,20 +13,21 @@
     }
     &.collection--2 {
       @include breakpoint(medium up) {
-        columns: 2;
+        grid-template-columns: repeat(2, 1fr);
         column-gap: 20px;
       }
       @include breakpoint(large up) {
-        columns: 2;
+        grid-template-columns: repeat(2, 1fr);
         column-gap: 30px;
       }
     }
     &.collection--3 {
       @include breakpoint(medium up) {
-        columns: 2;
+        grid-template-columns: repeat(2, 1fr);
         column-gap: 20px;
       }
       @include breakpoint(large up) {
+        grid-template-columns: repeat(3, 1fr);
         columns: 3;
         column-gap: 52px;
       }

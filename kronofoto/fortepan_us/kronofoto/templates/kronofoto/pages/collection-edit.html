@@ -24,7 +24,7 @@
                         {% csrf_token %}
                         <h2
                             class="header-group__header"
-                            contenteditable="true"
+                            contenteditable="plaintext-only"
                             hx-post="{% krono_url "kronofoto:collection-name" pk=collection.pk %}"
                             hx-swap="none"
                             hx-trigger="keyup delay:500ms"

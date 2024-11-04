@@ -315,11 +315,18 @@ $font-weight-thin: 100;
   }
 }
 
-[contenteditable][role=textbox]:not(:focus):empty {
-  color: #BBBBBB;
-  user-select: none;
-  &:before {
+[contenteditable][role=textbox]:not(:focus) {
+  > br:only-child:before {
+    color: #BBBBBB;
     content: "Click to change text";
     user-select: none;
+  }
+  &:empty {
+    color: #BBBBBB;
+    user-select: none;
+    &:before {
+      content: "Click to change text";
+      user-select: none;
+    }
   }
 }

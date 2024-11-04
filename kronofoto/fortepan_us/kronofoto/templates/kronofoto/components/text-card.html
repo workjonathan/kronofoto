@@ -8,9 +8,9 @@
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}
             {{ form.title.errors }}
-            <h2 contenteditable="true" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+            <h2 contenteditable="plaintext-only" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
             {{ form.description.errors }}
-            <span contenteditable="true" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            <span contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
             {% if card.description %}<span>{{ card.description }}</span>{% endif %}
