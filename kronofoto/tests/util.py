@@ -79,7 +79,13 @@ def a_category():
 
 @pytest.fixture
 def an_archive():
-    return Archive.objects.create()
+    return Archive.objects.create(slug="aslug")
+
+@pytest.fixture
+def a_donor(an_archive):
+    return Donor.objects.create(
+        archive=an_archive,
+    )
 
 @pytest.fixture
 def a_photo(a_category, an_archive):

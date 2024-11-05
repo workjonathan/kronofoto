@@ -1,7 +1,9 @@
 import pytest
-from django.test import Client, RequestFactory
+from django.test import Client, RequestFactory, override_settings
+from hypothesis import given, strategies as st, note
+from hypothesis.extra.django import TestCase
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity, RemoteArchive
-from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders
+from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders, Contact, Image
 import json
 from django.core.cache import cache
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -11,6 +13,8 @@ from cryptography.hazmat.primitives import hashes
 from datetime import datetime, timezone
 import base64
 import hashlib
+from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_donor
+from django.contrib.sites.models import Site
 
 def test_decode_signature():
     signature = 'keyId="https://my-example.com/actor#main-key",headers="(request-target) host date digest",signature="asdf"'
@@ -25,6 +29,31 @@ def test_decode_signature_headers():
     assert decode_signature_headers(signature_headers) == [
         "(request-target)", "host", "date", "digest"
     ]
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
+def test_donor_api(a_donor):
+    client = Client()
+    url = "/kf/activitypub/archives/{}/contributors/{}".format(a_donor.archive.slug, a_donor.id)
+    resp = client.get(url)
+    assert resp.status_code == 200
+    donor = Contact().load(resp.json())
+    assert a_donor.id == donor.id
+    assert a_donor.first_name == donor.first_name
+    assert a_donor.last_name == donor.last_name
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
+def test_photo_api(a_photo):
+    a_photo.caption = "a caption"
+    a_photo.save()
+    client = Client()
+    url = "/kf/activitypub/archives/{}/photos/{}".format(a_photo.archive.slug, a_photo.id)
+    resp = client.get(url)
+    assert resp.status_code == 200
+    Site.objects.all().update(domain='example2.net')
+    photo = Image().load(resp.json())
+    assert photo.caption == a_photo.caption
 
 @pytest.mark.django_db
 def test_signature_requires_correct_key_pair():

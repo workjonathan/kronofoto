@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpRequest, JsonResponse
-from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol
+from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union
 from functools import cached_property
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse, resolve
@@ -240,16 +240,6 @@ class register2:
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load
 from django.contrib.sites.models import Site
 
-class PageItem(fields.Field):
-    def _serialize(self, value, attr, obj, **kwargs):
-        if isinstance(value, Donor):
-            return Contact().dump(value)
-        else:
-            return Image().dump(value)
-    def _deserialize(self, obj, *args, **kwargs):
-        if obj['type'] == "Contact":
-            return Contact().load(obj)
-        return Image().load(obj)
 
 class Image(Schema):
     id = fields.Url()
@@ -268,11 +258,13 @@ class Image(Schema):
         }
 
     @post_load
-    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Donor:
+    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Photo:
         resolved = resolve(data['id'])
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
             return Photo.objects.get(pk=resolved.match.kwargs['pk'])
-        return Photo()
+        return Photo(
+            caption=data['content'],
+        )
 
 class Contact(Schema):
     id = fields.Url()
@@ -298,6 +290,17 @@ class Contact(Schema):
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
             return Donor.objects.get(pk=resolved.match.kwargs['pk'])
         return Donor()
+
+class PageItem(fields.Field):
+    def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
+        if isinstance(value, Donor):
+            return Contact().dump(value)
+        else:
+            return Image().dump(value)
+    def _deserialize(self, value: Dict[str, Any], *args: Any, **kwargs: Any) -> Union[Contact, Image]:
+        if value['type'] == "Contact":
+            return Contact().load(value)
+        return Image().load(value)
 
 
 class CollectionPage(Schema):
@@ -342,7 +345,7 @@ class ArchiveActor:
             form = Page(request.GET)
             if form.is_valid():
                 queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
-                schema = CollectionPage()
+                schema : Union[CollectionPage, PagedCollection] = CollectionPage()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:contributors:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
@@ -370,7 +373,7 @@ class ArchiveActor:
             form = Page(request.GET)
             if form.is_valid():
                 queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
-                schema = CollectionPage()
+                schema : Union[CollectionPage, PagedCollection] = CollectionPage()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:photos:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
