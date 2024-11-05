@@ -22,6 +22,7 @@ def get_photosphere_path(instance: "PhotoSphere", filename: str) -> str:
 
 class MainStreetSet(models.Model):
     name = models.CharField(max_length=256)
+    description = models.TextField(blank=True)
 
     def get_absolute_url(self) -> str:
         return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})

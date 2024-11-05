@@ -9,6 +9,7 @@
         {% block photosphere_metadata %}
         <h2>{{ object.title }}</h2>
         <div>{{ object.description | markdown }}</div>
+        {% if object.mainstreetset.description %}<div>{{ object.mainstreetset.description }}</div>{% endif %}
         {% endblock photosphere_metadata %}
     </div>
     <form hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
