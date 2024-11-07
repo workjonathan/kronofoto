@@ -13,7 +13,7 @@
             <span contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-            {% if card.description %}<span>{{ card.description }}</span>{% endif %}
+            {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
             {% endif %}
         </div>
     </div>

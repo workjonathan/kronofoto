@@ -18,7 +18,7 @@
             <span contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
             {% else %}
                 {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-                {% if card.description %}<span>{{ card.description }}</span>{% endif %}
+                {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
             {% endif %}
         </div>
         <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}" hx-swap="innerHTML show:top" {% endif %}>
@@ -34,11 +34,11 @@
             <div class="full-image-area__select-alignment" id="{{ form.fill_style.auto_id }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
                 <div x-model="fitStyle">
                     {{ form.fill_style.0.tag }}
-                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
+                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
                 </div>
                 <div x-model="fitStyle">
                     {{ form.fill_style.1.tag }}
-                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
+                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
                 </div>
             </div>
         {% endif %}
