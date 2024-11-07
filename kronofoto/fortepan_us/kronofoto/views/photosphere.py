@@ -10,10 +10,13 @@ from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePai
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from typing import Any, Dict
 from djgeojson.views import GeoJSONLayerView # type: ignore
+from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet
+from django.utils.html import format_html, format_html_join, html_safe
 from django import forms
 from .base import ArchiveRequest
 from django.templatetags.static import static
+import json
 
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
@@ -98,6 +101,26 @@ class PhotoSphereView(BaseTemplateMixin, DetailView):
 class MainStreetDetail(BaseTemplateMixin, DetailView):
     model = MainStreetSet
     template_name = "kronofoto/pages/mainstreet-detail.html"
+
+def mainstreet_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    areq = ArchiveRequest(request=request)
+    template_name = "kronofoto/pages/mainstreet-detail.html"
+    object = get_object_or_404(MainStreetSet.objects.all(), pk=pk)
+    context = areq.common_context
+    context['object'] = object
+    context['points'] = json.loads(GeoJSONSerializer().serialize([
+        {
+            'geom': photosphere.location,
+            'pk': photosphere.pk,
+            'popup': format_html('<h3>{}</h3>{}<br><a href="{}?id={}">View</a>'.format(photosphere.title, photosphere.description, reverse("kronofoto:mainstreetview"), photosphere.pk)),
+        }
+        for photosphere in object.photosphere_set.all()
+    ]))
+    return TemplateResponse(
+        request=request,
+        template=template_name,
+        context=context,
+    )
 
 class MainStreetList(BaseTemplateMixin, ListView):
     template_name = "kronofoto/pages/mainstreet-list.html"

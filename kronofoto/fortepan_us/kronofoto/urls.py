@@ -3,6 +3,7 @@ from fortepan_us.kronofoto import views
 from fortepan_us.kronofoto.views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
 from fortepan_us.kronofoto.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
+from fortepan_us.kronofoto.views import photosphere
 from fortepan_us.kronofoto.views.frontpage import RandomRedirect, YearRedirect
 from fortepan_us.kronofoto.views.photo import CarouselListView
 from fortepan_us.kronofoto.views.photo import LogoSvg, LogoSvgSmall
@@ -105,7 +106,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
         path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
     ])),
     *directory('mainstreets', MainStreetList.as_view(), name='mainstreet-list', children=include([
-        path('<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
+        path('<int:pk>', photosphere.mainstreet_detail, name='mainstreet-detail'),
         path('<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
     ])),
     path('mainstreet360', views.photosphere_view, name="mainstreetview"),
