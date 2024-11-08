@@ -18,7 +18,7 @@
             {% if edit %}
                 {% with form=figure.form %}
                 {{ form.caption.errors }}
-                <figcaption contenteditable="plaintext-only" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption }}</figcaption>
+                <figcaption contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption }}</figcaption>
                 {% for field in form %}
                     {{ field.as_hidden }}
                 {% endfor %}<input type="hidden" name="prefix" value="{{ form.prefix }}">

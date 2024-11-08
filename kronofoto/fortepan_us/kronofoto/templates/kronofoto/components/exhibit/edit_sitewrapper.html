@@ -13,10 +13,10 @@
 {% block hero_content_wrapper %}
     <div class="hero__title">
         {{ form.title.errors }}
-        <h1 contenteditable="plaintext-only" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
+        <h1 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
     </div>
     {{ form.description.errors }}
-    <p class="hero__content" contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ exhibit.description }}</p>
+    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ exhibit.description }}</p>
 {% endblock hero_content_wrapper %}
 
 {% block hero_background %}

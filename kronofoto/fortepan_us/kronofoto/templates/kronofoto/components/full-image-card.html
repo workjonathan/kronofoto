@@ -13,9 +13,9 @@
         <div class="full-image-area__text">
             {% if edit %}
             {{ form.title.errors }}
-            <h2 contenteditable="plaintext-only" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+            <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
             {{ form.description.errors }}
-            <span contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
             {% else %}
                 {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
                 {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}

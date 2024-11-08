@@ -35,12 +35,12 @@
             <div class="two-column__content">
                 {% if edit %}
                 {{ form.title.errors }}
-                <h2 contenteditable="plaintext-only" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+                <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
                 {% elif card.title %}<h2>{{ card.title }}</h2>
                 {% endif %}
                 {% if edit %}
                 {{ form.description.errors }}
-                <div contenteditable="plaintext-only" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
+                <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
                 {% elif card.description %}
                 <div>{{ card.description | linebreaks }}</div>
                 {% endif %}
