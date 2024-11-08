@@ -32,7 +32,6 @@ class PlaceType(models.Model): # type: ignore
         indexes = (
             models.Index(fields=['name']),
         )
-        db_table = 'kronofoto_placetype'
 
 class Place(MPTTModel):
     place_type = models.ForeignKey(PlaceType, null=False, on_delete=models.PROTECT)
@@ -81,4 +80,3 @@ class Place(MPTTModel):
             models.Index(Upper('fullname'), name='archive_place_icase_fullname'),
             models.Index(Upper('name'), 'place_type', name='archive_place_icase_name'),
         )
-        db_table = 'kronofoto_place'

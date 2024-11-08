@@ -19,7 +19,6 @@ class Archive(models.Model):
         indexes = (
             models.Index(fields=['slug'], name="archive_slug_idx"),
         )
-        db_table = 'kronofoto_archive'
 
 
     def __str__(self) -> str:
@@ -47,7 +46,6 @@ class ArchiveAgreement(models.Model):
 
     class Meta:
         verbose_name = "agreement"
-        db_table = 'kronofoto_archiveagreement'
 
 
 class UserAgreement(models.Model):
@@ -62,7 +60,6 @@ class UserAgreement(models.Model):
         indexes = [
             models.Index(fields=['agreement', 'user']),
         ]
-        db_table = 'kronofoto_useragreement'
 
 
 class ArchiveUserPermission(models.Model):
@@ -82,7 +79,6 @@ class ArchiveUserPermission(models.Model):
         ]
         verbose_name = "user-archive permissions"
         verbose_name_plural = "archive permissions"
-        db_table = 'kronofoto_archiveuserpermission'
 
 class ArchiveGroupPermission(models.Model):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
@@ -101,4 +97,3 @@ class ArchiveGroupPermission(models.Model):
         ]
         verbose_name = "archive group permission"
         verbose_name_plural = "archive permissions"
-        db_table = 'kronofoto_archivegrouppermission'

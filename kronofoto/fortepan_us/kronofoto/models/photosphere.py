@@ -30,9 +30,6 @@ class MainStreetSet(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    class Meta:
-        db_table = 'kronofoto_mainstreetset'
-
 
 class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -87,8 +84,6 @@ class PhotoSphere(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    class Meta:
-        db_table = 'kronofoto_photosphere'
 
 class PhotoSphereInfo(models.Model):
     photosphere = models.ForeignKey(PhotoSphere, on_delete=models.CASCADE, null=False)
@@ -111,7 +106,6 @@ class PhotoSpherePair(models.Model):
         indexes = [
             models.Index(fields=['photo', 'photosphere']),
         ]
-        db_table = 'kronofoto_photospherepair'
 
     def __str__(self) -> str:
         return "{donor} - {fi} - {sphere}".format(donor=self.photo.donor, fi=str(self.photo), sphere=self.photosphere)

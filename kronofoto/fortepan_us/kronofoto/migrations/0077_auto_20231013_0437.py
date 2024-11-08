@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='validcategory',
-            index=models.Index(fields=['category', 'archive'], name='archive_val_categor_eb5c7c_idx'),
+            index=models.Index(fields=['category', 'archive'], name='kronofoto_v_categor_db481c_idx'),
         ),
         migrations.AddConstraint(
             model_name='validcategory',
