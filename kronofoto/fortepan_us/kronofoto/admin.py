@@ -12,14 +12,14 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
 from fortepan_us.kronofoto.models.photo import Submission
 from fortepan_us.kronofoto.models.archive import Archive, ArchiveUserPermission, ArchiveAgreement, ArchiveGroupPermission
 from fortepan_us.kronofoto.models.category import Category, ValidCategory
 from fortepan_us.kronofoto.models.csvrecord import ConnecticutRecord
-from fortepan_us.kronofoto.forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm
+from fortepan_us.kronofoto.forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm, PhotoSphereInfoInlineForm
 from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey, Model, Manager
 from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
@@ -502,6 +502,12 @@ class TermGroupAdmin(base_admin.ModelAdmin):
 class MainStreetSetAdmin(base_admin.ModelAdmin):
     pass
 
+class PhotoInfoInline(admin.StackedInline):
+    model = PhotoSphereInfo
+    extra = 0
+    form = PhotoSphereInfoInlineForm
+    fields = ['text', 'position']
+
 class PhotoInline(admin.StackedInline):
     model = PhotoSpherePair
     extra = 0
@@ -567,7 +573,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
     list_filter = (MainstreetSetIsSetFilter, 'mainstreetset') # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
-    inlines = (PhotoInline,)
+    inlines = (PhotoInline, PhotoInfoInline)
 
     class Media:
         js = [
@@ -584,6 +590,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         ]
         css = {"all": [
             "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css",
+            "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/markers-plugin/index.min.css",
             "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/compass-plugin/index.min.css",
             CSSWIntegrity(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="),
         ]}
