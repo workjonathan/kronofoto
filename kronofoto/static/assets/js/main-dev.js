@@ -25,8 +25,8 @@ const init = () => {
     AlpineJS.start()
     initFoundation(document)
     initClipboardJS(document)
-    document.addEventListener("kronofoto-set-route-name", (evt) => {
-        document.documentElement.setAttribute("route", evt.detail.value)
+    document.addEventListener("htmx:beforeSwap", (evt) => {
+        console.log({evt})
     })
 }
 

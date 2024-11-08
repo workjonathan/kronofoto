@@ -21,7 +21,6 @@ class CorsMiddleware:
                 hxtriggersdict = json.loads(hxtriggers)
             else:
                 hxtriggersdict = {}
-            hxtriggersdict['kronofoto-set-route-name'] = resolve_match.url_name
             response.headers['Hx-Trigger'] = json.dumps(hxtriggersdict)
         return response
 

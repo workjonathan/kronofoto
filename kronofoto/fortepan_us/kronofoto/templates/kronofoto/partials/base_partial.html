@@ -19,5 +19,11 @@
     {% block viewbuttons %}
     {% endblock %}
 </div>
+{% if push_url %}
+    <script>
+        {# this is absolutely not the right way to do this. #}
+        document.documentElement.setAttribute("route", "{{ route_name }}")
+    </script>
+{% endif %}
 {% block content %}
 {% endblock %}
