@@ -14,6 +14,8 @@ import {
 } from "./lib.js"
 
 import HTMX from "./htmx.js"
+import AlpineJS from "alpinejs"
+AlpineJS.start()
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -195,6 +197,7 @@ class FortepanViewer extends HTMLElement {
                 initFoundation(this.shadowRoot.querySelector("#kfroot"))
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
                 initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true})
+                this.htmx.onLoad(element => AlpineJS.initTree(element))
             })
     }
 }

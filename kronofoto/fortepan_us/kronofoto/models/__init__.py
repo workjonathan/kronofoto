@@ -9,7 +9,7 @@ from .csvrecord import CSVRecord, ConnecticutRecord
 from .photo import Photo, get_original_path, format_location, PhotoTag, Submission
 from .wordcount import WordCount, PlaceWordCount
 from .cutoff import NewCutoff
-from .photosphere import PhotoSphere, PhotoSpherePair, get_photosphere_path, MainStreetSet
+from .photosphere import PhotoSphere, PhotoSpherePair, get_photosphere_path, MainStreetSet, PhotoSphereInfo
 from .archive import Archive, ArchiveAgreement
 from .category import Category, ValidCategory
 from .place import Place, PlaceType

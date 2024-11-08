@@ -1,4 +1,5 @@
 from django import forms
+from .photosphere import PhotoSphereInfoInlineForm
 from fortepan_us.kronofoto.models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair, Place
 from fortepan_us.kronofoto.search import expression
 from django.contrib.auth.models import User

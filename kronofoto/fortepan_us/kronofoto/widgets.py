@@ -84,6 +84,33 @@ class HeadingWidget(NumberInput):
             context['pan'] = ""
         return context
 
+class InfoPositionWidget(MultiWidget):
+    sphere_width = 600
+    sphere_height = 800
+    def __init__(self, attrs: Optional[Dict[str, Any]]=None, **kwargs: Any):
+        widgets = (
+            NumberInput(attrs=dict(anglename="yaw")),
+            NumberInput(attrs=dict(anglename="pitch")),
+        )
+        super().__init__(widgets=widgets, attrs=attrs, **kwargs)
+
+    def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        assert attrs
+        context = super().get_context(name, value, attrs)
+        if 'photosphere' in self.attrs:
+            self.template_name = 'kronofoto/widgets/info-position-widget.html'
+            context['sphere_image'] = self.attrs['photosphere']
+            context['info_text'] = self.attrs['info-text']
+            context['id'] = attrs['id']
+            context['sphere_width'] = self.sphere_width
+            context['sphere_height'] = self.sphere_height
+        return context
+
+    def decompress(self, value: Any) -> List[int]:
+        if value:
+            return [value['yaw'], value['pitch']]
+        return [0, 0]
+
 class PositioningWidget(MultiWidget):
     sphere_width = 600
     sphere_height = 800
@@ -95,6 +122,7 @@ class PositioningWidget(MultiWidget):
             NumberInput(attrs=dict(anglename="distance")),
         )
         super().__init__(widgets=widgets, attrs=attrs, **kwargs)
+
 
     def get_context(self, name: str, value: Any, attrs: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         assert attrs

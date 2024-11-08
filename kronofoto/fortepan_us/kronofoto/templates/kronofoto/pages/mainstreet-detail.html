@@ -11,8 +11,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <main class="container-center">
     {{ object.name }}
+    <p>{{ object.description }}</p>
     <div data-map style="width:100%; height:400px;"></div>
 </main>
+{{ points|json_script:"points" }}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     const map = L.map(document.querySelector('[data-map]'))
@@ -20,12 +22,11 @@
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map)
-    const points = L.geoJson({{ object.photosphere_set.all|geojsonfeature:"title,description:location"|safe}}).addTo(map)
+    const points = L.geoJson(JSON.parse(document.querySelector("#points").text)).addTo(map)
     map.fitBounds(points.getBounds(), {padding: [5,5]})
     points.bindPopup(layer => {
         const properties = layer.feature.properties
-        {# TODO: implement this correctly #}
-        return `<h3>${properties.title}</h3>${properties.description}<br><a href="/mainstreet360/${layer.feature.id}">View</a>`
+        return properties.popup
     })
 </script>
 {% endblock %}
