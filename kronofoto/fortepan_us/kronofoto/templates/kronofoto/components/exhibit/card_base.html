@@ -1,0 +1,24 @@
+<div class="card container {% block container_classes %}{% endblock %}" style="z-index: {{ zindex }}">
+    {% block content_body %}{% endblock %}
+
+    {% block component_menu_off_canvas %}
+    {% if form %}
+        <div class="component-menu--off-canvas">
+            <button type="button" class="up" aria-label="Move up">Move up</button>
+            <button type="button" class="down" aria-label="Move down">Move down</button>
+            <button type="button" class="delete" aria-label="Delete">Delete</button>
+        </div>
+    {% endif %}
+    {% endblock component_menu_off_canvas %}
+
+    {% block formfields %}
+    {% if form %}
+        {% for field in form %}
+            {% if field != form.fill_style %}
+            {{ field.as_hidden }}
+            {% endif %}
+        {% endfor %}
+        <input type="hidden" name="prefix" value="{{ form.prefix }}">
+    {% endif %}
+    {% endblock formfields %}
+</div>

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='photo',
             name='scanner',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='kronofoto.photo_scanned', to='kronofoto.donor'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='kronofoto_photo_scanned', to='kronofoto.donor'),
         ),
         migrations.CreateModel(
             name='UserAgreement',
@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='useragreement',
-            index=models.Index(fields=['agreement', 'user'], name='archive_use_agreeme_984b80_idx'),
+            index=models.Index(fields=['agreement', 'user'], name='kronofoto_u_agreeme_c0e97b_idx'),
         ),
         migrations.AddConstraint(
             model_name='useragreement',

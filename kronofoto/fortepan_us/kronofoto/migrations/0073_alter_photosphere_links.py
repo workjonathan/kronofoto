@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='photosphere',
             name='links',
-            field=models.ManyToManyField(blank=True, related_name='_kronofoto.photosphere_links_+', to='archive.PhotoSphere'),
+            field=models.ManyToManyField(blank=True, related_name='_kronofoto_photosphere_links_+', to='kronofoto.PhotoSphere'),
         ),
     ]

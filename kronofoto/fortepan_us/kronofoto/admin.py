@@ -12,7 +12,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, PhotoSphereInfo
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
 from fortepan_us.kronofoto.models.photo import Submission
@@ -47,6 +47,24 @@ admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
 admin.site.index_title = 'Fortepan Administration Index'
 admin.site.login_form = FortepanAuthenticationForm
+
+from .models import Exhibit, Card, PhotoCard, Figure
+
+class CardInline(admin.StackedInline):
+    model = Card
+    extra = 1
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).filter(photocard__isnull=True)
+class PhotoCardInline(admin.StackedInline):
+    model = PhotoCard
+    raw_id_fields = ['photo',]
+    extra = 1
+
+
+@admin.register(Exhibit)
+class ExhibitAdmin(admin.ModelAdmin):
+    raw_id_fields = ['photo', 'owner']
+    inlines = (CardInline, PhotoCardInline)
 
 class HasPhotoFilter(base_admin.SimpleListFilter):
     title = "has photo"

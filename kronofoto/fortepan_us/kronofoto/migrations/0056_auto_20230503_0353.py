@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='archiveuserpermission',
-            index=models.Index(fields=['archive', 'user'], name='archive_arc_archive_92f7ac_idx'),
+            index=models.Index(fields=['archive', 'user'], name='kronofoto_a_archive_4909eb_idx'),
         ),
         migrations.AddConstraint(
             model_name='archiveuserpermission',

@@ -26,4 +26,7 @@ def kronofoto_context(request: HttpRequest, short_name: Optional[str]=None) -> D
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
     context['theme'] = Theme.select_random_theme(short_name)
     context['CSS_VERSION'] = settings.CSS_VERSION
+    context['route_name'] = resolve(request.path_info).url_name
+    context['contenteditable'] = "true" if "Firefox" in request.META.get("HTTP_USER_AGENT","") else "plaintext-only"
+
     return context

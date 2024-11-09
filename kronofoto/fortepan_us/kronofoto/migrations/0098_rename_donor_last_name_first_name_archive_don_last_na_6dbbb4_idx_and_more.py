@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RenameIndex(
             model_name='donor',
-            new_name='archive_don_last_na_6dbbb4_idx',
+            new_name='kronofoto_d_last_na_8b87fd_idx',
             old_fields=('last_name', 'first_name'),
         ),
         migrations.RenameIndex(

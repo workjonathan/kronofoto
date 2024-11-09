@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='photospherepair',
-            index=models.Index(fields=['photo', 'photosphere'], name='archive_pho_photo_i_2810c9_idx'),
+            index=models.Index(fields=['photo', 'photosphere'], name='kronofoto_p_photo_i_774c19_idx'),
         ),
         migrations.AddConstraint(
             model_name='photospherepair',

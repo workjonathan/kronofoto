@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='photo',
             name='photographer_temp',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='kronofoto.photo_photographed', to='kronofoto.donor'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='kronofoto_photo_photographed', to='kronofoto.donor'),
         ),
         migrations.AddField(
             model_name='submission',
             name='photographer_temp',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='archive_submission_photographed', to='kronofoto.donor'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='kronofoto_submission_photographed', to='kronofoto.donor'),
         ),
     ]

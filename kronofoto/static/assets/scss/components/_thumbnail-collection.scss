@@ -1,0 +1,42 @@
+.thumbnail-collection {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  &__item {
+    width: calc(33.333% - 9px);
+    position: relative;
+    &:hover {
+      .thumbnail-collection__delete {
+        opacity: 1;
+      }
+    }
+    img {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
+
+  &__delete {
+    opacity: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16.263' height='16.263' viewBox='0 0 16.263 16.263'%3E%3Cg id='X' transform='translate(-220.868 -21.868)'%3E%3Cline id='Line_22' data-name='Line 22' x2='20' transform='translate(221.929 22.929) rotate(45)' fill='none' stroke='%23444' stroke-width='3'/%3E%3Cline id='Line_24' data-name='Line 24' x2='20' transform='translate(236.071 22.929) rotate(135)' fill='none' stroke='%23444' stroke-width='3'/%3E%3C/g%3E%3C/svg%3E%0A");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 1);
+    }
+
+    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    transition: all ease-in-out 150ms;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+  }
+}

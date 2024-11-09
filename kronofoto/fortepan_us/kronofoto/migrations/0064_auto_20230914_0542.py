@@ -13,9 +13,9 @@ def splitname(name):
 
 def set_new_photographer_field(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Donor = apps.get_model('archive', 'Donor')
-    Photo = apps.get_model('archive', 'Photo')
-    Submission = apps.get_model('archive', 'Submission')
+    Donor = apps.get_model('kronofoto', 'Donor')
+    Photo = apps.get_model('kronofoto', 'Photo')
+    Submission = apps.get_model('kronofoto', 'Submission')
     for model in (Photo, Submission):
         photos_with_photographers = model.objects.exclude(photographer='')
         for photo in photos_with_photographers:
@@ -27,9 +27,9 @@ def set_new_photographer_field(apps, schema_editor):
 
 def set_old_photographer_field(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Donor = apps.get_model('archive', 'Donor')
-    Photo = apps.get_model('archive', 'Photo')
-    Submission = apps.get_model('archive', 'Submission')
+    Donor = apps.get_model('kronofoto', 'Donor')
+    Photo = apps.get_model('kronofoto', 'Photo')
+    Submission = apps.get_model('kronofoto', 'Submission')
     for model in (Photo, Submission):
         photos_with_photographers = model.objects.exclude(photographer_temp__isnull=True)
         for photo in photos_with_photographers:

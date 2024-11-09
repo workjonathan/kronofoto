@@ -1,14 +1,20 @@
+@use 'components/collection' as collection;
+@use 'components/context-menu' as context-menu;
 @use 'components/gallery' as gallery;
 @use 'components/header' as header;
+@use 'components/header-group' as header-group;
 @use 'components/messages' as messages;
+@use 'components/reveal' as reveal;
+@use 'components/section' as section;
 @use 'components/social-share-icons' as shareSocialIcons;
 @use 'components/tags' as tags;
+@use 'components/thumbnail-collection' as thumbnail-collection;
 @use 'components/timeline' as timeline;
 @use 'typography' as typography;
+@use 'components/user-header' as user-header;
 @import '@photo-sphere-viewer/core/index.css';
 @import '@photo-sphere-viewer/markers-plugin/index.css';
 @import '@photo-sphere-viewer/virtual-tour-plugin/index.css';
-
 
 body, #kfroot {
   container-type: inline-size;
@@ -58,6 +64,7 @@ body, #kfroot {
 @import 'components/hamburger';
 @include header.styles;
 @include messages.styles;
+@include reveal.styles;
 @import 'components/input';
 @import 'components/navigation';
 @import 'components/photo-menu-popup';
@@ -71,6 +78,7 @@ body, #kfroot {
 @import 'foundation-sites/scss/components/switch';
 @import 'foundation-sites/scss/components/tooltip';
 @import 'foundation-sites/scss/components/callout';
+@import 'foundation-sites/scss/components/reveal';
 
 // Foundation Helpers
 @import 'foundation-sites/scss/components/float';
@@ -78,9 +86,11 @@ body, #kfroot {
 @import 'foundation-sites/scss/prototype/prototype';
 @import 'foundation-sites/scss/components/flex';
 
+@include foundation-prototype-spacing;
 @include foundation-switch;
 @include foundation-tooltip;
 @include foundation-callout;
+@include foundation-reveal;
 
 // Foundation Components
 @include foundation-visibility-classes;
@@ -95,8 +105,20 @@ body, #kfroot {
   font-family: var(--fp-main-font);
 }
 
+.float-left {
+  float: left;
+}
+
 .float-right {
   float: right;
+}
+
+.margin-right-auto {
+  margin-right: auto;
+}
+
+.margin-left-auto {
+  margin-left: auto;
 }
 
 .foundation-mq {
@@ -116,3 +138,4 @@ body, #kfroot {
 // Template-specific overrides
 @import "templates/gallery";
 @import "templates/cms";
+@import "templates/user-page";

@@ -1,0 +1,47 @@
+{% extends "kronofoto/components/exhibit/card_base.html" %}
+{% load widgets %}
+{% load krono_urls %}
+
+{% block container_classes %}container--full-width container--no-padding{% endblock %}
+
+{% block content_body %}
+    <div class="full-image-area {{ image_area_classes | join:" " }}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'full-image-area--cover': fitStyle == 1, 'full-image-area--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
+        {% if edit %}
+        {{ form.photo.errors }}
+        <div class="full-image-area__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
+        {% endif %}
+        <div class="full-image-area__text">
+            {% if edit %}
+            {{ form.title.errors }}
+            <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+            {{ form.description.errors }}
+            <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            {% else %}
+                {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
+                {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
+            {% endif %}
+        </div>
+        <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}" hx-swap="innerHTML show:top" {% endif %}>
+            {% if card.photo %}
+            <a class="full-image-area__info info-button info-button--top" href="#" target="_blank">
+                <span class="info-button__icon"></span>
+                <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "kronofoto/components/attribution.html" with object=card.photo %}</div>
+            </a>
+            {% include "kronofoto/components/full-image.html" with photo=card.photo %}
+            {% endif %}
+        </div>
+        {% if edit %}
+            <div class="full-image-area__select-alignment" id="{{ form.fill_style.auto_id }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
+                <div x-model="fitStyle">
+                    {{ form.fill_style.0.tag }}
+                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
+                </div>
+                <div x-model="fitStyle">
+                    {{ form.fill_style.1.tag }}
+                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content_body %}
+

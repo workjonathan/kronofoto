@@ -34,6 +34,7 @@
     "@photo-sphere-viewer/core": "^5.10.1",
     "@photo-sphere-viewer/markers-plugin": "^5.10.1",
     "@photo-sphere-viewer/virtual-tour-plugin": "^5.10.1",
+    "aos": "^2.3.4",
     "alpinejs": "^3.14.3",
     "clipboard": "^2.0.11",
     "jquery": "^3.7.1",

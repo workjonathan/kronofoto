@@ -28,7 +28,7 @@
                 id="fi-arrow-left"
                 data-fi-arrow-left
                 hx-trigger="click, keydown[code=='ArrowLeft'] from:#app"
-                class="control previous" 
+                class="control previous"
                 href="{% object_url prev_photo url_kwargs get_params %}"
                 hx-get="{% object_url prev_photo url_kwargs get_params %}"
             ></a>
@@ -49,7 +49,7 @@
             id="fi-arrow-right"
             hx-trigger="click, keydown[code=='ArrowRight'] from:#app"
             data-fi-arrow-right
-            class="control forward" 
+            class="control forward"
             href="{% object_url next_photo url_kwargs get_params %}"
             hx-get="{% object_url next_photo url_kwargs get_params %}"
         ></a>
@@ -79,19 +79,19 @@
             <div class="gallery__controls-bottom">
                 <!--Add to List Button-->
                 <button class="image-control-button" data-toggle="add-to-list-popup">
-                    <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}">
+                    <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}" data-tooltip title="Add to FotoAlbum" data-position="top" data-alignment="center">
                 </button>
                 <!--Share Button-->
                 <button class="image-control-button" data-toggle="share-popup">
-                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/share.svg" %}">
+                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/share.svg" %}" data-tooltip title="Share or Embed" data-position="top" data-alignment="center">
                 </button>
                 <!--Download Button-->
                 <button class="image-control-button" data-toggle="download-popup">
-                    <img class="meta-dl-icon" src="{% static "kronofoto/images/skyblue/download.svg" %}">
+                    <img class="meta-dl-icon" src="{% static "kronofoto/images/skyblue/download.svg" %}" data-tooltip title="Download" data-position="top" data-alignment="center">
                 </button>
                 <!--Info Button-->
                 <button class="image-control-button" data-toggle="metadata-popup">
-                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/info.svg" %}">
+                    <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/info.svg" %}" data-tooltip title="Info" data-position="top" data-alignment="center">
                 </button>
 
             </div>
@@ -123,9 +123,9 @@
 
 
     <nav class="fi-timeline" id="fi-timeline">
-    <form 
-        hx-trigger="kronofoto:loadThumbnails" 
-        hx-target="[data-fi-thumbnail-carousel-images]" 
+    <form
+        hx-trigger="kronofoto:loadThumbnails"
+        hx-target="[data-fi-thumbnail-carousel-images]"
         hx-get="{% krono_url "kronofoto:carousel" url_kwargs %}"
         hx-push-url="false"
         hx-swap="beforeend"
@@ -152,13 +152,6 @@
 
     <div class="car-right-space"></div>
 
-    <div id="messages">
-        <script type="template" id="toast-template">
-            <div class="callout success">
-                <button class="close-button" aria-label="Dismiss alert" type="button" data-close></button>
-            </div>
-        </script>
-    </div>
 
 </main>
 <script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=647a29d940353a0019caf1f7&product=inline-share-buttons&source=platform" async="async"></script>

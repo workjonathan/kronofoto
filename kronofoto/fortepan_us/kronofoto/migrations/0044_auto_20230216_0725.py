@@ -4,12 +4,12 @@ from django.db import migrations
 
 def set_default_archive(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Archive = apps.get_model('archive', 'Archive')
+    Archive = apps.get_model('kronofoto', 'Archive')
     archive = Archive.objects.using(db_alias).get(slug='default')
-    Donor = apps.get_model('archive', 'Donor')
-    Donor.objects.update(kronofoto.archive)
-    Photo = apps.get_model('archive', 'Photo')
-    Photo.objects.update(kronofoto.archive)
+    Donor = apps.get_model('kronofoto', 'Donor')
+    Donor.objects.update(archive=archive)
+    Photo = apps.get_model('kronofoto', 'Photo')
+    Photo.objects.update(archive=archive)
 
 
 def backwards(*args, **kwargs):

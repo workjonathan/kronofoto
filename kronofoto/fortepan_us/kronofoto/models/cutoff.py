@@ -13,6 +13,3 @@ class NewCutoff(models.Model):
 
     def __str__(self) -> str:
         return 'Cutoff date for "new" photos'
-
-    class Meta:
-        db_table = 'kronofoto_newcutoff'

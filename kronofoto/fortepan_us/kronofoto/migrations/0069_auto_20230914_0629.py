@@ -5,18 +5,18 @@ from django.db.models import Count, QuerySet
 
 def set_contribution_flags(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Donor = apps.get_model('archive', 'Donor')
+    Donor = apps.get_model('kronofoto', 'Donor')
     donors = list(Donor.objects.annotate(count=Count('photo')).filter(count__gte=1))
     for donor in donors:
         donor.is_contributor = True
     Donor.objects.bulk_update(donors, ['is_contributor'])
 
-    donors = list(Donor.objects.annotate(count=Count('kronofoto.photo_scanned')).filter(count__gte=1))
+    donors = list(Donor.objects.annotate(count=Count('kronofoto_photo_scanned')).filter(count__gte=1))
     for donor in donors:
         donor.is_scanner = True
     Donor.objects.bulk_update(donors, ['is_scanner'])
 
-    donors = list(Donor.objects.annotate(count=Count('kronofoto.photo_photographed')).filter(count__gte=1))
+    donors = list(Donor.objects.annotate(count=Count('kronofoto_photo_photographed')).filter(count__gte=1))
     for donor in donors:
         donor.is_photographer = True
     Donor.objects.bulk_update(donors, ['is_photographer'])

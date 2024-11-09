@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='place',
-            index=models.Index(fields=['fullname'], name='archive_pla_fullnam_e7ff62_idx'),
+            index=models.Index(fields=['fullname'], name='kronofoto_p_fullnam_822a04_idx'),
         ),
     ]

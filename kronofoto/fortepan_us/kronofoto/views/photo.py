@@ -1,6 +1,7 @@
 from django.views.generic import DetailView, ListView, View
 from django.views.generic.list import MultipleObjectMixin
 from django.http import Http404, HttpResponse, HttpRequest, HttpResponseBase
+from django.template.response import TemplateResponse
 from fortepan_us.kronofoto.reverse import reverse
 from django.shortcuts import redirect, get_object_or_404
 from django.core.cache import cache
@@ -138,48 +139,33 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     def render_to_response(self, context: Dict[str, Any], **kwargs: Any) -> HttpResponse:
         return self.render(context, **kwargs)
 
+def logo_icon_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo-icon")
 
-class LogoSvg(TemplateView):
-    template_name = "kronofoto/svg/logo.svg"
-    def get_template_names(self) -> List[str]:
-        templates = []
-        if 'short_name' in self.kwargs:
-            templates.append('kronofoto/svg/logo/{}.svg'.format(self.kwargs['short_name']))
-        templates.append(self.template_name)
-        print(templates)
-        return templates
+def logo_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo")
 
-    def get_context_data(self, theme: str='skyblue', short_name: str='us') -> Dict[str, Any]: # type: ignore
-        context = {
-            'theme': Theme.select_named_theme(archive=short_name, name=theme),
-        }
-        return context
+def logo_small_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None) -> HttpResponse:
+    return svg_view(request, theme=theme, short_name=short_name, name="logo-small")
 
-    @method_decorator(cache_control(max_age=60*60, public=True))
-    @vary_on_headers()
-    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        response = super().dispatch(*args, **kwargs)
-        response['Content-Type'] = 'image/svg+xml'
-        response.override_vary = "" # type: ignore
-        return response
-
-class LogoSvgSmall(TemplateView):
-    template_name = "kronofoto/svg/logo-small.svg"
-    def get_template_names(self) -> List[str]:
-        templates = []
-        if 'short_name' in self.kwargs:
-            templates.append('kronofoto/svg/logo-small/{}.svg'.format(self.kwargs['short_name']))
-        templates.append(self.template_name)
-        return templates
-
-    def get_context_data(self, theme: str='skyblue', short_name: str='us') -> Dict[str, Any]: # type: ignore
-        context = {
-            'theme': Theme.select_named_theme(archive=short_name, name=theme),
-        }
-        return context
-
-    @method_decorator(cache_control(max_age=60*60, public=True))
-    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponseBase:
-        response = super().dispatch(*args, **kwargs)
-        response['Content-Type'] = 'image/svg+xml'
-        return response
+@cache_control(max_age=60*60, public=True)
+@vary_on_headers()
+def svg_view(request: HttpRequest, *, theme: str, short_name: Optional[str]=None, name: str) -> HttpResponse:
+    template = f"kronofoto/svg/{name}.svg"
+    context = {
+        'theme': Theme.select_named_theme(name=theme)
+    }
+    templates = []
+    if short_name:
+        templates.append(f'kronofoto/svg/{name}/{short_name}.svg')
+    templates.append(template)
+    response = TemplateResponse(
+        request=request,
+        context=context,
+        template=templates,
+        headers={
+            "Content-Type": "image/svg+xml",
+        },
+    )
+    setattr(response, "override_vary", "")
+    return response

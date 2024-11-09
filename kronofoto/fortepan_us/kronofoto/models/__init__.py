@@ -13,4 +13,5 @@ from .photosphere import PhotoSphere, PhotoSpherePair, get_photosphere_path, Mai
 from .archive import Archive, ArchiveAgreement
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
+from .exhibit import Exhibit, Card, PhotoCard, Figure
 from .key import Key

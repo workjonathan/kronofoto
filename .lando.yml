@@ -6,6 +6,7 @@ excludes:
   - node_modules
 services:
   appserver:
+    ssl: true
     type: compose
     services:
       build: .

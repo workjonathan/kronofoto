@@ -16,7 +16,6 @@ class BaseDownloadView(DetailView):
         archive_request = ArchiveRequest(request=self.request, short_name=self.kwargs.get('short_name'), category=self.kwargs.get('category'))
         context.update(archive_request.common_context)
         photo = context['object']
-        context['citation_url'] = photo.get_absolute_url(params=None)
         context['grid_url'] = photo.get_grid_url()
         return context
 

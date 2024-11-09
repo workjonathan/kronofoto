@@ -6,6 +6,7 @@ Converts URLs in the markdown text to clickable links.
 """
 
 import re
+import markdown
 from markdown.preprocessors import Preprocessor
 from markdown.extensions import Extension
 

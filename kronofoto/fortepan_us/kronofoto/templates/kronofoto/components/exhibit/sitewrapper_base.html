@@ -1,0 +1,25 @@
+<div class="site-wrapper">
+    <header class="header">
+        {% block header_logo %}
+            <div class="header__logo">
+            </div>
+        {% endblock %}
+        {% block header_title %}{% endblock %}
+    </header>
+
+    <div class="hero">
+        <div class="hero__content-wrapper" >
+            {% block hero_content_wrapper %}{% endblock %}
+        </div>
+        {% block hero_background %}{% endblock %}
+        <div class="hero__info-button info-button info-button--bottom">
+            <span class="info-button__icon"></span>
+            {% block info_text %}{% endblock %}
+        </div>
+        {% block hero_formfields %}{% endblock %}
+    </div>
+    {% for card in cards %}
+    {% include card.template with card=card.card zindex=card.zindex edit=card.edit form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}
+    {% endfor %}
+</div>
+

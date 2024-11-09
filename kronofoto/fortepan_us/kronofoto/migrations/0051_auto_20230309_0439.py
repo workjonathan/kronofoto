@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='connecticutrecord',
-            index=models.Index(fields=['file_id1', 'file_id2'], name='archive_con_file_id_5f64ac_idx'),
+            index=models.Index(fields=['file_id1', 'file_id2'], name='kronofoto_c_file_id_3e40fb_idx'),
         ),
         migrations.AddConstraint(
             model_name='connecticutrecord',

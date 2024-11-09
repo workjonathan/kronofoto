@@ -12,14 +12,14 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='place',
-            index=models.Index(fields=['name'], name='archive_pla_name_c28f33_idx'),
+            index=models.Index(fields=['name'], name='kronofoto_p_name_290a32_idx'),
         ),
         migrations.AddIndex(
             model_name='place',
-            index=models.Index(fields=['place_type', 'name', 'parent'], name='archive_pla_place_t_0a93db_idx'),
+            index=models.Index(fields=['place_type', 'name', 'parent'], name='kronofoto_p_place_t_ede793_idx'),
         ),
         migrations.AddIndex(
             model_name='placetype',
-            index=models.Index(fields=['name'], name='archive_pla_name_aab364_idx'),
+            index=models.Index(fields=['name'], name='kronofoto_p_name_c31844_idx'),
         ),
     ]

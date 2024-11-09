@@ -11,6 +11,7 @@ import {Viewer} from "@photo-sphere-viewer/core"
 import {MarkersPlugin} from "@photo-sphere-viewer/markers-plugin"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
+import AOS from "aos"
 
 
 // Foundation
@@ -22,6 +23,7 @@ import {Toggler} from "./foundation-sites/js/foundation.toggler"
 import {Tooltip} from "./foundation-sites/js/foundation.tooltip"
 import {Box} from "./foundation-sites/js/foundation.util.box"
 import {MediaQuery} from "./foundation-sites/js/foundation.util.mediaQuery"
+import {Reveal} from "./foundation-sites/js/foundation.reveal"
 import {Triggers} from "./foundation-sites/js/foundation.util.triggers"
 
 class TimelineScroller {
@@ -326,6 +328,148 @@ class ImageLoader {
 class NullLoader {
     loadImage() {}
 }
+
+class CopyLink {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const elem2 of elem.querySelectorAll("[data-clipboard-copy]")) {
+            elem2.addEventListener("click", this.copyLink.bind(this))
+        }
+    }
+    copyLink(evt) {
+        evt.preventDefault()
+        navigator.clipboard.writeText(evt.target.getAttribute("href")).then(
+            () => {
+                showToast("The link has been copied to the clipboard.")
+            },
+            () => {
+                showToast(
+                    "ERROR: The collection link has not been copied to the clipboard.",
+                )
+            },
+        )
+    }
+}
+
+class PageEditor {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const modal of this.context.querySelectorAll("#add-image-modal")) {
+            this.context.addEventListener("kronofoto:modal:reveal", (evt) => {
+                $(modal).foundation("open")
+            })
+        }
+        for (const img of elem.querySelectorAll("[data-photo-target]")) {
+            img.addEventListener("click", (evt) => {
+                const id = img.getAttribute("data-photo-target")
+                $("#add-image-modal", this.context).foundation("close")
+                const target = this.context.querySelector(`#${id}`)
+                target.value = img.getAttribute("data-id")
+                target.dispatchEvent(
+                    new Event("change", {
+                        bubbles: false,
+                    }),
+                )
+            })
+        }
+        for (const btn of elem.querySelectorAll(".component-menu--off-canvas .up")) {
+            btn.addEventListener("click", this.moveComponentUp.bind(this))
+        }
+        for (const btn of elem.querySelectorAll(".component-menu--off-canvas .down")) {
+            btn.addEventListener("click", this.moveComponentDown.bind(this))
+        }
+        for (const btn of elem.querySelectorAll(".component-menu--off-canvas .delete")) {
+            btn.addEventListener("click", this.deleteComponent.bind(this))
+        }
+        for (const elem2 of elem.querySelectorAll("[data-target]")) {
+            elem2.addEventListener("input", (event) => {
+                const id = elem2.getAttribute("data-target")
+                const target = this.context.querySelector(`#${id}`)
+                target.value = elem2.innerText
+            })
+        }
+        for (const elem2 of elem.querySelectorAll("[data-copy-source]")) {
+            const handleSourceChange = (event) => {
+                if (!this.context.contains(elem2)) {
+                    this.context.removeEventListener("input", handleSourceChange)
+                    return
+                }
+                if (event.target.id == elem2.getAttribute("data-copy-source")) {
+                    elem2.innerText = event.target.innerText
+                }
+            }
+            this.context.addEventListener("input", handleSourceChange)
+        }
+        for (const elem2 of elem.querySelectorAll("[data-on-check-target]")) {
+            const target = elem2.getAttribute("data-on-check-target")
+            const add = elem2.getAttribute("data-on-check-add")
+            const remove = elem2.getAttribute("data-on-check-remove")
+            elem2.addEventListener("change", (evt) => {
+                const targetElem = evt.target.closest(target)
+                targetElem.classList.remove(remove)
+                targetElem.classList.add(add)
+            })
+        }
+    }
+
+    moveComponentUp(event) {
+        const button = event.target
+        const card = button.closest(".card")
+        let previous = card
+        while ((previous = previous.previousElementSibling)) {
+            if (previous.classList.contains("card")) {
+                break
+            }
+        }
+        if (previous !== card) {
+            previous.insertAdjacentElement("beforebegin", card)
+            previous.style["z-index"]--
+            card.style["z-index"]++
+            AOS.refreshHard()
+        }
+    }
+
+    moveComponentDown(event) {
+        const button = event.target
+        const card = button.closest(".card")
+        let next = card
+        while ((next = next.nextElementSibling)) {
+            if (next.classList.contains("card")) {
+                break
+            }
+        }
+        if (next !== card) {
+            next.insertAdjacentElement("afterend", card)
+            card.style["z-index"]--
+            next.style["z-index"]++
+            AOS.refreshHard()
+        }
+    }
+
+    deleteComponent(event) {
+        const button = event.target
+        const card = button.closest(".card")
+        card.remove()
+    }
+
+    updateHiddenField(event) {
+        if (event.target.getAttribute("contenteditable") !== null) {
+            const contentEditable = event.target
+            const targetName = contentEditable.getAttribute("data-target")
+            if (targetName) {
+                const $field = $(`#${targetName}`, this)
+
+                if ($field.length) {
+                    $field.val(contentEditable.innerText)
+                }
+            }
+        }
+    }
+}
 class ImagePreviewInput {
     constructor({context}) {
         this.context = context
@@ -416,6 +560,103 @@ class Gallery {
     }
     hideGalleryNav() {
         $(".gallery", this.context).addClass("hide-nav")
+    }
+}
+class ExhibitPlugin {
+    constructor({context, rootSelector, exhibit_mode}) {
+        this.context = context
+        this.rootSelector = rootSelector
+        this.exhibit_mode = exhibit_mode
+    }
+    install({elem}) {
+        const scrollEventOptions = this.rootSelector === "#kfroot" ? {capture: true} : undefined
+        for (const btn of elem.querySelectorAll("[data-form-target]")) {
+            btn.addEventListener("click", (evt) => {
+                btn.closest("form").setAttribute(
+                    "target",
+                    btn.getAttribute("data-form-target"),
+                )
+            })
+        }
+        for (const siteWrapper of elem.querySelectorAll(".site-wrapper")) {
+            // Function to update the --vh custom property
+            const updateVH = () => {
+                //console.log(updateVH)
+                if (!elem.contains(siteWrapper)) {
+                    window.removeEventListener("resize", updateVH)
+                    return
+                }
+                if (siteWrapper) {
+                    let vh = window.innerHeight / 100
+                    siteWrapper.style.setProperty("--vh", `${vh}px`)
+                }
+            }
+
+            // Scroll event handler for dynamically fading content
+            const updateScrollOpacity = () => {
+                //console.log('updateScrollOpacity')
+                if (!this.context.contains(siteWrapper)) {
+                    document.removeEventListener("scroll", updateScrollOpacity, scrollEventOptions)
+                    return
+                }
+
+                let elements = elem.querySelectorAll(".scroll-opacity, .two-column__content")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 30
+                    const end = 50
+                    const opacity = (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("two-column", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
+                    element.style.opacity = opacity / 100
+                })
+
+                elements = elem.querySelectorAll(".hero__title")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 80
+                    const end = 100
+                    const opacity =
+                        100 - (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("title", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
+                    element.style.opacity = opacity / 100
+                })
+
+                elements = elem.querySelectorAll(".hero__content")
+                elements.forEach((element) => {
+                    const viewportHeight = window.innerHeight
+                    const elementTop = element.getBoundingClientRect().top
+                    const distanceFromBottom = viewportHeight - elementTop
+                    const percentageFromBottom =
+                        (distanceFromBottom / viewportHeight) * 100
+                    const start = 50
+                    const end = 80
+                    const opacity =
+                        100 - (percentageFromBottom - start) * (100 / (end - start))
+                    //console.log("hero__content", {element, opacity, percentageFromBottom, start, end, elementTop, distanceFromBottom})
+                    element.style.opacity = opacity / 100
+                })
+            }
+
+            AOS.init({
+                disable: this.exhibit_mode === "light",
+                once: true,
+                rootNode: this.context,
+                rootSelector: this.rootSelector,
+                scrollEventOptions,
+            })
+
+            // Add event listeners
+            document.addEventListener("scroll", updateScrollOpacity, scrollEventOptions)
+            window.addEventListener("resize", updateVH)
+        }
     }
 }
 
@@ -676,9 +917,17 @@ class Zoom {
 }
 
 class KronofotoContext {
-    constructor({htmx, context}) {
+    constructor({htmx, context, rootSelector, exhibit_mode}) {
         this.htmx = htmx
         this.context = context
+        this.rootSelector = rootSelector
+        this.exhibit_mode = exhibit_mode
+        this.context.addEventListener("htmx:configRequest", (evt) => {
+            if (evt.target.hasAttribute("data-textcontent-name")) {
+                evt.detail.parameters[evt.target.getAttribute("data-textcontent-name")] =
+                    evt.target.textContent
+            }
+        })
     }
     onLoad(elem) {
         $("[data-autocomplete-url]", elem).each((_, input) => {
@@ -736,6 +985,21 @@ class KronofotoContext {
                     $("#overlay", this.context).fadeOut()
                 }
             })
+
+        // Close all dropdowns when clicking outside of a dropdown
+        $(elem).on("click", (e) => {
+            // Get the closest dropdown menu, if it exists
+            var $parentDropdownMenu = $(e.target, elem).closest(".collection__item-menu")
+            $(".collection__item-menu.expanded", elem).each((i, f) => {
+                if (
+                    !$parentDropdownMenu.length ||
+                    $parentDropdownMenu.attr("id") != $(f).attr("id")
+                ) {
+                    $(f).foundation("toggle")
+                }
+            })
+        })
+
         $("#login", elem)
             .on("off.zf.toggler", (e) => {
                 $("#hamburger-menu", this.context).addClass("collapse")
@@ -770,11 +1034,14 @@ class KronofotoContext {
             Gallery,
             ImagePreviewInput,
             PhotoSpherePlugin,
+            CopyLink,
+            PageEditor,
+            ExhibitPlugin,
             MapPlugin,
             MapPlugin2,
         ]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context})
+            const plugin = new cls({context: this.context, rootSelector: this.rootSelector, exhibit_mode: this.exhibit_mode})
             plugin.install({elem})
         }
 
@@ -855,7 +1122,7 @@ class KronofotoContext {
         clearInterval(window.autoplayTimer)
     }
 }
-export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
+export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelector = "body", exhibit_mode=""} = {}) => {
     // context here means our root element
     // necessary?
     $(context).on("click", (e) => {
@@ -874,11 +1141,16 @@ export const initHTMXListeners = (_htmx, context, {lateLoad = false} = {}) => {
         }
     })
 
-    const instance = new KronofotoContext({htmx: _htmx, context})
+    const instance = new KronofotoContext({htmx: _htmx, context, rootSelector, exhibit_mode})
     if (lateLoad) {
         instance.onLoad(context)
     }
     _htmx.onLoad(instance.onLoad.bind(instance))
+    _htmx.onLoad(() => {
+        if (window["AOS"]) {
+            AOS.refreshHard()
+        }
+    })
 }
 export function initFoundation(context) {
     Foundation.addToJquery($)
@@ -887,9 +1159,10 @@ export function initFoundation(context) {
     Foundation.Motion = Motion
     Foundation.Move = Move
 
-    Triggers.Initializers.addToggleListener($(context))
+    Triggers.init($, Foundation, context)
     Foundation.plugin(Toggler, "Toggler")
     Foundation.plugin(Tooltip, "Tooltip")
+    Foundation.plugin(Reveal, "Reveal")
 }
 
 export function initClipboardJS(context) {
@@ -897,6 +1170,7 @@ export function initClipboardJS(context) {
         let target = $(e.currentTarget).attr("data-clipboard-target")
         let text = $(target).val()
         ClipboardActionCopy(text)
+        showToast("The link has been copied to the clipboard.")
         $(target).select()
         $(target)[0].setSelectionRange(0, 999999)
     })

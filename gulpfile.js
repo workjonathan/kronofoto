@@ -26,7 +26,7 @@ let HELPERS = {
 }
 
 gulp.task('build:js', () => {
-    return HELPERS.execute('rollup -c');
+  return HELPERS.execute('rollup -c');
 });
 
 var config = {
@@ -37,7 +37,7 @@ gulp.task('build:sass', function () {
     return gulp.src(path.join(config.root, '/scss/index.scss'))
         .pipe(sourcemaps.init())
         .pipe(sass({
-            outputStlye: 'compressed',
+            outputStyle: 'compressed',
             includePaths: [
                 './node_modules'
             ]
@@ -47,11 +47,27 @@ gulp.task('build:sass', function () {
         .pipe(gulp.dest(path.join(config.root, './dist/css/')));
 });
 
-gulp.task('watch:all', function () {
-    gulp.watch(path.join(config.root, '/scss/**/*.scss'), gulp.series('build:sass'));
-    gulp.watch([path.join(config.root, '/js/**/*.js'), path.join('!' + config.root, '/js/kronofoto.js')], gulp.series('build:js'));
+gulp.task('build:exhibit:sass', function () {
+  return gulp.src(path.join(config.root, '/scss/exhibit.scss'))
+      .pipe(sourcemaps.init())
+      .pipe(sass({
+        outputStlye: 'compressed',
+        includePaths: [
+          './node_modules'
+        ]
+      }).on('error', sass.logError))
+      .pipe(autoprefixer())
+      .pipe(sourcemaps.write())
+      .pipe(gulp.dest(path.join(config.root, './dist/css/')));
 });
 
-gulp.task('build:all', function() {
-   gulp.series('build:sass', 'build:js')
+gulp.task('watch:all', function () {
+  gulp.watch([path.join(config.root, '/scss/**/*.scss')], gulp.series('build:sass'));
+  gulp.watch([path.join(config.root, '/js/**/*.js'), path.join('!' + config.root, '/js/kronofoto.js')], gulp.series('build:js'));
+
 });
+gulp.task('watch:exhibit', function () {
+  gulp.watch([path.join(config.root, '/scss/exhibit.scss'), path.join(config.root, '/scss/components/exhibit/**/*.scss')], gulp.series('build:exhibit:sass'));
+});
+
+gulp.task('build:all', gulp.series('build:sass', 'build:js'));

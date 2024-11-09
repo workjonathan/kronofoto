@@ -186,8 +186,6 @@ class Submission(PhotoBase):
         if location:
             stuff.append(location.fullname)
         return ' - '.join(stuff)
-    class Meta:
-        db_table = 'kronofoto_submission'
 
 class ResizerBase(Protocol):
     @property
@@ -324,7 +322,6 @@ class Photo(PhotoBase):
     objects = PhotoQuerySet.as_manager()
 
     class Meta:
-        db_table = 'kronofoto_photo'
         constraints = [
             models.CheckConstraint(check=Q(is_published=False) | Q(donor__isnull=False), name="never_published_without_donor"),
         ]
@@ -585,7 +582,6 @@ class PhotoTag(models.Model):
         indexes = [
             models.Index(fields=['tag', 'photo']),
         ]
-        db_table = 'kronofoto_phototag'
 
 
     def __str__(self) -> str:

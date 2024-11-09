@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='phototag',
-            index=models.Index(fields=['tag', 'photo'], name='archive_pho_tag_id_2ea640_idx'),
+            index=models.Index(fields=['tag', 'photo'], name='kronofoto_p_tag_id_fe62a8_idx'),
         ),
         migrations.AddConstraint(
             model_name='phototag',

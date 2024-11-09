@@ -1,0 +1,13 @@
+{% load static %}
+{% load widgets %}
+<head>
+    <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="{% static "kronofoto/css/exhibit.css" %}" rel="stylesheet">
+</head>
+
+<div id="kfroot">
+{% include "kronofoto/components/exhibit/sitewrapper.html" %}
+{% include "kronofoto/components/exhibit/credits.html" %}
+
+</div>
