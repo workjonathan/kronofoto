@@ -166,40 +166,6 @@ def service_outbox(request: HttpRequest) -> HttpResponse:
     return JsonLDResponse({})
 
 #@require_json_ld
-def archive_profile(request: HttpRequest, short_name: str) -> HttpResponse:
-    archive = get_object_or_404(Archive.objects.all(), slug=short_name)
-    return JsonLDResponse({
-        "@context": "https://www.w3.org/ns/activitystreams",
-         "type": "Organization",
-         "id": reverse("kronofoto:activitypub-archive", kwargs={"short_name": short_name}),
-         "name": archive.name,
-         "inbox": reverse("kronofoto:activitypub-archive-inbox", kwargs={"short_name": short_name}),
-         "outbox": reverse("kronofoto:activitypub-archive-outbox", kwargs={"short_name": short_name}),
-    })
-
-@require_json_ld
-def archive_inbox(request: HttpRequest, short_name: str) -> HttpResponse:
-    if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
-        return HttpResponse(status=401)
-    archive = get_object_or_404(Archive.objects.all(), slug=short_name)
-    if request.method == "POST":
-        data = json.loads(request.body.decode("utf-8"))
-        actor, created = RemoteActor.objects.get_or_create(
-            profile=data['actor'],
-            defaults={
-                "actor_follows_app": False,
-                "app_follows_actor": False,
-            }
-        )
-        FollowArchiveRequest.objects.create(remote_actor=actor, request_body=data, archive=archive)
-        return JsonLDResponse({})
-    else:
-        return HttpResponse(status=401)
-
-@require_json_ld
-def archive_outbox(request: HttpRequest, short_name: str) -> HttpResponse:
-    archive = get_object_or_404(Archive.objects.all(), slug=short_name)
-    return JsonLDResponse({})
 
 
 
@@ -212,6 +178,17 @@ class DataEndpoint(Protocol):
     def data(self, request: HttpRequest, short_name: str, pk: int) -> HttpResponse:
         ...
 
+class ActorEndpoint(Protocol):
+    @property
+    def data_urls(self) -> List[Any]:
+        ...
+    def profile(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+    def inbox(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+    def outbox(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+
 T = TypeVar("T", bound=DataEndpoint)
 
 @dataclass
@@ -219,8 +196,8 @@ class register:
     namespace: str
     data_urls: Any
     def __call__(self, cls: Type[T]) -> Type[T]:
-        data_urls[0].append(
-            path(self.namespace, include(([
+        self.data_urls.append(
+            path("/"+ self.namespace, include(([
                     path("", cls.data_page, name="page"),
                     path("/<int:pk>", cls.data, name="detail"),
                 ],
@@ -229,13 +206,6 @@ class register:
         ))
         return cls
 
-@dataclass
-class register2:
-    model: Any
-    data_urls: Any
-    def __call__(self, cls: Any) -> Any:
-        print(cls)
-        return cls
 
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load
 from django.contrib.sites.models import Site
@@ -251,8 +221,8 @@ class Image(Schema):
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
         return {
-            "id": reverse("kronofoto:activitypub_data:photos:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
-            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": object.archive.slug})],
+            "id": reverse("kronofoto:activitypub_data:archives:photos:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
+            "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
             "content": object.caption,
             "url": object.original.url,
         }
@@ -277,8 +247,8 @@ class Contact(Schema):
     @pre_dump
     def extract_fields_from_object(self, object: Donor, **kwargs: Any) -> Dict[str, Any]:
         return {
-            "id": reverse("kronofoto:activitypub_data:contributors:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
-            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": object.archive.slug})],
+            "id": reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
+            "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
             "name": object.display_format(),
             "firstName": object.first_name,
             "lastName": object.last_name,
@@ -334,8 +304,67 @@ class PagedCollection(Schema):
             'first': object
         }
 
+U = TypeVar("U", bound=ActorEndpoint)
 
+@dataclass
+class register_actor:
+    path: str
+    namespace: str
+    data_urls: Any
+    def __call__(self, cls: Type[U]) -> Type[U]:
+        data_urls[0].append(
+            path(self.path, include(([# type: ignore
+                    path("", cls.profile, name="actor"),
+                    path("/inbox", cls.inbox, name="inbox"),
+                    path("/outbox", cls.outbox, name="outbox"),
+                ] + cls.data_urls,
+                self.namespace,
+            ))
+        ))
+
+        return cls
+
+@register_actor("archives/<slug:short_name>", "archives", data_urls)
 class ArchiveActor:
+
+    data_urls: Any = []
+    @staticmethod
+    def profile(request: HttpRequest, short_name: str) -> HttpResponse:
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        return JsonLDResponse({
+            "@context": "https://www.w3.org/ns/activitystreams",
+             "type": "Organization",
+             "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": short_name}),
+             "name": archive.name,
+             "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": short_name}),
+             "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": short_name}),
+        })
+
+    #@require_json_ld
+    @staticmethod
+    def inbox(request: HttpRequest, short_name: str) -> HttpResponse:
+        if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
+            return HttpResponse(status=401)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        if request.method == "POST":
+            data = json.loads(request.body.decode("utf-8"))
+            actor, created = RemoteActor.objects.get_or_create(
+                profile=data['actor'],
+                defaults={
+                    "actor_follows_app": False,
+                    "app_follows_actor": False,
+                }
+            )
+            FollowArchiveRequest.objects.create(remote_actor=actor, request_body=data, archive=archive)
+            return JsonLDResponse({})
+        else:
+            return HttpResponse(status=401)
+
+    #@require_json_ld
+    @staticmethod
+    def outbox(request: HttpRequest, short_name: str) -> HttpResponse:
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        return JsonLDResponse({})
 
     @register("contributors", data_urls)
     class DonorData:
@@ -347,14 +376,14 @@ class ArchiveActor:
                 queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
                 schema : Union[CollectionPage, PagedCollection] = CollectionPage()
                 schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:contributors:page", kwargs={"short_name": short_name})
+                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
             else:
                 queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')
                 schema = PagedCollection()
                 schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:contributors:page", kwargs={"short_name": short_name})
+                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
                 schema.context['summary'] = "Contributor List"
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
@@ -375,14 +404,14 @@ class ArchiveActor:
                 queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
                 schema : Union[CollectionPage, PagedCollection] = CollectionPage()
                 schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:photos:page", kwargs={"short_name": short_name})
+                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
             else:
                 queryset = Photo.objects.filter(archive__slug=short_name).order_by('id')
                 schema = PagedCollection()
                 schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:photos:page", kwargs={"short_name": short_name})
+                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
                 schema.context['summary'] = "Photo List"
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
