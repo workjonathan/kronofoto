@@ -1,6 +1,6 @@
 <div class="row" hx-target="closest .photo-menu-popup__wrapper">
     <div class="columns small-12 medium-12 large-4 container--scroll">
-        <h1 class="h1">My Lists</h1>
+        <h1 class="h1">My FotoAlbums</h1>
 
         <form method="post" class="form" action="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}" hx-post="{% url "kronofoto:popup-new-list" photo=view.kwargs.photo %}">
             {% csrf_token %}
@@ -33,8 +33,8 @@
     <div class="small-12 medium-12 large-6 large-offset-2 columns container--scroll">
         <form class="form" method="post" data-save-list hx-post="{% url "kronofoto:popup-add-to-list" photo=view.kwargs.photo %}">
             {% csrf_token %}
-            <div class="h4">Save to an existing list</div>
-            <label class="text-tiny">*private list</label>
+            <div class="h4">Save to an existing FotoAlbum</div>
+            <label class="text-tiny">*private FotoAlbum</label>
             <ul class="checkboxes">
                 {{ form.as_ul }}
             </ul>

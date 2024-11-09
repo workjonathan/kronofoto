@@ -157,15 +157,25 @@
   flex-grow: 1;
   justify-content: space-between;
   align-items: center;
-  button {
+  button:not(.button) {
     cursor: pointer;
     appearance: none;
     border: none;
     background: none;
   }
-  .has-tip {
-    cursor: default;
-    border-bottom: none;
+  .button {
+    height: 35px;
+    line-height: 35px;
+  }
+  .icon {
+    width: 60px;
+    height: 40px;
+    i {
+      display: block;
+      width: 100%;
+      height: 100%;
+      vertical-align: middle;
+    }
   }
 }
 
@@ -191,12 +201,34 @@
     flex-basis: 25%;
   }
 }
+.main-nav__actions {
+  margin-right: 30px;
+  display: flex;
+}
+.main-nav__actions > button {
+  position: relative;
+  &:after {
+    content: '';
+    width: 98%;
+    height: 2px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 0;
+    position: absolute;
+    background-color: #BFBFBF;
+    transition: opacity ease-in-out 250ms;
+  }
 
+  &:hover:after {
+    opacity: 1;
+  }
+}
 .main-nav__right {
   justify-content: flex-end;
+
   @include breakpoint(medium up) {
     flex-grow: 1;
-    > div:not(.hamburger-container) {
+    > .new-label_container, > .login-container {
       &:after {
         content: '';
         width: 98%;
@@ -327,4 +359,9 @@
     filter: brightness(0) invert(1);
   }
 
+}
+
+.has-tip {
+  cursor: default !important;
+  border-bottom: none !important;
 }

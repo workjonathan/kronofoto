@@ -1,0 +1,107 @@
+@use '../../colors' as *;
+@use '../../typography' as *;
+
+.hero {
+  z-index: 1000;
+  background-color: $primary-color;
+  color: white;
+  text-align: center;
+  //padding: 50px 0;
+  //aspect-ratio: 1.6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  height: 100vh;
+  width: 100%;
+
+  &__title {
+    .page-editor & {
+      opacity: 1 !important;
+    }
+  }
+
+  &__edit-image-button {
+    width: 40px;
+    height: 35px;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+    background-repeat: no-repeat;
+    //background-color: #ffffff;
+    position: absolute;
+
+    bottom: 0px;
+    right: 0px;
+    background-position: center;
+    z-index: 100;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='35' viewBox='0 0 40 35'%3E%3Cpath id='Path_220' data-name='Path 220' d='M61.748,56.781l7.133-6.945L72.448,53.4l2.065-2.065,5.068,5.255' transform='translate(-50.748 -32.343)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='2'/%3E%3Cpath id='Path_221' data-name='Path 221' d='M84.465,42.983a2.888,2.888,0,1,0-2.889,2.89,2.888,2.888,0,0,0,2.889-2.89' transform='translate(-56.395 -29.097)' fill='%23fff'/%3E%3Cg id='Rectangle_125' data-name='Rectangle 125' fill='none' stroke='%23fff' stroke-width='2'%3E%3Crect width='40' height='35' stroke='none'/%3E%3Crect x='1' y='1' width='38' height='33' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    padding: 14px;
+    transition: padding ease-in-out 120ms;
+    &:hover {
+      padding: 14px 14px 22px 14px;
+    }
+  }
+
+  &__info-button {
+    z-index: 1;
+  }
+
+  &__content {
+    padding: 20px;
+    .page-editor & {
+      opacity: 1 !important;
+    }
+  }
+
+  &__content-wrapper {
+    margin: auto;
+    text-align: center;
+    z-index: 1;
+    padding: 30px;
+    @media screen and (min-width: 48em) {
+      padding: 0px;
+      width: 54%;
+    }
+    h1 {
+      font-weight: $font-weight-medium;
+      font-size: 44px;
+      line-height: 50px;
+      @media screen and (min-width: 48em) {
+        font-size: 72px;
+        line-height: 80px;
+      }
+    }
+    p {
+      font-weight: $font-weight-medium;
+      font-size: 16px;
+      line-height: 22px;
+      @media screen and (min-width: 48em) {
+        font-size: 24px;
+        line-height: 30px;
+      }
+    }
+  }
+
+  &__background {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    &:after {
+      content: '';
+      background-color: rgba(0, 0, 0, 0.4);
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 100%;
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+}

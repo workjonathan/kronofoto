@@ -1,0 +1,28 @@
+@use '../../colors' as *;
+@use '../../exhibit-typography' as *;
+
+.content-area {
+  padding-top: 4px;
+  &__content {
+    max-width: 600px;
+    margin: auto;
+    color: $clr-gray;
+    p {
+      @extend .paragraph;
+    }
+  }
+
+  &--credits {
+    padding: 90px 0px;
+    text-align: center;
+    background-color: #333333;
+    color: #E3E3E3;
+    small {
+      display: block;
+      margin-top: 40px;
+    }
+    * {
+      color: inherit;
+    }
+  }
+}

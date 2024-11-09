@@ -1,3 +1,4 @@
+@use '../typography' as *;
 @import 'button';
 @import 'input';
 
@@ -28,9 +29,16 @@ input[type=number]::-webkit-outer-spin-button {
 
 .form {
 
+  &--collection {
+    padding: 0px 70px 20px 0px;
+    @include breakpoint(small only) {
+      order: 9999;
+    }
+  }
+
   select {
     border: 3px solid var(--fp-main-color) !important;
-    color: $white;
+    color: inherit;
     background-color: transparent;
     border-radius: 3px;
     line-height: 29px;
@@ -39,13 +47,13 @@ input[type=number]::-webkit-outer-spin-button {
     margin-bottom: 14px;
     position: relative;
     [theme=skyblue] & {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.768' height='8.652' viewBox='0 0 13.768 8.652'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%236E86BC' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13.768 8.652' height='8.652' width='13.768'%3E%3Cg xmlns='http://www.w3.org/2000/svg' transform='matrix(-1 0 0 -1 13.768 8.652)'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%236E86BC' stroke-miterlimit='10' stroke-width='2.5' /%3E%3C/g%3E%3C/svg%3E");
     }
     [theme=golden] & {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.768' height='8.652' viewBox='0 0 13.768 8.652'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%23C2891C' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13.768 8.652' height='8.652' width='13.768'%3E%3Cg xmlns='http://www.w3.org/2000/svg' transform='matrix(-1 0 0 -1 13.768 8.652)'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%23C2891C' stroke-miterlimit='10' stroke-width='2.5' /%3E%3C/g%3E%3C/svg%3E");
     }
     [theme=haybail] & {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.768' height='8.652' viewBox='0 0 13.768 8.652'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%23C2A562' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13.768 8.652' height='8.652' width='13.768'%3E%3Cg xmlns='http://www.w3.org/2000/svg' transform='matrix(-1 0 0 -1 13.768 8.652)'%3E%3Cpath id='Path_88' data-name='Path 88' d='M13.061,1.061l-6,6-6-6' transform='translate(13.945 8.828) rotate(180)' fill='none' stroke='%23C2A562' stroke-miterlimit='10' stroke-width='2.5' /%3E%3C/g%3E%3C/svg%3E");
     }
 
     background-repeat: no-repeat;
@@ -99,6 +107,21 @@ input[type=number]::-webkit-outer-spin-button {
       cursor: pointer;
       line-height: 32px;
       padding-right: 16px;
+    }
+    &__left-label-with-subtitle {
+      cursor: pointer;
+      order: -1;
+      color: #747474;
+      font-weight: $font-weight-bold;
+      margin-right: 20px;
+      > span {
+        margin-top: 6px;
+        display: block;
+        &.invisible {
+          height: 0px;
+          margin: 0px;
+        }
+      }
     }
     &__right-label {
       cursor: pointer;
@@ -223,4 +246,34 @@ select::-ms-expand {
 .select2-dropdown {
   z-index: 20000;
   width: 25%;
+}
+
+fieldset.module.aligned.wide {
+  border: none;
+  padding: 20px 0px;
+
+}
+
+.help {
+  &--list {
+    font-size: 14px;
+    line-height: 1.5em;
+    background-color: #eee;
+    padding: 10px;
+    margin-bottom: 16px;
+   ul {
+     font-size: inherit;
+     line-height: inherit;
+     padding-left: 30px;
+     color: #7f7f7f;
+     line-height: 1.5em;
+     font-size: 18px;
+   }
+  }
+}
+
+.errorlist {
+  list-style-type: none;
+  color: #ff0000;
+  margin-bottom: 16px;
 }

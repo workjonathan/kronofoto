@@ -53,7 +53,6 @@ class Donor(Collectible, models.Model):
         indexes = (
             models.Index(fields=['last_name', 'first_name']),
         )
-        db_table = 'kronofoto_donor'
 
     @property
     def activity_dict(self) -> Dict[str, Any]:

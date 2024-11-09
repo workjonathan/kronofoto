@@ -4,7 +4,7 @@ from django.db import migrations
 
 def create_default_archive(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Archive = apps.get_model('archive', 'Archive')
+    Archive = apps.get_model('kronofoto', 'Archive')
     Archive.objects.using(db_alias).create(
         name='Default',
         short_name='default',

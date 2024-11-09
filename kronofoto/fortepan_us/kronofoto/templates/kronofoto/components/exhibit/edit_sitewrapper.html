@@ -1,0 +1,41 @@
+{% extends "./sitewrapper_base.html" %}
+
+{% load krono_urls %}
+{% load widgets %}
+
+{% block header_title %}
+    {{ form.name.errors }}
+    <div class="header__title" data-copy-source="content-editable-name">
+        {{ exhibit.name }}
+    </div>
+{% endblock %}
+
+{% block hero_content_wrapper %}
+    <div class="hero__title">
+        {{ form.title.errors }}
+        <h1 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
+    </div>
+    {{ form.description.errors }}
+    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ exhibit.description }}</p>
+{% endblock hero_content_wrapper %}
+
+{% block hero_background %}
+    {{ form.photo.errors }}
+    <div class="hero__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
+    <div class="hero__background"
+        hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">
+        <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+    </div>
+{% endblock hero_background %}
+
+{% block info_text %}
+    <div class="info-button__text" hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">{% include "kronofoto/components/attribution.html" with object=exhibit.photo %}</div>
+{% endblock info_text %}
+
+{% block hero_formfields %}
+    {% for field in form %}
+        {{ field.as_hidden }}
+    {% endfor %}
+{% endblock hero_formfields %}
+
+

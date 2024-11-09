@@ -105,10 +105,14 @@ $headerHeight: 80px;
       > button {
         background: none;
         border: none;
-        padding: 0px 10px;
+        padding: 0px;
         cursor: pointer;
         img {
+          width: 55px;
           transition: all ease-in-out 100ms;
+          padding: 5px 15px;
+          margin: 0px;
+          cursor: pointer !important;
         }
         &:hover {
           img {

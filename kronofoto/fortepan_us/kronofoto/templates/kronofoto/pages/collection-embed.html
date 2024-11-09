@@ -1,0 +1,26 @@
+{% extends base_template %}
+{% load static %}
+{% load krono_urls %}
+
+{% block content %}
+
+    <div class="container row">
+        <div class="columns small-12 medium-12 large-3">
+
+            <div class="row collapse">
+                <div class="columns small-8">
+                    <input type="text" id="embed-input" value="{% filter force_escape %}<script src="{% static 'kronofoto.js' %}"></script>
+                        <fortepan-viewer src="{% krono_url "kronofoto:random-image" %}" constraint="{{ constraint }}"></fortepan-viewer>{% endfilter %}" />
+                </div>
+                <div class="columns small-2">
+                    <a class="button copy-button" data-clipboard-target="#embed-input">Copy</a>
+                </div>
+            </div>
+        </div>
+        <div class="columns small-12 medium-12 large-9">
+            <script src="{% static "kronofoto.js" %}"></script>
+            <fortepan-viewer src="{% krono_url "kronofoto:random-image" %}" constraint="{{ constraint }}"></fortepan-viewer>
+        </div>
+    </div>
+
+{% endblock content %}

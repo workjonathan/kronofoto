@@ -47,8 +47,8 @@ class ImageCacher:
 class ImageSigner:
     id: int
     path: str
-    width: int
-    height: int
+    width: Optional[int]
+    height: Optional[int]
 
     @property
     def block1(self) -> int:
@@ -76,7 +76,7 @@ class ImageSigner:
 
     @property
     def profile_args(self) -> Tuple[str, int, int]:
-        profile_args = (self.path, self.width, self.height)
+        profile_args = (self.path, self.width or 0, self.height or 0)
         return profile_args
 
     @property

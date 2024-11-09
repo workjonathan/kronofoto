@@ -14,6 +14,8 @@ import {
 } from "./lib.js"
 
 import HTMX from "./htmx.js"
+import AlpineJS from "alpinejs"
+AlpineJS.start()
 
 class FortepanViewer extends HTMLElement {
     constructor() {
@@ -23,6 +25,7 @@ class FortepanViewer extends HTMLElement {
     connectedCallback() {
         const constraint = this.getAttribute("constraint") || ""
         const host = this.getAttribute("src") || "https://fortepan.us"
+        const exhibit_mode = this.getAttribute("exhibit-mode") || ""
         const template = document.createElement("template")
         const body = document.querySelector("body")
         const f = document.createElement("style")
@@ -194,7 +197,8 @@ class FortepanViewer extends HTMLElement {
                 this.htmx = HTMX(this.shadowRoot)
                 initFoundation(this.shadowRoot.querySelector("#kfroot"))
                 this.htmx.process(this.shadowRoot.querySelector("#kfroot"))
-                initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true})
+                initHTMXListeners(this.htmx, this.shadowRoot, {lateLoad: true, rootSelector: "#kfroot", exhibit_mode})
+                this.htmx.onLoad(element => AlpineJS.initTree(element))
             })
     }
 }

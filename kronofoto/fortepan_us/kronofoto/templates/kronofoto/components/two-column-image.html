@@ -1,0 +1,5 @@
+{% load widgets %}
+{% load krono_urls %}
+
+
+<img{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-swap="outerHTML show:top" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %} loading="lazy" {% if photo %}src="{% image_url id=photo.id path=photo.original.name width=1000 %}"{% endif %}>

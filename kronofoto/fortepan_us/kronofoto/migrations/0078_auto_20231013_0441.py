@@ -4,19 +4,19 @@ from django.db import migrations
 
 def create_photo_category(apps, schema_editor):
     db_alias = schema_editor.connection.alias
-    Category = apps.get_model('archive', 'Category')
-    Term = apps.get_model('archive', 'Term')
-    Photo = apps.get_model('archive', 'Photo')
-    Submission = apps.get_model('archive', 'Submission')
-    Archive = apps.get_model('archive', 'Archive')
-    ValidCategory = apps.get_model('archive', 'ValidCategory')
+    Category = apps.get_model('kronofoto', 'Category')
+    Term = apps.get_model('kronofoto', 'Term')
+    Photo = apps.get_model('kronofoto', 'Photo')
+    Submission = apps.get_model('kronofoto', 'Submission')
+    Archive = apps.get_model('kronofoto', 'Archive')
+    ValidCategory = apps.get_model('kronofoto', 'ValidCategory')
     photos_category = Category.objects.using(db_alias).create(
         name='Photos',
         slug='photos',
     )
     for archive in Archive.objects.all():
         archive.categories.add(photos_category)
-        vc = ValidCategory.objects.get(kronofoto.archive, category=photos_category)
+        vc = ValidCategory.objects.get(archive=archive, category=photos_category)
         vc.terms.set(Term.objects.all())
 
     Photo.objects.update(category=photos_category)

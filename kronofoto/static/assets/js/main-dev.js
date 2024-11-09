@@ -11,6 +11,8 @@ import {
     initFoundation,
     initHTMXListeners,
 } from "./lib.js"
+import AlpineJS from "alpinejs"
+window.AlpineJS = AlpineJS
 window.kfcontext = document
 import HTMX from "./htmx.js"
 
@@ -20,8 +22,12 @@ htmx.config.refreshOnHistoryMiss = true
 
 const init = () => {
     initHTMXListeners(htmx, document)
+    AlpineJS.start()
     initFoundation(document)
     initClipboardJS(document)
+    document.addEventListener("htmx:beforeSwap", (evt) => {
+        console.log({evt})
+    })
 }
 
 const ready = (fn) => {

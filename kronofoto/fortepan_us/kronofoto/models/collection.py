@@ -4,7 +4,11 @@ from django.utils.http import urlencode
 from django.contrib.auth.models import User
 import uuid
 import deal
-from typing import Dict, Any
+from .photo import Photo
+from django.db.models import QuerySet
+from django.db.models.functions import Lower
+from typing import Optional
+from typing import Dict, Any, Protocol
 
 class CollectionQuerySet(models.QuerySet):
     @deal.ensure(lambda self, photo, result:
@@ -14,6 +18,12 @@ class CollectionQuerySet(models.QuerySet):
         return self.annotate(
             membership=models.Count('photos', filter=models.Q(photos__id=photo))
         )
+
+    def by_user(self, *, user: User, visibility: Optional[str]=None) -> "CollectionQuerySet":
+        objs = self.filter(owner=user)
+        if visibility:
+            objs.filter(visibility=visibility)
+        return objs.order_by(Lower("name"))
 
 class Collection(models.Model):
     PRIVACY_TYPES = [
@@ -35,5 +45,3 @@ class Collection(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    class Meta:
-        db_table = 'kronofoto_collection'

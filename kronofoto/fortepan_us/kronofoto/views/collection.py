@@ -1,65 +1,222 @@
 from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic import ListView
+from django.core.exceptions import PermissionDenied
+from django.utils.html import escape
 from fortepan_us.kronofoto.reverse import reverse
-from django.http import QueryDict, HttpResponse, HttpRequest, HttpResponseForbidden
+from django.views.decorators.http import require_http_methods
+from django.http import QueryDict, HttpResponse, HttpResponseForbidden, HttpRequest, HttpResponseRedirect
+from fortepan_us.kronofoto.reverse import reverse
+from django.template.response import TemplateResponse
 from django.forms import formset_factory, ModelForm, Form, BaseFormSet
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .basetemplate import BaseTemplateMixin
-from fortepan_us.kronofoto.models.photo import Photo
-from django.db.models import QuerySet
-from fortepan_us.kronofoto.models.collection import Collection
-from fortepan_us.kronofoto.forms import AddToListForm, ListMemberForm, ListForm
+from .base import ArchiveRequest
+from django.db.models import QuerySet, Exists, OuterRef
+from fortepan_us.kronofoto.forms import AddToListForm, ListMemberForm, ListForm, CollectionForm, ListVisibilityForm
+from fortepan_us.kronofoto.models import Photo, Exhibit, Collection
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
-from typing import Any, Dict, Collection as CollectionT, List
+from dataclasses import dataclass
+from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type
+
+@login_required
+def embed(request: HttpRequest, pk: int) -> HttpResponse:
+    collection = get_object_or_404(Collection.objects.all(), id=pk, owner=request.user)
+    context = ArchiveRequest(request=request).common_context
+    context["constraint"] = "collection:{}".format(collection.uuid)
+    context['collection'] = collection
+    return TemplateResponse(
+        request=request,
+        context=context,
+        template="kronofoto/pages/collection-embed.html",
+    )
+
+def profile_view(request: HttpRequest, username: str) -> HttpResponse:
+    context = ArchiveRequest(request=request).common_context
+    context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
+    from .exhibit import ExhibitCreateForm
+    if not request.user.is_anonymous:
+        context['form'] = ExhibitCreateForm()
+        context['form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
+        context['exhibits'] = Exhibit.objects.filter(owner=request.user)
+    return TemplateResponse(request=request, context=context, template="kronofoto/pages/user-page.html")
+
+def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    collection = get_object_or_404(Collection.objects.all(), id=pk)
+    if collection.owner != request.user:
+        return HttpResponseForbidden()
+    else:
+        context = ArchiveRequest(request=request).common_context
+        context['collection'] = collection
+        context['visibility_form'] = ListVisibilityForm(initial={'is_private': collection.visibility != "PU"})
+        return TemplateResponse(request=request, context=context, template="kronofoto/pages/collection-edit.html")
+
+class Responder(Protocol):
+    @property
+    def response(self) -> HttpResponse: ...
+
+@dataclass
+class UserPageRedirect:
+    user: User
+
+    @property
+    def response(self) -> HttpResponse:
+        return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": self.user.username}))
+
+@dataclass
+class FormResponse:
+    request: HttpRequest
+    user: User
+    template: str
+    context: Dict[str, Any]
+
+    form_class: Callable[[], CollectionForm] = CollectionForm
+
+    @property
+    def response(self) -> HttpResponse:
+        self.context['form'] = self.form_class()
+        self.context['object_list'] = Collection.objects.by_user(user=self.user)
+        self.context['profile_user'] = self.user
+        return TemplateResponse(request=self.request, context=self.context, template=self.template)
+
+class ListNullAction:
+    def save(self) -> None:
+        pass
+
+@dataclass
+class ListSaver(ListNullAction):
+    form: CollectionForm
+    user: User
+
+    def save(self) -> None:
+        instance = self.form.save(commit=False)
+        instance.owner = self.user
+        instance.visibility = "PU"
+        instance.save()
+
+class BehaviorSelection(Protocol):
+    def saver(self) -> ListNullAction: ...
+    def responder(self, *, request: HttpRequest, user: User) -> Responder: ...
 
 
-class Profile(BaseTemplateMixin, ListView):
-    model = Collection
-    template_name = 'kronofoto/pages/user-page.html' # any template is needed to prevent a 500 error
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context['profile_user'] = User.objects.get(username=self.kwargs['username'])
-        return context
-
-    def get_queryset(self) -> QuerySet:
-        if not self.request.user.is_anonymous and self.request.user.get_username() == self.kwargs['username']:
-            return Collection.objects.filter(owner=self.request.user)
+@dataclass
+class CollectionPostBehaviorSelection:
+    postdata: QueryDict
+    user: User
+    areq: ArchiveRequest
+    def saver(self) -> ListNullAction:
+        form = CollectionForm(self.postdata)
+        if form.is_valid():
+            return ListSaver(user=self.user, form=form)
         else:
-            user = get_object_or_404(User, username=self.kwargs['username'])
-            return Collection.objects.filter(owner=user, visibility='PU')
+            return ListNullAction()
+
+    def responder(self, *, request: HttpRequest, user: User) -> Responder:
+        if self.areq.is_hx_request:
+            template = "kronofoto/components/collections.html"
+            return FormResponse(request=request, user=user, template=template, context=self.areq.common_context)
+        else:
+            return UserPageRedirect(user=user)
+
+@dataclass
+class CollectionGetBehaviorSelection:
+    areq: ArchiveRequest
+    def saver(self) -> ListNullAction:
+        return ListNullAction()
+
+    def responder(self, *, request: HttpRequest, user: User) -> Responder:
+        template = "kronofoto/pages/collection-create.html"
+        responder = FormResponse(request=request, user=user, template=template, context=self.areq.common_context)
+        return responder
+
+class CollectionBehaviorSelection:
+    def behavior(self, *, request: HttpRequest, user: User) -> BehaviorSelection:
+        areq = ArchiveRequest(request=request)
+        if request.method == "POST":
+            return CollectionPostBehaviorSelection(postdata=request.POST, user=user, areq=areq)
+        else:
+            return CollectionGetBehaviorSelection(areq=areq)
 
 
-class CollectionCreate(BaseTemplateMixin, LoginRequiredMixin, CreateView):
-    model = Collection
-    fields = ['name', 'visibility']
-    template_name = 'kronofoto/pages/collection-create.html'
+@require_http_methods(["POST"])
+@login_required
+def change_name(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    collections = Collection.objects.filter(owner__id=request.user.id, pk=pk)
+    if 'collection-name' in request.POST and len(request.POST['collection-name'].strip()) > 0:
+        name = request.POST['collection-name']
+        collections.update(name=name)
+    for c in collections:
+        return HttpResponse(escape(c.name))
+    return HttpResponse("forbidden", status=403)
 
-    def get_success_url(self) -> str:
-        return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
+@require_http_methods(["POST"])
+@login_required
+def change_visibility(request: HttpRequest, pk: int) -> HttpResponse:
+    assert not request.user.is_anonymous
+    areq = ArchiveRequest(request)
+    collection = get_object_or_404(Collection.objects.all(), owner=request.user, id=pk)
+    form = ListVisibilityForm(request.POST)
+    if form.is_valid():
+        collection.visibility = "PR" if form.cleaned_data['is_private'] else "PU"
+        collection.save()
+    context = areq.common_context
+    context['collection'] = collection
+    context['visibility_form'] = form
+    if areq.is_hx_request:
+        return TemplateResponse(request=request, template="kronofoto/pages/collection-edit.html", context=context)
+    else:
+        return HttpResponseRedirect(reverse("kronofoto:collection-edit", kwargs={'pk':pk}))
 
-    def form_valid(self, form: ModelForm) -> HttpResponse:
-        form.instance.owner = self.request.user
-        return super().form_valid(form)
+
+@require_http_methods(["POST"])
+@login_required
+def remove(request: HttpRequest, pk: int, photo: int) -> HttpResponse:
+    areq = ArchiveRequest(request)
+    assert not request.user.is_anonymous
+    collection = get_object_or_404(Collection.objects.all(), owner=request.user, id=pk)
+    relations = Collection.photos.through.objects.filter(collection__owner=request.user, collection__id=pk, photo__id=photo)
+    if 'choice' in request.POST and request.POST['choice'] == 'Yes':
+        relations.delete()
+    context = areq.common_context
+    context['collection'] = collection
+    context['visibility_form'] = ListVisibilityForm(initial={'is_private': collection.visibility != "PU"})
+    if areq.is_hx_request:
+        return TemplateResponse(request=request, template="kronofoto/pages/collection-edit.html", context=context)
+    else:
+        return HttpResponseRedirect(reverse("kronofoto:collection-edit", kwargs={'pk':pk}))
+
+@login_required
+def collections_view(
+    request: HttpRequest,
+    behavior_class: Type[CollectionBehaviorSelection]=CollectionBehaviorSelection,
+) -> HttpResponse:
+    assert not request.user.is_anonymous
+    behavior = behavior_class().behavior(request=request, user=request.user)
+    saver = behavior.saver()
+    responder = behavior.responder(request=request, user=request.user)
+    saver.save()
+    return responder.response
 
 
 class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView): # type: ignore
     model = Collection
     template_name = 'kronofoto/pages/collection-delete.html'
 
-    def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def get_context_data(self, *args: Any, **kwargs: Any) -> Any:
         context = super().get_context_data(*args, **kwargs)
         if 'view' not in context:
             context['view'] = self
         return context
 
-    def get_success_url(self) -> str:
+    def get_success_url(self) -> Any:
         return reverse('kronofoto:user-page', args=[self.request.user.get_username()])
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def dispatch(self, request: Any, *args: Any, **kwargs: Any) -> Any:
         obj = self.get_object()
         if obj.owner != request.user:
             return HttpResponseForbidden()
@@ -73,7 +230,8 @@ class NewList(LoginRequiredMixin, FormView):
         return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
 
     def form_valid(self, form: Form) -> HttpResponse:
-        assert not self.request.user.is_anonymous
+        if self.request.user.is_anonymous:
+            return HttpResponseForbidden()
         collection = Collection.objects.create(
             name=form.cleaned_data['name'],
             owner=self.request.user,
@@ -118,8 +276,8 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
             return HttpResponse(400)
         for data in form.cleaned_data:
             try:
-                collection = Collection.objects.get(id=data['collection'], owner=self.request.user)
-                if data['membership']:
+                collection = Collection.objects.get(id=data['collection'], owner=self.request.user) # type: ignore
+                if data['membership']: # type: ignore
                     collection.photos.add(self.kwargs['photo'])
                 else:
                     collection.photos.remove(self.kwargs['photo'])
@@ -147,6 +305,8 @@ class AddToList(BaseTemplateMixin, LoginRequiredMixin, FormView):
     def get_form_kwargs(self) -> Dict[str, Any]:
         assert not self.request.user.is_anonymous
         kwargs = super().get_form_kwargs()
+        if self.request.user.is_anonymous:
+            raise PermissionDenied
         kwargs['collections'] = [
             (collection.id, collection.name)
             for collection in Collection.objects.filter(owner=self.request.user)

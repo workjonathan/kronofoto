@@ -1,0 +1,19 @@
+{% extends base_template %}
+
+{% load krono_urls %}
+
+{% block content %}
+<div class="container-center exhibit_delete-container">
+    <form method="post" hx-post hx-target="#app">
+        {% csrf_token %}
+        <p>Are you sure you want to delete {{ exhibit.name }}?</p>
+        <input type="submit" value="Yes">
+        <span class="back-btn">
+            <a 
+                href="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+                hx-get="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+            >No</a>
+        </span>
+    </form>
+</div>
+{% endblock content %}

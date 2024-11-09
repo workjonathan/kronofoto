@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='photosphere',
             name='links',
-            field=models.ManyToManyField(related_name='_kronofoto.photosphere_links_+', to='archive.PhotoSphere'),
+            field=models.ManyToManyField(related_name='_kronofoto_photosphere_links_+', to='kronofoto.PhotoSphere'),
         ),
         migrations.AddField(
             model_name='photosphere',

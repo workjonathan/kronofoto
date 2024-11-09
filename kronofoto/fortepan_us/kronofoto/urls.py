@@ -3,14 +3,16 @@ from fortepan_us.kronofoto import views
 from fortepan_us.kronofoto.views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
 from fortepan_us.kronofoto.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
+from fortepan_us.kronofoto.views import photosphere
 from fortepan_us.kronofoto.views.frontpage import RandomRedirect, YearRedirect
 from fortepan_us.kronofoto.views.photo import CarouselListView
-from fortepan_us.kronofoto.views.photo import LogoSvg, LogoSvgSmall
 from fortepan_us.kronofoto.views.agreement import AgreementView
 from fortepan_us.kronofoto.views.submission import submission, KronofotoTemplateView
 from fortepan_us.kronofoto.views.tagsearch import ContributorSearchView
 from fortepan_us.kronofoto.views.donor import ContributorCreateView
-from fortepan_us.kronofoto.views import tags_view, activitypub
+from fortepan_us.kronofoto.views import activitypub
+from fortepan_us.kronofoto.views import tags_view
+from fortepan_us.kronofoto.views import photosphere
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -96,19 +98,25 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
         *build_content_urls("all", with_names=False, kwargs={}),
         *build_content_urls("<slug:category>", with_names=False, kwargs={}),
     ])),
-    path('logo.svg/<str:theme>', LogoSvg.as_view()),
-    path('logo-small.svg/<str:theme>', LogoSvgSmall.as_view()),
-    path('<str:theme>/logo.svg', LogoSvg.as_view(), name='logosvg'),
-    path('<str:theme>/logo-small.svg', LogoSvgSmall.as_view(), name='logosvgsmall'),
-    *directory('collections', views.CollectionCreate.as_view(), name='collection-create', children=include([
-        path('<int:pk>/delete', views.CollectionDelete.as_view(), name='collection-delete'),
+    path('<str:theme>/logo.svg', views.photo.logo_view, name='logosvg'),
+    path('<str:theme>/logo-small.svg', views.photo.logo_small_view, name='logosvgsmall'),
+    path('<str:theme>/logo-icon.svg', views.photo.logo_icon_view, name='logo-icon.svg'),
+    *directory('collections', views.collections_view, name='collection-create', children=include([
+        *directory('<int:pk>', views.collection_view, name='collection-edit', children=include([
+            path("embed", views.collection.embed, name="collection-embed"),
+            path("remove/<int:photo>", views.collection.remove, name="collection-remove"),
+            path("change-visibility", views.collection.change_visibility, name="collection-visibility"),
+            path("change-name", views.collection.change_name, name="collection-name"),
+            path('delete', views.CollectionDelete.as_view(), name='collection-delete'),
+        ])),
     ])),
     *directory('mainstreets', MainStreetList.as_view(), name='mainstreet-list', children=include([
-        path('<int:pk>', MainStreetDetail.as_view(), name='mainstreet-detail'),
+        path('<int:pk>', photosphere.mainstreet_detail, name='mainstreet-detail'),
         path('<int:pk>.geojson', MainStreetGeojson.as_view(), name='mainstreet-data'),
     ])),
     path('mainstreet360', views.photosphere_view, name="mainstreetview"),
     path('mainstreet360/json', views.photosphere_data, name="mainstreetview.json"),
+    path('mainstreet360/infobox', photosphere.info_text, name="mainstreet-info"),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
     path('autocomplete/contributors/select2', views.contributor_search, name='contributor-search2'),
     path('autocomplete/contributors', ContributorSearchView.as_view(), name='contributor-search'),
@@ -117,7 +125,6 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 ]
 
 urlpatterns = urlpatterns + [
-    path('users/<str:username>', views.Profile.as_view(), name='user-page'),
     path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
     path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),
     path('activitypub/service/outbox', views.activitypub.service_outbox, name="activitypub-main-service-outbox"),
@@ -125,6 +132,20 @@ urlpatterns = urlpatterns + [
     path('activitypub/archives/<slug:short_name>/inbox', views.activitypub.archive_inbox, name="activitypub-archive-inbox"),
     path('activitypub/archives/<slug:short_name>/outbox', views.activitypub.archive_outbox, name="activitypub-archive-outbox"),
     path("activitypub/archives/<slug:short_name>/", include(views.activitypub.data_urls)),
+    path('users/<str:username>', views.profile_view, name='user-page'),
+    path('attribution', views.attribution, name="attribution"),
+    path("exhibits", views.exhibit_list, name="exhibit-list"),
+    path("exhibits/<int:pk>-<slug:title>", views.exhibit.view, name='exhibit-view'),
+    path("exhibits/<int:pk>/embed", views.exhibit.embed, name='exhibit-embed'),
+    path("exhibits/<int:pk>/edit", views.exhibit_edit, name='exhibit-edit'),
+    path("exhibits/<int:pk>/delete", views.exhibit.delete, name='exhibit-delete'),
+    path("exhibits/<int:pk>/images", views.exhibit_images, name='exhibit-images'),
+    path("exhibits/<int:pk>/figure-form-<str:parent>", views.exhibit_figure_form, name='exhibit-figure-form'),
+    path("exhibits/<int:pk>/figure-image", views.exhibit_figure_image, name='exhibit-figure-image'),
+    path("exhibits/<int:pk>/two-column-image", views.exhibit_two_column_image, name='exhibit-two-column-image'),
+    path("exhibits/full-image", views.exhibit_full_image, name='exhibit-full-image'),
+    path("exhibits/<int:pk>/<str:card_type>-form", views.exhibit_card_form, name='exhibit-card-form'),
+    path("exhibits/add", views.exhibit_create, name='exhibit-create'),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),
     path('<slug:short_name>/contributors/added', KronofotoTemplateView.as_view(template_name="kronofoto/pages/contributor-created.html"), name='contributor-created'),
     path("<slug:short_name>/agreement", AgreementView.as_view(), name="agreement"),
@@ -137,5 +158,4 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/data.json', views.datadump, name="data-dump"),
     path("<slug:short_name>/", include(urlpatterns)),
     path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
-    path("exhibit-test", views.exhibit),
 ]

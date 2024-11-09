@@ -1,4 +1,5 @@
 from django import forms
+from .photosphere import PhotoSphereInfoInlineForm
 from fortepan_us.kronofoto.models import Tag, PhotoTag, Collection, Term, Donor, Photo, PhotoSphere, PhotoSpherePair, Place
 from fortepan_us.kronofoto.search import expression
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from fortepan_us.kronofoto.widgets import HeadingWidget, PositioningWidget, Sele
 from fortepan_us.kronofoto.models.photosphere import IncompleteGPSInfo
 from fortepan_us.kronofoto.fields import RecaptchaField
 from .photobase import PhotoForm, SubmissionForm, ArchiveSubmissionForm
+from .card import CardForm, PhotoCardForm, FigureForm, CardFormType, PhotoCardFormWrapper, CardFormWrapper, FigureFormWrapper, FigureListForm, FigureListFormWrapper
 from fortepan_us.kronofoto.reverse import reverse_lazy
 from dataclasses import dataclass
 from typing import Any, List, Dict, Optional, Union, Generator, Tuple, TypeVar, Type
@@ -46,9 +48,15 @@ class WebComponentForm(forms.Form):
         required=False
     )
 
+class ListVisibilityForm(forms.Form):
+    is_private = forms.BooleanField(label="Make Private", label_suffix="", required=False)
+    is_private.widget.attrs.update({
+        "class": "switch-input",
+    })
+
 class ListForm(forms.Form):
-    name = forms.CharField(label="create a new list")
-    name.widget.attrs['placeholder'] = "new list name"
+    name = forms.CharField(label="create a new FotoAlbum")
+    name.widget.attrs['placeholder'] = "New FotoAlbum name"
     is_private = forms.BooleanField(label="Make Private", label_suffix="", required=False)
     is_private.widget.attrs.update({
         "class": "switch-input",
@@ -278,7 +286,7 @@ class TagForm(forms.Form):
 class CollectionForm(forms.ModelForm):
     class Meta:
         model = Collection
-        fields = ['name', 'visibility']
+        fields = ['name']
 
 
 class AddToListForm(forms.Form):

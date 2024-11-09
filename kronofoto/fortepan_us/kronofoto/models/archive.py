@@ -22,7 +22,6 @@ class Archive(ArchiveBase):
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
 
-
     def __str__(self) -> str:
         return self.name
 
@@ -48,7 +47,6 @@ class ArchiveAgreement(models.Model):
 
     class Meta:
         verbose_name = "agreement"
-        db_table = 'kronofoto_archiveagreement'
 
 
 class UserAgreement(models.Model):
@@ -63,7 +61,6 @@ class UserAgreement(models.Model):
         indexes = [
             models.Index(fields=['agreement', 'user']),
         ]
-        db_table = 'kronofoto_useragreement'
 
 
 class ArchiveUserPermission(models.Model):
@@ -83,7 +80,6 @@ class ArchiveUserPermission(models.Model):
         ]
         verbose_name = "user-archive permissions"
         verbose_name_plural = "archive permissions"
-        db_table = 'kronofoto_archiveuserpermission'
 
 class ArchiveGroupPermission(models.Model):
     archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
@@ -102,4 +98,3 @@ class ArchiveGroupPermission(models.Model):
         ]
         verbose_name = "archive group permission"
         verbose_name_plural = "archive permissions"
-        db_table = 'kronofoto_archivegrouppermission'

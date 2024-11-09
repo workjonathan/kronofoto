@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="photo",
             index=models.Index(
-                fields=["archive", "id"], name="archive_pho_archive_9df7f8_idx"
+                fields=["archive", "id"], name="kronofoto_p_archive_1450ca_idx"
             ),
         ),
     ]
