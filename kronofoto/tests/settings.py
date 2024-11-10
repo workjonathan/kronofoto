@@ -1,4 +1,7 @@
 import os
+from cryptography.fernet import Fernet
+
+ENCRYPTION_KEY = b"secret-encryption-key"
 
 SECRET_KEY = 'fake-key'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

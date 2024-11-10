@@ -1,8 +1,12 @@
 import pytest
+import requests
+from unittest import mock
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, RequestFactory, override_settings
 from hypothesis import given, strategies as st, note
 from hypothesis.extra.django import TestCase
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity, RemoteArchive
+from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders, Contact, Image
 import json
 from django.core.cache import cache
@@ -239,6 +243,30 @@ def test_service_requires_correct_accept_header():
     client = Client()
     resp = client.get("/kf/activitypub/service")
     assert resp.status_code == 406
+
+@pytest.mark.django_db
+def test_archive_followers_get_photo_create(an_archive, a_donor, a_category):
+    actor = models.RemoteActor.objects.create(profile="https://anotherinstance.com/actor")
+    an_archive.name = "an archive"
+    an_archive.slug = "an-archive"
+    an_archive.save()
+    actor.archives_followed.add(an_archive)
+    with mock.patch("requests.get") as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
+        with mock.patch("requests.post") as post:
+            photo = models.Photo.objects.create(
+                donor=a_donor,
+                archive=an_archive,
+                is_published=True,
+                original=SimpleUploadedFile("small.gif", small_gif, content_type="image/gif"),
+                category=a_category,
+            )
+            mock_.assert_called_with("https://anotherinstance.com/actor")
+            assert len(post.mock_calls) == 1
+            assert post.mock_calls[0][1] == ('https://anotherinstance.com/actor/inbox',)
+            data = json.loads(post.mock_calls[0][2]['data'])
+            assert data['type'] == 'Create'
 
 @pytest.mark.django_db
 def test_service_has_valid_response():

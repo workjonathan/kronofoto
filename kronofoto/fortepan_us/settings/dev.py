@@ -138,6 +138,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv(), default="localhost, 127.0.0.1")
 
+ENCRYPTION_KEY = config("ENCRYPTION_KEY", cast=bytes, default=b"secret-encryption-key")
+
 SECRET_KEY = config("SECRET_KEY")
 
 GOOGLE_RECAPTCHA_SECRET_KEY = config("GOOGLE_RECAPTCHA_SECRET_KEY", default="fake-secret")

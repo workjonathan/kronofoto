@@ -324,21 +324,57 @@ class register_actor:
 
         return cls
 
+class ActivitySchema(Schema):
+    summary = fields.Str()
+    type = fields.Str()
+    actor = fields.Url()
+    object = fields.Nested(Image)
+    to = fields.List(fields.Url())
+
+    @pre_dump
+    def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "summary": f"{object.archive.name} created a photo",
+            "object": object,
+            "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug}),
+            "type": "Create",
+            "to": ["https://www.w3.org/ns/activitystreams#Public"],
+        }
+
+
+class ArchiveSchema(Schema):
+    type = fields.Constant("Organization")
+    id = fields.Url(relative=True)
+    name = fields.Str()
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+    inbox = fields.Url(relative=True)
+    outbox = fields.Url(relative=True)
+    contributors = fields.Url(relative=True)
+    photos = fields.Url(relative=True)
+
+    @pre_dump
+    def extract_fields_from_object(self, object: Archive, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
+            "name": object.name,
+            "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug}),
+            "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
+            "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),
+            "photos": reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug}),
+            "publicKey": {
+                "id": object.keyId,
+                "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
+                "publicKeyPem": object.guaranteed_public_key(),
+            },
+        }
+
 @register_actor("archives/<slug:short_name>", "archives", data_urls)
 class ArchiveActor:
-
     data_urls: Any = []
     @staticmethod
     def profile(request: HttpRequest, short_name: str) -> HttpResponse:
         archive = get_object_or_404(Archive.objects.all(), slug=short_name)
-        return JsonLDResponse({
-            "@context": "https://www.w3.org/ns/activitystreams",
-             "type": "Organization",
-             "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": short_name}),
-             "name": archive.name,
-             "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": short_name}),
-             "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": short_name}),
-        })
+        return JsonLDResponse(ArchiveSchema().dump(archive))
 
     #@require_json_ld
     @staticmethod

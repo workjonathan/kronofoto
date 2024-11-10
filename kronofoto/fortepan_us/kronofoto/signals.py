@@ -4,7 +4,7 @@ from django.db.models import Q
 from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount
 from collections import Counter
 import re
-from typing import Any, Union, Optional, List, Dict, NoReturn
+from typing import Any, Union, Optional, List, Dict, NoReturn, Type
 
 
 @receiver(post_save, sender=Place)
@@ -16,6 +16,33 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
         PlaceWordCount(place=instance, word=w) for w in counts
     ]
     PlaceWordCount.objects.bulk_create(wordcounts)
+
+from fortepan_us.kronofoto.views.activitypub import ActivitySchema
+
+
+@receiver(post_save, sender=Photo)
+def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+    from . import signed_requests
+    import requests
+    import json
+    if not instance.archive.remoteactor_set.exists():
+        return
+    data = ActivitySchema().dump(instance)
+    for actor in instance.archive.remoteactor_set.all():
+        resp = requests.get(actor.profile)
+        profile = resp.json()
+        inbox = profile.get("inbox")
+        if inbox:
+            signed_requests.post(
+                inbox,
+                data=json.dumps(data),
+                headers={
+                    "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+                private_key=instance.archive.private_key,
+                keyId=instance.archive.keyId,
+            )
 
 @receiver(post_save, sender=Photo)
 def photo_save(sender: Any, instance: Photo, created: Any, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:

@@ -2,8 +2,11 @@ from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MinLengthValidator
 from django.conf import settings
+from fortepan_us.kronofoto.reverse import reverse
 from django.contrib.auth.models import Permission, Group
 from .category import Category, ValidCategory
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 class ArchiveBase(models.Model):
@@ -21,6 +24,56 @@ class Archive(ArchiveBase):
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
+    serialized_public_key = models.BinaryField(null=True, blank=True)
+    encrypted_private_key = models.BinaryField(null=True, blank=True)
+
+    def guaranteed_public_key(self) -> bytes:
+        if not self.serialized_public_key:
+            self.generate_new_keys()
+        return self.serialized_public_key or b""
+
+    @property
+    def keyId(self) -> str:
+        return reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": self.slug}) + "#mainKey"
+
+    def generate_new_keys(self) -> None:
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        self.serialized_public_key = private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        self.encrypted_private_key = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(settings.ENCRYPTION_KEY),
+        )
+        self.save()
+
+    @property
+    def private_key(self) -> rsa.RSAPrivateKey:
+        if self.encrypted_private_key and isinstance(self.encrypted_private_key, bytes):
+            private_key = serialization.load_pem_private_key(
+                self.encrypted_private_key,
+                password=settings.ENCRYPTION_KEY,
+            )
+            if isinstance(private_key, rsa.RSAPrivateKey):
+                return private_key
+        self.generate_new_keys()
+        return self.private_key
+
+    @property
+    def public_key(self) -> rsa.RSAPublicKey:
+        if self.serialized_public_key and isinstance(self.serialized_public_key, bytes):
+            public_key = serialization.load_pem_public_key(
+                self.serialized_public_key,
+            )
+            if isinstance(public_key, rsa.RSAPublicKey):
+                return public_key
+        self.generate_new_keys()
+        return self.public_key
+
 
     def __str__(self) -> str:
         return self.name
