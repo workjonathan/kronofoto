@@ -6,6 +6,7 @@ from typing_extensions import Self
 class Collectible:
     def encode_params(self, params: QueryDict) -> str:
         raise NotImplementedError
+
     def get_absolute_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
         return self.format_url(viewname='kronofoto:gridview', kwargs=kwargs, params=params)
 

@@ -37,14 +37,6 @@ class Donor(Collectible, models.Model):
     archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.PROTECT, null=False)
     last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
-    email = models.EmailField(blank=True)
-    home_phone = models.CharField(max_length=256, blank=True)
-    street1 = models.CharField(max_length=256, blank=True)
-    street2 = models.CharField(max_length=256, blank=True)
-    city = models.CharField(max_length=256, blank=True)
-    state = models.CharField(max_length=256, blank=True)
-    zip = models.CharField(max_length=256, blank=True)
-    country = models.CharField(max_length=256, blank=True)
 
     objects = DonorQuerySet.as_manager()
 
@@ -53,17 +45,6 @@ class Donor(Collectible, models.Model):
         indexes = (
             models.Index(fields=['last_name', 'first_name']),
         )
-
-    @property
-    def activity_dict(self) -> Dict[str, Any]:
-        return {
-            "id": reverse("kronofoto:activitypub-donor", kwargs={"short_name": self.archive.slug, "pk": self.id}),
-            "type": "Person",
-            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": self.archive.slug})],
-            "name": self.display_format(),
-            "firstName": self.first_name,
-            "lastName": self.last_name,
-        }
 
     def display_format(self) -> str:
         return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
@@ -83,3 +64,22 @@ class Donor(Collectible, models.Model):
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
             for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
+
+class DonorDataBase(models.Model):
+    donor = models.OneToOneField(Donor, null=False, on_delete=models.CASCADE)
+
+class LocalDonorData(DonorDataBase):
+    email = models.EmailField(blank=True)
+    home_phone = models.CharField(max_length=256, blank=True)
+    street1 = models.CharField(max_length=256, blank=True)
+    street2 = models.CharField(max_length=256, blank=True)
+    city = models.CharField(max_length=256, blank=True)
+    state = models.CharField(max_length=256, blank=True)
+    zip = models.CharField(max_length=256, blank=True)
+    country = models.CharField(max_length=256, blank=True)
+
+    def __str__(self):
+        return str(self.donor)
+
+class RemoteDonorData(DonorDataBase):
+    ld_id = models.URLField(unique=True)

@@ -13,6 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
 from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo
+from fortepan_us.kronofoto.models import donor
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
 from fortepan_us.kronofoto.models.photo import Submission
@@ -276,9 +277,14 @@ class FilteringArchivePermissionMixin(ArchivePermissionMixin):
             qs = qs.filter(Exists(Permission.objects.filter(q)))
         return qs
 
+class DonorInfoInline(admin.StackedInline):
+    model = donor.LocalDonorData
+    extra = 0
+
 @admin.register(Donor)
 class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
+    inlines = (DonorInfoInline,)
 
     list_display = ('__str__', 'donated', 'scanned', "photographed", "photography_collection")
     class WithScannedCount(TypedDict):

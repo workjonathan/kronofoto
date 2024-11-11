@@ -44,83 +44,8 @@ def require_json_ld(func: ViewFunction) -> ViewFunction:
 
 from django.db.models import QuerySet
 
-@dataclass
-class DataPage:
-    pk: int
-    queryset: QuerySet
-    backward: bool=False
-
-    @cached_property
-    def item_list(self) -> List[Donor]:
-        if self.backward:
-            filter = {"pk__lt": self.pk}
-            order = "-id"
-            reorder = lambda xs: list(reversed(xs))
-        else:
-            filter = {"pk__gt": self.pk}
-            order = "id"
-            reorder = list
-        return reorder(self.queryset.filter(**filter).order_by(order)[:100])
-
-    @property
-    def next_page_pk(self) -> Optional[int]:
-        return self.item_list[99].pk if len(self.item_list) >= 100 else None
-
-    def page(self) -> List[Dict[str, Any]]:
-        return [item.activity_dict for item in self.item_list]
-
 class Page(forms.Form):
     pk = forms.IntegerField(required=True)
-
-def get_donor_page(request:HttpRequest, short_name: str) -> HttpResponse:
-    queryset = Donor.objects.filter(archive__slug=short_name)
-    url_path = reverse("kronofoto:activitypub-donor-page", kwargs={"short_name": short_name})
-    summary = "Contributor List"
-    return get_data_page(request=request, queryset=queryset, url_path=url_path, summary=summary)
-
-def get_photo_page(request:HttpRequest, short_name: str) -> HttpResponse:
-    queryset = Photo.objects.filter(archive__slug=short_name)
-    url_path = reverse("kronofoto:activitypub-photo-page", kwargs={"short_name": short_name})
-    summary = "Photo List"
-    return get_data_page(request=request, queryset=queryset, url_path=url_path, summary=summary)
-
-def get_data_page(request: HttpRequest, queryset: QuerySet, url_path: str, summary: str) -> HttpResponse:
-    object_data: Dict[str, Any] = {
-        "@context": activity_stream_context,
-    }
-    form = Page(request.GET)
-    if form.is_valid():
-        pk = form.cleaned_data['pk']
-        object_data['id'] = "{}?{}".format(url_path, request.GET.urlencode())
-        page = DataPage(pk=pk, queryset=queryset)
-        object_data['items'] = page.page()
-        next_page = page.next_page_pk
-        object_data['next'] = "{}?pk={}".format(url_path, next_page) if next_page is not None else None
-
-    else:
-        object_data['summary'] = summary
-        object_data['id'] = url_path
-        page = DataPage(pk=0, queryset=queryset)
-        next_page = page.next_page_pk
-        object_data['first'] = {
-            "id": "{}?pk=0".format(url_path),
-            'items': page.page(),
-            'next': "{}?pk={}".format(url_path, next_page) if next_page is not None else None,
-
-        }
-    return JsonLDResponse(object_data)
-
-def get_photo_data(request: HttpRequest, *, short_name: str, pk: int) -> HttpResponse:
-    photo = get_object_or_404(Photo.objects.all(), pk=pk, archive__slug=short_name)
-    object_data = photo.activity_dict
-    object_data['@context'] = activity_stream_context
-    return JsonLDResponse(object_data)
-
-def get_donor_data(request: HttpRequest, *, short_name: str, pk: int) -> HttpResponse:
-    donor : Donor = get_object_or_404(Donor.objects.all(), pk=pk, archive__slug=short_name)
-    object_data = donor.activity_dict
-    object_data['@context'] = activity_stream_context
-    return JsonLDResponse(object_data)
 
 #@require_json_ld
 def get_data(request:HttpRequest, type: str, pk: int) -> HttpResponse:
