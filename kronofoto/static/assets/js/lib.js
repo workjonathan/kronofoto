@@ -13,6 +13,7 @@ import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
 
+import vectorTileLayer from 'leaflet-vector-tile-layer';
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -679,6 +680,21 @@ class MapPlugin2 {
                         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 },
             ).addTo(map)
+            const icon = new L.Icon.Default()
+            icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+            icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+            const tileLayer = vectorTileLayer(
+                "/tiles/mainstreets/{z}/{x}/{y}.mvt",
+                {style: { 
+                    icon,
+                    interactive: true
+                }},
+            )
+            tileLayer.addEventListener("click", evt => {
+                map_elem.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
+                
+            })
+            tileLayer.addTo(map)
             const position = [y, x]
             let marker = L.marker(position).addTo(map)
             map.setView(position, 20)

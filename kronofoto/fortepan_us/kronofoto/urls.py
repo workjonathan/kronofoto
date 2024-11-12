@@ -151,4 +151,5 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/data.json', views.datadump, name="data-dump"),
     path("<slug:short_name>/", include(urlpatterns)),
     path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
+    path("", include("fortepan_us.kronofoto.views.vector_tiles")),
 ]
