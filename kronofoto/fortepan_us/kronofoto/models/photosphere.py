@@ -96,7 +96,7 @@ class PhotoSpherePair(models.Model):
     photosphere = models.ForeignKey(PhotoSphere, on_delete=models.CASCADE, help_text="Select a photo and photo sphere then click Save and Continue Editing to use the interactive tool")
     azimuth = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-180), MaxValueValidator(limit_value=180)])
     inclination = models.FloatField(default=0, validators=[MinValueValidator(limit_value=-90), MaxValueValidator(limit_value=90)])
-    distance = models.FloatField(default=500, validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=2000)])
+    distance = models.FloatField(default=500, validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=3000)])
 
     class Meta:
         verbose_name = 'Photo position'
