@@ -686,7 +686,7 @@ class MapPlugin2 {
             const tileLayer = vectorTileLayer(
                 "/tiles/mainstreets/{z}/{x}/{y}.mvt",
                 {style: { 
-                    icon,
+                    // icon,
                     interactive: true
                 }},
             )
@@ -764,6 +764,10 @@ class PhotoSpherePlugin {
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
             const startNodeId = elem2.getAttribute("data-node-start")
+            this.context.querySelector("#photosphere-map").addEventListener("kronofoto-select-map-marker", (evt) => {
+                const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
+                tourPlugin.setCurrentNode(evt.detail.properties.id)
+            })
 
             const viewer = new Viewer({
                 container: elem2,
