@@ -65,7 +65,7 @@ export class ImagePlanePlugin extends AbstractPlugin {
                         .add(this, "inclination", -90, 90)
                         .onChange(this.updatePosition.bind(this))
                     posFolder
-                        .add(this, "distance", 10, 2000)
+                        .add(this, "distance", 10, 3000)
                         .onChange(this.updatePosition.bind(this))
                 }
             })
