@@ -33,6 +33,7 @@
   "dependencies": {
     "@photo-sphere-viewer/core": "^5.10.1",
     "@photo-sphere-viewer/markers-plugin": "^5.10.1",
+    "@photo-sphere-viewer/plan-plugin": "^5.10.1",
     "@photo-sphere-viewer/virtual-tour-plugin": "^5.10.1",
     "alpinejs": "^3.14.3",
     "aos": "^2.3.4",

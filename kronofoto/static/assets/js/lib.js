@@ -9,6 +9,7 @@ import Select2 from "select2"
 //Select2.default(window, $)
 import {Viewer} from "@photo-sphere-viewer/core"
 import {MarkersPlugin} from "@photo-sphere-viewer/markers-plugin"
+import {PlanPlugin} from "@photo-sphere-viewer/plan-plugin"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
@@ -799,6 +800,39 @@ class PhotoSpherePlugin {
                             }),
                         },
                     ],
+                    [
+                        PlanPlugin, 
+                        {
+                            defaultZoom: 19,
+                            configureLeaflet: (map) => {
+                                const OpenStreetMap_Mapnik = L.tileLayer(
+                                    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                    {
+                                        maxZoom: 19,
+                                        attribution:
+                                            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                                    },
+                                ).addTo(map)
+                                const icon = new L.Icon.Default()
+                                icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+                                icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+                                const tileLayer = vectorTileLayer(
+                                    "/tiles/mainstreets/{z}/{x}/{y}.mvt",
+                                    {style: { 
+                                        // icon,
+                                        interactive: true
+                                    }},
+                                )
+                                tileLayer.addEventListener("click", evt => {
+                                    //elem2.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
+                                    const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
+                                    tourPlugin.setCurrentNode(evt.layer.feature.properties.id)
+                                    
+                                })
+                                tileLayer.addTo(map)
+                            },
+                        },
+                    ]
                 ],
             })
             const markersPlugin = viewer.getPlugin(MarkersPlugin)
