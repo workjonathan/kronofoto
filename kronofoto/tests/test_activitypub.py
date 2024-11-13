@@ -8,6 +8,7 @@ from hypothesis.extra.django import TestCase
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity, RemoteArchive
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders, Contact, Image
+from fortepan_us.kronofoto.views import activitypub
 import json
 from django.core.cache import cache
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -35,6 +36,16 @@ def test_decode_signature_headers():
     ]
 
 @pytest.mark.django_db
+def test_receiving_a_donor_create_creates_a_donor():
+    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="https://example.com/actor"))
+    request = RequestFactory().post("/kf/activitypub/service/inbox")
+    request.actor = remote_archive
+    resp = activitypub.service_inbox(request)
+    assert resp.status_code == 200
+
+
+
+@pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_donor_api(a_donor):
     client = Client()
@@ -58,6 +69,54 @@ def test_photo_api(a_photo):
     Site.objects.all().update(domain='example2.net')
     photo = Image().load(resp.json())
     assert photo.caption == a_photo.caption
+
+@pytest.mark.django_db
+def test_signature_requires_correct_key_pair():
+    client = Client()
+    url = "/kf/activitypub/service/inbox"
+    message = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "id": "https://anotherinstance.com/123",
+        "type": "Follow",
+        "actor": "https://anotherinstance.com/kf/activitypub/service",
+        "object": "https://example.com/kf/activitypub/archives/asdf",
+    }
+    valid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    valid_public_key = valid_private_key.public_key()
+    cache.set(
+        "kronofoto:keyId:https://anotherinstance.com/kf/activitypub/service",
+        valid_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ),
+    )
+
+    invalid_private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    body = json.dumps(message)
+    headers = SignatureHeaders(
+        url=url,
+        msg_body=body,
+        host="example.com",
+    )
+
+    resp = client.post(
+        url,
+        data=body,
+        headers={
+            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            "Signature": headers.signature(private_key=invalid_private_key, keyId="https://anotherinstance.com/activitypub/service"),
+            "Host": headers.host,
+            "Date": headers.date_format,
+            "Digest": headers.digest,
+        },
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+    )
+    assert resp.status_code == 401
 
 @pytest.mark.django_db
 def test_signature_requires_correct_key_pair():

@@ -78,7 +78,7 @@ class LocalDonorData(DonorDataBase):
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.donor)
 
 class RemoteDonorData(DonorDataBase):
