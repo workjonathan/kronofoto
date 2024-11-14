@@ -4,5 +4,10 @@
 <a 
     id="backward"
     href="{% object_url prev_photo url_kwargs get_params %}"
+    
+    {% if is_mainstreet %}
+    @click.prevent="$dispatch('kronofoto-select-node', {{prev_photo.id}})"
+    {% else %}
     hx-get="{% object_url prev_photo url_kwargs get_params %}"
+    {% endif %}
 ></a>

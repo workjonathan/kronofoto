@@ -1,8 +1,10 @@
 from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.template.response import TemplateResponse
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import get_resolver, reverse as django_reverse
 from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.templatetags.widgets import markdown
-from fortepan_us.kronofoto.reverse import reverse
+from fortepan_us.kronofoto.reverse import reverse, resolve
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
@@ -151,10 +153,18 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
     query = DataParams(request.GET)
     if query.is_valid():
         object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
+        resolver = get_resolver()
+        u = django_reverse("kronofoto:vector-tiles:photosphere", kwargs=dict(zoom=1, mainstreet=1, x=1, y=1))
+        info = resolver.resolve(u)
+        pattern = "/" + info.route.replace("<int:zoom>", "{z}").replace(
+            "<int:x>", "{x}"
+        ).replace("<int:y>", "{y}").replace("<int:mainstreet>", str(object.mainstreetset.id))
+        tile_set = "{}//{}{}".format(settings.KF_URL_SCHEME, get_current_site(request).domain, pattern)
         archiverequest = PhotoSphereRequest(request)
         context = archiverequest.common_context
         context['object'] = object
         context['hx_request'] = archiverequest.is_hx_request
+        context['mainstreet_tiles'] = tile_set
 
         Photo = object._meta.get_field("photos").related_model
         assert not isinstance(Photo, str) and hasattr(Photo, "objects")

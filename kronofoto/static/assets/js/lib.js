@@ -764,6 +764,7 @@ class PhotoSpherePlugin {
             const api_url = elem2.getAttribute("data-node-href")
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
+            const tileset = elem2.getAttribute("data-mainstreet-tiles")
             const startNodeId = elem2.getAttribute("data-node-start")
             this.context.addEventListener("kronofoto-select-node", (evt) => {
                 const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
@@ -817,7 +818,7 @@ class PhotoSpherePlugin {
                                 icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
                                 icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
                                 const tileLayer = vectorTileLayer(
-                                    "/tiles/mainstreets/{z}/{x}/{y}.mvt",
+                                    tileset,
                                     {style: { 
                                         // icon,
                                         interactive: true

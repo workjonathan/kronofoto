@@ -5,7 +5,7 @@ from django.contrib.gis.geos import Point, Polygon
 from fortepan_us.kronofoto import models
 import mercantile # type: ignore
 
-def photosphere_vector_tile(request: HttpRequest, zoom: int, x: int, y: int) -> HttpResponse:
+def photosphere_vector_tile(request: HttpRequest, mainstreet: int, zoom: int, x: int, y: int) -> HttpResponse:
     bounds = mercantile.bounds(x, y, zoom)
     bbox = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
     x_span = bounds.east - bounds.west
@@ -20,7 +20,11 @@ def photosphere_vector_tile(request: HttpRequest, zoom: int, x: int, y: int) -> 
             ).wkt,
             "properties": {"id": obj.id},
         }
-        for obj in models.PhotoSphere.objects.filter(location__isnull=False, location__intersects=bbox)
+        for obj in models.PhotoSphere.objects.filter(
+            location__isnull=False,
+            location__intersects=bbox,
+            mainstreetset__id=mainstreet
+        )
     ]
     layers = [
         {
@@ -40,7 +44,7 @@ from django.urls import path, include, register_converter, URLPattern, URLResolv
 app_name = "vector-tiles"
 urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path("tiles/", include([
-        path("mainstreets/<int:zoom>/<int:x>/<int:y>.mvt", photosphere_vector_tile, name="photosphere"),
+        path("mainstreets/<int:mainstreet>/<int:zoom>/<int:x>/<int:y>.mvt", photosphere_vector_tile, name="photosphere"),
     ])),
 ]
 
