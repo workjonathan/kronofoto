@@ -1,7 +1,7 @@
 {% load widgets %}
 
-<ul hx-swap-oob="outerHTML:#fi-preload-zone" id="fi-preload-zone" data-slide-id="{{ object.photos.all.0.id }}">
-    {% include "kronofoto/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" %}
+<ul hx-swap-oob="outerHTML:#fi-preload-zone" id="fi-preload-zone" data-slide-id="{{ object.id }}">
+    {% include "kronofoto/components/thumbnails.html" with object_list=photos width_element="#fi-photosphere" is_mainstreet=True %}
 </ul>
 
 <h2>{{ object.title }}</h2>
