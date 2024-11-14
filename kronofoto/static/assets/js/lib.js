@@ -765,9 +765,9 @@ class PhotoSpherePlugin {
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
             const startNodeId = elem2.getAttribute("data-node-start")
-            this.context.querySelector("#photosphere-map").addEventListener("kronofoto-select-map-marker", (evt) => {
+            this.context.addEventListener("kronofoto-select-node", (evt) => {
                 const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
-                tourPlugin.setCurrentNode(evt.detail.properties.id)
+                tourPlugin.setCurrentNode(evt.detail)
             })
 
             const viewer = new Viewer({

@@ -35,6 +35,7 @@ class MainstreetThumbnails(forms.Form):
 class PhotoWrapper:
     photo: Photo
     mainstreetset: MainStreetSet
+    photosphere: PhotoSphere
 
     @property
     def thumbnail(self) -> Optional[ImageData]:
@@ -47,7 +48,7 @@ class PhotoWrapper:
 
     @property
     def id(self) -> int:
-        return self.photo.id
+        return self.photosphere.id
 
     @property
     def active(self) -> bool:
@@ -162,17 +163,48 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         context['thumbnails_form'] = MainstreetThumbnails(initial={
             "mainstreet": object.mainstreetset.id,
         })
-        photos = Photo.objects.filter(photosphere__mainstreetset__id=object.mainstreetset.id, year__isnull=False, is_published=True)
+        assert object.location
+        nearby = PhotoSpherePair.objects.filter(
+            photosphere__mainstreetset__id=object.mainstreetset.id,
+            photosphere__location__within=object.location.buffer(0.003),
+            photo__year__isnull=False,
+            photo__is_published=True,
+        )
+        #photos = Photo.objects.filter(
+        #    photosphere__mainstreetset__id=object.mainstreetset.id,
+        #    year__isnull=False,
+        #    is_published=True,
+        #    photosphere__location__within=object.location.buffer(0.0003),
+        #)
         if object.photos.exists():
             photo = object.photos.all()[0]
             photo.active = True
             if photo.year is not None:
-                backlist = BackwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
-                forwardlist = ForwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=20)
-                context['prev_photo'] = PhotoWrapper(photo=backlist[0], mainstreetset=object.mainstreetset) if backlist else None
-                context['next_photo'] = PhotoWrapper(photo=forwardlist[0], mainstreetset=object.mainstreetset) if forwardlist else None
+                backlist = nearby.filter(Q(photo__year__lt=photo.year) | Q(photo__year=photo.year, photo__id__lt=photo.id)).order_by('-photo__year', '-photo__id')[:20]
+                forwardlist = nearby.filter(Q(photo__year__gt=photo.year) | Q(photo__year=photo.year, photo__id__gt=photo.id)).order_by('photo__year', 'photo__id')[:20]
+                context['prev_photo'] = PhotoWrapper(
+                    photo=backlist[0].photo,
+                    mainstreetset=object.mainstreetset,
+                    photosphere=backlist[0].photosphere,
+                ) if backlist else None
+                context['next_photo'] = PhotoWrapper(
+                    photo=forwardlist[0].photo,
+                    mainstreetset=object.mainstreetset,
+                    photosphere=forwardlist[0].photosphere,
+                ) if forwardlist else None
+                backlist = list(backlist)
                 backlist.reverse()
-                context['photos'] = [PhotoWrapper(photo=photo, mainstreetset=object.mainstreetset) for photo in backlist + [photo] + forwardlist]
+                context['photos'] = [PhotoWrapper(
+                    photo=photo.photo,
+                    mainstreetset=object.mainstreetset,
+                    photosphere=photo.photosphere,
+                ) for photo in backlist]
+                context['photos'].append(PhotoWrapper(photo=photo, mainstreetset=object.mainstreetset, photosphere=object))
+                context['photos'] += [PhotoWrapper(
+                    photo=photo.photo,
+                    mainstreetset=object.mainstreetset,
+                    photosphere=photo.photosphere,
+                ) for photo in forwardlist]
 
         response = TemplateResponse(request, "kronofoto/pages/mainstreetview.html", context=context)
         assert object.location

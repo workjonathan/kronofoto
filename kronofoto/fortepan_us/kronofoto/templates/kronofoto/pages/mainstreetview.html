@@ -49,10 +49,9 @@
         <ul id="fi-preload-zone"></ul>
         <div data-fi-load-thumbnails class="hide"></div>
         <div class="fi-thumbnail-carousel" hx-target="#fi-photosphere-metadata" hx-swap="innerHTML">
-            {% include "kronofoto/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" %}
+            {% include "kronofoto/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" is_mainstreet=True %}
         </div>
         </form>
     </nav>
-    <div id="photosphere-map" style="width: 100vw; height: 50vh;" data-map2 data-x="{{ object.location.x }}" data-y="{{ object.location.y }}" @kronofoto-select-map-marker="console.log($event)"></div>
 </div>
 {% endblock %}
