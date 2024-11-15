@@ -2,6 +2,7 @@ from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.template.response import TemplateResponse
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import get_resolver, reverse as django_reverse
+from django.template.loader import get_template
 from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.templatetags.widgets import markdown
 from fortepan_us.kronofoto.reverse import reverse, resolve
@@ -9,7 +10,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union, List
 from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from djgeojson.views import GeoJSONLayerView # type: ignore
@@ -77,6 +78,7 @@ def info_text(request: HttpRequest) -> HttpResponse:
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
+        info_template = get_template(template_name="kronofoto/components/mainstreet-info.html")
         object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
         links = [
             {
@@ -106,6 +108,7 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                     "yaw": info.yaw+(90-object.heading)/180*3.1416,
                     "pitch": info.pitch,
                     "image": static("kronofoto/images/info-icon.png"),
+                    "content": info_template.render(context={"info": info}),
                 } for info in object.photosphereinfo_set.all()]
             },
         }
@@ -156,6 +159,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         resolver = get_resolver()
         u = django_reverse("kronofoto:vector-tiles:photosphere", kwargs=dict(zoom=1, mainstreet=1, x=1, y=1))
         info = resolver.resolve(u)
+        assert object.mainstreetset
         pattern = "/" + info.route.replace("<int:zoom>", "{z}").replace(
             "<int:x>", "{x}"
         ).replace("<int:y>", "{y}").replace("<int:mainstreet>", str(object.mainstreetset.id))
@@ -190,7 +194,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
             photo = object.photos.all()[0]
             photo.active = True
             if photo.year is not None:
-                backlist = nearby.filter(Q(photo__year__lt=photo.year) | Q(photo__year=photo.year, photo__id__lt=photo.id)).order_by('-photo__year', '-photo__id')[:20]
+                backlist : Union[QuerySet, List] = nearby.filter(Q(photo__year__lt=photo.year) | Q(photo__year=photo.year, photo__id__lt=photo.id)).order_by('-photo__year', '-photo__id')[:20]
                 forwardlist = nearby.filter(Q(photo__year__gt=photo.year) | Q(photo__year=photo.year, photo__id__gt=photo.id)).order_by('photo__year', 'photo__id')[:20]
                 context['prev_photo'] = PhotoWrapper(
                     photo=backlist[0].photo,

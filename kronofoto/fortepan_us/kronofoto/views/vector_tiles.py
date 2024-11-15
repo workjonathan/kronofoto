@@ -24,7 +24,7 @@ def photosphere_vector_tile(request: HttpRequest, mainstreet: int, zoom: int, x:
             location__isnull=False,
             location__intersects=bbox,
             mainstreetset__id=mainstreet
-        )
+        ) if obj.location
     ]
     layers = [
         {

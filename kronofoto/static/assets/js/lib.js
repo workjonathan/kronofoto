@@ -825,7 +825,6 @@ class PhotoSpherePlugin {
                                     }},
                                 )
                                 tileLayer.addEventListener("click", evt => {
-                                    //elem2.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
                                     const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
                                     tourPlugin.setCurrentNode(evt.layer.feature.properties.id)
                                     
@@ -857,6 +856,7 @@ class PhotoSpherePlugin {
                             image: infobox.image,
                             position: {yaw: infobox.yaw, pitch: infobox.pitch},
                             size: {width: 32, height: 32},
+                            content: infobox.content || "",
                         })
                     }
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
