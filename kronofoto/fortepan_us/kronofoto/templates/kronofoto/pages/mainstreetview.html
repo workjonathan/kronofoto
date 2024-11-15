@@ -20,7 +20,7 @@
         {% endblock photosphere_metadata %}
     </div>
     <form hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-        <div data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh" data-mainstreet-tiles="{{ mainstreet_tiles }}">
+        <div id="fi-photosphere" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh" data-mainstreet-tiles="{{ mainstreet_tiles }}">
             <input name="id" type="hidden">
         </div>
     </form>

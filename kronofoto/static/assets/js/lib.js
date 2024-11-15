@@ -98,6 +98,10 @@ class TimelineScroller {
             },
         })
     }
+    getWidthElement() {
+        let carousel = this.context.querySelector("#fi-thumbnail-carousel-images")
+        return (carousel ? carousel.getAttribute("data-width-element") : undefined) || "#fi-image"
+    }
     moveTimelineCoin(deltaX, drag = true) {
         if (drag) {
             $("#fi-thumbnail-carousel-images", this.context).addClass("dragging")
@@ -145,7 +149,7 @@ class TimelineScroller {
         })
     }
     getNumVisibleTimelineTiles() {
-        let widthOfTimeline = $(this.widthElement, this.context).width() // assumes the timeline is the same width as gallery image
+        let widthOfTimeline = $(this.getWidthElement(), this.context).width() // assumes the timeline is the same width as gallery image
         let $li = $("#fi-thumbnail-carousel-images li[data-active]", this.context)
         let widthOfTile = $li.outerWidth()
         return Math.floor(widthOfTimeline / widthOfTile)
@@ -805,6 +809,7 @@ class PhotoSpherePlugin {
                         PlanPlugin, 
                         {
                             defaultZoom: 19,
+                            position: "bottom right",
                             configureLeaflet: (map) => {
                                 const OpenStreetMap_Mapnik = L.tileLayer(
                                     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
