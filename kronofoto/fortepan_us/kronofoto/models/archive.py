@@ -18,6 +18,8 @@ class ArchiveBase(models.Model):
             models.Index(fields=['slug'], name="archivebase_slug_idx"),
         )
 
+    def __str__(self) -> str:
+        return self.name
 
 class Archive(ArchiveBase):
     cms_root = models.CharField(max_length=16, null=False, blank=False)

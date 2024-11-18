@@ -6,7 +6,7 @@ from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
-from .archive import Archive
+from .archive import ArchiveBase
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict
 
@@ -34,7 +34,7 @@ class DonorQuerySet(models.QuerySet):
 
 
 class Donor(Collectible, models.Model):
-    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.PROTECT, null=False)
+    archive = models.ForeignKey(ArchiveBase, on_delete=models.PROTECT, null=False)
     last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
 

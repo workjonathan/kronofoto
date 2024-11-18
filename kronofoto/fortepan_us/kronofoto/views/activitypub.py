@@ -75,7 +75,8 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=401)
     if request.method == "POST":
         data = json.loads(request.body)
-        if data['type'] == "Accept":
+        deserialized = ActivitySchema().load(data)
+        if deserialized['type'] == "Accept":
             for activity in OutboxActivity.objects.filter(
                 body__id=data['object']['id'],
                 body__type="Follow",
@@ -83,6 +84,12 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
             ):
                 RemoteArchive.objects.get_or_create(actor=request.actor)
                 return JsonLDResponse({})
+        if deserialized['type'] == 'Create':
+            if not request.actor.app_follows_actor:
+                return HttpResponse(status=401)
+            object = deserialized['object']
+            object.archive = RemoteArchive.objects.get(actor=request.actor)
+            object.save()
         return JsonLDResponse({})
     return HttpResponse(status=401)
 
@@ -135,13 +142,20 @@ class register:
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load
 from django.contrib.sites.models import Site
 
-
-class Image(Schema):
-    id = fields.Url()
-    type = fields.Constant("Image")
+class ObjectSchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    id = fields.Url(required=False)
+    type = fields.Str()
     attributedTo = fields.List(fields.Url())
-    content = fields.Str()
     url = fields.Url(relative=True)
+    content = fields.Str()
+
+class LinkSchema(Schema):
+    href = fields.Url()
+
+
+class Image(ObjectSchema):
+    id = fields.Url()
 
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
@@ -150,6 +164,7 @@ class Image(Schema):
             "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
             "content": object.caption,
             "url": object.original.url,
+            "type": "Image",
         }
 
     @post_load
@@ -161,9 +176,8 @@ class Image(Schema):
             caption=data['content'],
         )
 
-class Contact(Schema):
+class Contact(ObjectSchema):
     id = fields.Url()
-    type = fields.Constant("Contact")
     attributedTo = fields.List(fields.Url())
     name = fields.Str()
     firstName = fields.Str()
@@ -177,6 +191,7 @@ class Contact(Schema):
             "name": object.display_format(),
             "firstName": object.first_name,
             "lastName": object.last_name,
+            "type": "Contact",
         }
 
     @post_load
@@ -184,7 +199,7 @@ class Contact(Schema):
         resolved = resolve(data['id'])
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
             return Donor.objects.get(pk=resolved.match.kwargs['pk'])
-        return Donor()
+        return Donor(first_name=data['firstName'], last_name=data['lastName'])
 
 class PageItem(fields.Field):
     def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
@@ -197,8 +212,35 @@ class PageItem(fields.Field):
             return Contact().load(value)
         return Image().load(value)
 
+class ObjectOrLinkField(fields.Field):
+    def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
+        if isinstance(value, Donor):
+            return Contact().dump(value)
+        else:
+            return Image().dump(value)
+    def _deserialize(self, value: Union[str, Dict[str, Any]], *args: Any, **kwargs: Any) -> Any:
+        if isinstance(value, str):
+            return LinkSchema().load({"href": value})
+        if value['type'] in ["Accept", "Follow",]:
+            return ActivitySchema().load(value)
+        if value['type'] in ["Contact",]:
+            return Contact().load(value)
+        raise ValueError(value['type'])
 
-class CollectionPage(Schema):
+
+class Collection(ObjectSchema):
+    summary = fields.Str()
+    first = fields.Nested(lambda: CollectionPage())
+
+    @pre_dump
+    def extract_fields_from_object(self, object: QuerySet, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "id": self.context['url'],
+            "summary": self.context['summary'],
+            'first': object
+        }
+
+class CollectionPage(Collection):
     id = fields.Url()
     next = fields.Url(required=False, allow_none=True)
     items = fields.List(PageItem)
@@ -213,20 +255,6 @@ class CollectionPage(Schema):
             "id": "{}?pk=0".format(self.context['url']),
             'items': object,
             "next": next,
-        }
-
-
-class PagedCollection(Schema):
-    id = fields.Str()
-    summary = fields.Str()
-    first = fields.Nested(CollectionPage)
-
-    @pre_dump
-    def extract_fields_from_object(self, object: QuerySet, **kwargs: Any) -> Dict[str, Any]:
-        return {
-            "id": self.context['url'],
-            "summary": self.context['summary'],
-            'first': object
         }
 
 U = TypeVar("U", bound=ActorEndpoint)
@@ -249,22 +277,25 @@ class register_actor:
 
         return cls
 
-class ActivitySchema(Schema):
-    summary = fields.Str()
-    type = fields.Str()
+class ActivitySchema(ObjectSchema):
     actor = fields.Url()
-    object = fields.Nested(Image)
+    object = ObjectOrLinkField()
     to = fields.List(fields.Url())
 
     @pre_dump
-    def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
+    def extract_fields_from_object(self, object: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
         return {
-            "summary": f"{object.archive.name} created a photo",
-            "object": object,
-            "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug}),
-            "type": "Create",
-            "to": ["https://www.w3.org/ns/activitystreams#Public"],
+            "summary": f"{object['actor'].name} created something",
+            "object": object['object'],
+            "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object['actor'].slug}),
+            "type": object['type'],
+            "to": object['to'],
         }
+
+    @post_load
+    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        data['actor'] = RemoteActor.objects.get_or_create(profile=data['actor'])[0]
+        return data
 
 
 class ArchiveSchema(Schema):
@@ -335,14 +366,14 @@ class ArchiveActor:
             form = Page(request.GET)
             if form.is_valid():
                 queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
-                schema : Union[CollectionPage, PagedCollection] = CollectionPage()
+                schema : Union[CollectionPage, Collection] = CollectionPage()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
             else:
                 queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')
-                schema = PagedCollection()
+                schema = Collection()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
                 schema.context['summary'] = "Contributor List"
@@ -363,14 +394,14 @@ class ArchiveActor:
             form = Page(request.GET)
             if form.is_valid():
                 queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
-                schema : Union[CollectionPage, PagedCollection] = CollectionPage()
+                schema : Union[CollectionPage, Collection] = CollectionPage()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
                 object_data = schema.dump(queryset[:100])
                 return JsonLDResponse(object_data)
             else:
                 queryset = Photo.objects.filter(archive__slug=short_name).order_by('id')
-                schema = PagedCollection()
+                schema = Collection()
                 schema.context['slug'] = short_name
                 schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
                 schema.context['summary'] = "Photo List"

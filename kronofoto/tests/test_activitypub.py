@@ -36,13 +36,57 @@ def test_decode_signature_headers():
     ]
 
 @pytest.mark.django_db
-def test_receiving_a_donor_create_creates_a_donor():
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="https://example.com/actor"))
-    request = RequestFactory().post("/kf/activitypub/service/inbox")
-    request.actor = remote_archive
+@override_settings(KF_URL_SCHEME="http:")
+def test_ignore_activities_from_nonfollows(a_donor):
+    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=False))
+    data=activitypub.ActivitySchema().dump({
+        "actor": remote_archive,
+        "object": a_donor,
+        "type": "Create",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
+    request = RequestFactory().post(
+        "/kf/activitypub/service/inbox",
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        headers={
+            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        },
+        data=json.dumps(data),
+    )
+    request.actor = remote_archive.actor
+    Site.objects.all().update(domain='example2.net')
+    models.Donor.objects.all().delete()
+    resp = activitypub.service_inbox(request)
+    assert resp.status_code == 401
+    assert not models.Donor.objects.all().exists()
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
+def test_receiving_a_donor_create_creates_a_donor(a_donor):
+    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    a_donor.first_name = "first"
+    a_donor.last_name = "Last"
+    a_donor.save()
+    data=activitypub.ActivitySchema().dump({
+        "actor": remote_archive,
+        "object": a_donor,
+        "type": "Create",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
+    request = RequestFactory().post(
+        "/kf/activitypub/service/inbox",
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        headers={
+            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        },
+        data=json.dumps(data),
+    )
+    request.actor = remote_archive.actor
+    Site.objects.all().update(domain='example2.net')
+    models.Donor.objects.all().delete()
     resp = activitypub.service_inbox(request)
     assert resp.status_code == 200
-
+    assert models.Donor.objects.all().exists()
 
 
 @pytest.mark.django_db
@@ -412,6 +456,7 @@ def test_archive_inbox_follow_request():
 
 
 @pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
 def test_service_inbox_accept_request():
     client = Client()
     url = "/kf/activitypub/service/inbox"

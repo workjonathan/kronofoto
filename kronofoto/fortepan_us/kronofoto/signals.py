@@ -27,7 +27,12 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
     import json
     if not instance.archive.remoteactor_set.exists():
         return
-    data = ActivitySchema().dump(instance)
+    data = ActivitySchema().dump({
+        "object": instance,
+        "actor": instance.archive,
+        "type": "Create",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
     for actor in instance.archive.remoteactor_set.all():
         resp = requests.get(actor.profile)
         profile = resp.json()
