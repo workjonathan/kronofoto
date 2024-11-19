@@ -45,9 +45,7 @@ class PhotoWrapper:
         return self.photo.thumbnail
 
     def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
-        pairs = PhotoSpherePair.objects.filter(photo__id=self.photo.id, photosphere__id=OuterRef("pk"))
-        return PhotoSphere.objects.get(Exists(pairs), mainstreetset=self.mainstreetset).get_absolute_url()
-        return "{}?{}".format(reverse("kronofoto:mainstreetview"), PhotoSphere.objects.get(Exists(pairs), mainstreetset=self.mainstreetset).id)
+        return self.photosphere.get_absolute_url()
 
     @property
     def id(self) -> int:
