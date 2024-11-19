@@ -1,6 +1,6 @@
 #from django.contrib.gis.db import models
 from django.contrib.auth.models import User
-from .donor import Donor
+from .donor import Donor, RemoteDonorData
 from .tag import Tag, LowerCaseCharField
 from .term import Term, TermGroup
 from .collection import Collection

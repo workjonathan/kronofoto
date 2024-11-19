@@ -1,11 +1,12 @@
 from django.http import HttpResponse, HttpRequest, JsonResponse
-from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union
+from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union, NamedTuple
 from functools import cached_property
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse, resolve
 from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.models.photo import Photo
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive, Donor
+from fortepan_us.kronofoto import models
 import json
 import parsy # type: ignore
 from django.core.cache import cache
@@ -84,12 +85,22 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
             ):
                 RemoteArchive.objects.get_or_create(actor=request.actor)
                 return JsonLDResponse({})
+        if not request.actor.app_follows_actor:
+            return HttpResponse(status=401)
         if deserialized['type'] == 'Create':
-            if not request.actor.app_follows_actor:
-                return HttpResponse(status=401)
-            object = deserialized['object']
-            object.archive = RemoteArchive.objects.get(actor=request.actor)
-            object.save()
+            objdata, object = deserialized['object']
+            if not object and objdata['type'] == "Contact":
+                archive = RemoteArchive.objects.get(actor=request.actor)
+                donor = Donor.objects.create(first_name=objdata['firstName'], last_name=objdata['lastName'], archive=archive)
+                remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=objdata['id'])
+        elif deserialized['type'] == 'Update':
+            objdata, object = deserialized['object']
+            if object and objdata['type'] == "Contact":
+                archive = RemoteArchive.objects.get(actor=request.actor)
+                if object.archive.id == archive.id:
+                    object.first_name = objdata['firstName']
+                    object.last_name = objdata['lastName']
+                    object.save()
         return JsonLDResponse({})
     return HttpResponse(status=401)
 
@@ -176,6 +187,24 @@ class Image(ObjectSchema):
             caption=data['content'],
         )
 
+@dataclass
+class DonorSaveAction:
+    first_name: str
+    last_name: str
+    ld_id: str
+    archive: Optional[models.Archive]=None
+
+    def save(self) -> Donor:
+        assert self.archive
+        donor = Donor.objects.create(first_name=self.first_name, last_name=self.last_name, archive=self.archive)
+        remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=self.ld_id)
+        return donor
+
+class ContactData(NamedTuple):
+    data: Dict[str, Any]
+    donor: Optional[Donor] = None
+
+
 class Contact(ObjectSchema):
     id = fields.Url()
     attributedTo = fields.List(fields.Url())
@@ -195,11 +224,15 @@ class Contact(ObjectSchema):
         }
 
     @post_load
-    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Donor:
+    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> ContactData:
         resolved = resolve(data['id'])
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
-            return Donor.objects.get(pk=resolved.match.kwargs['pk'])
-        return Donor(first_name=data['firstName'], last_name=data['lastName'])
+            return ContactData(data, Donor.objects.get(pk=resolved.match.kwargs['pk']))
+        else:
+            qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'])
+            if qs.exists():
+                return ContactData(data, qs[0])
+            return ContactData(data)
 
 class PageItem(fields.Field):
     def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
