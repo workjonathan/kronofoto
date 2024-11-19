@@ -39,7 +39,7 @@
     <nav id="fi-timeline" class="fi-timeline">
         <form 
             hx-trigger="kronofoto:loadThumbnails" 
-            hx-target="#fi-photosphere-metadata" 
+            hx-target="#fi-thumbnail-carousel-images" 
             hx-get="{% krono_url "kronofoto:mainstreetview-carousel" %}"
             hx-push-url="false"
             hx-swap="beforeend"

@@ -9,7 +9,7 @@ from fortepan_us.kronofoto.reverse import reverse, resolve
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
-from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData
+from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData, CarouselList
 from typing import Any, Dict, Optional, Union, List
 from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
 from fortepan_us.kronofoto.templatetags.widgets import image_url
@@ -28,7 +28,6 @@ class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
 
 class MainstreetThumbnails(forms.Form):
-    mainstreet = forms.IntegerField(required=True, widget=forms.HiddenInput)
     forward = forms.BooleanField(required=False, widget=forms.HiddenInput)
     offset = forms.IntegerField(required=True, widget=forms.HiddenInput)
     width = forms.IntegerField(required=True, widget=forms.HiddenInput)
@@ -37,7 +36,6 @@ class MainstreetThumbnails(forms.Form):
 @dataclass
 class PhotoWrapper:
     photo: Photo
-    mainstreetset: MainStreetSet
     photosphere: PhotoSphere
 
     @property
@@ -125,13 +123,21 @@ class PhotoSphereRequest(ArchiveRequest):
 def photosphere_carousel(request: HttpRequest) -> HttpResponse:
     form = MainstreetThumbnails(request.GET)
     if form.is_valid():
-        photos = Photo.objects.filter(photosphere__mainstreetset__id=form.cleaned_data['mainstreet'], year__isnull=False, is_published=True)
-        photo = get_object_or_404(Photo.objects.all(), pk = form.cleaned_data['id'])
+        object: PhotoSphere = get_object_or_404(PhotoSphere.objects.all(), pk=form.cleaned_data['id'])
+        photo = object.photos.all()[0]
+        assert object.mainstreetset
+        assert object.location
+        nearby = PhotoSpherePair.objects.filter(
+            photosphere__mainstreetset__id=object.mainstreetset.id,
+            photosphere__location__within=object.location.buffer(0.003),
+            photo__year__isnull=False,
+            photo__is_published=True,
+        ).select_related("photo", "photosphere")
         offset = form.cleaned_data['offset']
         if form.cleaned_data['forward']:
-            objects = ForwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=40)
+            objects = PhotoPairForwardList(queryset=nearby, year=photo.year, id=photo.id).carousel_list(item_count=40, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
         else:
-            objects = BackwardList(queryset=photos, year=photo.year, id=photo.id).carousel_list(item_count=40)
+            objects = PhotoPairBackwardList(queryset=nearby, year=photo.year, id=photo.id).carousel_list(item_count=40, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
             offset -= form.cleaned_data['width'] * (1 + 40)
         context = {
             'object_list': objects,
@@ -139,6 +145,7 @@ def photosphere_carousel(request: HttpRequest) -> HttpResponse:
                 'width': form.cleaned_data['width'],
                 'offset': offset,
             },
+            'is_mainstreet': True,
         }
         return TemplateResponse(
             template="kronofoto/components/thumbnails.html",
@@ -149,6 +156,31 @@ def photosphere_carousel(request: HttpRequest) -> HttpResponse:
 
     return HttpResponse("", status=400)
 
+@dataclass
+class PhotoPairBackwardList(CarouselList):
+    year: int
+    id: int
+
+    @property
+    def keyset(self) -> QuerySet:
+        return self.queryset.filter(Q(photo__year__lt=self.year) | Q(photo__year=self.year, photo__id__lt=self.id)).order_by('-photo__year', '-photo__id')
+
+    @property
+    def wrapped_queryset(self) -> QuerySet:
+        return self.queryset.order_by('-photo__year', '-photo__id')
+
+@dataclass
+class PhotoPairForwardList(CarouselList):
+    year: int
+    id: int
+
+    @property
+    def keyset(self) -> QuerySet:
+        return self.queryset.filter(Q(photo__year__gt=self.year) | Q(photo__year=self.year, photo__id__gt=self.id)).order_by('photo__year', 'photo__id')
+
+    @property
+    def wrapped_queryset(self) -> QuerySet:
+        return self.queryset.order_by('photo__year', 'photo__id')
 
 def photosphere_view(request: HttpRequest) -> HttpResponse:
     query = DataParams(request.GET)
@@ -181,7 +213,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
             photosphere__location__within=object.location.buffer(0.003),
             photo__year__isnull=False,
             photo__is_published=True,
-        )
+        ).select_related("photo", "photosphere")
         #photos = Photo.objects.filter(
         #    photosphere__mainstreetset__id=object.mainstreetset.id,
         #    year__isnull=False,
@@ -192,31 +224,14 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
             photo = object.photos.all()[0]
             photo.active = True
             if photo.year is not None:
-                backlist : Union[QuerySet, List] = nearby.filter(Q(photo__year__lt=photo.year) | Q(photo__year=photo.year, photo__id__lt=photo.id)).order_by('-photo__year', '-photo__id')[:20]
-                forwardlist = nearby.filter(Q(photo__year__gt=photo.year) | Q(photo__year=photo.year, photo__id__gt=photo.id)).order_by('photo__year', 'photo__id')[:20]
-                context['prev_photo'] = PhotoWrapper(
-                    photo=backlist[0].photo,
-                    mainstreetset=object.mainstreetset,
-                    photosphere=backlist[0].photosphere,
-                ) if backlist else None
-                context['next_photo'] = PhotoWrapper(
-                    photo=forwardlist[0].photo,
-                    mainstreetset=object.mainstreetset,
-                    photosphere=forwardlist[0].photosphere,
-                ) if forwardlist else None
-                backlist = list(backlist)
+                backlist : List = PhotoPairBackwardList(queryset=nearby, id=photo.id, year=photo.year).carousel_list(item_count=20, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
+                forwardlist : List = PhotoPairForwardList(queryset=nearby, id=photo.id, year=photo.year).carousel_list(item_count=20, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
+                context['prev_photo'] = backlist[0]
+                context['next_photo'] = forwardlist[0]
                 backlist.reverse()
-                context['photos'] = [PhotoWrapper(
-                    photo=photo.photo,
-                    mainstreetset=object.mainstreetset,
-                    photosphere=photo.photosphere,
-                ) for photo in backlist]
-                context['photos'].append(PhotoWrapper(photo=photo, mainstreetset=object.mainstreetset, photosphere=object))
-                context['photos'] += [PhotoWrapper(
-                    photo=photo.photo,
-                    mainstreetset=object.mainstreetset,
-                    photosphere=photo.photosphere,
-                ) for photo in forwardlist]
+                context['photos'] = backlist
+                context['photos'].append(PhotoWrapper(photo=photo, photosphere=object))
+                context['photos'] += forwardlist
 
         response = TemplateResponse(request, "kronofoto/pages/mainstreetview.html", context=context)
         assert object.location

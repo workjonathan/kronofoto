@@ -1131,7 +1131,6 @@ class KronofotoContext {
                     "#fi-thumbnail-carousel-images",
                 )
                 carouselImages.innerHTML = html
-                console.log({carouselImages})
                 carouselImages.classList.add("dragging")
                 carouselImages.style.left = "0px"
                 setTimeout(() => {

@@ -34,7 +34,7 @@ from .place import Place
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
-from typing import Dict, Any, List, Optional, Set, Tuple, Protocol, TypedDict
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol, TypedDict, Callable, Iterable
 from typing_extensions import Self
 from itertools import chain, cycle, islice
 
@@ -620,31 +620,34 @@ class PhotoPlaceholder:
 
 @dataclass
 class CarouselList:
-    queryset: PhotoQuerySet
+    queryset: QuerySet
 
     @property
-    def keyset(self) -> PhotoQuerySet:
+    def keyset(self) -> QuerySet:
         raise NotImplementedError
 
     @property
-    def wrapped_queryset(self) -> PhotoQuerySet:
+    def wrapped_queryset(self) -> QuerySet:
         raise NotImplementedError
 
-    def carousel_list(self, *, item_count: int) -> List[Photo]:
-        keyset = self.keyset
+    def carousel_list(self, *, item_count: int, func: Optional[Callable]=None) -> List[Photo]:
+        keyset: Iterable = self.keyset[:item_count]
+        if func:
+            keyset = [func(item) for item in keyset]
         wrapped_qs = self.wrapped_queryset
         cycling = cycle(
             PhotoPlaceholder(
                 thumbnail=EMPTY_THUMBNAIL,
                 is_spacer=True,
-                photo=photo,
+                photo=func(photo) if func else photo,
             ) for photo in wrapped_qs[:item_count]
         )
-        looping = chain(keyset[:item_count], cycling)
+        looping = chain(keyset, cycling)
         return list(islice(looping, item_count))
 
 @dataclass
 class BackwardList(CarouselList):
+    queryset: PhotoQuerySet
     year: int
     id: int
 
@@ -658,6 +661,7 @@ class BackwardList(CarouselList):
 
 @dataclass
 class ForwardList(CarouselList):
+    queryset: PhotoQuerySet
     year: int
     id: int
 
