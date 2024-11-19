@@ -214,14 +214,13 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
             photo__year__isnull=False,
             photo__is_published=True,
         ).select_related("photo", "photosphere")
-        #photos = Photo.objects.filter(
-        #    photosphere__mainstreetset__id=object.mainstreetset.id,
-        #    year__isnull=False,
-        #    is_published=True,
-        #    photosphere__location__within=object.location.buffer(0.0003),
-        #)
         if object.photos.exists():
             photo = object.photos.all()[0]
+        elif nearby.exists():
+            photo = nearby[0].photo
+        else:
+            photo = None
+        if photo:
             photo.active = True
             if photo.year is not None:
                 backlist : List = PhotoPairBackwardList(queryset=nearby, id=photo.id, year=photo.year).carousel_list(item_count=20, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))

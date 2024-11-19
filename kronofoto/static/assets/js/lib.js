@@ -798,10 +798,10 @@ class PhotoSpherePlugin {
                                 speed: "10rpm",
                                 fadeIn: true,
                                 rotation: true,
-                                rotateTo: {
+                                rotateTo: toNode.data.photos.length ? {
                                     yaw: `${90-toNode.data.photos[0].azimuth}deg`,
                                     pitch: `${toNode.data.photos[0].inclination}deg`,
-                                },
+                                } : undefined,
                             }),
                         },
                     ],
