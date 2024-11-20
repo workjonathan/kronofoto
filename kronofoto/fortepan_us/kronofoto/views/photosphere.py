@@ -15,7 +15,8 @@ from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePai
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
-from django.db.models import OuterRef, Exists, Q, QuerySet
+from django.db.models import OuterRef, Exists, Q, QuerySet, Subquery
+from django.contrib.gis.db.models.functions import Distance
 from django.conf import settings
 from django import forms
 from .base import ArchiveRequest
@@ -208,6 +209,19 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
             "mainstreet": object.mainstreetset.id,
         })
         assert object.location
+        all_nearby = PhotoSpherePair.objects.filter(
+            photosphere__mainstreetset__id=OuterRef("id"),
+            photosphere__location__within=object.location.buffer(0.003),
+            photo__year__isnull=False,
+            photo__is_published=True,
+        ).annotate(distance_=Distance("photosphere__location", object.location)).order_by("distance_")
+        context['mainstreet_links'] = [
+            {
+                "set": set,
+                "photosphere_href": PhotoSpherePair.objects.get(id=set.closest).photosphere.get_absolute_url(),
+            }
+            for set in MainStreetSet.objects.filter(Exists(all_nearby)).annotate(closest=Subquery(all_nearby.values("id")[:1])).order_by("name")
+        ]
         nearby = PhotoSpherePair.objects.filter(
             photosphere__mainstreetset__id=object.mainstreetset.id,
             photosphere__location__within=object.location.buffer(0.003),
