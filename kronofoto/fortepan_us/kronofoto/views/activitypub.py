@@ -76,7 +76,9 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=401)
     if request.method == "POST":
         data = json.loads(request.body)
-        deserialized = ActivitySchema().load(data)
+        schema = ActivitySchema()
+        schema.context['actor'] = request.actor
+        deserialized = schema.load(data)
         if deserialized['type'] == "Accept":
             for activity in OutboxActivity.objects.filter(
                 body__id=data['object']['id'],
@@ -87,20 +89,6 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 return JsonLDResponse({})
         if not request.actor.app_follows_actor:
             return HttpResponse(status=401)
-        if deserialized['type'] == 'Create':
-            objdata, object = deserialized['object']
-            if not object and objdata['type'] == "Contact":
-                archive = RemoteArchive.objects.get(actor=request.actor)
-                donor = Donor.objects.create(first_name=objdata['firstName'], last_name=objdata['lastName'], archive=archive)
-                remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=objdata['id'])
-        elif deserialized['type'] == 'Update':
-            objdata, object = deserialized['object']
-            if object and objdata['type'] == "Contact":
-                archive = RemoteArchive.objects.get(actor=request.actor)
-                if object.archive.id == archive.id:
-                    object.first_name = objdata['firstName']
-                    object.last_name = objdata['lastName']
-                    object.save()
         return JsonLDResponse({})
     return HttpResponse(status=401)
 
@@ -164,6 +152,16 @@ class ObjectSchema(Schema):
 class LinkSchema(Schema):
     href = fields.Url()
 
+    @post_load
+    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Any:
+        actor = self.context.get('actor')
+        root_type = self.context.get('root_type')
+        if actor and actor.app_follows_actor:
+            archive = RemoteArchive.objects.get(actor=actor)
+            if root_type == "Delete":
+                Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['href'], archive__id=archive.id).delete()
+        return data
+
 
 class Image(ObjectSchema):
     id = fields.Url()
@@ -224,15 +222,36 @@ class Contact(ObjectSchema):
         }
 
     @post_load
-    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> ContactData:
+    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Donor:
         resolved = resolve(data['id'])
+        actor = self.context.get('actor')
+        root_type = self.context.get('root_type')
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
-            return ContactData(data, Donor.objects.get(pk=resolved.match.kwargs['pk']))
+            return Donor.objects.get(pk=resolved.match.kwargs['pk'])
+        elif actor and actor.app_follows_actor:
+            archive = RemoteArchive.objects.get(actor=actor)
+            if root_type == "Create":
+                donor = Donor.objects.create(first_name=data['firstName'], last_name=data['lastName'], archive=archive)
+                remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=data['id'])
+                return donor
+            elif root_type == 'Update':
+                qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id)
+                qs.update(first_name=data['firstName'], last_name=data['lastName'])
+                if qs.exists():
+                    return qs[0]
+                else:
+                    return Donor()
+            elif root_type == "Delete":
+                Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id).delete()
+                return Donor()
+
+            else:
+                return Donor()
         else:
             qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'])
             if qs.exists():
-                return ContactData(data, qs[0])
-            return ContactData(data)
+                return qs[0]
+            return Donor()
 
 class PageItem(fields.Field):
     def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
@@ -249,15 +268,18 @@ class ObjectOrLinkField(fields.Field):
     def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
         if isinstance(value, Donor):
             return Contact().dump(value)
-        else:
+        elif isinstance(value, Photo):
             return Image().dump(value)
+        else:
+            return value
+
     def _deserialize(self, value: Union[str, Dict[str, Any]], *args: Any, **kwargs: Any) -> Any:
         if isinstance(value, str):
-            return LinkSchema().load({"href": value})
+            return LinkSchema(context=self.context).load({"href": value})
         if value['type'] in ["Accept", "Follow",]:
-            return ActivitySchema().load(value)
+            return ActivitySchema(context=self.context).load(value)
         if value['type'] in ["Contact",]:
-            return Contact().load(value)
+            return Contact(context=self.context).load(value)
         raise ValueError(value['type'])
 
 
@@ -324,6 +346,11 @@ class ActivitySchema(ObjectSchema):
             "type": object['type'],
             "to": object['to'],
         }
+
+    @pre_load
+    def preload(self, data: Dict[str, Any], *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        self.fields['object'].context.setdefault("root_type", data['type'])
+        return data
 
     @post_load
     def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:

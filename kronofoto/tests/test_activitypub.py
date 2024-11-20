@@ -62,6 +62,35 @@ def test_ignore_activities_from_nonfollows(a_donor):
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
+def test_receiving_a_donor_delete_deletes_a_donor(a_donor):
+    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    a_donor.first_name = "first"
+    a_donor.last_name = "Last"
+    a_donor.archive = remote_archive
+    a_donor.save()
+    rdd = models.RemoteDonorData.objects.create(donor=a_donor, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1')
+    data = activitypub.ActivitySchema().dump({
+        "actor": remote_archive,
+        "object": rdd.ld_id,
+        "type": "Delete",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
+    request = RequestFactory().post(
+        "/kf/activitypub/service/inbox",
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        headers={
+            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        },
+        data=json.dumps(data),
+    )
+    request.actor = remote_archive.actor
+    Site.objects.all().update(domain='example2.net')
+    resp = activitypub.service_inbox(request)
+    assert resp.status_code == 200
+    assert not models.Donor.objects.all().exists()
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_donor_update_updates_a_donor(a_donor):
     remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "first"
@@ -132,7 +161,7 @@ def test_donor_api(a_donor):
     url = "/kf/activitypub/archives/{}/contributors/{}".format(a_donor.archive.slug, a_donor.id)
     resp = client.get(url)
     assert resp.status_code == 200
-    data, donor = Contact().load(resp.json())
+    donor = Contact().load(resp.json())
     assert a_donor.id == donor.id
     assert a_donor.first_name == donor.first_name
     assert a_donor.last_name == donor.last_name
