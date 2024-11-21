@@ -1,7 +1,7 @@
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, m2m_changed, pre_delete
 from django.dispatch import receiver
 from django.db.models import Q
-from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount
+from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor
 from collections import Counter
 import re
 from typing import Any, Union, Optional, List, Dict, NoReturn, Type
@@ -18,6 +18,43 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
     PlaceWordCount.objects.bulk_create(wordcounts)
 
 from fortepan_us.kronofoto.views.activitypub import ActivitySchema
+
+@receiver(pre_delete, sender=Donor)
+def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kwargs: Any) -> None:
+    pass
+
+@receiver(post_save, sender=Donor)
+def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+    if not hasattr(instance.archive, "archive"):
+        return
+    archive = instance.archive.archive
+    from . import signed_requests
+    import requests
+    import json
+    if not archive.remoteactor_set.exists():
+        return
+    data = ActivitySchema().dump({
+        "object": instance,
+        "actor": instance.archive,
+        "type": "Create" if created else "Update",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
+
+    for actor in archive.remoteactor_set.all():
+        resp = requests.get(actor.profile)
+        profile = resp.json()
+        inbox = profile.get("inbox")
+        if inbox:
+            signed_requests.post(
+                inbox,
+                data=json.dumps(data),
+                headers={
+                    "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+                private_key=archive.private_key,
+                keyId=archive.keyId,
+            )
 
 
 @receiver(post_save, sender=Photo)
