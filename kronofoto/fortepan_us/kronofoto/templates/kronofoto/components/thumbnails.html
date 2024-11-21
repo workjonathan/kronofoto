@@ -12,7 +12,7 @@
         <a 
             href="{% object_url p url_kwargs get_params %}"
             {% if is_mainstreet %}
-            @click.prevent="$dispatch('kronofoto-select-node', {{p.id}})"
+            @click.prevent="if (!dragging) {$dispatch('kronofoto-select-node', {{p.id}})}"
             {% else %}
             hx-get="{% object_url p url_kwargs get_params %}"
             {% endif %}

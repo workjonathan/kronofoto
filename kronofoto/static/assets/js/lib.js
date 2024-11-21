@@ -82,12 +82,20 @@ class TimelineScroller {
             drag: (event, ui) => {
                 if (!elem) {
                     elem = event.target
+                    carousel.dispatchEvent(new Event("kronofoto-drag-timeline-start"))
                     console.log("installing htmx:confirm handler", elem)
                     elem.addEventListener("htmx:confirm", handler)
                 }
                 this.moveTimelineCoin(ui.position.left, true)
             },
             stop: (event, ui) => {
+                for (const temp of this.context.querySelectorAll(
+                    "#fi-thumbnail-carousel-images li[data-active] a",
+                )) {
+                    const detail = parseInt(temp.parentNode.getAttribute("data-fi"))
+                    const evt = new CustomEvent("kronofoto-select-node", { bubbles: true, detail })
+                    carousel.dispatchEvent(evt)
+                }
                 this.dropTimelineCoin(ui.position.left)
                 released = true
                 for (const temp of this.context.querySelectorAll(
