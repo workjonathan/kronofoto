@@ -3,6 +3,8 @@ import requests
 from .archive import Archive, ArchiveBase
 from django.core.cache import cache
 from typing import Optional
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 class RemoteActor(models.Model):
     profile = models.URLField(unique=True)
@@ -43,3 +45,14 @@ class FollowArchiveRequest(models.Model):
 class OutboxActivity(models.Model):
     body = models.JSONField()
     created = models.DateTimeField(auto_now=True)
+
+class LdId(models.Model):
+    ld_id = models.URLField(unique=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["content_type", "object_id"], name="unique_content_id_per_object"),
+        ]

@@ -22,6 +22,7 @@ import hashlib
 from datetime import datetime, timezone, timedelta
 from fortepan_us.kronofoto.middleware import SignatureHeaders, decode_signature, decode_signature_headers
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 
 activity_stream_context = "https://www.w3.org/ns/activitystreams"
 
@@ -89,6 +90,45 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 return JsonLDResponse({})
         if not request.actor.app_follows_actor:
             return HttpResponse(status=401)
+        root_type = deserialized.get('type')
+        object = deserialized.get('object', {})
+        object_type = object.get('type')
+        if root_type == 'Create' and object_type == "Contact":
+            archive = RemoteArchive.objects.get(actor=request.actor)
+            donor = Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
+            ct = ContentType.objects.get_for_model(models.Donor)
+            rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=donor.id)
+        elif root_type == 'Update' and object_type == "Contact":
+            archive = RemoteArchive.objects.get(actor=request.actor)
+            ldids = models.LdId.objects.filter(ld_id=object.get('id'))
+            for dldid in ldids:
+                updatedonor = dldid.content_object
+                if isinstance(updatedonor, models.Donor) and updatedonor.archive.id == archive.id:
+                    updatedonor.first_name = object.get('firstName')
+                    updatedonor.last_name = object.get('lastName')
+                    updatedonor.save()
+        elif root_type == 'Delete':
+            archive = RemoteArchive.objects.get(actor=request.actor)
+            ldids = models.LdId.objects.filter(ld_id=object.get('href'))
+            for dldid in ldids:
+                deletedonor = dldid.content_object
+                if deletedonor and deletedonor.archive.id == archive.id:
+                    deletedonor.delete()
+                    dldid.delete()
+
+        """
+        if root_type == "Create":
+        elif root_type == 'Update':
+            qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id)
+            qs.update(first_name=data['firstName'], last_name=data['lastName'])
+            if qs.exists():
+                return qs[0]
+            else:
+                return Donor()
+        elif root_type == "Delete":
+            Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id).delete()
+            return Donor()
+        """
         return JsonLDResponse({})
     return HttpResponse(status=401)
 
@@ -152,17 +192,6 @@ class ObjectSchema(Schema):
 class LinkSchema(Schema):
     href = fields.Url()
 
-    @post_load
-    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Any:
-        actor = self.context.get('actor')
-        root_type = self.context.get('root_type')
-        if actor and actor.app_follows_actor:
-            archive = RemoteArchive.objects.get(actor=actor)
-            if root_type == "Delete":
-                Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['href'], archive__id=archive.id).delete()
-        return data
-
-
 class Image(ObjectSchema):
     id = fields.Url()
 
@@ -195,7 +224,7 @@ class DonorSaveAction:
     def save(self) -> Donor:
         assert self.archive
         donor = Donor.objects.create(first_name=self.first_name, last_name=self.last_name, archive=self.archive)
-        remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=self.ld_id)
+        #remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=self.ld_id)
         return donor
 
 class ContactData(NamedTuple):
@@ -221,7 +250,7 @@ class Contact(ObjectSchema):
             "type": "Contact",
         }
 
-    @post_load
+    #@post_load
     def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Donor:
         resolved = resolve(data['id'])
         actor = self.context.get('actor')
@@ -232,7 +261,7 @@ class Contact(ObjectSchema):
             archive = RemoteArchive.objects.get(actor=actor)
             if root_type == "Create":
                 donor = Donor.objects.create(first_name=data['firstName'], last_name=data['lastName'], archive=archive)
-                remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=data['id'])
+                #remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=data['id'])
                 return donor
             elif root_type == 'Update':
                 qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id)

@@ -20,6 +20,7 @@ import base64
 import hashlib
 from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_donor
 from django.contrib.sites.models import Site
+from django.contrib.contenttypes.models import ContentType
 
 def test_decode_signature():
     signature = 'keyId="https://my-example.com/actor#main-key",headers="(request-target) host date digest",signature="asdf"'
@@ -68,7 +69,8 @@ def test_receiving_a_donor_delete_deletes_a_donor(a_donor):
     a_donor.last_name = "Last"
     a_donor.archive = remote_archive
     a_donor.save()
-    rdd = models.RemoteDonorData.objects.create(donor=a_donor, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1')
+    ct = ContentType.objects.get_for_model(models.Donor)
+    rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1', object_id=a_donor.id)
     data = activitypub.ActivitySchema().dump({
         "actor": remote_archive,
         "object": rdd.ld_id,
@@ -97,7 +99,8 @@ def test_receiving_a_donor_update_updates_a_donor(a_donor):
     a_donor.last_name = "Last"
     a_donor.archive = remote_archive
     a_donor.save()
-    models.RemoteDonorData.objects.create(donor=a_donor, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1')
+    ct = ContentType.objects.get_for_model(models.Donor)
+    rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1', object_id=a_donor.id)
     data = activitypub.ActivitySchema().dump({
         "actor": remote_archive,
         "object": a_donor,
@@ -151,7 +154,7 @@ def test_receiving_a_donor_create_creates_a_donor(a_donor):
     resp = activitypub.service_inbox(request)
     assert resp.status_code == 200
     assert models.Donor.objects.all().exists()
-    assert models.Donor.objects.all()[0].donordatabase.remotedonordata.ld_id == 'http://example.com/kf/activitypub/archives/an-archive/contributors/1'
+    assert models.LdId.objects.get(ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1').content_object.id == models.Donor.objects.all()[0].id
 
 
 @pytest.mark.django_db
@@ -162,9 +165,8 @@ def test_donor_api(a_donor):
     resp = client.get(url)
     assert resp.status_code == 200
     donor = Contact().load(resp.json())
-    assert a_donor.id == donor.id
-    assert a_donor.first_name == donor.first_name
-    assert a_donor.last_name == donor.last_name
+    assert a_donor.first_name == donor['firstName']
+    assert a_donor.last_name == donor['lastName']
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

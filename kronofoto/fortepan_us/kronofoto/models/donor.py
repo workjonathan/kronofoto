@@ -81,5 +81,3 @@ class LocalDonorData(DonorDataBase):
     def __str__(self) -> str:
         return str(self.donor)
 
-class RemoteDonorData(DonorDataBase):
-    ld_id = models.URLField(unique=True)
