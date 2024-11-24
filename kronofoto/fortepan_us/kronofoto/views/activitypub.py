@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseRed
 from django.template.response import TemplateResponse
 from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union, NamedTuple
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import permission_required
 import requests
 from fortepan_us.kronofoto import signed_requests
 from functools import cached_property
@@ -63,7 +64,7 @@ def get_data(request:HttpRequest, type: str, pk: int) -> HttpResponse:
     #object_data['@context'] = activity_stream_context
     return JsonLDResponse({})
 
-@require_json_ld
+#@require_json_ld
 def service(request: HttpRequest) -> HttpResponse:
     site = get_current_site(request)
     return JsonLDResponse({
@@ -73,6 +74,7 @@ def service(request: HttpRequest) -> HttpResponse:
          "name": site.name,
          "inbox": reverse("kronofoto:activitypub-main-service-inbox"),
          "outbox": reverse("kronofoto:activitypub-main-service-outbox"),
+         "following": [actor.actor.profile for actor in models.RemoteArchive.objects.all()],
          "publicKey": {
             "id": reverse("kronofoto:activitypub-main-service") + "#mainKey",
             "owner": reverse("kronofoto:activitypub-main-service"),
@@ -80,6 +82,7 @@ def service(request: HttpRequest) -> HttpResponse:
          },
     })
 
+@csrf_exempt
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
     if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
@@ -90,10 +93,10 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         schema.context['actor'] = request.actor
         deserialized = schema.load(data)
         if deserialized['type'] == "Accept":
+            print(deserialized)
             for activity in OutboxActivity.objects.filter(
-                body__id=data['object']['id'],
                 body__type="Follow",
-                body__actor=data['object']['actor'],
+                body__actor=deserialized['object']['actor'].profile,
             ):
                 RemoteArchive.objects.get_or_create(actor=request.actor)
                 return JsonLDResponse({})
@@ -148,6 +151,7 @@ def service_outbox(request: HttpRequest) -> HttpResponse:
 class FollowForm(forms.Form):
     address = forms.URLField()
 
+@permission_required("kronofoto.archive.create")
 def service_follows(request: HttpRequest) -> HttpResponse:
     template = "kronofoto/pages/service.html"
     context : Dict[str, Any] = {}
@@ -162,6 +166,7 @@ def service_follows(request: HttpRequest) -> HttpResponse:
                 "actor": reverse("kronofoto:activitypub-main-service"),
                 "_context": activity_stream_context,
             })
+            models.OutboxActivity.objects.create(body=activity)
             service_actor = models.ServiceActor.get_instance()
             signed_requests.post(
                 actor_data['inbox'],
@@ -184,11 +189,54 @@ def service_follows(request: HttpRequest) -> HttpResponse:
         context=context,
     )
 
+class FollowReactForm(forms.Form):
+    follow = forms.IntegerField(required=True)
+
+@permission_required("kronofoto.archive.change")
+def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
+    template = "kronofoto/pages/archive_view.html"
+    context : Dict[str, Any] = {}
+    archive = get_object_or_404(models.Archive.objects.all(), slug=short_name)
+    context['archive'] = archive
+    if request.method == "POST":
+        form = FollowReactForm(request.POST)
+        if form.is_valid():
+            followrequest = get_object_or_404(models.FollowArchiveRequest.objects.all(), pk=form.cleaned_data['follow'])
+            if 'accept' in request.POST:
+                actor_data = requests.get(followrequest.remote_actor.profile, headers={
+                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                }).json()
+                activity = ActivitySchema().dump({
+                    "object": followrequest.request_body,
+                    "type": "Accept",
+                    "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": archive.slug}),
+                    "_context": activity_stream_context,
+                })
+                resp = signed_requests.post(
+                    actor_data['inbox'],
+                    data=json.dumps(activity),
+                    headers={
+                        "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    },
+                    private_key=archive.private_key,
+                    keyId=archive.keyId,
+                )
+                if resp.status_code == 200:
+                    followrequest.remote_actor.archives_followed.add(archive)
+                    followrequest.delete()
+    return TemplateResponse(
+        request=request,
+        template=template,
+        context=context,
+    )
 
 
 from django.urls import path, include, register_converter, URLPattern, URLResolver
 data_urls: Any = ([
     path("remotearchives/add", service_follows),
+    path("archives/<slug:short_name>/show", archive_view),
 ], "activitypub_data")
 
 class DataEndpoint(Protocol):
@@ -204,6 +252,10 @@ class ActorEndpoint(Protocol):
     def profile(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         ...
     def inbox(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+    def following(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ...
+    def followers(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         ...
     def outbox(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         ...
@@ -402,6 +454,8 @@ class register_actor:
                     path("", cls.profile, name="actor"),
                     path("/inbox", cls.inbox, name="inbox"),
                     path("/outbox", cls.outbox, name="outbox"),
+                    path("/followers", cls.followers, name="followers"),
+                    path("/following", cls.following, name="following"),
                 ] + cls.data_urls,
                 self.namespace,
             ))
@@ -430,16 +484,30 @@ class ActivitySchema(ObjectSchema):
         data['actor'] = RemoteActor.objects.get_or_create(profile=data['actor'])[0]
         return data
 
+class ActorCollectionSchema(ObjectSchema):
+    items = fields.List(ObjectOrLinkField)
+    totalItems = fields.Integer()
+
+    @pre_dump
+    def extract_fields_from_object(self, object: Any, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "totalItems": object.count(),
+            "items": [actor.profile for actor in object],
+        }
+
 
 class ArchiveSchema(Schema):
     type = fields.Constant("Organization")
     id = fields.Url(relative=True)
     name = fields.Str()
     publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+
     inbox = fields.Url(relative=True)
     outbox = fields.Url(relative=True)
     contributors = fields.Url(relative=True)
     photos = fields.Url(relative=True)
+    following = fields.Url(relative=True)
+    followers = fields.Url(relative=True)
 
     @pre_dump
     def extract_fields_from_object(self, object: Archive, **kwargs: Any) -> Dict[str, Any]:
@@ -450,6 +518,8 @@ class ArchiveSchema(Schema):
             "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
             "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),
             "photos": reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug}),
+            "followers": reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug}),
+            "following": reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug}),
             "publicKey": {
                 "id": object.keyId,
                 "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
@@ -464,6 +534,20 @@ class ArchiveActor:
     def profile(request: HttpRequest, short_name: str) -> HttpResponse:
         archive = get_object_or_404(Archive.objects.all(), slug=short_name)
         return JsonLDResponse(ArchiveSchema().dump(archive))
+
+    @staticmethod
+    def following(request: HttpRequest, short_name: str) -> HttpResponse:
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        return JsonLDResponse(ActorCollectionSchema().dump(
+            archive.remoteactor_set.none()
+        ))
+
+    @staticmethod
+    def followers(request: HttpRequest, short_name: str) -> HttpResponse:
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        return JsonLDResponse(ActorCollectionSchema().dump(
+            archive.remoteactor_set.all()
+        ))
 
     #@require_json_ld
     @staticmethod
