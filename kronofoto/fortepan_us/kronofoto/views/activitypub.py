@@ -1,5 +1,9 @@
-from django.http import HttpResponse, HttpRequest, JsonResponse
+from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union, NamedTuple
+from django.views.decorators.csrf import csrf_exempt
+import requests
+from fortepan_us.kronofoto import signed_requests
 from functools import cached_property
 from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse, resolve
@@ -69,6 +73,11 @@ def service(request: HttpRequest) -> HttpResponse:
          "name": site.name,
          "inbox": reverse("kronofoto:activitypub-main-service-inbox"),
          "outbox": reverse("kronofoto:activitypub-main-service-outbox"),
+         "publicKey": {
+            "id": reverse("kronofoto:activitypub-main-service") + "#mainKey",
+            "owner": reverse("kronofoto:activitypub-main-service"),
+            "publicKeyPem": models.ServiceActor.get_instance().guaranteed_public_key().decode("utf-8"),
+         },
     })
 
 @require_json_ld
@@ -136,12 +145,51 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
 def service_outbox(request: HttpRequest) -> HttpResponse:
     return JsonLDResponse({})
 
-#@require_json_ld
+class FollowForm(forms.Form):
+    address = forms.URLField()
+
+def service_follows(request: HttpRequest) -> HttpResponse:
+    template = "kronofoto/pages/service.html"
+    context : Dict[str, Any] = {}
+    if request.method == "POST":
+        form = FollowForm(request.POST)
+        if form.is_valid():
+            actor_data = requests.get(form.cleaned_data['address']).json()
+            print(actor_data)
+            activity = ActivitySchema().dump({
+                "object": form.cleaned_data['address'],
+                "type": "Follow",
+                "actor": reverse("kronofoto:activitypub-main-service"),
+                "_context": activity_stream_context,
+            })
+            service_actor = models.ServiceActor.get_instance()
+            signed_requests.post(
+                actor_data['inbox'],
+                data=json.dumps(activity),
+                headers={
+                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+                private_key=service_actor.private_key,
+                keyId=service_actor.keyId,
+            )
+
+            #return HttpResponseRedirect("/")
+    else:
+        context['form'] = FollowForm()
+
+    return TemplateResponse(
+        request=request,
+        template=template,
+        context=context,
+    )
 
 
 
-data_urls: Any = ([], "activitypub_data")
 from django.urls import path, include, register_converter, URLPattern, URLResolver
+data_urls: Any = ([
+    path("remotearchives/add", service_follows),
+], "activitypub_data")
 
 class DataEndpoint(Protocol):
     def data_page(self, request: HttpRequest, short_name: str) -> HttpResponse:
@@ -368,13 +416,9 @@ class ActivitySchema(ObjectSchema):
 
     @pre_dump
     def extract_fields_from_object(self, object: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        return {
-            "summary": f"{object['actor'].name} created something",
-            "object": object['object'],
-            "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object['actor'].slug}),
-            "type": object['type'],
-            "to": object['to'],
-        }
+        if isinstance(object['actor'], models.ArchiveBase):
+            object['actor'] = reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object['actor'].slug})
+        return object
 
     @pre_load
     def preload(self, data: Dict[str, Any], *args: Any, **kwargs: Any) -> Dict[str, Any]:
@@ -423,6 +467,7 @@ class ArchiveActor:
 
     #@require_json_ld
     @staticmethod
+    @csrf_exempt
     def inbox(request: HttpRequest, short_name: str) -> HttpResponse:
         if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
             return HttpResponse(status=401)

@@ -5,6 +5,68 @@ from django.core.cache import cache
 from typing import Optional
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from django.conf import settings
+from fortepan_us.kronofoto.reverse import reverse
+
+class ServiceActor(models.Model):
+    serialized_public_key = models.BinaryField(null=True, blank=True)
+    encrypted_private_key = models.BinaryField(null=True, blank=True)
+
+    @classmethod
+    def get_instance(cls) -> "ServiceActor":
+        if cls.objects.exists():
+            return cls.objects.all()[0]
+        else:
+            return cls.objects.create()
+
+    def guaranteed_public_key(self) -> bytes:
+        if not self.serialized_public_key:
+            self.generate_new_keys()
+        return self.serialized_public_key or b""
+
+    @property
+    def keyId(self) -> str:
+        return reverse("kronofoto:activitypub-main-service") + "#mainKey"
+
+    def generate_new_keys(self) -> None:
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+        )
+        self.serialized_public_key = private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        self.encrypted_private_key = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(settings.ENCRYPTION_KEY),
+        )
+        self.save()
+
+    @property
+    def private_key(self) -> rsa.RSAPrivateKey:
+        if self.encrypted_private_key and isinstance(self.encrypted_private_key, bytes):
+            private_key = serialization.load_pem_private_key(
+                self.encrypted_private_key,
+                password=settings.ENCRYPTION_KEY,
+            )
+            if isinstance(private_key, rsa.RSAPrivateKey):
+                return private_key
+        self.generate_new_keys()
+        return self.private_key
+
+    @property
+    def public_key(self) -> rsa.RSAPublicKey:
+        if self.serialized_public_key and isinstance(self.serialized_public_key, bytes):
+            public_key = serialization.load_pem_public_key(
+                self.serialized_public_key,
+            )
+            if isinstance(public_key, rsa.RSAPublicKey):
+                return public_key
+        self.generate_new_keys()
+        return self.public_key
 
 class RemoteActor(models.Model):
     profile = models.URLField(unique=True)
@@ -25,9 +87,10 @@ class RemoteActor(models.Model):
             key = None
             if resp.status_code == 200:
                 data = resp.json()
+                print(data)
                 key = data.get('publicKey', {}).get('publicKeyPem', None)
             return key.encode('utf-8') if key else None
-        return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=7*24*60*60)
+        return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=10)
 
 class RemoteArchive(ArchiveBase):
     actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
