@@ -21,7 +21,7 @@ class ArchiveBase(models.Model):
         )
 
     def __str__(self) -> str:
-        return self.name
+        return "{}@{}".format(self.slug, self.server_domain) if self.server_domain else self.name
 
 class Archive(ArchiveBase):
     cms_root = models.CharField(max_length=16, null=False, blank=False)

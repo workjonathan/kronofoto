@@ -94,6 +94,8 @@ class RemoteActor(models.Model):
 
 class RemoteArchive(ArchiveBase):
     actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
+    def __str__(self) -> str:
+        return "{}@{}".format(self.slug, self.server_domain)
 
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)

@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save, m2m_changed, pre_delete
 from django.dispatch import receiver
 from django.db.models import Q
+from .reverse import reverse
 from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor
 from collections import Counter
 import re
@@ -19,12 +20,7 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
 
 from fortepan_us.kronofoto.views.activitypub import ActivitySchema
 
-@receiver(pre_delete, sender=Donor)
-def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kwargs: Any) -> None:
-    pass
-
-@receiver(post_save, sender=Donor)
-def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+def send_donor_activities(instance: Donor, created: bool, DELETE: bool) -> None:
     if not hasattr(instance.archive, "archive"):
         return
     archive = instance.archive.archive
@@ -34,9 +30,9 @@ def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any
     if not archive.remoteactor_set.exists():
         return
     data = ActivitySchema().dump({
-        "object": instance,
+        "object": instance if not DELETE else reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={'short_name': archive.slug, "pk": instance.pk}),
         "actor": instance.archive,
-        "type": "Create" if created else "Update",
+        "type": "Create" if created else "Delete" if DELETE else "Update",
         "to": ["https://www.w3.org/ns/activitystreams#Public"],
     })
 
@@ -49,12 +45,20 @@ def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any
                 inbox,
                 data=json.dumps(data),
                 headers={
-                    "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                     'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
                 private_key=archive.private_key,
                 keyId=archive.keyId,
             )
+
+@receiver(pre_delete, sender=Donor)
+def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kwargs: Any) -> None:
+    send_donor_activities(instance, created=False, DELETE=True)
+
+@receiver(post_save, sender=Donor)
+def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+    send_donor_activities(instance, created=created, DELETE=False)
 
 
 @receiver(post_save, sender=Photo)
