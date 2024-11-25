@@ -3,6 +3,7 @@ from django.template.response import TemplateResponse
 from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union, NamedTuple
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import permission_required
+from urllib.parse import urlparse
 import requests
 from fortepan_us.kronofoto import signed_requests
 from functools import cached_property
@@ -93,12 +94,19 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         schema.context['actor'] = request.actor
         deserialized = schema.load(data)
         if deserialized['type'] == "Accept":
-            print(deserialized)
             for activity in OutboxActivity.objects.filter(
                 body__type="Follow",
                 body__actor=deserialized['object']['actor'].profile,
             ):
-                RemoteArchive.objects.get_or_create(actor=request.actor)
+                profile = requests.get(
+                    activity.body['object'],
+                    headers={
+                        "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    },
+                ).json()
+                server_domain = urlparse(activity.body['object']).netloc
+                RemoteArchive.objects.get_or_create(actor=request.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
                 return JsonLDResponse({})
         if not request.actor.app_follows_actor:
             return HttpResponse(status=401)
@@ -159,7 +167,6 @@ def service_follows(request: HttpRequest) -> HttpResponse:
         form = FollowForm(request.POST)
         if form.is_valid():
             actor_data = requests.get(form.cleaned_data['address']).json()
-            print(actor_data)
             activity = ActivitySchema().dump({
                 "object": form.cleaned_data['address'],
                 "type": "Follow",
@@ -500,6 +507,7 @@ class ArchiveSchema(Schema):
     type = fields.Constant("Organization")
     id = fields.Url(relative=True)
     name = fields.Str()
+    slug = fields.Str()
     publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
 
     inbox = fields.Url(relative=True)
@@ -514,6 +522,7 @@ class ArchiveSchema(Schema):
         return {
             "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
             "name": object.name,
+            "slug": object.slug,
             "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug}),
             "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
             "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),

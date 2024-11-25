@@ -11,9 +11,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 class ArchiveBase(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False)
-    slug = models.SlugField(unique=True, blank=False, null=False)
+    slug = models.SlugField(blank=False, null=False)
+    server_domain = models.CharField(max_length=255, null=False, blank=True, default="")
 
     class Meta:
+        unique_together = ("slug", "server_domain")
         indexes = (
             models.Index(fields=['slug'], name="archivebase_slug_idx"),
         )
