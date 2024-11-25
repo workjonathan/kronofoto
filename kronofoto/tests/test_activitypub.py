@@ -46,6 +46,7 @@ def test_ignore_activities_from_nonfollows(a_donor):
         "type": "Create",
         "to": ["https://www.w3.org/ns/activitystreams#Public"],
     })
+    remote_archive.delete()
     request = RequestFactory().post(
         "/kf/activitypub/service/inbox",
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -563,18 +564,21 @@ def test_service_inbox_accept_request():
         msg_body=msg_body,
         host="example.com",
     )
-    resp = client.post(
-        url,
-        data=msg_body,
-        headers={
-            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/archive/asdf"),
-            "Host": headers.host,
-            "Date": headers.date_format,
-            "Digest": headers.digest,
-        },
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-    )
+    with mock.patch("requests.get") as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.return_value = {"slug": "aslug", "name": "a detailed name"}
+        resp = client.post(
+            url,
+            data=msg_body,
+            headers={
+                'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                "Signature": headers.signature(private_key=valid_private_key, keyId="https://anotherinstance.com/activitypub/archive/asdf"),
+                "Host": headers.host,
+                "Date": headers.date_format,
+                "Digest": headers.digest,
+            },
+            content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        )
     assert resp.status_code == 200
     assert resp.headers['Content-Type'] == 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     assert RemoteArchive.objects.filter(actor__profile="https://anotherinstance.com/activitypub/archive/asdf").exists()
