@@ -114,7 +114,7 @@ class ExhibitForm(ModelForm):
 
     class Meta:
         model = Exhibit
-        fields = ['name', 'title', 'description', 'photo', "credits"]
+        fields = ['name', 'title', 'description', 'smalltext', 'photo', "credits"]
 
 @dataclass
 class ExhibitFormWrapper:
@@ -134,7 +134,6 @@ class ExhibitFormWrapper:
 
     @property
     def credits(self) -> str:
-        print(f"{self.form['credits'].value()=}")
         return self.form['credits'].value() or ""
 
     @property
@@ -156,6 +155,10 @@ class ExhibitFormWrapper:
     @property
     def description(self) -> str:
         return self.form['description'].value() or ""
+
+    @property
+    def smalltext(self) -> str:
+        return self.form['smalltext'].value() or ""
 
 
 def exhibit_two_column_image(request: HttpRequest, pk: int) -> HttpResponse:

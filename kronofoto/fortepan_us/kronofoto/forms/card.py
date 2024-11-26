@@ -12,7 +12,7 @@ class CardFormType(Form):
 class CardForm(ModelForm, CardFormType):
     class Meta:
         model = Card
-        fields = ['title', 'description']
+        fields = ['title', 'description', "smalltext"]
 
 class FigureListForm(ModelForm, CardFormType):
     class Meta:
@@ -28,7 +28,7 @@ class FigureForm(ModelForm, CardFormType):
 class PhotoCardForm(ModelForm, CardFormType):
     class Meta:
         model = PhotoCard
-        fields = ['title', 'description', 'photo', 'fill_style', "alignment"]
+        fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "alignment"]
         widgets = {
             "fill_style": RadioSelect,
         }
@@ -75,6 +75,10 @@ class CardFormWrapper:
     def description(self) -> str:
         return self.form['description'].value() or ""
 
+    @property
+    def smalltext(self) -> str:
+        return self.form['smalltext'].value() or ""
+
 
 
 @dataclass
@@ -114,6 +118,10 @@ class PhotoCardFormWrapper:
     @property
     def description(self) -> str:
         return self.form['description'].value() or ""
+
+    @property
+    def smalltext(self) -> str:
+        return self.form['smalltext'].value() or ""
 
 @dataclass
 class FigureFormWrapper:

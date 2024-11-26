@@ -11,9 +11,12 @@
             <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
             {{ form.description.errors }}
             <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            {{ form.smalltext.errors }}
+            <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ card.smalltext }}</span>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
             {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
+            {% if card.smalltext %}<span>{{ card.smalltext | linebreaks }}</span>{% endif %}
             {% endif %}
         </div>
     </div>

@@ -17,6 +17,8 @@
     </div>
     {{ form.description.errors }}
     <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ exhibit.description }}</p>
+    {{ form.smalltext.errors }}
+    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ exhibit.smalltext }}</p>
 {% endblock hero_content_wrapper %}
 
 {% block hero_background %}

@@ -44,6 +44,12 @@
                 {% elif card.description %}
                 <div>{{ card.description | linebreaks }}</div>
                 {% endif %}
+                {% if edit %}
+                {{ form.smalltext.errors }}
+                <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ card.smalltext }}</div>
+                {% elif card.smalltext %}
+                <div>{{ card.smalltext | linebreaks }}</div>
+                {% endif %}
             </div>
         </div>
     </div>

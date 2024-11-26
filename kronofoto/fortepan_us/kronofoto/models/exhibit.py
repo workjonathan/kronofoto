@@ -10,6 +10,7 @@ class Exhibit(models.Model):
     name = models.CharField(max_length=256)
     title = models.CharField(max_length=1024, blank=True)
     description = models.TextField(blank=True)
+    smalltext = models.TextField(blank=True, default="")
     photo = models.ForeignKey(Photo, null=False, on_delete=models.PROTECT)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
@@ -27,6 +28,7 @@ class Exhibit(models.Model):
 class Card(models.Model):
     title = models.TextField(blank=True, default="")
     description = models.TextField(blank=True, default="")
+    smalltext = models.TextField(blank=True, default="")
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
     order = models.IntegerField()
 
