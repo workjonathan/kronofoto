@@ -64,8 +64,8 @@ class ActorAuthenticationMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         signature_parts = decode_signature(request.headers.get("Signature", ""))
-        body = request.body.decode("utf-8")
         if request.content_type == 'application/ld+json' and request.content_params and request.content_params.get("profile") == "https://www.w3.org/ns/activitystreams" and 'date' in request.headers:
+            body = request.body.decode("utf-8")
             request_date = datetime.strptime(request.headers['date'], SignatureHeaders.date_format_str).replace(tzinfo=timezone.utc)
             if abs(request_date - datetime.now(timezone.utc)) <= timedelta(minutes=10):
                 headers = SignatureHeaders(

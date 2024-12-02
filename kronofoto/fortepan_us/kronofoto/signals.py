@@ -63,18 +63,21 @@ def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any
 
 @receiver(post_save, sender=Photo)
 def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+    if not hasattr(instance.archive, "archive"):
+        return
+    archive = instance.archive.archive
+    if not archive.remoteactor_set.exists():
+        return
     from . import signed_requests
     import requests
     import json
-    if not instance.archive.remoteactor_set.exists():
-        return
     data = ActivitySchema().dump({
         "object": instance,
         "actor": instance.archive,
         "type": "Create",
         "to": ["https://www.w3.org/ns/activitystreams#Public"],
     })
-    for actor in instance.archive.remoteactor_set.all():
+    for actor in archive.remoteactor_set.all():
         resp = requests.get(actor.profile)
         profile = resp.json()
         inbox = profile.get("inbox")
@@ -86,8 +89,8 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
                     "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                     'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
-                private_key=instance.archive.private_key,
-                keyId=instance.archive.keyId,
+                private_key=archive.private_key,
+                keyId=archive.keyId,
             )
 
 @receiver(post_save, sender=Photo)

@@ -129,6 +129,32 @@ def test_receiving_a_donor_update_updates_a_donor(a_donor):
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
+def test_receiving_a_photo_create_creates_a_photo(a_photo):
+    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    data=activitypub.ActivitySchema().dump({
+        "actor": remote_archive,
+        "object": a_photo,
+        "type": "Create",
+        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    })
+    request = RequestFactory().post(
+        "/kf/activitypub/service/inbox",
+        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        headers={
+            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        },
+        data=json.dumps(data),
+    )
+    request.actor = remote_archive.actor
+    Site.objects.all().update(domain='example2.net')
+    models.Photo.objects.all().delete()
+    resp = activitypub.service_inbox(request)
+    assert resp.status_code == 200
+    assert models.Photo.objects.all().exists()
+    assert models.LdId.objects.get(ld_id='http://example.com/kf/activitypub/archives/aslug/photos/1').content_object.id == models.Photo.objects.all()[0].id
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_donor_create_creates_a_donor(a_donor):
     remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "first"
@@ -180,7 +206,7 @@ def test_photo_api(a_photo):
     assert resp.status_code == 200
     Site.objects.all().update(domain='example2.net')
     photo = Image().load(resp.json())
-    assert photo.caption == a_photo.caption
+    assert photo['content'] == a_photo.caption
 
 @pytest.mark.django_db
 def test_signature_requires_correct_key_pair():

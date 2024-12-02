@@ -28,7 +28,7 @@ from fortepan_us.kronofoto.storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag, TagQuerySet
 from .term import Term
-from .archive import Archive
+from .archive import ArchiveBase
 from .category import Category
 from .place import Place
 import requests
@@ -110,7 +110,7 @@ class PlaceData:
         return " AND ".join(parts)
 
 class PhotoBase(models.Model):
-    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.PROTECT, null=False)
+    archive = models.ForeignKey(ArchiveBase, on_delete=models.PROTECT, null=False)
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
@@ -267,6 +267,7 @@ class ImageData:
 
 class Photo(PhotoBase):
     original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
+    remote_image = models.URLField(null=True, editable=False)
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
@@ -296,7 +297,6 @@ class Photo(PhotoBase):
         )
 
     tags = models.ManyToManyField(Tag, db_index=True, blank=True, through="kronofoto.PhotoTag")
-    location_from_google = models.BooleanField(editable=False, default=False)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False, db_index=True)
     local_context_id = models.CharField(
@@ -553,7 +553,6 @@ class Photo(PhotoBase):
             return val
         else:
             return []
-
 
 def get_resized_path(instance: Any, filename: str) -> str:
     return path.join('resized', '{}_{}_{}.jpg'.format(instance.width, instance.height, instance.photo.uuid))

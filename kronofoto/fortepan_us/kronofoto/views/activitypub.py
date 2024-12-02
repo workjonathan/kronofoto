@@ -135,6 +135,15 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 if deletedonor and deletedonor.archive.id == archive.id:
                     deletedonor.delete()
                     dldid.delete()
+        if root_type == 'Create' and object_type == "Image":
+            archive = RemoteArchive.objects.get(actor=request.actor)
+            photo = models.Photo.objects.create(
+                caption=object['content'],
+                archive=archive,
+                category=models.Category.objects.get_or_create(slug=object['category']['slug'], name=object['category']['name'])[0],
+            )
+            ct = ContentType.objects.get_for_model(models.Photo)
+            rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=photo.id)
 
         """
         if root_type == "Create":
@@ -299,8 +308,13 @@ class ObjectSchema(Schema):
 class LinkSchema(Schema):
     href = fields.Url()
 
+class CategorySchema(Schema):
+    slug = fields.Str()
+    name = fields.Str()
+
 class Image(ObjectSchema):
     id = fields.Url()
+    category = fields.Nested(CategorySchema)
 
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
@@ -309,10 +323,11 @@ class Image(ObjectSchema):
             "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
             "content": object.caption,
             "url": object.original.url,
+            "category": object.category,
             "type": "Image",
         }
 
-    @post_load
+    #@post_load
     def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Photo:
         resolved = resolve(data['id'])
         if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
@@ -357,38 +372,6 @@ class Contact(ObjectSchema):
             "type": "Contact",
         }
 
-    #@post_load
-    def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Donor:
-        resolved = resolve(data['id'])
-        actor = self.context.get('actor')
-        root_type = self.context.get('root_type')
-        if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
-            return Donor.objects.get(pk=resolved.match.kwargs['pk'])
-        elif actor and actor.app_follows_actor:
-            archive = RemoteArchive.objects.get(actor=actor)
-            if root_type == "Create":
-                donor = Donor.objects.create(first_name=data['firstName'], last_name=data['lastName'], archive=archive)
-                #remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=data['id'])
-                return donor
-            elif root_type == 'Update':
-                qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id)
-                qs.update(first_name=data['firstName'], last_name=data['lastName'])
-                if qs.exists():
-                    return qs[0]
-                else:
-                    return Donor()
-            elif root_type == "Delete":
-                Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id).delete()
-                return Donor()
-
-            else:
-                return Donor()
-        else:
-            qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'])
-            if qs.exists():
-                return qs[0]
-            return Donor()
-
 class PageItem(fields.Field):
     def _serialize(self, value: Union[Donor, Photo], attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
         if isinstance(value, Donor):
@@ -414,6 +397,8 @@ class ObjectOrLinkField(fields.Field):
             return LinkSchema(context=self.context).load({"href": value})
         if value['type'] in ["Accept", "Follow",]:
             return ActivitySchema(context=self.context).load(value)
+        if value['type'] in ["Image",]:
+            return Image(context=self.context).load(value)
         if value['type'] in ["Contact",]:
             return Contact(context=self.context).load(value)
         raise ValueError(value['type'])
