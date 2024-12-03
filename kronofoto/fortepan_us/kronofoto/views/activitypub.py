@@ -11,7 +11,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from ..reverse import reverse, resolve
 from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.models.photo import Photo
-from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, RemoteArchive, Donor
+from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, Donor
 from fortepan_us.kronofoto import models
 import json
 import parsy # type: ignore
@@ -75,7 +75,7 @@ def service(request: HttpRequest) -> HttpResponse:
          "name": site.name,
          "inbox": reverse("kronofoto:activitypub-main-service-inbox"),
          "outbox": reverse("kronofoto:activitypub-main-service-outbox"),
-         "following": [actor.actor.profile for actor in models.RemoteArchive.objects.all()],
+         "following": [archive.actor.profile for archive in models.Archive.objects.filter(actor__isnull=False) if archive.actor],
          "publicKey": {
             "id": reverse("kronofoto:activitypub-main-service") + "#mainKey",
             "owner": reverse("kronofoto:activitypub-main-service"),
@@ -106,20 +106,20 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                     },
                 ).json()
                 server_domain = urlparse(activity.body['object']).netloc
-                RemoteArchive.objects.get_or_create(actor=request.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
+                Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=request.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
                 return JsonLDResponse({})
-        if not request.actor.app_follows_actor and not RemoteArchive.objects.filter(actor=request.actor).exists():
+        if not request.actor.app_follows_actor and not Archive.objects.filter(actor=request.actor).exists():
             return JsonResponse({"error": "Not following this actor"}, status=401)
         root_type = deserialized.get('type')
         object = deserialized.get('object', {})
         object_type = object.get('type')
         if root_type == 'Create' and object_type == "Contact":
-            archive = RemoteArchive.objects.get(actor=request.actor)
+            archive = Archive.objects.get(actor=request.actor)
             donor = Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
             ct = ContentType.objects.get_for_model(models.Donor)
             rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=donor.id)
         elif root_type == 'Update' and object_type == "Contact":
-            archive = RemoteArchive.objects.get(actor=request.actor)
+            archive = Archive.objects.get(actor=request.actor)
             ldids = models.LdId.objects.filter(ld_id=object.get('id'))
             for dldid in ldids:
                 updatedonor = dldid.content_object
@@ -128,7 +128,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                     updatedonor.last_name = object.get('lastName')
                     updatedonor.save()
         elif root_type == 'Delete':
-            archive = RemoteArchive.objects.get(actor=request.actor)
+            archive = Archive.objects.get(actor=request.actor)
             ldids = models.LdId.objects.filter(ld_id=object.get('href'))
             for dldid in ldids:
                 deletedonor = dldid.content_object
@@ -136,7 +136,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                     deletedonor.delete()
                     dldid.delete()
         if root_type == 'Create' and object_type == "Image":
-            archive = RemoteArchive.objects.get(actor=request.actor)
+            archive = Archive.objects.get(actor=request.actor)
             photo = models.Photo.objects.create(
                 caption=object['content'],
                 archive=archive,
@@ -462,7 +462,7 @@ class ActivitySchema(ObjectSchema):
 
     @pre_dump
     def extract_fields_from_object(self, object: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        if isinstance(object['actor'], models.ArchiveBase):
+        if isinstance(object['actor'], models.Archive):
             object['actor'] = reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object['actor'].slug})
         return object
 

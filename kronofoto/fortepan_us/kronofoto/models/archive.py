@@ -5,11 +5,18 @@ from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse
 from django.contrib.auth.models import Permission, Group
 from .category import Category, ValidCategory
+from .activity import RemoteActor
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 
-class ArchiveBase(models.Model):
+class Archive(models.Model):
+    class ArchiveType(models.IntegerChoices):
+        LOCAL = 0
+        REMOTE = 1
+
+    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE, null=True)
+    type = models.IntegerField(choices=ArchiveType.choices, default=ArchiveType.LOCAL)
     name = models.CharField(max_length=64, null=False, blank=False)
     slug = models.SlugField(blank=False, null=False)
     server_domain = models.CharField(max_length=255, null=False, blank=True, default="")
@@ -20,11 +27,8 @@ class ArchiveBase(models.Model):
             models.Index(fields=['slug'], name="archivebase_slug_idx"),
         )
 
-    def __str__(self) -> str:
-        return "{}@{}".format(self.slug, self.server_domain) if self.server_domain else self.name
 
-class Archive(ArchiveBase):
-    cms_root = models.CharField(max_length=16, null=False, blank=False)
+    cms_root = models.CharField(max_length=16, null=True, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission")
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
@@ -80,7 +84,7 @@ class Archive(ArchiveBase):
 
 
     def __str__(self) -> str:
-        return self.name
+        return "{}@{}".format(self.slug, self.server_domain) if self.server_domain else self.name
 
 
 class ArchiveAgreementQuerySet(models.QuerySet):
@@ -90,7 +94,7 @@ class ArchiveAgreementQuerySet(models.QuerySet):
 class ArchiveAgreement(models.Model):
     text = models.TextField(blank=False, null=False)
     version = models.DateTimeField(null=False, auto_now=True)
-    archive = models.OneToOneField(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
+    archive = models.OneToOneField(Archive, on_delete=models.CASCADE)
 
     objects = ArchiveAgreementQuerySet.as_manager()
 
@@ -121,7 +125,7 @@ class UserAgreement(models.Model):
 
 
 class ArchiveUserPermission(models.Model):
-    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 
@@ -139,7 +143,7 @@ class ArchiveUserPermission(models.Model):
         verbose_name_plural = "archive permissions"
 
 class ArchiveGroupPermission(models.Model):
-    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE)
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
 

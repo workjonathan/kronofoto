@@ -14,7 +14,7 @@ class Category(models.Model):
 
 class ValidCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
-    archive = models.ForeignKey("Archive", to_field="archivebase_ptr", on_delete=models.CASCADE, null=False)
+    archive = models.ForeignKey("Archive", on_delete=models.CASCADE, null=False)
     terms = models.ManyToManyField(Term)
 
     def __str__(self) -> str:

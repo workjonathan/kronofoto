@@ -277,14 +277,10 @@ class FilteringArchivePermissionMixin(ArchivePermissionMixin):
             qs = qs.filter(Exists(Permission.objects.filter(q)))
         return qs
 
-class DonorInfoInline(admin.StackedInline):
-    model = donor.LocalDonorData
-    extra = 0
 
 @admin.register(Donor)
 class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
     search_fields = ['last_name', 'first_name']
-    inlines = (DonorInfoInline,)
 
     list_display = ('__str__', 'donated', 'scanned', "photographed", "photography_collection")
     class WithScannedCount(TypedDict):

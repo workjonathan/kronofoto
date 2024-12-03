@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, RequestFactory, override_settings
 from hypothesis import given, strategies as st, note
 from hypothesis.extra.django import TestCase
-from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity, RemoteArchive
+from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders, Contact, Image
 from fortepan_us.kronofoto.views import activitypub
@@ -39,7 +39,7 @@ def test_decode_signature_headers():
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_ignore_activities_from_nonfollows(a_donor):
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=False))
+    remote_archive = Archive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=False))
     data=activitypub.ActivitySchema().dump({
         "actor": remote_archive,
         "object": a_donor,
@@ -65,7 +65,7 @@ def test_ignore_activities_from_nonfollows(a_donor):
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_donor_delete_deletes_a_donor(a_donor):
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
     a_donor.archive = remote_archive
@@ -95,7 +95,7 @@ def test_receiving_a_donor_delete_deletes_a_donor(a_donor):
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_donor_update_updates_a_donor(a_donor):
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
     a_donor.archive = remote_archive
@@ -130,7 +130,7 @@ def test_receiving_a_donor_update_updates_a_donor(a_donor):
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_photo_create_creates_a_photo(a_photo):
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     data=activitypub.ActivitySchema().dump({
         "actor": remote_archive,
         "object": a_photo,
@@ -156,7 +156,7 @@ def test_receiving_a_photo_create_creates_a_photo(a_photo):
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_donor_create_creates_a_donor(a_donor):
-    remote_archive = RemoteArchive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
     a_donor.archive = remote_archive
@@ -607,4 +607,4 @@ def test_service_inbox_accept_request():
         )
     assert resp.status_code == 200
     assert resp.headers['Content-Type'] == 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-    assert RemoteArchive.objects.filter(actor__profile="https://anotherinstance.com/activitypub/archive/asdf").exists()
+    assert Archive.objects.filter(actor__profile="https://anotherinstance.com/activitypub/archive/asdf").exists()

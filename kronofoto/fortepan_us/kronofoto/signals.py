@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, m2m_changed, pre_delete
 from django.dispatch import receiver
 from django.db.models import Q
 from .reverse import reverse
-from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor
+from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor, Archive
 from collections import Counter
 import re
 from typing import Any, Union, Optional, List, Dict, NoReturn, Type
@@ -21,9 +21,9 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
 from fortepan_us.kronofoto.views.activitypub import ActivitySchema
 
 def send_donor_activities(instance: Donor, created: bool, DELETE: bool) -> None:
-    if not hasattr(instance.archive, "archive"):
+    if not instance.archive.type == Archive.ArchiveType.LOCAL:
         return
-    archive = instance.archive.archive
+    archive = instance.archive
     from . import signed_requests
     import requests
     import json
@@ -63,9 +63,9 @@ def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any
 
 @receiver(post_save, sender=Photo)
 def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
-    if not hasattr(instance.archive, "archive"):
+    if not instance.archive.type == Archive.ArchiveType.LOCAL:
         return
-    archive = instance.archive.archive
+    archive = instance.archive
     if not archive.remoteactor_set.exists():
         return
     from . import signed_requests

@@ -6,7 +6,7 @@ from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
-from .archive import ArchiveBase
+from .archive import Archive
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict
 
@@ -34,9 +34,17 @@ class DonorQuerySet(models.QuerySet):
 
 
 class Donor(Collectible, models.Model):
-    archive = models.ForeignKey(ArchiveBase, on_delete=models.PROTECT, null=False)
+    archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
+    email = models.EmailField(blank=True)
+    home_phone = models.CharField(max_length=256, blank=True)
+    street1 = models.CharField(max_length=256, blank=True)
+    street2 = models.CharField(max_length=256, blank=True)
+    city = models.CharField(max_length=256, blank=True)
+    state = models.CharField(max_length=256, blank=True)
+    zip = models.CharField(max_length=256, blank=True)
+    country = models.CharField(max_length=256, blank=True)
 
     objects = DonorQuerySet.as_manager()
 
@@ -64,20 +72,4 @@ class Donor(Collectible, models.Model):
             {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
             for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
         ]
-
-class DonorDataBase(models.Model):
-    donor = models.OneToOneField(Donor, null=False, on_delete=models.CASCADE)
-
-class LocalDonorData(DonorDataBase):
-    email = models.EmailField(blank=True)
-    home_phone = models.CharField(max_length=256, blank=True)
-    street1 = models.CharField(max_length=256, blank=True)
-    street2 = models.CharField(max_length=256, blank=True)
-    city = models.CharField(max_length=256, blank=True)
-    state = models.CharField(max_length=256, blank=True)
-    zip = models.CharField(max_length=256, blank=True)
-    country = models.CharField(max_length=256, blank=True)
-
-    def __str__(self) -> str:
-        return str(self.donor)
 

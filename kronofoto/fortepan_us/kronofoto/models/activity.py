@@ -1,6 +1,5 @@
 from django.db import models
 import requests
-from .archive import Archive, ArchiveBase
 from django.core.cache import cache
 from typing import Optional
 from django.contrib.contenttypes.models import ContentType
@@ -73,8 +72,8 @@ class RemoteActor(models.Model):
     actor_follows_app = models.BooleanField(default=False)
     app_follows_actor = models.BooleanField(default=False)
     follow_app_request = models.JSONField(null=True)
-    archives_followed = models.ManyToManyField(Archive)
-    requested_archive_follows : models.ManyToManyField = models.ManyToManyField(Archive, through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
+    archives_followed = models.ManyToManyField('kronofoto.Archive')
+    requested_archive_follows : models.ManyToManyField = models.ManyToManyField("kronofoto.Archive", through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
 
     def public_key(self) -> Optional[bytes]:
         def _() -> Optional[str]:
@@ -92,15 +91,10 @@ class RemoteActor(models.Model):
             return key.encode('utf-8') if key else None
         return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=10)
 
-class RemoteArchive(ArchiveBase):
-    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
-    def __str__(self) -> str:
-        return "{}@{}".format(self.slug, self.server_domain)
-
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
     request_body = models.JSONField()
-    archive = models.ForeignKey(Archive, to_field="archivebase_ptr", on_delete=models.CASCADE, null=False)
+    archive = models.ForeignKey("kronofoto.Archive", on_delete=models.CASCADE, null=False)
 
     class Meta:
         constraints = [

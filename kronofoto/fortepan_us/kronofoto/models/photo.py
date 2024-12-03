@@ -28,7 +28,7 @@ from fortepan_us.kronofoto.storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag, TagQuerySet
 from .term import Term
-from .archive import ArchiveBase
+from .archive import Archive
 from .category import Category
 from .place import Place
 import requests
@@ -110,7 +110,7 @@ class PlaceData:
         return " AND ".join(parts)
 
 class PhotoBase(models.Model):
-    archive = models.ForeignKey(ArchiveBase, on_delete=models.PROTECT, null=False)
+    archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
