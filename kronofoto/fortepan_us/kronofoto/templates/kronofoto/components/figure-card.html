@@ -24,7 +24,7 @@
                 {% endfor %}<input type="hidden" name="prefix" value="{{ form.prefix }}">
                 {% endwith %}
             {% else %}
-                <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
+                <figcaption>{{ figure.caption | markdown }}</figcaption>
             {% endif %}
         </figure>
     {% endfor %}

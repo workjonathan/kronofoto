@@ -20,8 +20,8 @@
             <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ card.smalltext }}</span>
             {% else %}
                 {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-                {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
-                {% if card.smalltext %}<span>{{ card.smalltext | linebreaks }}</span>{% endif %}
+                {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
+                {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
             {% endif %}
         </div>
         <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}" hx-swap="innerHTML show:top" {% endif %}>

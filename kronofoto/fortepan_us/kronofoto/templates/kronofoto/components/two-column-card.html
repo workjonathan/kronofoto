@@ -42,13 +42,13 @@
                 {{ form.description.errors }}
                 <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
                 {% elif card.description %}
-                <div>{{ card.description | linebreaks }}</div>
+                <div>{{ card.description | markdown:"nl2br" }}</div>
                 {% endif %}
                 {% if edit %}
                 {{ form.smalltext.errors }}
                 <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ card.smalltext }}</div>
                 {% elif card.smalltext %}
-                <div>{{ card.smalltext | linebreaks }}</div>
+                <div>{{ card.smalltext | markdown }}</div>
                 {% endif %}
             </div>
         </div>

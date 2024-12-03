@@ -1,9 +1,11 @@
+{% load widgets %}
 <div class="card container container--no-padding" style="z-index: 0">
     <div class="content-area content-area--credits">
         <div class="content-area__content">
             <h2>Credits</h2>
             {{ form.credits.errors }}
-            {% if form or exhibit.credits %}<span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.credits.auto_id }}">{{ exhibit.credits }}</span>{% endif %}
+            {% if form %}<span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.credits.auto_id }}">{{ exhibit.credits }}</span>
+            {% else %}{{ exhibit.credits | markdown:"nl2br" }}{% endif %}
             <br/>
             <small>Exhibit created with FotoStory, a <a href="https://fortepan.us/" target="_blank">Fortepan.us</a> tool</small>
         </div>

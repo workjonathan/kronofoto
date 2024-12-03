@@ -71,9 +71,14 @@ def photo_count() -> Optional[Any]:
 
 @register.filter(is_safe=True)
 @stringfilter
-def markdown(text: str) -> str:
+def markdown(text: str, extension: Optional[str]=None) -> str:
+    # disable ParagraphProcessor?
     from .urlify import URLifyExtension
-    return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
+    extensions = []
+    extensions.append(URLifyExtension())
+    if extension:
+        extensions.append(extension)
+    return mark_safe(md.markdown(escape(text), output_format="html", extensions=extensions))
 
 @register.simple_tag(takes_context=False)
 def thumb_left(*, index: int, offset: int, width: int) -> int:
