@@ -26,11 +26,23 @@ class Exhibit(models.Model):
         db_table = "kronofoto_exhibit"
 
 class Card(models.Model):
+    class CardType(models.IntegerChoices):
+        TEXT_ONLY = 0
+        FULL = 1
+        LEFT = 2
+        RIGHT = 3
+
+    class Fill(models.IntegerChoices):
+        CONTAIN = 1
+        COVER = 2
     title = models.TextField(blank=True, default="")
     description = models.TextField(blank=True, default="")
     smalltext = models.TextField(blank=True, default="")
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
     order = models.IntegerField()
+    photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
+    card_type = models.IntegerField(choices=CardType.choices, default=CardType.TEXT_ONLY)
+    fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
     def figures(self) -> "models.QuerySet[Figure]":
         return self.figure_set.all().order_by("order")
@@ -42,25 +54,13 @@ class Card(models.Model):
         db_table = "kronofoto_card"
 
 class PhotoCard(Card):
-    photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
 
     def photo_choices(self) -> models.Q:
         return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
 
-    class Alignment(models.IntegerChoices):
-        FULL = 1
-        LEFT = 2
-        RIGHT = 3
-
-    class Fill(models.IntegerChoices):
-        CONTAIN = 1
-        COVER = 2
-
-    alignment = models.IntegerField(choices=Alignment.choices, default=Alignment.FULL)
-    fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
     class Meta:
-        db_table = "kronofoto_photocard"
+        proxy = True
 
 class Figure(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)

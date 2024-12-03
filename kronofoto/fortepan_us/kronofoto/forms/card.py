@@ -7,7 +7,7 @@ from typing import Optional, List
 
 
 class CardFormType(Form):
-    card_type = CharField(required=True, widget=HiddenInput)
+    cardform_type = CharField(required=True, widget=HiddenInput)
 
 class CardForm(ModelForm, CardFormType):
     class Meta:
@@ -28,7 +28,7 @@ class FigureForm(ModelForm, CardFormType):
 class PhotoCardForm(ModelForm, CardFormType):
     class Meta:
         model = PhotoCard
-        fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "alignment"]
+        fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "card_type"]
         widgets = {
             "fill_style": RadioSelect,
         }
@@ -60,9 +60,33 @@ class CardFormWrapper:
         return self.form.instance.figure_set
 
     @property
+    def photo(self) -> Optional[Photo]:
+        val = self.form['photo'].value()
+        if val:
+            try:
+                return Photo.objects.get(pk=val)
+            except Photo.DoesNotExist:
+                return None
+
+        else:
+            return None
+    @property
     def title(self) -> str:
         return self.form['title'].value() or ""
 
+    @property
+    def card_type(self) -> int:
+        try:
+            return int(self.form['card_type'].value())
+        except ValueError:
+            return 0
+
+    @property
+    def fill_style(self) -> int:
+        try:
+            return int(self.form['fill_style'].value())
+        except ValueError:
+            return 1
     @property
     def card(self) -> "CardFormWrapper":
         return self
@@ -97,9 +121,9 @@ class PhotoCardFormWrapper:
             return 1
 
     @property
-    def alignment(self) -> int:
+    def card_type(self) -> int:
         try:
-            return int(self.form['alignment'].value())
+            return int(self.form['card_type'].value())
         except ValueError:
             return 1
 

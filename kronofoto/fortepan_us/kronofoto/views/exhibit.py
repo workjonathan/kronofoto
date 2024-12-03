@@ -24,7 +24,7 @@ from collections import defaultdict
 def exhibit_figure_form(request: HttpRequest, pk: int, parent: str) -> HttpResponse:
     context = {}
     exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
-    context['form'] = FigureForm(prefix=str(uuid.uuid4()), initial={"card_type": "figure", "parent": parent})
+    context['form'] = FigureForm(prefix=str(uuid.uuid4()), initial={"cardform_type": "figure", "parent": parent})
     assert hasattr(context['form'].fields['photo'], 'queryset')
     if exhibit.collection:
         context['form'].fields['photo'].queryset = exhibit.collection.photos.all()
@@ -47,7 +47,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
     context['edit'] = True
     if card_type == "text":
         parent_uuid = str(uuid.uuid4())
-        cardform: Union[CardForm, FigureListForm] = CardForm(initial={'card_type': "text"}, prefix=parent_uuid)
+        cardform: Union[CardForm, FigureListForm] = CardForm(initial={"cardform_type": "text"}, prefix=parent_uuid)
         context['card'] = CardFormWrapper(form=cardform, figures=[])
         context['form'] = cardform
         return TemplateResponse(
@@ -57,7 +57,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
         )
     elif card_type == "figure":
         parent_uuid = str(uuid.uuid4())
-        cardform = FigureListForm(initial={'card_type': "figure_list"}, prefix=parent_uuid)
+        cardform = FigureListForm(initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
         figures = []
         form = FigureCountForm(request.GET, initial={"count": 1})
         if form.is_valid() and form.cleaned_data['count']:
@@ -65,7 +65,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
                 'border-top': '1px solid #ffffff',
             }
             figures = [
-                FigureFormWrapper(FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent_uuid, "card_type": "figure"}))
+                FigureFormWrapper(FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent_uuid, "cardform_type": "figure"}))
                 for _ in range(form.cleaned_data['count'])
             ]
         context['card'] = FigureListFormWrapper(form=cardform, figures=figures)
@@ -77,13 +77,13 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
         )
     elif card_type == "photo":
         alignment = int(request.GET.get("align", "2"))
-        context['form'] = PhotoCardForm(initial={'card_type': 'photo', "alignment": alignment}, prefix=str(uuid.uuid4()))
+        context['form'] = PhotoCardForm(initial={"cardform_type": 'photo', "card_type": alignment}, prefix=str(uuid.uuid4()))
 
         if alignment in (2,3):
             template = 'kronofoto/components/two-column-card.html'
             context['image_area_classes'] = (
                 ['two-column--image-left', 'two-column--variation-1']
-                if alignment == PhotoCard.Alignment.LEFT
+                if alignment == Card.CardType.LEFT
                 else ['two-column--image-right', 'two-column--variation-2']
             )
         else:
@@ -266,30 +266,30 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
         card_types = [CardFormType(request.POST, prefix=prefix) for prefix in request.POST.getlist("prefix")]
         if all(typeform.is_valid() for typeform in card_types):
             forms = [
-                CardForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'text'
-                else FigureForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'figure'
-                else FigureListForm(request.POST, prefix=form.prefix) if form.cleaned_data['card_type'] == 'figure_list'
+                CardForm(request.POST, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'text'
+                else FigureForm(request.POST, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'figure'
+                else FigureListForm(request.POST, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'figure_list'
                 else PhotoCardForm(request.POST, prefix=form.prefix)
                 for form in card_types
             ]
             cards = []
             figure_forms : Dict[str, List[Form]] = defaultdict(list)
             for form in forms:
-                if form['card_type'].value() == 'figure':
+                if form["cardform_type"].value() == 'figure':
                     matching_forms = figure_forms[form['parent'].value() or ""]
                     matching_forms.append(FigureFormWrapper(form)) # type: ignore
                     figure_forms[form['parent'].value() or ""] = matching_forms
             forms = []
             for form in card_types:
-                if form.cleaned_data['card_type'] == "text":
+                if form.cleaned_data["cardform_type"] == "text":
                     card_form: ModelForm = CardForm(request.POST, prefix=form.prefix)
                     cards.append(CardFormWrapper(form=card_form)) # type: ignore
                     forms.append(card_form)
-                elif form.cleaned_data['card_type'] == "figure_list":
+                elif form.cleaned_data["cardform_type"] == "figure_list":
                     card_form = FigureListForm(request.POST, prefix=form.prefix)
                     cards.append(FigureListFormWrapper(form=card_form, figures=figure_forms[form.prefix])) # type: ignore
                     forms.append(card_form)
-                elif form.cleaned_data['card_type'] == "photo":
+                elif form.cleaned_data["cardform_type"] == "photo":
                     card_form = PhotoCardForm(request.POST, prefix=form.prefix)
                     cards.append(PhotoCardFormWrapper(form=card_form))
                     forms.append(card_form)
@@ -305,7 +305,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                 exhibit.card_set.all().delete()
                 card_objs = {}
                 for order, card_form in enumerate(forms):
-                    if card_form.cleaned_data['card_type'] != 'figure':
+                    if card_form.cleaned_data["cardform_type"] != 'figure':
                         card = card_form.save(commit=False)
                         card_objs[card_form.prefix] = card
                         card.exhibit = exhibit
@@ -313,7 +313,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         card.card_style = 0
                         card.save()
                 for order, card_form in enumerate(forms):
-                    if card_form.cleaned_data['card_type'] == 'figure':
+                    if card_form.cleaned_data["cardform_type"] == 'figure':
                         figure = card_form.save(commit=False)
                         figure.card = card_objs[card_form.cleaned_data['parent']]
                         figure.order = order
@@ -337,10 +337,9 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                 else:
                     return TemplateResponse(request, "kronofoto/pages/exhibit-edit.html", context=context)
     cards = exhibit.card_set.all().order_by('order').select_related(
-        'photocard',
-        'photocard__photo',
-        'photocard__photo__donor',
-        'photocard__photo__place',
+        'photo',
+        'photo__donor',
+        'photo__place',
     )
     objs = []
     two_column_count = 0
@@ -363,17 +362,16 @@ class CardContext:
         }
         if mode == "DISPLAY":
             assert isinstance(card, Card)
-            if hasattr(card, 'photocard'):
-                card = card.photocard
+            if card.card_type != Card.CardType.TEXT_ONLY:
                 obj['card'] = card
                 obj['image_area_classes'] = []
-                if card.alignment == PhotoCard.Alignment.FULL:
+                if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
-                        if card.alignment == PhotoCard.Alignment.LEFT
+                        if card.card_type == Card.CardType.LEFT
                         else ['two-column--image-right', 'two-column--variation-2']
                     )
                     if two_column_count % 2 == 0:
@@ -404,19 +402,18 @@ class CardContext:
                     }
         elif mode == "EDIT_GET":
             assert isinstance(card, Card)
-            if hasattr(card, 'photocard'):
-                card = card.photocard
-                photoform = PhotoCardForm(instance=card, initial={"card_type": "photo"}, prefix=str(uuid.uuid4()))
+            if card.card_type != Card.CardType.TEXT_ONLY:
+                photoform = PhotoCardForm(instance=card, initial={"cardform_type": "photo"}, prefix=str(uuid.uuid4()))
                 obj['form'] = photoform
                 obj['card'] = PhotoCardFormWrapper(form=photoform)
                 obj['image_area_classes'] = []
-                if card.alignment == PhotoCard.Alignment.FULL:
+                if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
-                        if card.alignment == PhotoCard.Alignment.LEFT
+                        if card.card_type == Card.CardType.LEFT
                         else ['two-column--image-right', 'two-column--variation-2']
                     )
                     if two_column_count % 2 == 0:
@@ -437,13 +434,13 @@ class CardContext:
                         FigureFormWrapper(
                             FigureForm(
                                 prefix=str(uuid.uuid4()),
-                                initial={"parent": parent_uuid, "card_type": "figure"},
+                                initial={"parent": parent_uuid, "cardform_type": "figure"},
                                 instance=figure,
                             )
                         )
                     )
                 if len(figures):
-                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"card_type": "figure_list"}, prefix=parent_uuid)
+                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
                     obj['form'] = cardform
                     obj['card'] = FigureListFormWrapper(form=cardform, figures=figures)
                     obj['template'] = 'kronofoto/components/figure-card.html'
@@ -452,7 +449,7 @@ class CardContext:
                         'data-aos-duration': '1000',
                     }
                 else:
-                    cardform = CardForm(instance=card, initial={"card_type": "text"}, prefix=parent_uuid)
+                    cardform = CardForm(instance=card, initial={"cardform_type": "text"}, prefix=parent_uuid)
                     obj['form'] = cardform
                     obj['card'] = CardFormWrapper(form=cardform, figures=figures)
                     obj['template'] = 'kronofoto/components/text-card.html'
@@ -462,7 +459,7 @@ class CardContext:
                     }
         else: # EDIT_POST
             assert not isinstance(card, Card)
-            if card.form['card_type'].value() == 'figure_list':
+            if card.form["cardform_type"].value() == 'figure_list':
                 assert isinstance(card, FigureListFormWrapper)
                 obj['form'] = card.form
                 obj['card'] = card
@@ -471,7 +468,7 @@ class CardContext:
                     'data-aos': 'fade-up',
                     'data-aos-duration': '1000',
                 }
-            elif card.form['card_type'].value() == 'text':
+            elif card.form["cardform_type"].value() == 'text':
                 assert isinstance(card, CardFormWrapper)
                 obj['form'] = card.form
                 obj['card'] = card
@@ -485,13 +482,13 @@ class CardContext:
                 obj['form'] = card.form
                 obj['card'] = card
                 obj['image_area_classes'] = []
-                if card.alignment == PhotoCard.Alignment.FULL:
+                if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
-                        if card.alignment == PhotoCard.Alignment.LEFT
+                        if card.card_type == Card.CardType.LEFT
                         else ['two-column--image-right', 'two-column--variation-2']
                     )
                     if two_column_count % 2 == 0:
@@ -522,10 +519,9 @@ def view(request : HttpRequest, pk: int, title: str) -> HttpResponse:
     context: Dict[str, Any] = {}
     context['exhibit'] = exhibit
     cards = exhibit.card_set.all().order_by('order').select_related(
-        'photocard',
-        'photocard__photo',
-        'photocard__photo__donor',
-        'photocard__photo__place',
+        'photo',
+        'photo__donor',
+        'photo__place',
     )
     objs = []
     obj_context = CardContext()
