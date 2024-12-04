@@ -135,7 +135,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 if deletedonor and deletedonor.archive.id == archive.id:
                     deletedonor.delete()
                     dldid.delete()
-        if root_type == 'Create' and object_type == "Image":
+        elif root_type == 'Create' and object_type == "Image":
             archive = Archive.objects.get(actor=request.actor)
             photo = models.Photo.objects.create(
                 caption=object['content'],
@@ -144,20 +144,14 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
             )
             ct = ContentType.objects.get_for_model(models.Photo)
             rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=photo.id)
-
-        """
-        if root_type == "Create":
-        elif root_type == 'Update':
-            qs = Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id)
-            qs.update(first_name=data['firstName'], last_name=data['lastName'])
-            if qs.exists():
-                return qs[0]
-            else:
-                return Donor()
-        elif root_type == "Delete":
-            Donor.objects.filter(donordatabase__remotedonordata__ld_id=data['id'], archive__id=archive.id).delete()
-            return Donor()
-        """
+        elif root_type == 'Update' and object_type == "Image":
+            archive = Archive.objects.get(actor=request.actor)
+            ldids = models.LdId.objects.filter(ld_id=object.get('id'))
+            for dldid in ldids:
+                updatephoto = dldid.content_object
+                if isinstance(updatephoto, models.Photo) and updatephoto.archive.id == archive.id:
+                    updatephoto.caption = object.get('content')
+                    updatephoto.save()
         return JsonLDResponse({})
     return HttpResponse(status=401)
 
