@@ -41,7 +41,7 @@ def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     if not request.user.is_anonymous:
         context['form'] = ExhibitCreateForm()
         context['form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
-        context['exhibits'] = Exhibit.objects.filter(owner=request.user)
+    context['exhibits'] = Exhibit.objects.filter(owner=context['profile_user'])
     return TemplateResponse(request=request, context=context, template="kronofoto/pages/user-page.html")
 
 def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
