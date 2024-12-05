@@ -1,3 +1,5 @@
+{% load krono_urls %}
+
 <div class="site-wrapper">
     <header class="header">
         {% block header_logo %}
@@ -8,14 +10,16 @@
     </header>
 
     <div class="hero">
-        <div class="hero__content-wrapper" >
+        <div class="hero__content-wrapper">
             {% block hero_content_wrapper %}{% endblock %}
         </div>
         {% block hero_background %}{% endblock %}
-        <div class="hero__info-button info-button info-button--bottom">
+        {% if exhibit.photo %}
+        <a href="{% object_url exhibit.photo %}" target="_blank" class="hero__info-button info-button info-button--bottom">
             <span class="info-button__icon"></span>
             {% block info_text %}{% endblock %}
-        </div>
+        </a>
+        {% endif %}
         {% block hero_formfields %}{% endblock %}
     </div>
     {% for card in cards %}

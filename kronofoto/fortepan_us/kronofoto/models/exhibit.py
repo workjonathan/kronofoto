@@ -11,7 +11,7 @@ class Exhibit(models.Model):
     title = models.CharField(max_length=1024, blank=True)
     description = models.TextField(blank=True)
     smalltext = models.TextField(blank=True, default="")
-    photo = models.ForeignKey(Photo, null=False, on_delete=models.PROTECT)
+    photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
     credits = models.TextField(blank=True, null=False)

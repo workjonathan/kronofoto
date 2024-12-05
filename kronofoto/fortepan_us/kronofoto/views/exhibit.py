@@ -106,7 +106,9 @@ class ExhibitForm(ModelForm):
             exhibit = kwargs['instance']
             assert hasattr(self.fields['photo'], 'queryset')
             subq = Collection.objects.filter(id=exhibit.collection.id, photos=OuterRef("id"))
-            q = Exists(subq) | Q(id=exhibit.photo.id)
+            q : Union[Q, Exists] = Exists(subq)
+            if exhibit.photo:
+                q |= Q(id=exhibit.photo.id)
             if exhibit.collection:
                 self.fields['photo'].queryset = Photo.objects.filter(q)
             else:
@@ -148,7 +150,6 @@ class ExhibitFormWrapper:
                 return Photo.objects.get(pk=val)
             except Photo.DoesNotExist:
                 return None
-
         else:
             return None
 
@@ -554,7 +555,6 @@ def exhibit_create(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             exhibit = form.save(commit=False)
             if exhibit.collection.owner == request.user and exhibit.collection.photos.exists():
-                exhibit.photo = exhibit.collection.photos.order_by("?")[0]
                 exhibit.name = exhibit.collection.name
                 exhibit.owner = request.user
                 exhibit.save()
