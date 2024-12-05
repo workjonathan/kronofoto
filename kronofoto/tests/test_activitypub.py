@@ -187,6 +187,8 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo):
     assert models.Photo.objects.all().exists()
     assert models.Photo.objects.all()[0].caption == 'old caption'
 
+
+
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_receiving_a_photo_create_creates_a_photo(a_photo):
@@ -212,6 +214,28 @@ def test_receiving_a_photo_create_creates_a_photo(a_photo):
     assert resp.status_code == 200
     assert models.Photo.objects.all().exists()
     assert models.LdId.objects.get(ld_id='http://example.com/kf/activitypub/archives/aslug/photos/1').content_object.id == models.Photo.objects.all()[0].id
+
+@pytest.mark.django_db
+def test_updatecontacthandler(a_donor):
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    a_donor.archive = remote_archive
+    a_donor.save()
+    a_donor.first_name = "first"
+    a_donor.last_name = "Last"
+    activitypub.UpdateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Update")
+    assert models.Donor.objects.count() == 1
+    assert models.Donor.objects.all()[0].first_name == "first"
+    assert models.Donor.objects.all()[0].first_name == "first"
+    assert models.LdId.objects.exists()
+
+@pytest.mark.django_db
+def test_createcontacthandler(a_donor):
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    a_donor.first_name = "first"
+    a_donor.last_name = "Last"
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    assert models.Donor.objects.count() == 2
+    assert models.LdId.objects.exists()
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

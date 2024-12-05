@@ -365,23 +365,6 @@ class Image(ObjectSchema):
             caption=data['content'],
         )
 
-@dataclass
-class DonorSaveAction:
-    first_name: str
-    last_name: str
-    ld_id: str
-    archive: Optional[models.Archive]=None
-
-    def save(self) -> Donor:
-        assert self.archive
-        donor = Donor.objects.create(first_name=self.first_name, last_name=self.last_name, archive=self.archive)
-        #remote_data = models.RemoteDonorData.objects.create(donor=donor, ld_id=self.ld_id)
-        return donor
-
-class ContactData(NamedTuple):
-    data: Dict[str, Any]
-    donor: Optional[Donor] = None
-
 
 class Contact(ObjectSchema):
     id = fields.Url()
