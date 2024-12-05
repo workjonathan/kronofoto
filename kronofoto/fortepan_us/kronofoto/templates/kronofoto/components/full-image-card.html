@@ -24,12 +24,20 @@
                 {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
             {% endif %}
         </div>
-        <div class="full-image-area__image" data-aos="fade-zoom-in" data-aos-easing="ease-in-back" data-aos-delay="300" data-aos-offset="0"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}" hx-swap="innerHTML show:top" {% endif %}>
+        <div 
+            class="full-image-area__image" 
+            data-aos="fade-zoom-in" 
+            data-aos-easing="ease-in-back" 
+            data-aos-delay="300" 
+            data-aos-offset="0"
+            {% if form %} 
+            hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" 
+            hx-include="#{{ form.photo.auto_id }}" 
+            hx-vals='{"html_name": "{{ form.photo.html_name }}" }' 
+            hx-trigger="change from:#{{ form.photo.auto_id }}" 
+            hx-swap="innerHTML show:top" 
+            {% endif %}>
             {% if card.photo %}
-            <a class="full-image-area__info info-button info-button--top" href="#" target="_blank">
-                <span class="info-button__icon"></span>
-                <div class="info-button__text"{% if form %} hx-get="{% krono_url "kronofoto:attribution" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}"{% endif %}>{% include "kronofoto/components/attribution.html" with object=card.photo %}</div>
-            </a>
             {% include "kronofoto/components/full-image.html" with photo=card.photo %}
             {% endif %}
         </div>
