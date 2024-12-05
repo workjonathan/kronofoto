@@ -1,10 +1,33 @@
 {% load widgets %}
 {% load krono_urls %}
 
-    <img{% if form %} hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" hx-swap="outerHTML show:top" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ target_id }}"{% endif %} loading="lazy" {% if photo %}src="{% image_url id=photo.id path=photo.original.name width=1000 %}"{% endif %}>
+{% if edit %}
+    {{ form.photo.errors }}
+    <div class="two-column__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
+{% endif %}
+
+<img
+    loading="lazy" 
+    {% if photo %}
+        src="{% image_url id=photo.id path=photo.original.name width=1000 %}"
+    {% endif %}
+>
 
 
-    <a class="two-column__info-button info-button info-button--top" href="{% object_url photo %}" target="_blank">
-        <span class="info-button__icon"></span>
-        <div class="info-button__text">{% include "kronofoto/components/attribution.html" with object=photo %}</div>
-    </a>
+<a class="two-column__info-button info-button info-button--top" href="{% object_url photo %}" target="_blank">
+    <span class="info-button__icon"></span>
+    <div class="info-button__text">{% include "kronofoto/components/attribution.html" with object=photo %}</div>
+</a>
+
+{% if edit %}
+    <div hx-preserve class="full-image-area__select-alignment" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
+        <div x-model="fitStyle">
+            {{ form.fill_style.0.tag }}
+            <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fill page</label>
+        </div>
+        <div x-model="fitStyle">
+            {{ form.fill_style.1.tag }}
+            <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fit to page</label>
+        </div>
+    </div>
+{% endif %}

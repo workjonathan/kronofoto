@@ -7,24 +7,17 @@
 {% block content_body %}
     <div class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'two-column--cover': fitStyle == 1, 'two-column--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
         {% with target_id=form.photo.auto_id photo=card.photo %}
-        <div class="two-column__image">
-            {% if edit %}
-            {{ form.photo.errors }}
-            <div class="two-column__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
-            {% endif %}
+        <div 
+            class="two-column__image"
+            {% if form %} 
+                hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" 
+                hx-swap="innerHTML show:top" 
+                hx-include="#{{ form.photo.auto_id }}" 
+                hx-vals='{"field": "{{ form.photo.auto_id }}", "html_name": "{{ form.photo.html_name }}", "fill_style_id": "{{ form.fill_style.auto_id }}"}' 
+                hx-trigger="change from:#{{ target_id }}"
+            {% endif %} 
+        >
             {% include "kronofoto/components/two-column-image.html" %}
-            {% if edit %}
-                <div class="full-image-area__select-alignment" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
-                    <div x-model="fitStyle">
-                        {{ form.fill_style.0.tag }}
-                        <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fill page</label>
-                    </div>
-                    <div x-model="fitStyle">
-                        {{ form.fill_style.1.tag }}
-                        <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded= !dropdownExpanded">fit to page</label>
-                    </div>
-                </div>
-            {% endif %}
         </div>
         {% endwith %}
         <div class="two-column__content-wrapper">

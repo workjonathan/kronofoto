@@ -163,12 +163,16 @@ class ExhibitFormWrapper:
 
 def exhibit_two_column_image(request: HttpRequest, pk: int) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
-    target_id = request.GET.get("field")
+    target_id = request.GET.get("field", "")
+    fill_style_id = request.GET.get("fill_style_id", "")
     html_name = request.GET.get("html_name", "")
     try:
         photo_id = int(request.GET.get(html_name, ""))
         photo = get_object_or_404(Photo.objects.all(), pk=photo_id)
-        form = {'photo': {'auto_id': target_id, 'html_name': html_name } }
+        form = {
+            'photo': {'auto_id': target_id, 'html_name': html_name },
+            'fill_style': {'auto_id': fill_style_id },
+        }
         context = {
             "form": form,
             "edit": True,
