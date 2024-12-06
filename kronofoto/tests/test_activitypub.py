@@ -62,98 +62,6 @@ def test_ignore_activities_from_nonfollows(a_donor):
     assert resp.status_code == 401
     assert not models.Donor.objects.all().exists()
 
-@pytest.mark.django_db
-@override_settings(KF_URL_SCHEME="http:")
-def test_receiving_a_photo_delete_deletes_a_photo(a_photo):
-    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_photo.archive = remote_archive
-    a_photo.save()
-    ct = ContentType.objects.get_for_model(models.Photo)
-    rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1', object_id=a_photo.id)
-    data = activitypub.ActivitySchema().dump({
-        "actor": remote_archive,
-        "object": rdd.ld_id,
-        "type": "Delete",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    request = RequestFactory().post(
-        "/kf/activitypub/service/inbox",
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        headers={
-            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        },
-        data=json.dumps(data),
-    )
-    request.actor = remote_archive.actor
-    Site.objects.all().update(domain='example2.net')
-    resp = activitypub.service_inbox(request)
-    assert resp.status_code == 200
-    assert not models.Photo.objects.all().exists()
-
-@pytest.mark.django_db
-@override_settings(KF_URL_SCHEME="http:")
-def test_receiving_a_donor_delete_deletes_a_donor(a_donor):
-    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_donor.first_name = "first"
-    a_donor.last_name = "Last"
-    a_donor.archive = remote_archive
-    a_donor.save()
-    ct = ContentType.objects.get_for_model(models.Donor)
-    rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1', object_id=a_donor.id)
-    data = activitypub.ActivitySchema().dump({
-        "actor": remote_archive,
-        "object": rdd.ld_id,
-        "type": "Delete",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    request = RequestFactory().post(
-        "/kf/activitypub/service/inbox",
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        headers={
-            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        },
-        data=json.dumps(data),
-    )
-    request.actor = remote_archive.actor
-    Site.objects.all().update(domain='example2.net')
-    resp = activitypub.service_inbox(request)
-    assert resp.status_code == 200
-    assert not models.Donor.objects.all().exists()
-
-@pytest.mark.django_db
-@override_settings(KF_URL_SCHEME="http:")
-def test_receiving_a_donor_update_updates_a_donor(a_donor):
-    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_donor.first_name = "first"
-    a_donor.last_name = "Last"
-    a_donor.archive = remote_archive
-    a_donor.save()
-    ct = ContentType.objects.get_for_model(models.Donor)
-    rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1', object_id=a_donor.id)
-    data = activitypub.ActivitySchema().dump({
-        "actor": remote_archive,
-        "object": a_donor,
-        "type": "Update",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    a_donor.first_name = "second"
-    a_donor.last_name = "ending"
-    a_donor.save()
-    request = RequestFactory().post(
-        "/kf/activitypub/service/inbox",
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        headers={
-            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        },
-        data=json.dumps(data),
-    )
-    request.actor = remote_archive.actor
-    Site.objects.all().update(domain='example2.net')
-    resp = activitypub.service_inbox(request)
-    assert resp.status_code == 200
-    assert models.Donor.objects.all().exists()
-    assert models.Donor.objects.all()[0].first_name == 'first'
-    assert models.Donor.objects.all()[0].last_name == 'Last'
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
@@ -161,6 +69,7 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_photo.archive = remote_archive
     a_photo.caption = "old caption"
+    a_photo.year = 1923
     a_photo.save()
     ct = ContentType.objects.get_for_model(models.Photo)
     rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/photos/1', object_id=a_photo.id)
@@ -189,44 +98,38 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo):
 
 
 
-@pytest.mark.django_db
-@override_settings(KF_URL_SCHEME="http:")
-def test_receiving_a_photo_create_creates_a_photo(a_photo):
-    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    data=activitypub.ActivitySchema().dump({
-        "actor": remote_archive,
-        "object": a_photo,
-        "type": "Create",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    request = RequestFactory().post(
-        "/kf/activitypub/service/inbox",
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        headers={
-            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        },
-        data=json.dumps(data),
-    )
-    request.actor = remote_archive.actor
-    Site.objects.all().update(domain='example2.net')
-    models.Photo.objects.all().delete()
-    resp = activitypub.service_inbox(request)
-    assert resp.status_code == 200
-    assert models.Photo.objects.all().exists()
-    assert models.LdId.objects.get(ld_id='http://example.com/kf/activitypub/archives/aslug/photos/1').content_object.id == models.Photo.objects.all()[0].id
 
 @pytest.mark.django_db
 def test_updatecontacthandler(a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_donor.archive = remote_archive
-    a_donor.save()
+    a_donor.first_name = "fake"
+    a_donor.last_name = "name"
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
     activitypub.UpdateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Update")
-    assert models.Donor.objects.count() == 1
-    assert models.Donor.objects.all()[0].first_name == "first"
-    assert models.Donor.objects.all()[0].first_name == "first"
+    assert models.Donor.objects.count() == 2
+    assert models.Donor.objects.filter(archive=remote_archive)[0].first_name == "first"
+    assert models.Donor.objects.filter(archive=remote_archive)[0].last_name == "Last"
     assert models.LdId.objects.exists()
+
+@pytest.mark.django_db
+def test_deletehandler(a_donor):
+    remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
+    a_donor.first_name = "fake"
+    a_donor.last_name = "name"
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    ld_id = models.LdId.objects.all()[0]
+    activitypub.DeleteObject().handle(
+        archive=remote_archive,
+        object={
+            "type": "Contact",
+            "href": ld_id.ld_id,
+        },
+        root_type="Delete"
+    )
+    assert models.Donor.objects.count() == 1
+    assert not models.LdId.objects.exists()
 
 @pytest.mark.django_db
 def test_createcontacthandler(a_donor):
@@ -238,34 +141,26 @@ def test_createcontacthandler(a_donor):
     assert models.LdId.objects.exists()
 
 @pytest.mark.django_db
-@override_settings(KF_URL_SCHEME="http:")
-def test_receiving_a_donor_create_creates_a_donor(a_donor):
+def test_createimagehandler(a_photo, a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_donor.first_name = "first"
-    a_donor.last_name = "Last"
-    a_donor.archive = remote_archive
-    a_donor.save()
-    data=activitypub.ActivitySchema().dump({
-        "actor": remote_archive,
-        "object": a_donor,
-        "type": "Create",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    request = RequestFactory().post(
-        "/kf/activitypub/service/inbox",
-        content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        headers={
-            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        },
-        data=json.dumps(data),
-    )
-    request.actor = remote_archive.actor
-    Site.objects.all().update(domain='example2.net')
-    models.Donor.objects.all().delete()
-    resp = activitypub.service_inbox(request)
-    assert resp.status_code == 200
-    assert models.Donor.objects.all().exists()
-    assert models.LdId.objects.get(ld_id='http://example.com/kf/activitypub/archives/an-archive/contributors/1').content_object.id == models.Donor.objects.all()[0].id
+    a_photo.caption = "caption"
+    a_photo.year = 1954
+    a_photo.donor = a_donor
+    a_photo.circa = True
+    a_photo.is_published = True
+    a_photo.donor.first_name = "first"
+    a_photo.donor.last_name = "last"
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
+    activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    assert models.Photo.objects.count() == 2
+    saved = models.Photo.objects.get(archive=remote_archive)
+    assert saved.year == a_photo.year
+    assert saved.category.name == a_photo.category.name
+    assert saved.category.slug == a_photo.category.slug
+    assert saved.circa == a_photo.circa
+    assert saved.is_published == a_photo.is_published
+    assert saved.donor.first_name == a_photo.donor.first_name
+    assert models.LdId.objects.count() == 2
 
 
 @pytest.mark.django_db
@@ -283,6 +178,7 @@ def test_donor_api(a_donor):
 @override_settings(KF_URL_SCHEME="http:")
 def test_photo_api(a_photo):
     a_photo.caption = "a caption"
+    a_photo.year = 1920
     a_photo.save()
     client = Client()
     url = "/kf/activitypub/archives/{}/photos/{}".format(a_photo.archive.slug, a_photo.id)

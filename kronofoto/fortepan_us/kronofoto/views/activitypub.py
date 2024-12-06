@@ -108,10 +108,19 @@ class UpdateImage:
 class CreateImage:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
         if root_type == 'Create' and object['type'] == "Image":
+            donor = models.LdId.objects.get(ld_id=object['contributor']).content_object
+            assert isinstance(donor, models.Donor)
             photo = models.Photo.objects.create(
                 caption=object['content'],
+                year=object['year'],
                 archive=archive,
-                category=models.Category.objects.get_or_create(slug=object['category']['slug'], name=object['category']['name'])[0],
+                circa=object['circa'],
+                is_published=object['is_published'],
+                donor=donor,
+                category=models.Category.objects.get_or_create(
+                    slug=object['category']['slug'],
+                    name=object['category']['name'],
+                )[0],
             )
             ct = ContentType.objects.get_for_model(models.Photo)
             rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=photo.id)
@@ -344,17 +353,27 @@ class CategorySchema(Schema):
 class Image(ObjectSchema):
     id = fields.Url()
     category = fields.Nested(CategorySchema)
+    year = fields.Integer()
+    circa = fields.Boolean()
+    is_published = fields.Boolean()
+    contributor = fields.Url(relative=True)
 
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
-        return {
+        data = {
             "id": reverse("kronofoto:activitypub_data:archives:photos:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
             "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
             "content": object.caption,
+            "year": object.year,
             "url": object.original.url,
             "category": object.category,
+            "circa": object.circa,
+            "is_published": object.is_published,
             "type": "Image",
         }
+        if object.donor:
+            data["contributor"] = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={'short_name': object.archive.slug, "pk": object.donor.id})
+        return data
 
     #@post_load
     def extract_fields_from_dict(self, data: Dict[str, Any], **kwargs: Any) -> Photo:

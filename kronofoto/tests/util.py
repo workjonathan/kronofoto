@@ -75,7 +75,7 @@ donors = lambda archive=None, id=st.none(), **kwargs: from_model(Donor, archive=
 
 @pytest.fixture
 def a_category():
-    return Category.objects.create()
+    return Category.objects.create(name="category name", slug="categoryslug")
 
 @pytest.fixture
 def an_archive():
