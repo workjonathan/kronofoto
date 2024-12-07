@@ -1,19 +1,27 @@
-{% extends base_template %}
+{% extends "kronofoto/pages/user-page.html" %}
 
 {% load krono_urls %}
 
-{% block content %}
-<div class="container-center exhibit_delete-container">
-    <form method="post" hx-post hx-target="#app">
-        {% csrf_token %}
-        <p>Are you sure you want to delete {{ exhibit.name }}?</p>
-        <input type="submit" value="Yes">
-        <span class="back-btn">
-            <a 
-                href="{% krono_url "kronofoto:user-page" username=request.user.username %}"
-                hx-get="{% krono_url "kronofoto:user-page" username=request.user.username %}"
-            >No</a>
-        </span>
-    </form>
-</div>
-{% endblock content %}
+{% block exhibits %}
+<section id="my-exhibits" class="border-bottom">
+    <div class="row">
+        <div class="columns small-9">
+            <h2>My FotoStories</h2>
+            <p class="paragraph color-light padding-bottom-2">A FotoStory is a digital exhibit built with Fortepan photos; build a FotoStory with a combination of text + image content blocks. You can share and embed any FotoStory.</p>
+        </div>
+        <div class="columns small-12">
+            <form method="post" hx-post hx-target="#app">
+                {% csrf_token %}
+                <p>Are you sure you want to delete {{ exhibit.name }}?</p>
+                <input type="submit" value="Yes">
+                <span class="back-btn">
+                    <a 
+                        href="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+                        hx-get="{% krono_url "kronofoto:user-page" username=request.user.username %}"
+                    >No</a>
+                </span>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock exhibits %}

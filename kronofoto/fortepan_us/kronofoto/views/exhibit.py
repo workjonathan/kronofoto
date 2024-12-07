@@ -252,7 +252,10 @@ def delete(request : HttpRequest, pk: int) -> HttpResponse:
         return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": request.user.username}))
     else:
         context = ArchiveRequest(request=request).common_context
+        context['profile_user'] = request.user
         context['exhibit'] = exhibit
+        filter_kwargs = {}
+        context['object_list'] = Collection.objects.by_user(user=request.user, **filter_kwargs)
         return TemplateResponse(request=request, context=context, template="kronofoto/pages/exhibit-delete.html")
 
 @transaction.atomic
