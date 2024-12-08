@@ -150,6 +150,8 @@ def test_createimagehandler(a_photo, a_donor):
     a_photo.is_published = True
     a_photo.donor.first_name = "first"
     a_photo.donor.last_name = "last"
+    a_photo.terms.add(models.Term.objects.create(term="ExampleTerm"))
+    models.PhotoTag.objects.create(photo=a_photo, tag=models.Tag.objects.create(tag="example"), accepted=True)
     activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
     activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
     assert models.Photo.objects.count() == 2
@@ -160,6 +162,8 @@ def test_createimagehandler(a_photo, a_donor):
     assert saved.circa == a_photo.circa
     assert saved.is_published == a_photo.is_published
     assert saved.donor.first_name == a_photo.donor.first_name
+    assert set(t.term for t in saved.terms.all()) == set(t.term for t in a_photo.terms.all())
+    assert set(t.tag for t in saved.get_accepted_tags()) == set(t.tag for t in a_photo.get_accepted_tags())
     assert models.LdId.objects.count() == 2
 
 

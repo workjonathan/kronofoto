@@ -122,6 +122,10 @@ class CreateImage:
                     name=object['category']['name'],
                 )[0],
             )
+            for tag in object['tags']:
+                models.PhotoTag.objects.get_or_create(tag=models.Tag.objects.get_or_create(tag=tag)[0], photo=photo, accepted=True)
+            for term in object['terms']:
+                photo.terms.add(models.Term.objects.get_or_create(term=term)[0])
             ct = ContentType.objects.get_for_model(models.Photo)
             rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=photo.id)
             return InboxResponse(data={"status": "image created"})
@@ -357,6 +361,8 @@ class Image(ObjectSchema):
     circa = fields.Boolean()
     is_published = fields.Boolean()
     contributor = fields.Url(relative=True)
+    terms = fields.List(fields.Str)
+    tags = fields.List(fields.Str)
 
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
@@ -370,6 +376,8 @@ class Image(ObjectSchema):
             "circa": object.circa,
             "is_published": object.is_published,
             "type": "Image",
+            "terms": [t.term for t in object.terms.all()],
+            "tags": [t.tag for t in object.get_accepted_tags()],
         }
         if object.donor:
             data["contributor"] = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={'short_name': object.archive.slug, "pk": object.donor.id})
