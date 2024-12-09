@@ -7,6 +7,16 @@
     <a class="fpi-fpilink" href="{{ timeline_url }}"><img src="{% static "kronofoto/images/01-fi-logo.svg" %}" alt="Fortepan Iowa icon" title="Fortepan Iowa"></a>
     {% endblock %}
 </div>
+<div hx-swap-oob="outerHTML:.collection-name">
+    {% if collection_name %}
+    <div class="collection-name">
+      <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
+    </div>
+    {% else %}
+    <template class="collection-name">
+    </template>
+    {% endif %}
+</div>
 <div hx-swap-oob="innerHTML:.navigation-menu">
 {% include "kronofoto/components/navigation-menu.html" %}
 </div>
