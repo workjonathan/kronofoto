@@ -85,6 +85,8 @@ def an_archive():
 def a_donor(an_archive):
     return Donor.objects.create(
         archive=an_archive,
+        first_name="first",
+        last_name="last",
     )
 
 @pytest.fixture

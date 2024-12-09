@@ -107,7 +107,7 @@ def test_updatecontacthandler(a_donor):
     activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
-    activitypub.UpdateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Update")
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Update")
     assert models.Donor.objects.count() == 2
     assert models.Donor.objects.filter(archive=remote_archive)[0].first_name == "first"
     assert models.Donor.objects.filter(archive=remote_archive)[0].last_name == "Last"
@@ -134,11 +134,21 @@ def test_deletehandler(a_donor):
 @pytest.mark.django_db
 def test_createcontacthandler(a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    a_donor.first_name = "first"
-    a_donor.last_name = "Last"
     activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
     assert models.Donor.objects.count() == 2
     assert models.LdId.objects.exists()
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    assert models.Donor.objects.count() == 2
+
+def assertPhotosEqual(photo_a, photo_b):
+    assert photo_b.year == photo_a.year
+    assert photo_b.category.name == photo_a.category.name
+    assert photo_b.category.slug == photo_a.category.slug
+    assert photo_b.circa == photo_a.circa
+    assert photo_b.is_published == photo_a.is_published
+    assert photo_b.donor.first_name == photo_a.donor.first_name
+    assert set(t.term for t in photo_b.terms.all()) == set(t.term for t in photo_a.terms.all())
+    assert set(t.tag for t in photo_b.get_accepted_tags()) == set(t.tag for t in photo_a.get_accepted_tags())
 
 @pytest.mark.django_db
 def test_createimagehandler(a_photo, a_donor):
@@ -148,24 +158,17 @@ def test_createimagehandler(a_photo, a_donor):
     a_photo.donor = a_donor
     a_photo.circa = True
     a_photo.is_published = True
-    a_photo.donor.first_name = "first"
-    a_photo.donor.last_name = "last"
+    a_photo.location_point = "POINT (1 0)"
     a_photo.terms.add(models.Term.objects.create(term="ExampleTerm"))
     models.PhotoTag.objects.create(photo=a_photo, tag=models.Tag.objects.create(tag="example"), accepted=True)
     activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
     activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
     assert models.Photo.objects.count() == 2
     saved = models.Photo.objects.get(archive=remote_archive)
-    assert saved.year == a_photo.year
-    assert saved.category.name == a_photo.category.name
-    assert saved.category.slug == a_photo.category.slug
-    assert saved.circa == a_photo.circa
-    assert saved.is_published == a_photo.is_published
-    assert saved.donor.first_name == a_photo.donor.first_name
-    assert set(t.term for t in saved.terms.all()) == set(t.term for t in a_photo.terms.all())
-    assert set(t.tag for t in saved.get_accepted_tags()) == set(t.tag for t in a_photo.get_accepted_tags())
     assert models.LdId.objects.count() == 2
-
+    assertPhotosEqual(a_photo, saved)
+    activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    assert models.Photo.objects.count() == 2
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
