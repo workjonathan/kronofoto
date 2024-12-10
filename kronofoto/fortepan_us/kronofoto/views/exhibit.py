@@ -329,6 +329,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         figure.order = order
                         figure.save()
                 messages.success(request, "Your exhibit has been saved")
+                return HttpResponseRedirect(reverse("kronofoto:exhibit-edit", kwargs={"pk": pk}))
             else:
                 two_column_count = 0
                 objs = []
