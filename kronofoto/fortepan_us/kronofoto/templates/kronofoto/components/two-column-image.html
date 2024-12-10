@@ -3,7 +3,7 @@
 
 {% if edit %}
     {{ form.photo.errors }}
-    <div class="two-column__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal" data-target="{{ target_id }}"></div>
+    <div class="two-column__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ target_id }}" hx-target="#add-image-modal"></div>
 {% endif %}
 
 <img

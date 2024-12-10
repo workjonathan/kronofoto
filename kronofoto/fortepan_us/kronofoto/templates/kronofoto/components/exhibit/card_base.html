@@ -1,4 +1,4 @@
-<div class="card container {% block container_classes %}{% endblock %}" style="z-index: {{ zindex }}">
+<div class="card container {% block container_classes %}{% endblock %}" style="z-index: {{ zindex }}" {% if form %}x-data="{title: '{{ card.title | escapejs }}', description: '{{ card.description | escapejs }}', smalltext: '{{ card.smalltext | escapejs }}'}" {% endif %}>
     {% block content_body %}{% endblock %}
 
     {% block component_menu_off_canvas %}
@@ -14,10 +14,13 @@
     {% block formfields %}
     {% if form %}
         {% for field in form %}
-            {% if field != form.fill_style %}
+            {% if field != form.fill_style and field != form.title and field != form.description and field != form.smalltext %}
             {{ field.as_hidden }}
             {% endif %}
         {% endfor %}
+        <input type="hidden" name="{{ form.title.html_name }}" x-model="title">
+        <input type="hidden" name="{{ form.description.html_name }}" x-model="description">
+        <input type="hidden" name="{{ form.smalltext.html_name }}" x-model="smalltext">
         <input type="hidden" name="prefix" value="{{ form.prefix }}">
     {% endif %}
     {% endblock formfields %}

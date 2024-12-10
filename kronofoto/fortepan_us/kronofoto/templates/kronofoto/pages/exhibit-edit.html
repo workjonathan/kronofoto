@@ -40,7 +40,7 @@
 <body>
 
 
-    <form method="post">
+    <form method="post" x-data="{name: '{{ exhibit.name | escapejs }}', credits: '{{ exhibit.credits | escapejs }}'}">
         {% page_editor_header %}
         {% csrf_token %}
 

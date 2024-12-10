@@ -9,7 +9,15 @@
         {% block header_title %}{% endblock %}
     </header>
 
-    <div class="hero">
+    <div class="hero" 
+        {% if form %}
+        x-data="{
+            title: '{{ exhibit.title | escapejs }}',
+            description: '{{ exhibit.description | escapejs }}',
+            smalltext: '{{ exhibit.smalltext | escapejs }}',
+        }"
+        {% endif %}
+    >
         <div class="hero__content-wrapper">
             {% block hero_content_wrapper %}{% endblock %}
         </div>

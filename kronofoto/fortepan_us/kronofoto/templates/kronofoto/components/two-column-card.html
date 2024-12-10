@@ -24,18 +24,18 @@
             <div class="two-column__content">
                 {% if edit %}
                 {{ form.title.errors }}
-                <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+                <h2 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ card.title }}</h2>
                 {% elif card.title %}<h2>{{ card.title }}</h2>
                 {% endif %}
                 {% if edit %}
                 {{ form.description.errors }}
-                <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</div>
+                <div contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ card.description }}</div>
                 {% elif card.description %}
                 <div>{{ card.description | markdown:"nl2br" }}</div>
                 {% endif %}
                 {% if edit %}
                 {{ form.smalltext.errors }}
-                <div contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.smalltext.auto_id }}">{{ card.smalltext }}</div>
+                <div contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</div>
                 {% elif card.smalltext %}
                 <div>{{ card.smalltext | markdown:"nl2br" }}</div>
                 {% endif %}

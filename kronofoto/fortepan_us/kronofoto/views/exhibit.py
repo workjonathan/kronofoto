@@ -254,7 +254,8 @@ def delete(request : HttpRequest, pk: int) -> HttpResponse:
         context = ArchiveRequest(request=request).common_context
         context['profile_user'] = request.user
         context['exhibit'] = exhibit
-        filter_kwargs = {}
+        filter_kwargs: Dict[str, Any] = {}
+        assert not request.user.is_anonymous
         context['object_list'] = Collection.objects.by_user(user=request.user, **filter_kwargs)
         return TemplateResponse(request=request, context=context, template="kronofoto/pages/exhibit-delete.html")
 

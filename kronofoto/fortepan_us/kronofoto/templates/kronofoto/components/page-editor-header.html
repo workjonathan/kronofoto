@@ -11,7 +11,7 @@
                 <img class="logo-img" src="{{ theme.logoicon }}" alt="Fortepan Iowa Logo">
                 </a>
             </div>
-            <div class="nav-title" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.name.auto_id }}" id="content-editable-name">{{ exhibit.name }}</div>
+            <div class="nav-title" contenteditable="{{ contenteditable }}" role="textbox" @input="name = $el.innerText" id="content-editable-name">{{ exhibit.name }}</div>
         </div> <!-- end nav left -->
 
       <div class="main-nav__right">
