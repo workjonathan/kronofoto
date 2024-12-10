@@ -95,46 +95,12 @@ class ArchiveInboxHandler(Protocol):
 
 class UpdateImage:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        if root_type == 'Update' and object['type'] == "Image":
-            ldids = models.LdId.objects.filter(ld_id=object.get('id'))
-            for dldid in ldids:
-                updatephoto = dldid.content_object
-                if isinstance(updatephoto, models.Photo) and updatephoto.archive.id == archive.id:
-                    updatephoto.caption = object.get('content', "")
-                    updatephoto.save()
-            return InboxResponse(data={"status": "image updated"})
         return None
 
 class CreateImage:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
         if root_type in ('Create', 'Update') and object['type'] == "Image":
-            ldids = models.LdId.objects.filter(ld_id=object.get('id'))
-            for dldid in ldids:
-                updatephoto = dldid.content_object
-                if isinstance(updatephoto, models.Photo) and updatephoto.archive.id == archive.id:
-                    updatephoto.caption = object.get('content', "")
-                    updatephoto.save()
-                    return InboxResponse(data={"status": "image updated"})
-            donor = models.LdId.objects.get(ld_id=object['contributor']).content_object
-            assert isinstance(donor, models.Donor)
-            photo = models.Photo.objects.create(
-                caption=object['content'],
-                year=object['year'],
-                archive=archive,
-                circa=object['circa'],
-                is_published=object['is_published'],
-                donor=donor,
-                category=models.Category.objects.get_or_create(
-                    slug=object['category']['slug'],
-                    name=object['category']['name'],
-                )[0],
-            )
-            for tag in object['tags']:
-                models.PhotoTag.objects.get_or_create(tag=models.Tag.objects.get_or_create(tag=tag)[0], photo=photo, accepted=True)
-            for term in object['terms']:
-                photo.terms.add(models.Term.objects.get_or_create(term=term)[0])
-            ct = ContentType.objects.get_for_model(models.Photo)
-            rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=photo.id)
+            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
             return InboxResponse(data={"status": "image created"})
         return None
 
@@ -153,17 +119,7 @@ class DeleteObject:
 class CreateContact:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
         if root_type in ('Create', 'Update') and object['type'] == "Contact":
-            ldids = models.LdId.objects.filter(ld_id=object.get('id'))
-            for dldid in ldids:
-                updatedonor = dldid.content_object
-                if isinstance(updatedonor, models.Donor) and updatedonor.archive.id == archive.id:
-                    updatedonor.first_name = object.get('firstName', "")
-                    updatedonor.last_name = object.get('lastName', "")
-                    updatedonor.save()
-                    return InboxResponse(data={"status": "contact updated"})
-            donor = Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
-            ct = ContentType.objects.get_for_model(models.Donor)
-            rdd = models.LdId.objects.create(content_type=ct, ld_id=object['id'], object_id=donor.id)
+            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
             return InboxResponse(data={"status": "contact created"})
         return None
 
@@ -198,11 +154,14 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         object = deserialized.get('object', {})
         object_type = object.get('type')
         archive = Archive.objects.get(actor=request.actor)
-        handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
-        for handler in handlers:
-            response = handler.handle(archive=archive, object=object, root_type=root_type)
-            if response:
-                return JsonLDResponse(response.data, status=response.status_code)
+        if root_type in ("Create", "Update"):
+            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+        else:
+            handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
+            for handler in handlers:
+                response = handler.handle(archive=archive, object=object, root_type=root_type)
+                if response:
+                    return JsonLDResponse(response.data, status=response.status_code)
     return HttpResponse(status=401)
 
 @require_json_ld

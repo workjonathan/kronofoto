@@ -1,13 +1,14 @@
 from django.db import models
 import requests
 from django.core.cache import cache
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse
+from fortepan_us.kronofoto import models as kf_models
 
 class ServiceActor(models.Model):
     serialized_public_key = models.BinaryField(null=True, blank=True)
@@ -105,11 +106,65 @@ class OutboxActivity(models.Model):
     body = models.JSONField()
     created = models.DateTimeField(auto_now=True)
 
+
+class LdIdQuerySet(models.QuerySet):
+    def get_or_create_ld_object(self, ld_id: str) -> Tuple["LdId", bool]:
+        return (self.get(ld_id=ld_id), True)
+
+    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: Dict[str, Any]) -> Tuple[Optional["LdId"], bool]:
+        ldid = None
+        try:
+            ldid = self.get(ld_id=object['id'])
+            db_obj = ldid.content_object
+            if db_obj and db_obj.archive.id != owner.id:
+                db_obj = None
+            else:
+                created = False
+        except self.model.DoesNotExist:
+            if object['type'] == "Contact":
+                db_obj = kf_models.Donor()
+                created = True
+            elif object['type'] == "Image":
+                db_obj = kf_models.Photo()
+                created = True
+        if not db_obj:
+            return (None, False)
+        if isinstance(db_obj, kf_models.Donor):
+            db_obj.first_name = object['firstName']
+            db_obj.last_name = object['lastName']
+            db_obj.archive = owner
+            db_obj.save()
+            ct = ContentType.objects.get_for_model(kf_models.Donor)
+        elif isinstance(db_obj, kf_models.Photo):
+            donor, _ = self.get_or_create_ld_object(object['contributor'])
+            db_obj.caption = object['content']
+            db_obj.year = object['year']
+            db_obj.archive = owner
+            db_obj.circa = object['circa']
+            db_obj.is_published = object['is_published']
+            db_obj.donor = donor.content_object
+            db_obj.category, _ = kf_models.Category.objects.get_or_create(
+                slug=object['category']['slug'],
+                defaults={"name": object['category']['name']},
+            )
+            ct = ContentType.objects.get_for_model(kf_models.Photo)
+            db_obj.save()
+            for tag in object['tags']:
+                tag, _ = kf_models.Tag.objects.get_or_create(tag=tag)
+                kf_models.PhotoTag.objects.get_or_create(tag=tag, photo=db_obj, accepted=True)
+            for term in object['terms']:
+                db_obj.terms.add(kf_models.Term.objects.get_or_create(term=term)[0])
+        ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
+        return ldid, created
+
+
 class LdId(models.Model):
     ld_id = models.URLField(unique=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
+
+    objects = LdIdQuerySet.as_manager()
 
     class Meta:
         constraints = [
