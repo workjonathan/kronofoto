@@ -20,6 +20,7 @@ import json
 import uuid
 from dataclasses import dataclass
 from collections import defaultdict
+from django.contrib import messages
 
 def exhibit_figure_form(request: HttpRequest, pk: int, parent: str) -> HttpResponse:
     context = {}
@@ -327,7 +328,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         figure.card = card_objs[card_form.cleaned_data['parent']]
                         figure.order = order
                         figure.save()
-                return HttpResponseRedirect(reverse("kronofoto:user-page", kwargs={"username": request.user.username}))
+                messages.success(request, "Your exhibit has been saved")
             else:
                 two_column_count = 0
                 objs = []
