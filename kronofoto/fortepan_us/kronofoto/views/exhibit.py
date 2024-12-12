@@ -13,7 +13,7 @@ from .base import ArchiveRequest
 from typing import Dict, Any, Iterator, Union, List, Optional, Tuple
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.decorators import login_required
-from django.forms import ModelForm, ModelChoiceField, Form, IntegerField
+from django.forms import ModelForm, ModelChoiceField, Form, IntegerField, HiddenInput
 from django import forms
 from fortepan_us.kronofoto.forms import CardForm, PhotoCardForm, FigureForm, CardFormType, CardFormWrapper, PhotoCardFormWrapper, FigureForm, FigureFormWrapper, FigureListForm, FigureListFormWrapper
 import json
@@ -118,6 +118,14 @@ class ExhibitForm(ModelForm):
     class Meta:
         model = Exhibit
         fields = ['name', 'title', 'description', 'smalltext', 'photo', "credits"]
+        widgets = {
+            "name": HiddenInput(attrs={"x-model": "name"}),
+            "title": HiddenInput(attrs={"x-model": "title"}),
+            "description": HiddenInput(attrs={"x-model": "description"}),
+            "smalltext": HiddenInput(attrs={"x-model": "smalltext"}),
+            "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
+            "credits": HiddenInput(attrs={"x-model": "credits"}),
+        }
 
 @dataclass
 class ExhibitFormWrapper:

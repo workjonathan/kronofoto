@@ -40,7 +40,7 @@
 <body>
 
 
-    <form method="post" x-data="{name: '{{ exhibit.name | escapejs }}', credits: '{{ exhibit.credits | escapejs }}'}">
+    <form method="post" @input="hasChanges = true" @beforeunload.window="if (hasChanges) {$event.preventDefault()}" x-data="{hasChanges: false, name: '{{ exhibit.name | escapejs }}', credits: '{{ exhibit.credits | escapejs }}'}">
         {% page_editor_header %}
         {% csrf_token %}
 
@@ -51,14 +51,14 @@
             </div>
             <div class="page-editor__toolbar toolbar">
                 <div class="toolbar__section">
-                    <label class="toolbar__label" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center">Content blocks</label>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
-                    <button class="toolbar__button--icon" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
+                    <label class="toolbar__label" @click="hasChanges=true" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center">Content blocks</label>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+                    <button class="toolbar__button--icon" @click="hasChanges=true" hx-target=".site-wrapper" hx-swap="beforeend show:bottom" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
 
                 </div>
 

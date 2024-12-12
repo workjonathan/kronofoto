@@ -5,20 +5,20 @@
     {% block component_menu_off_canvas %}
     {% if form %}
         <div class="component-menu--off-canvas">
-            <button type="button" class="up" aria-label="Move up">Move up</button>
-            <button type="button" class="down" aria-label="Move down">Move down</button>
-            <button type="button" class="delete" aria-label="Delete">Delete</button>
+            <button type="button" @click="hasChanges = true" class="up" aria-label="Move up">Move up</button>
+            <button type="button" @click="hasChanges = true" class="down" aria-label="Move down">Move down</button>
+            <button type="button" @click="hasChanges = true" class="delete" aria-label="Delete">Delete</button>
         </div>
         <div x-data="{open: false}">
             <button type="button" aria-label="Insert Card" @click="open=!open">Insert card</button>
             <div class="toolbar" x-show="open">
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
-                <button class="toolbar__button--icon" @click="open=false" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
             </div>
         </div>
     {% endif %}
@@ -27,13 +27,10 @@
     {% block formfields %}
     {% if form %}
         {% for field in form %}
-            {% if field != form.fill_style and field != form.title and field != form.description and field != form.smalltext %}
-            {{ field.as_hidden }}
+            {% if field != form.fill_style %}
+            {{ field }}
             {% endif %}
         {% endfor %}
-        <input type="hidden" name="{{ form.title.html_name }}" x-model="title">
-        <input type="hidden" name="{{ form.description.html_name }}" x-model="description">
-        <input type="hidden" name="{{ form.smalltext.html_name }}" x-model="smalltext">
         <input type="hidden" name="prefix" value="{{ form.prefix }}">
     {% endif %}
     {% endblock formfields %}

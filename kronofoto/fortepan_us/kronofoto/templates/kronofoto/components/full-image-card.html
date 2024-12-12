@@ -51,11 +51,11 @@
             <div class="full-image-area__select-alignment" id="{{ form.fill_style.auto_id }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">
                 <div x-model="fitStyle">
                     {{ form.fill_style.0.tag }}
-                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
+                    <label for="{{ form.fill_style.0.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded; hasChanges = true" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fill page</label>
                 </div>
                 <div x-model="fitStyle">
                     {{ form.fill_style.1.tag }}
-                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
+                    <label for="{{ form.fill_style.1.id_for_label }}" @click="dropdownExpanded = !dropdownExpanded; hasChanges = true" id="{{ form.fill_style.auto_id }}" :class="dropdownExpanded ? 'expanded' : ''">fit to page</label>
                 </div>
             </div>
         {% endif %}

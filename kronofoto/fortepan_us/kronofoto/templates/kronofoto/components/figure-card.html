@@ -19,12 +19,7 @@
                 {% with form=figure.form %}
                 {{ form.caption.errors }}
                 <figcaption contenteditable="{{ contenteditable }}" role="textbox" @input="caption = $el.innerText">{{ figure.caption }}</figcaption>
-                {% for field in form %}
-                    {% if field != form.caption %}
-                    {{ field.as_hidden }}
-                    {% endif %}
-                {% endfor %}
-                <input type="hidden" name="{{ form.caption.html_name }}" x-model="caption">
+                {{ form }}
                 <input type="hidden" name="prefix" value="{{ form.prefix }}">
                 {% endwith %}
             {% else %}

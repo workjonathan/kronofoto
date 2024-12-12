@@ -13,6 +13,11 @@ class CardForm(ModelForm, CardFormType):
     class Meta:
         model = Card
         fields = ['title', 'description', "smalltext"]
+        widgets = {
+            "title": HiddenInput(attrs={"x-model": "title"}),
+            "description": HiddenInput(attrs={"x-model": "description"}),
+            "smalltext": HiddenInput(attrs={"x-model": "smalltext"}),
+        }
 
 class FigureListForm(ModelForm, CardFormType):
     class Meta:
@@ -24,6 +29,10 @@ class FigureForm(ModelForm, CardFormType):
     class Meta:
         model = Figure
         fields = ['caption', 'photo']
+        widgets = {
+            "caption": HiddenInput(attrs={"x-model": "caption"}),
+            "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
+        }
 
 class PhotoCardForm(ModelForm, CardFormType):
     class Meta:
@@ -31,6 +40,11 @@ class PhotoCardForm(ModelForm, CardFormType):
         fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "card_type"]
         widgets = {
             "fill_style": RadioSelect,
+            "title": HiddenInput(attrs={"x-model": "title"}),
+            "description": HiddenInput(attrs={"x-model": "description"}),
+            "smalltext": HiddenInput(attrs={"x-model": "smalltext"}),
+            "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
+            "card_type": HiddenInput,
         }
 
 @dataclass
