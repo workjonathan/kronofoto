@@ -355,7 +355,7 @@ class CardContext:
     def context(self, *, card: Union[Card, CardFormWrapper, PhotoCardFormWrapper], i: int, two_column_count: int, mode: str) -> Tuple[Dict[str, Any], int]:
         is_edit = mode != "DISPLAY" and mode != "PREVIEW"
         obj : Dict[str, Any] = {
-            "zindex": 20 - i,
+            "zindex": 200 - i,
             "edit": is_edit,
         }
         if mode == "DISPLAY":
