@@ -9,7 +9,7 @@
         {% block header_title %}{% endblock %}
     </header>
 
-    <div class="hero" 
+    <div class="hero {% if exhibit.photo is empty %}hero--empty{% endif %}"
         {% if form %}
         x-data="{
             title: '{{ exhibit.title | escapejs }}',
