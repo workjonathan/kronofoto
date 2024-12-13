@@ -122,6 +122,7 @@ class CardFormWrapper:
 @dataclass
 class PhotoCardFormWrapper:
     form: ModelForm
+    figures: "List[FigureFormWrapper]" = field(default_factory=list)
 
     @property
     def title(self) -> str:

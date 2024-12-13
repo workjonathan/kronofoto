@@ -4,7 +4,7 @@
 {% load widgets %}
 
 {% block content_body %}
-<div class="content-area">
+<div data-card class="content-area">
     <div class="image-collection image-collection--{{ card.figures|length }}">
     {% for figure in card.figures %}
         <figure{% if not figure.photo %} class="empty"{% endif %}{% if edit %} x-data="{ 'empty': {{ figure.photo|yesno:"false,true" }}, caption: '{{ figure.caption | escapejs }}' }" :class="{'empty': empty}" @remove-empty="empty=false"{% endif %}>

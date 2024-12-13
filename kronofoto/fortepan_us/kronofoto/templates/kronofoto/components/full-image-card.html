@@ -6,6 +6,7 @@
 
 {% block content_body %}
     <div 
+        data-card
         class="full-image-area {{ image_area_classes | join:" " }}{% if not card.photo %} empty{% endif %}" 
         {% if edit %} 
             x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }}, }" 

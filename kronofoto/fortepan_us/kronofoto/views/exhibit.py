@@ -21,6 +21,58 @@ import uuid
 from dataclasses import dataclass
 from collections import defaultdict
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
+    data = request.GET.copy()
+    exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
+    card_types = [CardFormType(data, prefix=prefix) for prefix in request.GET.getlist("prefix")]
+    new_type = request.GET.get("assign_type")
+    new_alignment = int(request.GET.get("assign_alignment", "0"))
+    new_count = int(request.GET.get("count", "0"))
+    for t in card_types:
+        if not t.is_valid():
+            return HttpResponse("invalid type", status=400)
+    figures = []
+    mainform = None
+    figures = []
+    for (i, form) in enumerate(card_types):
+        if form.cleaned_data['cardform_type'] != 'figure':
+            data[form.prefix + "-card_type"] = new_alignment
+            data[form.prefix + 'cardform_type'] = new_type
+            mainform = form
+        else:
+            figures.append(form)
+
+    forms = [
+        FigureForm(data, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'figure'
+        else CardForm(data, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'text'
+        else FigureListForm(data, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'figure_list'
+        else PhotoCardForm(data, prefix=form.prefix)
+        for form in card_types
+    ]
+    assert all(f.is_valid() for f in forms)
+    mainform = [f_ for f_ in forms if f_.cleaned_data['cardform_type'] != 'figure'][0]
+
+    wrapped : Any = None
+    figures = [FigureFormWrapper(form_) for form_ in forms if form_.cleaned_data['cardform_type'] == 'figure']
+    wrapperT = (
+        CardFormWrapper if isinstance(mainform, CardForm)
+        else FigureListFormWrapper if isinstance(mainform, FigureListForm)
+        else PhotoCardFormWrapper
+    )
+    wrapped = wrapperT(form=mainform, figures=figures)
+    cardcontext = CardContext()
+    context, i = cardcontext.context(card=wrapped, i=0, two_column_count=0, mode="EDIT_POST")
+    context['exhibit'] = exhibit
+    print(context)
+    return TemplateResponse(
+        template=context['template'],
+        request=request,
+        context=context,
+    )
+
 
 def exhibit_figure_form(request: HttpRequest, pk: int, parent: str) -> HttpResponse:
     context = {}

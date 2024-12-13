@@ -12,6 +12,7 @@ from fortepan_us.kronofoto.views.tagsearch import ContributorSearchView
 from fortepan_us.kronofoto.views.donor import ContributorCreateView
 from fortepan_us.kronofoto.views import tags_view
 from fortepan_us.kronofoto.views import photosphere
+from fortepan_us.kronofoto.views import exhibit
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -136,6 +137,7 @@ urlpatterns = urlpatterns + [
     path("exhibits/<int:pk>/figure-image", views.exhibit_figure_image, name='exhibit-figure-image'),
     path("exhibits/<int:pk>/two-column-image", views.exhibit_two_column_image, name='exhibit-two-column-image'),
     path("exhibits/full-image", views.exhibit_full_image, name='exhibit-full-image'),
+    path("exhibits/recard/<int:pk>", exhibit.exhibit_recard, name='exhibit-recard'),
     path("exhibits/<int:pk>/<str:card_type>-form", views.exhibit_card_form, name='exhibit-card-form'),
     path("exhibits/add", views.exhibit_create, name='exhibit-create'),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),

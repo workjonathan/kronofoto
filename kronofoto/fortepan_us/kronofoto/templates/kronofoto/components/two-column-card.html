@@ -5,7 +5,7 @@
 {% block container_classes %}container--no-padding{% endblock %}
 
 {% block content_body %}
-    <div class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'two-column--cover': fitStyle == 1, 'two-column--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
+    <div data-card class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'two-column--cover': fitStyle == 1, 'two-column--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
         {% with target_id=form.photo.auto_id photo=card.photo %}
         <div 
             class="two-column__image"

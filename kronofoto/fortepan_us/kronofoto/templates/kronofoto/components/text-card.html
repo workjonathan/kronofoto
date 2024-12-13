@@ -4,7 +4,7 @@
 {% load widgets %}
 
 {% block content_body %}
-    <div class="content-area">
+    <div data-card class="content-area">
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}
             {{ form.title.errors }}
