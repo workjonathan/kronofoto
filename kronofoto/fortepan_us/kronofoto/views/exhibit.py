@@ -34,17 +34,20 @@ def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
     for t in card_types:
         if not t.is_valid():
             return HttpResponse("invalid type", status=400)
-    figures = []
     mainform = None
     figures = []
     for (i, form) in enumerate(card_types):
         if form.cleaned_data['cardform_type'] != 'figure':
-            data[form.prefix + "-card_type"] = new_alignment
-            data[form.prefix + 'cardform_type'] = new_type
-            mainform = form
+            data[form.prefix + "-card_type"] = str(new_alignment)
+            data[form.prefix + '-cardform_type'] = new_type
+            mainform = CardForm(data, prefix=form.prefix)
+            if not mainform.is_valid():
+                print(mainform.errors)
         else:
-            figures.append(form)
+            figures.append(FigureForm(data, prefix=form.prefix))
+            assert figures[-1].is_valid()
 
+    print(mainform.cleaned_data, figures.cleaned_data)
     forms = [
         FigureForm(data, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'figure'
         else CardForm(data, prefix=form.prefix) if form.cleaned_data["cardform_type"] == 'text'

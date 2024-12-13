@@ -12,17 +12,17 @@ class CardFormType(Form):
 class CardForm(ModelForm, CardFormType):
     class Meta:
         model = Card
-        fields = ['title', 'description', "smalltext"]
+        fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "card_type"]
         widgets = {
+            "fill_style": RadioSelect,
             "title": HiddenInput(attrs={"x-model": "title"}),
             "description": HiddenInput(attrs={"x-model": "description"}),
             "smalltext": HiddenInput(attrs={"x-model": "smalltext"}),
+            "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
+            "card_type": HiddenInput,
         }
 
-class FigureListForm(ModelForm, CardFormType):
-    class Meta:
-        model = Card
-        fields: List[str] = []
+FigureListForm = CardForm
 
 class FigureForm(ModelForm, CardFormType):
     parent = CharField(required=True, widget=HiddenInput)
@@ -34,35 +34,8 @@ class FigureForm(ModelForm, CardFormType):
             "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
         }
 
-class PhotoCardForm(ModelForm, CardFormType):
-    class Meta:
-        model = PhotoCard
-        fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "card_type"]
-        widgets = {
-            "fill_style": RadioSelect,
-            "title": HiddenInput(attrs={"x-model": "title"}),
-            "description": HiddenInput(attrs={"x-model": "description"}),
-            "smalltext": HiddenInput(attrs={"x-model": "smalltext"}),
-            "photo": HiddenInput(attrs={"@change": "hasChanges = true"}),
-            "card_type": HiddenInput,
-        }
+PhotoCardForm = CardForm
 
-@dataclass
-class FigureListFormWrapper:
-    form: ModelForm
-    figures: "List[FigureFormWrapper]" = field(default_factory=list)
-
-    @property
-    def figure_set(self) -> QuerySet[Figure]:
-        return self.form.instance.figure_set
-
-    @property
-    def card(self) -> "FigureListFormWrapper":
-        return self
-
-    @property
-    def id(self) -> int:
-        return self.form.instance.id
 
 @dataclass
 class CardFormWrapper:
@@ -117,50 +90,8 @@ class CardFormWrapper:
     def smalltext(self) -> str:
         return self.form['smalltext'].value() or ""
 
-
-
-@dataclass
-class PhotoCardFormWrapper:
-    form: ModelForm
-    figures: "List[FigureFormWrapper]" = field(default_factory=list)
-
-    @property
-    def title(self) -> str:
-        return self.form['title'].value() or ""
-
-    @property
-    def fill_style(self) -> int:
-        try:
-            return int(self.form['fill_style'].value())
-        except ValueError:
-            return 1
-
-    @property
-    def card_type(self) -> int:
-        try:
-            return int(self.form['card_type'].value())
-        except ValueError:
-            return 1
-
-    @property
-    def photo(self) -> Optional[Photo]:
-        val = self.form['photo'].value()
-        if val:
-            try:
-                return Photo.objects.get(pk=val)
-            except Photo.DoesNotExist:
-                return None
-
-        else:
-            return None
-
-    @property
-    def description(self) -> str:
-        return self.form['description'].value() or ""
-
-    @property
-    def smalltext(self) -> str:
-        return self.form['smalltext'].value() or ""
+PhotoCardFormWrapper = CardFormWrapper
+FigureListFormWrapper = CardFormWrapper
 
 @dataclass
 class FigureFormWrapper:

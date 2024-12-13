@@ -44,6 +44,9 @@ class Card(models.Model):
     card_type = models.IntegerField(choices=CardType.choices, default=CardType.TEXT_ONLY)
     fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
+    def photo_choices(self) -> models.Q:
+        return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
+
     def figures(self) -> "models.QuerySet[Figure]":
         return self.figure_set.all().order_by("order")
 
