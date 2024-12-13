@@ -52,9 +52,11 @@
                                     <li><a href="{{ collection.get_absolute_url }}" data-clipboard-copy>Share</a></li>
                                     <li><a href="{% krono_url "kronofoto:collection-embed" pk=collection.id %}">Embed</a></li>
                                     <li><a
-                                            href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
+                                        href="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
                                         hx-get="{% krono_url "kronofoto:collection-delete" pk=collection.id %}"
-                                        hx-target="#app"
+                                        hx-target="closest section"
+                                        hx-select="#my-lists"
+                                        hx-swap="outerHTML"
                                         >Delete</a></li>
                                     <li><a href="{% krono_url "kronofoto:exhibit-create" %}?collection={{ collection.id }}">Use in a FotoStory</a></li>
                                 </ul>

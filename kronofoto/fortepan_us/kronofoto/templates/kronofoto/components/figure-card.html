@@ -7,7 +7,7 @@
 <div class="content-area">
     <div class="image-collection image-collection--{{ card.figures|length }}">
     {% for figure in card.figures %}
-        <figure{% if not figure.photo %} class="empty"{% endif %}{% if edit %} x-data="{ 'empty': {{ figure.photo|yesno:"false,true" }} }" :class="{'empty': empty}" @remove-empty="empty=false"{% endif %}>
+        <figure{% if not figure.photo %} class="empty"{% endif %}{% if edit %} x-data="{ 'empty': {{ figure.photo|yesno:"false,true" }}, caption: '{{ figure.caption | escapejs }}' }" :class="{'empty': empty}" @remove-empty="empty=false"{% endif %}>
             <div class="image-collection__wrapper">
                 {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
                 <div class="image-collection__inner-wrapper"{% if form %} hx-get="{% krono_url "kronofoto:exhibit-figure-image" pk=exhibit.pk %}" hx-include="#{{ target_id }}" hx-vals='{"field": "{{ target_id }}", "html_name": "{{ html_name }}" }' hx-trigger="change from:#{{ target_id }}" hx-swap="innerHTML show:top"{% endif %}>
@@ -18,13 +18,12 @@
             {% if edit %}
                 {% with form=figure.form %}
                 {{ form.caption.errors }}
-                <figcaption contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.caption.auto_id }}">{{ figure.caption }}</figcaption>
-                {% for field in form %}
-                    {{ field.as_hidden }}
-                {% endfor %}<input type="hidden" name="prefix" value="{{ form.prefix }}">
+                <figcaption contenteditable="{{ contenteditable }}" role="textbox" @input="caption = $el.innerText">{{ figure.caption }}</figcaption>
+                {{ form }}
+                <input type="hidden" name="prefix" value="{{ form.prefix }}">
                 {% endwith %}
             {% else %}
-                <figcaption>{{ figure.caption | linebreaksbr }}</figcaption>
+                <figcaption>{{ figure.caption | markdown }}</figcaption>
             {% endif %}
         </figure>
     {% endfor %}

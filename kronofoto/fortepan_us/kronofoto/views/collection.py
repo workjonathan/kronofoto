@@ -21,6 +21,7 @@ from django.views.generic.list import MultipleObjectTemplateResponseMixin, Multi
 from django.views.decorators.csrf import csrf_exempt
 from dataclasses import dataclass
 from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type
+from .exhibit import ExhibitCreateForm
 
 @login_required
 def embed(request: HttpRequest, pk: int) -> HttpResponse:
@@ -36,12 +37,17 @@ def embed(request: HttpRequest, pk: int) -> HttpResponse:
 
 def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
-    context['profile_user'] = get_object_or_404(User.objects.all(), username=username)
-    from .exhibit import ExhibitCreateForm
-    if not request.user.is_anonymous:
-        context['form'] = ExhibitCreateForm()
-        context['form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
-    context['exhibits'] = Exhibit.objects.filter(owner=context['profile_user'])
+    profile_user = get_object_or_404(User.objects.all(), username=username)
+    context['profile_user'] = profile_user
+    filter_kwargs = {}
+    if request.user.id != profile_user.id:
+        filter_kwargs['visibility'] = "PU"
+    context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
+    if not request.user.is_anonymous and request.user.id == profile_user.id:
+        context['form'] = CollectionForm()
+        context['exhibit_form'] = ExhibitCreateForm()
+        context['exhibit_form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
+    context['exhibits'] = Exhibit.objects.filter(owner=profile_user)
     return TemplateResponse(request=request, context=context, template="kronofoto/pages/user-page.html")
 
 def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
@@ -209,6 +215,11 @@ class CollectionDelete(BaseTemplateMixin, LoginRequiredMixin, DeleteView): # typ
 
     def get_context_data(self, *args: Any, **kwargs: Any) -> Any:
         context = super().get_context_data(*args, **kwargs)
+        assert not self.request.user.is_anonymous
+        context['profile_user'] = self.request.user
+        context['exhibit_form'] = ExhibitCreateForm()
+        context['exhibit_form'].fields['collection'].queryset = Collection.objects.filter(owner=self.request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
+        context['exhibits'] = Exhibit.objects.filter(owner=self.request.user)
         if 'view' not in context:
             context['view'] = self
         return context

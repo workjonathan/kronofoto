@@ -1,3 +1,5 @@
+{% load krono_urls %}
+
 <div class="site-wrapper">
     <header class="header">
         {% block header_logo %}
@@ -7,17 +9,29 @@
         {% block header_title %}{% endblock %}
     </header>
 
-    <div class="hero">
-        <div class="hero__content-wrapper" >
+    <div class="hero {% if exhibit.photo is empty %}hero--empty{% endif %}"
+        {% if form %}
+        x-data="{
+            title: '{{ exhibit.title | escapejs }}',
+            description: '{{ exhibit.description | escapejs }}',
+            smalltext: '{{ exhibit.smalltext | escapejs }}',
+        }"
+        {% endif %}
+    >
+        <div class="hero__content-wrapper">
             {% block hero_content_wrapper %}{% endblock %}
         </div>
         {% block hero_background %}{% endblock %}
-        <div class="hero__info-button info-button info-button--bottom">
+        {% if exhibit.photo %}
+        <a href="{% object_url exhibit.photo %}" target="_blank" class="hero__info-button info-button info-button--bottom">
             <span class="info-button__icon"></span>
             {% block info_text %}{% endblock %}
-        </div>
+        </a>
+        {% endif %}
         {% block hero_formfields %}{% endblock %}
     </div>
+    {% block insert_card %}
+    {% endblock %}
     {% for card in cards %}
     {% include card.template with card=card.card zindex=card.zindex edit=card.edit form=card.form exhibit=exhibit image_area_classes=card.image_area_classes %}
     {% endfor %}

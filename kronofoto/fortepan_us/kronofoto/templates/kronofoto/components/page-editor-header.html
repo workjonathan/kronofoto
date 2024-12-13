@@ -11,7 +11,7 @@
                 <img class="logo-img" src="{{ theme.logoicon }}" alt="Fortepan Iowa Logo">
                 </a>
             </div>
-            <div class="nav-title" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.name.auto_id }}" id="content-editable-name">{{ exhibit.name }}</div>
+            <div class="nav-title" contenteditable="{{ contenteditable }}" role="textbox" @input="name = $el.innerText" id="content-editable-name">{{ exhibit.name }}</div>
         </div> <!-- end nav left -->
 
       <div class="main-nav__right">
@@ -20,7 +20,7 @@
 <!--              <button class="icon" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center"><i class="icon&#45;&#45;embed"></i></button>-->
 <!--              <button data-form-target="" data-tooltip title="Share Link" data-position="bottom" data-alignment="center" class="icon"><i class="icon&#45;&#45;link"></i></button>-->
               <button data-form-target="_blank" data-tooltip title="Preview" data-position="bottom" data-alignment="center" name="preview" class="icon"><i class="icon--preview"></i></button>
-              <button data-form-target="" type="submit" name="save" value="Save" class="button">Save</button>
+              <button data-form-target="" type="submit" @click="hasChanges = false" name="save" value="Save" class="button">Save</button>
           </div>
 
           <div class="login-container" data-tooltip title="My Account" data-position="bottom" data-alignment="center">
@@ -48,4 +48,44 @@
 
     </div>
   </nav>
+</div>
+
+  {% if messages %}
+    <ul  
+		x-data="{ show: true }" 
+        x-init="setTimeout(() => show = false, 5000)" 
+        x-show="show"
+        x-transition:enter="fade-enter"
+        x-transition:enter-start="fade-enter-start"
+        x-transition:enter-end="fade-enter-end"
+        x-transition:leave="fade-leave"
+        x-transition:leave-start="fade-leave-start"
+        x-transition:leave-end="fade-leave-end"
+        class="notification">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+<style>
+.notification {
+    padding: 1rem;
+    background-color: tomato;
+    color: white;
+    border-radius: 8px;
+}
+
+/* Transition classes */
+.fade-enter, .fade-leave {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-start, .fade-leave-end {
+    opacity: 0;
+}
+
+.fade-enter-end, .fade-leave-start {
+    opacity: 1;
+}
+</style>
+  {% endif %}
 </header>

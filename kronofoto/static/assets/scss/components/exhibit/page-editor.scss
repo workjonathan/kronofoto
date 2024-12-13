@@ -1,4 +1,5 @@
 @use '../../colors' as *;
+@use 'buttons' as *;
 @use '../../exhibit-typography' as *;
 @use '../../typography' as *;
 
@@ -10,11 +11,15 @@
   box-sizing: border-box;
   flex-direction: row;
   align-items: flex-start;
-  background-color: #D6D6D6;
-  padding: 30px 30px 30px 70px;
+  padding: 30px 10vw 30px 10vw;
+
+  background-color: #dedede;
+  opacity: 0.8;
+  background-image:  repeating-linear-gradient(45deg, #c6c6c6 25%, transparent 25%, transparent 75%, #c6c6c6 75%, #c6c6c6), repeating-linear-gradient(45deg, #c6c6c6 25%, #dedede 25%, #dedede 75%, #c6c6c6 75%, #c6c6c6);
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
 
   &__page-wrapper {
-    margin-right: 50px;
     flex: 1;
   }
 
@@ -25,95 +30,59 @@
 
 }
 
-.toolbar {
-  box-sizing: border-box;
-  width: 130px;
-  padding: 15px;
-  background-color: $white;
+.between-card {
   position: relative;
-  overflow: hidden;
-
-  .toolbar__button {
-    margin-bottom: 10px;
-    padding: 0px;
+  &__indicator {
+    height: 3px;
     width: 100%;
+    background-color: var(--fp-main-blue);
+    opacity: 0;
+    position: absolute;
+    z-index: 1001;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+    transition: opacity 0.15s ease-in-out;
   }
-
-  .toolbar__button--icon {
-    appearance: none;
-    padding: 0px;
-    width: 100px;
-    height: 69px;
-    background-color: $white;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all ease-in-out 200ms;
-    border: 1px solid #D6D6D6;
-    &:hover {
-      box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .16);
+  &.opened {
+    .between-card__indicator {
+      opacity: 0 !important;
     }
-    &:last-child {
-      margin-bottom: 0px;
-    }
-    i {
-      font-size: 0px;
-      display: block;
-    }
-  }
-
-  .toolbar__button--icon.toolbar__button--small {
-    width: 50px;
-    height: 50px;
-    border: none;
-    position: relative;
-    &:hover {
-      box-shadow: none;
-      &:after {
-        content: '';
-        position: absolute;
-        bottom: 0px;
-        left: 50%;
-        height: 2px;
-        width: 35px;
-        background-color: #D6D6D6;
-        transform: translateX(-50%);
+    .between-card__add-button {
+      &:before {
+        transform: rotate(90deg + 45deg);
       }
     }
   }
-
-  &__section {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    position: relative;
-    padding-top: 15px;
-    &:first-child {
-      padding-top: 0px;
+  &__add-button {
+    &:hover {
+      + .between-card__indicator {
+        opacity: 1;
+      }
     }
-    &:after {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -50px;
+    height: 40px;
+    width: 40px;
+    &:before {
       content: '';
+      width: 100%;
+      height: 100%;
       display: block;
-      min-width: 300px;
-      height: 1px;
-      background-color: #D6D6D6;
-      position: absolute;
-      bottom: 0px;
+      transition: transform 0.3s ease-in-out;
+      @include plus-button;
     }
-    &:last-child:after {
-      display: none;
+    @include off-canvas-button;
+    &:hover {
+      background-color: #ffffff;
     }
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
   }
-
-  label {
-    color: #838383;
-    font-size: 10px;
-    font-weight: $font-weight-semibold;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 10px;
+  .toolbar {
+    position: absolute;
+    right: -10px;
+    top: -20px;
+    z-index: 1001;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
   }
 }

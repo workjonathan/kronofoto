@@ -1,12 +1,20 @@
-{% extends base_template %}
+{% extends "kronofoto/pages/user-page.html" %}
 
-{% block content %}
-<div class="container-center collection_delete-container">
-    <form method="post" hx-post hx-target="#app">
-    {% csrf_token %}
-        <p>Are you sure you want to delete {{ object.name }}?</p>
-        <input type="submit" value="Yes">
-        <span class="back-btn"><a href="{{ view.get_success_url }}" hx-get="{{ view.get_success_url }}">No</a></span>
-    </form>
-</div>
+{% block collections %}
+<section id="my-lists" class="border-bottom">
+    <div class="row">
+        <div class="columns small-9">
+            <h2>My FotoAlbums</h2>
+            <p class="paragraph color-light padding-bottom-2">A FotoAlbum is a collection of Fortepan photos organized by a customizable theme. You can share and embed any FotoAlbum, and use a FotoAlbum to create a FotoStory.</p>
+        </div>
+        <div class="columns small-12">
+        <form method="post" hx-post hx-target="#app">
+        {% csrf_token %}
+            <p>Are you sure you want to delete {{ object.name }}?</p>
+            <input type="submit" value="Yes">
+            <span class="back-btn"><a href="{{ view.get_success_url }}" hx-get="{{ view.get_success_url }}">No</a></span>
+        </form>
+        </div>
+    </div>
+</section>
 {% endblock %}

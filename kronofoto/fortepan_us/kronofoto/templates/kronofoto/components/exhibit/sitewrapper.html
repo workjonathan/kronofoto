@@ -13,12 +13,17 @@
         <h1>{{ exhibit.title }}</h1>
     </div>
     <div class="hero__content">
-        {{ exhibit.description | linebreaks }}
+        {{ exhibit.description | markdown:"nl2br" }}
+    </div>
+    <div class="hero__content">
+        {{ exhibit.smalltext | markdown:"nl2br" }}
     </div>
 {% endblock hero_content_wrapper %}
 {% block hero_background %}
 <div class="hero__background">
+    {% if exhibit.photo %}
     <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+    {% endif %}
 </div>
 {% endblock hero_background %}
 
