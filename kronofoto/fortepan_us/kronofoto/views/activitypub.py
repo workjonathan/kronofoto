@@ -156,6 +156,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
         archive = Archive.objects.get(actor=request.actor)
         if root_type in ("Create", "Update"):
             models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+            return JsonLDResponse({"status": "created"})
         else:
             handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
             for handler in handlers:

@@ -109,7 +109,19 @@ class OutboxActivity(models.Model):
 
 class LdIdQuerySet(models.QuerySet):
     def get_or_create_ld_object(self, ld_id: str) -> Tuple["LdId", bool]:
-        return (self.get(ld_id=ld_id), True)
+        try:
+            return (self.get(ld_id=ld_id), False)
+        except self.model.DoesNotExist:
+            object = requests.get(ld_id).json()
+            if object['type'] == 'Contact':
+                archive = kf_models.Archive.objects.get(actor__profile=object['attributedTo'][0])
+                db_obj = kf_models.Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
+                ct = ContentType.objects.get_for_model(kf_models.Donor)
+                ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
+                return ldid, True
+            else:
+                raise NotImplementedError
+
 
     def update_or_create_ld_object(self, owner: "kf_models.Archive", object: Dict[str, Any]) -> Tuple[Optional["LdId"], bool]:
         ldid = None

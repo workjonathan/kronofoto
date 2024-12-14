@@ -70,8 +70,10 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo, a_donor):
     a_photo.archive = remote_archive
     a_photo.caption = "old caption"
     a_photo.donor = a_donor
+    a_donor.archive = remote_archive
     a_photo.year = 1923
     a_photo.save()
+    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
     ct = ContentType.objects.get_for_model(models.Photo)
     rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/photos/1', object_id=a_photo.id)
     data=activitypub.ActivitySchema().dump({
@@ -170,13 +172,19 @@ def test_createimagehandler(a_photo, a_donor):
     activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
     assert models.Photo.objects.count() == 2
 
+@override_settings(KF_URL_SCHEME="http:")
 @pytest.mark.django_db
 def test_createimagehandler_unknown_donor(a_photo, a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_photo.caption = "caption"
     a_photo.donor = a_donor
+    a_photo.archive = remote_archive
+    a_donor.archive = remote_archive
     with mock.patch("requests.get") as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.return_value = activitypub.Contact().dump(a_donor)
         activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    mock_.assert_called_with("http://example.com/kf/activitypub/archives/an-archive/contributors/1")
     assert models.Photo.objects.count() == 2
     saved = models.Photo.objects.get(archive=remote_archive)
     assert models.LdId.objects.count() == 2
