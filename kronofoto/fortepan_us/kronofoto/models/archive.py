@@ -1,14 +1,48 @@
 from django.db import models
 from django.utils.text import slugify
+from urllib.parse import urlparse
 from django.core.validators import MinLengthValidator
 from django.conf import settings
-from fortepan_us.kronofoto.reverse import reverse
+from fortepan_us.kronofoto.reverse import reverse, resolve
+from django.urls.exceptions import Resolver404
 from django.contrib.auth.models import Permission, Group
 from .category import Category, ValidCategory
 from .activity import RemoteActor
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from typing import Tuple
+import requests
 
+class ArchiveQuerySet(models.QuerySet):
+    def get_or_create_by_profile(self, profile: str) -> Tuple["Archive", bool]:
+        server_domain = urlparse(profile).netloc
+        try:
+            return self.get(actor__profile=profile, type=Archive.ArchiveType.REMOTE), False
+        except self.model.DoesNotExist:
+            try:
+                resolved = resolve(profile)
+                raise NotImplementedError
+            except Resolver404:
+                data = requests.get(
+                    profile,
+                    headers={
+                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    },
+                ).json()
+                actor = RemoteActor.objects.create(profile=profile)
+                return self.create(
+                    type=Archive.ArchiveType.REMOTE,
+                    server_domain=server_domain,
+                    name=data['name'],
+                    slug=data['slug'],
+                ), True
+
+            raise NotImplementedError
+            #if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
+            #    return Photo.objects.get(pk=resolved.match.kwargs['pk'])
+            #return Photo(
+            #    caption=data['content'],
+            #)
 
 class Archive(models.Model):
     class ArchiveType(models.IntegerChoices):
@@ -34,6 +68,8 @@ class Archive(models.Model):
     categories = models.ManyToManyField(Category, through=ValidCategory)
     serialized_public_key = models.BinaryField(null=True, blank=True)
     encrypted_private_key = models.BinaryField(null=True, blank=True)
+
+    objects = ArchiveQuerySet.as_manager()
 
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:

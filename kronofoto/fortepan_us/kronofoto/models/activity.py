@@ -112,9 +112,14 @@ class LdIdQuerySet(models.QuerySet):
         try:
             return (self.get(ld_id=ld_id), False)
         except self.model.DoesNotExist:
-            object = requests.get(ld_id).json()
+            object = requests.get(
+                ld_id,
+                headers={
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+            ).json()
             if object['type'] == 'Contact':
-                archive = kf_models.Archive.objects.get(actor__profile=object['attributedTo'][0])
+                archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=object['attributedTo'][0])
                 db_obj = kf_models.Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
                 ct = ContentType.objects.get_for_model(kf_models.Donor)
                 ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})

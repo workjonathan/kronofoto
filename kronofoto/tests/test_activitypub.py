@@ -36,6 +36,28 @@ def test_decode_signature_headers():
         "(request-target)", "host", "date", "digest"
     ]
 
+
+@pytest.mark.django_db
+def test_ldid_get_or_create_encounters_unknown_actor():
+    with mock.patch('requests.get') as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.side_effect = [
+            {
+                "id": "http://127.0.0.1:8000/kf/activitypub/archives/an-archive/contributors/1",
+                "type": "Contact",
+                "attributedTo": ["https://example.com/remotesite"],
+                "firstName": "first",
+                "lastName": "last",
+            },
+            {
+                "id": "https://example.com/remotesite",
+                "type": "Organization",
+                "name": "OrgName",
+                "slug": "an-archive",
+            },
+        ]
+        models.LdId.objects.get_or_create_ld_object(ld_id="http://127.0.0.1:8000/kf/activitypub/archives/an-archive/contributors/1")
+
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_ignore_activities_from_nonfollows(a_donor):
@@ -184,7 +206,12 @@ def test_createimagehandler_unknown_donor(a_photo, a_donor):
         mock_.return_value = mock.Mock(name="json")
         mock_.return_value.json.return_value = activitypub.Contact().dump(a_donor)
         activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
-    mock_.assert_called_with("http://example.com/kf/activitypub/archives/an-archive/contributors/1")
+    mock_.assert_called_with(
+        "http://example.com/kf/activitypub/archives/an-archive/contributors/1",
+        headers={
+            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        },
+    )
     assert models.Photo.objects.count() == 2
     saved = models.Photo.objects.get(archive=remote_archive)
     assert models.LdId.objects.count() == 2
