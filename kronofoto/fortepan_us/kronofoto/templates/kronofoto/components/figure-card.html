@@ -30,4 +30,8 @@
     </div>
 </div>
 {% endblock content_body %}
+{% block formfields %}
+    {{ block.super }}
+    {{ form.fill_style.as_hidden }}
+{% endblock formfields %}
 
