@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.models.photo import Photo
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, Donor
 from fortepan_us.kronofoto import models
+from fortepan_us.kronofoto.models.archive import ArchiveSchema
 import json
 import parsy # type: ignore
 from django.core.cache import cache
@@ -489,38 +490,6 @@ class ActorCollectionSchema(ObjectSchema):
         }
 
 
-class ArchiveSchema(Schema):
-    type = fields.Constant("Organization")
-    id = fields.Url(relative=True)
-    name = fields.Str()
-    slug = fields.Str()
-    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
-
-    inbox = fields.Url(relative=True)
-    outbox = fields.Url(relative=True)
-    contributors = fields.Url(relative=True)
-    photos = fields.Url(relative=True)
-    following = fields.Url(relative=True)
-    followers = fields.Url(relative=True)
-
-    @pre_dump
-    def extract_fields_from_object(self, object: Archive, **kwargs: Any) -> Dict[str, Any]:
-        return {
-            "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
-            "name": object.name,
-            "slug": object.slug,
-            "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug}),
-            "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
-            "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),
-            "photos": reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug}),
-            "followers": reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug}),
-            "following": reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug}),
-            "publicKey": {
-                "id": object.keyId,
-                "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
-                "publicKeyPem": object.guaranteed_public_key(),
-            },
-        }
 
 @register_actor("archives/<slug:short_name>", "archives", data_urls)
 class ArchiveActor:

@@ -10,9 +10,45 @@ from .category import Category, ValidCategory
 from .activity import RemoteActor
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from typing import Tuple
+from typing import Tuple, Any, Dict
 from django.contrib.sites.models import Site
 import requests
+from marshmallow import Schema, fields, pre_dump, post_load, pre_load, ValidationError
+
+class InvalidArchive(Exception): pass
+
+class ArchiveSchema(Schema):
+    type = fields.Constant("Organization")
+    id = fields.Url(relative=True, required=True)
+    name = fields.Str(required=True)
+    slug = fields.Str(required=True)
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+
+    inbox = fields.Url(relative=True)
+    outbox = fields.Url(relative=True)
+    contributors = fields.Url(relative=True)
+    photos = fields.Url(relative=True)
+    following = fields.Url(relative=True)
+    followers = fields.Url(relative=True)
+
+    @pre_dump
+    def extract_fields_from_object(self, object: "Archive", **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
+            "name": object.name,
+            "slug": object.slug,
+            "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug}),
+            "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
+            "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),
+            "photos": reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug}),
+            "followers": reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug}),
+            "following": reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug}),
+            "publicKey": {
+                "id": object.keyId,
+                "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
+                "publicKeyPem": object.guaranteed_public_key(),
+            },
+        }
 
 class ArchiveQuerySet(models.QuerySet):
     def get_or_create_by_profile(self, profile: str) -> Tuple["Archive", bool]:
@@ -33,20 +69,20 @@ class ArchiveQuerySet(models.QuerySet):
                         'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                     },
                 ).json()
-                actor = RemoteActor.objects.create(profile=profile)
-                return self.create(
-                    type=Archive.ArchiveType.REMOTE,
-                    server_domain=server_domain,
-                    name=data['name'],
-                    slug=data['slug'],
-                ), True
-
+                try:
+                    data = ArchiveSchema().load(data)
+                    if data['id'] != profile:
+                        raise InvalidArchive
+                    actor = RemoteActor.objects.create(profile=profile)
+                    return self.create(
+                        type=Archive.ArchiveType.REMOTE,
+                        server_domain=server_domain,
+                        name=data['name'],
+                        slug=data['slug'],
+                    ), True
+                except ValidationError:
+                    raise InvalidArchive
             raise NotImplementedError
-            #if Site.objects.filter(domain=resolved.domain).exists() and resolved.match.url_name == "detail":
-            #    return Photo.objects.get(pk=resolved.match.kwargs['pk'])
-            #return Photo(
-            #    caption=data['content'],
-            #)
 
 class Archive(models.Model):
     class ArchiveType(models.IntegerChoices):

@@ -58,6 +58,17 @@ def test_ldid_get_or_create_encounters_a_local_object(a_donor, an_archive):
         mock_.assert_not_called()
 
 @pytest.mark.django_db
+def test_archive_get_or_create_encounters_insufficient_information():
+    with mock.patch('requests.get') as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.return_value = {
+            "id": "https://example.com/remotesite",
+            "type": "Organization",
+        }
+        with pytest.raises(models.archive.InvalidArchive):
+            models.Archive.objects.get_or_create_by_profile(profile="http://example.com/remotesite")
+
+@pytest.mark.django_db
 def test_ldid_get_or_create_encounters_unknown_actor():
     with mock.patch('requests.get') as mock_:
         mock_.return_value = mock.Mock(name="json")
