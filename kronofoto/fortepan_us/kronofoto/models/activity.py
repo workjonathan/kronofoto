@@ -1,5 +1,7 @@
 from django.db import models
 import requests
+from urllib.parse import urlparse
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from typing import Optional, Tuple, Dict, Any
 from django.contrib.contenttypes.models import ContentType
@@ -7,7 +9,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
-from fortepan_us.kronofoto.reverse import reverse
+from fortepan_us.kronofoto.reverse import reverse, resolve
 from fortepan_us.kronofoto import models as kf_models
 
 class ServiceActor(models.Model):
@@ -109,6 +111,12 @@ class OutboxActivity(models.Model):
 
 class LdIdQuerySet(models.QuerySet):
     def get_or_create_ld_object(self, ld_id: str) -> Tuple["LdId", bool]:
+        server_domain = urlparse(ld_id).netloc
+        if Site.objects.filter(domain=server_domain).exists():
+            resolved = resolve(ld_id)
+            if resolved.match.namespaces == ['kronofoto', 'activitypub_data', 'archives', 'contributors'] and resolved.match.url_name == 'detail':
+                return LdId(content_object=kf_models.Donor.objects.get(archive__slug=resolved.match.kwargs['short_name']), id=resolved.match.kwargs['pk']), False
+            raise NotImplementedError
         try:
             return (self.get(ld_id=ld_id), False)
         except self.model.DoesNotExist:
@@ -118,6 +126,7 @@ class LdIdQuerySet(models.QuerySet):
                     'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
             ).json()
+            assert object['id'] == ld_id
             if object['type'] == 'Contact':
                 archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=object['attributedTo'][0])
                 db_obj = kf_models.Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)

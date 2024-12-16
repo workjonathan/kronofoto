@@ -11,6 +11,7 @@ from .activity import RemoteActor
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from typing import Tuple
+from django.contrib.sites.models import Site
 import requests
 
 class ArchiveQuerySet(models.QuerySet):
@@ -20,7 +21,10 @@ class ArchiveQuerySet(models.QuerySet):
             return self.get(actor__profile=profile, type=Archive.ArchiveType.REMOTE), False
         except self.model.DoesNotExist:
             try:
-                resolved = resolve(profile)
+                if Site.objects.filter(domain=server_domain).exists():
+                    resolved = resolve(profile)
+                    if resolved.match.url_name == "actor":
+                        return self.get(slug=resolved.match.kwargs['short_name']), False
                 raise NotImplementedError
             except Resolver404:
                 data = requests.get(

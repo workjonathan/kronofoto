@@ -38,6 +38,26 @@ def test_decode_signature_headers():
 
 
 @pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
+def test_archive_get_or_create_by_profile_for_local_archive(an_archive):
+    # When could this happen?
+    with mock.patch('requests.get') as mock_:
+        archive, created = models.Archive.objects.get_or_create_by_profile("http://example.com/kf/activitypub/archives/aslug")
+        assert not created
+        assert archive.id == an_archive.id
+        mock_.assert_not_called()
+
+@pytest.mark.django_db
+def test_ldid_get_or_create_encounters_a_local_object(a_donor, an_archive):
+    a_donor.archive = an_archive
+    a_donor.save()
+    with mock.patch('requests.get') as mock_:
+        ldid, created = models.LdId.objects.get_or_create_ld_object("http://example.com/kf/activitypub/archives/aslug/contributors/1")
+        assert not created
+        assert a_donor.id == ldid.content_object.id
+        mock_.assert_not_called()
+
+@pytest.mark.django_db
 def test_ldid_get_or_create_encounters_unknown_actor():
     with mock.patch('requests.get') as mock_:
         mock_.return_value = mock.Mock(name="json")
@@ -186,6 +206,7 @@ def test_createimagehandler(a_photo, a_donor):
     a_photo.terms.add(models.Term.objects.create(term="ExampleTerm"))
     models.PhotoTag.objects.create(photo=a_photo, tag=models.Tag.objects.create(tag="example"), accepted=True)
     activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
+    Site.objects.all().update(domain='example2.net')
     activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
     assert models.Photo.objects.count() == 2
     saved = models.Photo.objects.get(archive=remote_archive)
@@ -205,6 +226,7 @@ def test_createimagehandler_unknown_donor(a_photo, a_donor):
     with mock.patch("requests.get") as mock_:
         mock_.return_value = mock.Mock(name="json")
         mock_.return_value.json.return_value = activitypub.Contact().dump(a_donor)
+        Site.objects.all().update(domain='example2.net')
         activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
     mock_.assert_called_with(
         "http://example.com/kf/activitypub/archives/an-archive/contributors/1",
