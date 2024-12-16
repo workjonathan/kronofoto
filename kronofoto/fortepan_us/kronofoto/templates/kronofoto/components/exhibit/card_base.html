@@ -21,18 +21,6 @@
                 </div>
             </div>
         </div>
-        <div x-data="{open: false}">
-            <button type="button" aria-label="Insert Card" @click="open=!open">Insert card</button>
-            <div class="toolbar" x-show="open">
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
-                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
-            </div>
-        </div>
     {% endif %}
     {% endblock component_menu_off_canvas %}
 
@@ -47,3 +35,21 @@
     {% endif %}
     {% endblock formfields %}
 </div>
+{% if form %}
+<div x-data="{open: false}" class="between-card" x-bind:class="{ 'opened': open }">
+    <button type="button" class="between-card__add-button" aria-label="Insert Card" @click="open=!open">Insert card</button>
+    <div class="between-card__indicator"></div>
+    <div class="toolbar" x-show="open">
+        <label class="toolbar__label">Add a content block</label>
+        <div class="toolbar__buttons">
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+            <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -9,9 +9,9 @@ from django.conf import settings
 from django.views.generic.base import RedirectView, TemplateView
 from django.template.loader import render_to_string
 from .basetemplate import BasePhotoTemplateMixin
-from .paginator import TimelinePaginator, EMPTY_PNG
+from .paginator import Paginator, EMPTY_PNG
 from django.db.models import QuerySet
-from fortepan_us.kronofoto.models.photo import Photo, PhotoQuerySet
+from fortepan_us.kronofoto.models.photo import Photo, PhotoQuerySet, BackwardList, ForwardList
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_headers
 from django.views.decorators.csrf import csrf_exempt
@@ -27,38 +27,12 @@ from django.utils.cache import patch_vary_headers
 from django.utils.decorators import method_decorator
 from typing import Any, Optional, Dict, List
 
-class Thumbnail(TypedDict):
-    url: str
-    height: int
-    width: int
-
-@dataclass
-class PhotoPlaceholder:
-    thumbnail: Thumbnail
-    is_spacer: bool
-    photo: Photo
-
-    def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
-        return self.photo.get_absolute_url(*args, **kwargs)
-
-    @property
-    def id(self) -> int:
-        return self.photo.id
-
-    @property
-    def year(self) -> Optional[int]:
-        return self.photo.year
-
-EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
-
-NO_URLS = dict(url='#', json_url='#')
-
-
 class OrderedDetailBase(DetailView):
     pk_url_kwarg = 'photo'
     @property
     def item_count(self) -> int:
         raise NotImplementedError
+
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -68,28 +42,10 @@ class OrderedDetailBase(DetailView):
         object = self.object
         object.active = True
 
-        before = queryset.photos_before(year=object.year, id=object.id)[:self.item_count]
-        before_cycling = cycle(
-            PhotoPlaceholder(
-                thumbnail=EMPTY_THUMBNAIL,
-                is_spacer=True,
-                photo=photo
-            ) for photo in queryset.order_by('-year', '-id')[:self.item_count]
-        )
-        before_looping = chain(before, before_cycling)
-        before_chained = list(islice(before_looping, self.item_count))
+        before_chained = BackwardList(queryset=queryset, year=object.year, id=object.id).carousel_list(item_count=self.item_count)
         context['prev_photo'] = before_chained[0]
 
-        after = queryset.photos_after(year=object.year, id=object.id)[:self.item_count]
-        after_cycling = cycle(
-            PhotoPlaceholder(
-                thumbnail=EMPTY_THUMBNAIL,
-                is_spacer=True,
-                photo=photo,
-            ) for photo in queryset[:self.item_count]
-        )
-        after_looping = chain(after, after_cycling)
-        after_chained = list(islice(after_looping, self.item_count))
+        after_chained = ForwardList(queryset=queryset, year=object.year, id=object.id).carousel_list(item_count=self.item_count)
         context['next_photo'] = after_chained[0]
 
         before_chained.reverse()
@@ -116,28 +72,9 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
         offset = form.cleaned_data['offset']
         assert object.year
         if form.cleaned_data['forward']:
-            object_qs = queryset.photos_after(year=object.year, id=object.id)[:self.item_count]
-            objects_cycling = cycle(
-                PhotoPlaceholder(
-                    thumbnail=EMPTY_THUMBNAIL,
-                    is_spacer=True,
-                    photo=photo
-                ) for photo in queryset[:self.item_count]
-            )
-            objects_looping = chain(object_qs, objects_cycling)
-            objects = list(islice(objects_looping, self.item_count))
-
+            objects = ForwardList(queryset=queryset, year=object.year, id=object.id).carousel_list(item_count=self.item_count)
         else:
-            object_qs = queryset.photos_before(year=object.year, id=object.id)[:self.item_count]
-            objects_cycling = cycle(
-                PhotoPlaceholder(
-                    thumbnail=EMPTY_THUMBNAIL,
-                    is_spacer=True,
-                    photo=photo
-                ) for photo in queryset.order_by('-year', '-id')[:self.item_count]
-            )
-            objects_looping = chain(object_qs, objects_cycling)
-            objects = list(islice(objects_looping, self.item_count))
+            objects = BackwardList(queryset=queryset, year=object.year, id=object.id).carousel_list(item_count=self.item_count)
             objects.reverse()
             offset -= form.cleaned_data['width'] * (1 + self.item_count)
         context = {

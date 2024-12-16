@@ -9,10 +9,12 @@ import Select2 from "select2"
 //Select2.default(window, $)
 import {Viewer} from "@photo-sphere-viewer/core"
 import {MarkersPlugin} from "@photo-sphere-viewer/markers-plugin"
+import {PlanPlugin} from "@photo-sphere-viewer/plan-plugin"
 import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
 
+import vectorTileLayer from 'leaflet-vector-tile-layer';
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -71,17 +73,29 @@ class TimelineScroller {
                 setTimeout(() => elem.removeEventListener("htmx:confirm", handler), 100)
             }
         }
+        let carousel = newElems.querySelector("#fi-thumbnail-carousel-images")
+        this.widthElement =
+            (carousel ? carousel.getAttribute("data-width-element") : undefined) ||
+            "#fi-image"
         $("#fi-thumbnail-carousel-images", newElems).draggable({
             axis: "x",
             drag: (event, ui) => {
                 if (!elem) {
                     elem = event.target
+                    carousel.dispatchEvent(new Event("kronofoto-drag-timeline-start"))
                     console.log("installing htmx:confirm handler", elem)
                     elem.addEventListener("htmx:confirm", handler)
                 }
                 this.moveTimelineCoin(ui.position.left, true)
             },
             stop: (event, ui) => {
+                for (const temp of this.context.querySelectorAll(
+                    "#fi-thumbnail-carousel-images li[data-active] a",
+                )) {
+                    const detail = parseInt(temp.parentNode.getAttribute("data-fi"))
+                    const evt = new CustomEvent("kronofoto-select-node", { bubbles: true, detail })
+                    carousel.dispatchEvent(evt)
+                }
                 this.dropTimelineCoin(ui.position.left)
                 released = true
                 for (const temp of this.context.querySelectorAll(
@@ -91,6 +105,10 @@ class TimelineScroller {
                 }
             },
         })
+    }
+    getWidthElement() {
+        let carousel = this.context.querySelector("#fi-thumbnail-carousel-images")
+        return (carousel ? carousel.getAttribute("data-width-element") : undefined) || "#fi-image"
     }
     moveTimelineCoin(deltaX, drag = true) {
         if (drag) {
@@ -139,7 +157,7 @@ class TimelineScroller {
         })
     }
     getNumVisibleTimelineTiles() {
-        let widthOfTimeline = $("#fi-image", this.context).width() // assumes the timeline is the same width as gallery image
+        let widthOfTimeline = $(this.getWidthElement(), this.context).width() // assumes the timeline is the same width as gallery image
         let $li = $("#fi-thumbnail-carousel-images li[data-active]", this.context)
         let widthOfTile = $li.outerWidth()
         return Math.floor(widthOfTimeline / widthOfTile)
@@ -656,6 +674,52 @@ class ExhibitPlugin {
     }
 }
 
+// somehow this plugin was copied across branches and modified in both.
+// These two map plugins work slightly differently.
+class MapPlugin2 {
+    constructor({context}) {
+        this.context = context
+    }
+    install({elem}) {
+        for (const map_elem of querySelectorAll({node: elem, selector: "[data-map2]"})) {
+            const map = L.map(map_elem)
+            const x = map_elem.getAttribute("data-x")
+            const y = map_elem.getAttribute("data-y")
+            const OpenStreetMap_Mapnik = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                },
+            ).addTo(map)
+            const icon = new L.Icon.Default()
+            icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+            icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+            const tileLayer = vectorTileLayer(
+                "/tiles/mainstreets/{z}/{x}/{y}.mvt",
+                {style: { 
+                    // icon,
+                    interactive: true
+                }},
+            )
+            tileLayer.addEventListener("click", evt => {
+                map_elem.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
+                
+            })
+            tileLayer.addTo(map)
+            const position = [y, x]
+            let marker = L.marker(position).addTo(map)
+            map.setView(position, 20)
+            this.context.addEventListener("kronofoto:map:marker:change", (evt) => {
+                const position = [evt.detail.y, evt.detail.x]
+                marker.setLatLng(position)
+                map.setView(position, 20)
+            })
+        }
+    }
+}
+
 class MapPlugin {
     constructor({context}) {
         this.context = context
@@ -702,6 +766,7 @@ class MapPlugin {
         }
     }
 }
+
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -709,8 +774,14 @@ class PhotoSpherePlugin {
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
             const api_url = elem2.getAttribute("data-node-href")
+            const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
+            const tileset = elem2.getAttribute("data-mainstreet-tiles")
             const startNodeId = elem2.getAttribute("data-node-start")
+            this.context.addEventListener("kronofoto-select-node", (evt) => {
+                const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
+                tourPlugin.setCurrentNode(evt.detail)
+            })
 
             const viewer = new Viewer({
                 container: elem2,
@@ -735,13 +806,46 @@ class PhotoSpherePlugin {
                                 speed: "10rpm",
                                 fadeIn: true,
                                 rotation: true,
-                                rotateTo: {
+                                rotateTo: toNode.data.photos.length ? {
                                     yaw: `${90-toNode.data.photos[0].azimuth}deg`,
                                     pitch: `${toNode.data.photos[0].inclination}deg`,
-                                },
+                                } : undefined,
                             }),
                         },
                     ],
+                    [
+                        PlanPlugin, 
+                        {
+                            defaultZoom: 19,
+                            position: "bottom right",
+                            configureLeaflet: (map) => {
+                                const OpenStreetMap_Mapnik = L.tileLayer(
+                                    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                    {
+                                        maxZoom: 19,
+                                        attribution:
+                                            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                                    },
+                                ).addTo(map)
+                                const icon = new L.Icon.Default()
+                                icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+                                icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+                                const tileLayer = vectorTileLayer(
+                                    tileset,
+                                    {style: { 
+                                        // icon,
+                                        interactive: true
+                                    }},
+                                )
+                                tileLayer.addEventListener("click", evt => {
+                                    const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
+                                    tourPlugin.setCurrentNode(evt.layer.feature.properties.id)
+                                    
+                                })
+                                tileLayer.addTo(map)
+                            },
+                        },
+                    ]
                 ],
             })
             const markersPlugin = viewer.getPlugin(MarkersPlugin)
@@ -751,6 +855,11 @@ class PhotoSpherePlugin {
             viewer
                 .getPlugin(VirtualTourPlugin)
                 .addEventListener("node-changed", ({node, data}) => {
+                    //const slideScroller = new TimelineScroller({context: this.context})
+                    //slideScroller.slideToId({
+                    //    fi: node.data.photos[0].id,
+                    //    target: "[data-fi-thumbnail-carousel-images]",
+                    //})
                     const markersPlugin = viewer.getPlugin(MarkersPlugin)
                     markersPlugin.clearMarkers()
                     for (const infobox of node.data.infoboxes) {
@@ -760,6 +869,7 @@ class PhotoSpherePlugin {
                             image: infobox.image,
                             position: {yaw: infobox.yaw, pitch: infobox.pitch},
                             size: {width: 32, height: 32},
+                            content: infobox.content || "",
                         })
                     }
                     viewer.getPlugin(ImagePlanePlugin).setPhotos(node.data.photos)
@@ -996,6 +1106,7 @@ class KronofotoContext {
             PageEditor,
             ExhibitPlugin,
             MapPlugin,
+            MapPlugin2,
         ]
         for (const cls of plugins) {
             const plugin = new cls({context: this.context, rootSelector: this.rootSelector, exhibit_mode: this.exhibit_mode})

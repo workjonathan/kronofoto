@@ -16,7 +16,7 @@ from fortepan_us.kronofoto.models.donor import Donor
 from fortepan_us.kronofoto.models import Category
 from fortepan_us.kronofoto.views.photo import PhotoView
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair
+from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_photosphere, a_photosphere_pair, a_mainstreetset
 
 class Tests(TestCase):
 

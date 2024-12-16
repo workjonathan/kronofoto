@@ -2,7 +2,7 @@ from django.urls import path, include, register_converter, URLPattern, URLResolv
 from fortepan_us.kronofoto import views
 from fortepan_us.kronofoto.views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
-from fortepan_us.kronofoto.views.photosphere import PhotoSphereView, MainStreetList, MainStreetDetail, MainStreetGeojson
+from fortepan_us.kronofoto.views.photosphere import MainStreetList, MainStreetDetail, MainStreetGeojson
 from fortepan_us.kronofoto.views import photosphere
 from fortepan_us.kronofoto.views.frontpage import RandomRedirect, YearRedirect
 from fortepan_us.kronofoto.views.photo import CarouselListView
@@ -116,6 +116,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     ])),
     path('mainstreet360', views.photosphere_view, name="mainstreetview"),
     path('mainstreet360/json', views.photosphere_data, name="mainstreetview.json"),
+    path('mainstreet360/carousel', views.photosphere_carousel, name='mainstreetview-carousel'),
     path('mainstreet360/infobox', photosphere.info_text, name="mainstreet-info"),
     path('tags', views.TagSearchView.as_view(), name='tag-search'),
     path('autocomplete/contributors/select2', views.contributor_search, name='contributor-search2'),
@@ -152,4 +153,5 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/data.json', views.datadump, name="data-dump"),
     path("<slug:short_name>/", include(urlpatterns)),
     path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
+    path("", include("fortepan_us.kronofoto.views.vector_tiles")),
 ]

@@ -1,2 +1,14 @@
 {% load widgets %}
-{% block photosphere_metadata %}{% endblock %}
+
+<div hx-swap-oob="innerHTML:[data-back-arrows]">
+{% include "kronofoto/components/photo-link/back-arrows.html" with is_mainstreet=True %}
+</div>
+<div hx-swap-oob="innerHTML:[data-forward-arrows]">
+{% include "kronofoto/components/photo-link/forward-arrows.html" with is_mainstreet=True %}
+</div>
+<ul hx-swap-oob="outerHTML:#fi-preload-zone" id="fi-preload-zone" data-slide-id="{{ object.id }}">
+    {% include "kronofoto/components/thumbnails.html" with object_list=photos width_element="#fi-photosphere" is_mainstreet=True %}
+</ul>
+
+<h2>{{ object.title }}</h2>
+<div>{{ object.description | markdown }}</div>

@@ -1,0 +1,16 @@
+{% load widgets %}
+<div class="back-arrows" data-back-arrows>
+    {% include "kronofoto/components/photo-link/back-arrows.html" %}
+</div>
+
+<div class="slide-container">
+    <ul id="fi-preload-zone"></ul>
+    <div data-fi-load-thumbnails class="hide"></div>
+    <ul id="fi-thumbnail-carousel-images" {% if is_mainstreet %}x-data="{dragging: false}" @kronofoto-drag-timeline-start="dragging = true" @kronofoto-drag-timeline-stop="dragging = false" {% endif %}style="left: 0px;" data-fi-thumbnail-carousel-images{% if width_element %} data-width-element="{{ width_element }}"{% endif %}>
+        {% include "kronofoto/components/thumbnails.html" %}
+    </ul>
+</div>
+
+<div class="forward-arrows" data-forward-arrows>
+    {% include "kronofoto/components/photo-link/forward-arrows.html" %}
+</div>

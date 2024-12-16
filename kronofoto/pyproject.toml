@@ -30,6 +30,8 @@ dependencies = [
     "django-stubs",
     "django-stubs-ext",
     "deal",
+    "mapbox-vector-tile",
+    "mercantile",
     "requests",
     "Pillow",
     "django-mptt",
