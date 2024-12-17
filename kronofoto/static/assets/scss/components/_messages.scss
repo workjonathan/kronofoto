@@ -1,5 +1,17 @@
 
 @mixin styles($message-bottom-distance: 140px) {
+  /* Transition classes */
+  .fade-enter, .fade-leave {
+    transition: opacity 0.5s ease;
+  }
+
+  .fade-enter-start, .fade-leave-end {
+    opacity: 0;
+  }
+
+  .fade-enter-end, .fade-leave-start {
+    opacity: 1;
+  }
   #messages {
     position: fixed;
     bottom: $message-bottom-distance;
