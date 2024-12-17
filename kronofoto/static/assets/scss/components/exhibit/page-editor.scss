@@ -14,13 +14,13 @@
   padding: 30px 10vw 30px 10vw;
 
   background-color: #dedede;
-  opacity: 0.8;
   background-image:  repeating-linear-gradient(45deg, #c6c6c6 25%, transparent 25%, transparent 75%, #c6c6c6 75%, #c6c6c6), repeating-linear-gradient(45deg, #c6c6c6 25%, #dedede 25%, #dedede 75%, #c6c6c6 75%, #c6c6c6);
   background-position: 0 0, 10px 10px;
   background-size: 20px 20px;
 
   &__page-wrapper {
     flex: 1;
+    width: 100%;
   }
 
   &__toolbar {

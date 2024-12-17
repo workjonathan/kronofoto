@@ -1,8 +1,8 @@
 
-@mixin styles {
+@mixin styles($message-bottom-distance: 140px) {
   #messages {
     position: fixed;
-    bottom: 140px;
+    bottom: $message-bottom-distance;
     left: 50%;
     transform: translateX(-50%);
     width: 28%;
