@@ -33,8 +33,8 @@ class Card(models.Model):
         RIGHT = 3
 
     class Fill(models.IntegerChoices):
-        CONTAIN = 1
-        COVER = 2
+        COVER = 1
+        CONTAIN = 2
     title = models.TextField(blank=True, default="")
     description = models.TextField(blank=True, default="")
     smalltext = models.TextField(blank=True, default="")
