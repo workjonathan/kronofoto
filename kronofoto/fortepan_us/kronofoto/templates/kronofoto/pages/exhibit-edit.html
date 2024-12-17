@@ -10,7 +10,7 @@
     <title>Fortepan Exhibit</title>
     <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link href="{% static "kronofoto/css/exhibit.css" %}" rel="stylesheet">
+    <link href="{% static "kronofoto/css/exhibit.css" %}?version={{ CSS_VERSION }}" rel="stylesheet">
 	<link rel="apple-touch-icon" sizes="180x180" href="{% static "kronofoto/favicon/apple-touch-icon.png" %}">
 	<link rel="icon" type="image/png" sizes="32x32" href="{% static "kronofoto/favicon/favicon-32x32.png" %}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{% static "kronofoto/favicon/favicon-16x16.png" %}">
@@ -21,7 +21,7 @@
 	<meta name="msapplication-config" content="{% static "kronofoto/favicon/browserconfig.xml" %}">
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="{% static "kronofoto/js/main.js" %}"></script>
+    <script src="{% static "kronofoto/js/main.js" %}?version={{ CSS_VERSION }}"></script>
     <style>
         :root {
             --fp-main-font: 'Montserrat', sans-serif;

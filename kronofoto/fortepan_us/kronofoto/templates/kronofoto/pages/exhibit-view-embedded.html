@@ -5,8 +5,8 @@
 
     <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link href="http://127.0.0.1:8000/static/kronofoto/css/exhibit.css" rel="stylesheet">
-    <link href="http://127.0.0.1:8000/static/kronofoto/css/index.css" rel="stylesheet">
+    <link href="{% static "kronofoto/css/exhibit.css" %}?version={{ CSS_VERSION }}" rel="stylesheet">
+    <link href="{% static "kronofoto/css/index.css" %}?version={{ CSS_VERSION }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <style>
     * {
