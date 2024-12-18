@@ -11,6 +11,8 @@
 @use 'components/exhibit/photo-tiles';
 @use 'components/exhibit/two-column';
 @use 'components/exhibit/_toolbar';
+@use 'components/messages' as messages;
+@include messages.styles(20px);
 
 @import 'colors';
 @import 'keyframes';
@@ -20,6 +22,7 @@
 @import 'foundation-sites/scss/global';
 @import 'foundation-sites/scss/typography/typography';
 @import "foundation-sites/scss/util/breakpoint";
+@import 'foundation-sites/scss/components/callout';
 @import 'foundation-sites/scss/components/reveal';
 @import 'foundation-sites/scss/components/tooltip';
 
@@ -34,6 +37,7 @@
 //@import 'components/exhibit/container';
 //$reveal-width: 600px;
 
+@include foundation-callout;
 @include foundation-reveal;
 @include foundation-tooltip;
 //@include foundation-close-button;

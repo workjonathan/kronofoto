@@ -51,41 +51,23 @@
 </div>
 
   {% if messages %}
-    <ul  
-		x-data="{ show: true }" 
-        x-init="setTimeout(() => show = false, 5000)" 
-        x-show="show"
-        x-transition:enter="fade-enter"
-        x-transition:enter-start="fade-enter-start"
-        x-transition:enter-end="fade-enter-end"
-        x-transition:leave="fade-leave"
-        x-transition:leave-start="fade-leave-start"
-        x-transition:leave-end="fade-leave-end"
-        class="notification">
+    <div id="messages">
         {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        <div
+            x-data="{ show: true }"
+            x-init="setTimeout(() => show = false, 5000)"
+            x-show="show"
+            x-transition:enter="fade-enter"
+            x-transition:enter-start="fade-enter-start"
+            x-transition:enter-end="fade-enter-end"
+            x-transition:leave="fade-leave"
+            x-transition:leave-start="fade-leave-start"
+            x-transition:leave-end="fade-leave-end"
+            class="callout{% if message.tags %} {{ message.tags }}{% endif %}">
+            {{ message }}
+            <button class="close-button" aria-label="Dismiss alert" type="button" @click="show = false"></button>
+        </div>
         {% endfor %}
-    </ul>
-<style>
-.notification {
-    padding: 1rem;
-    background-color: tomato;
-    color: white;
-    border-radius: 8px;
-}
-
-/* Transition classes */
-.fade-enter, .fade-leave {
-    transition: opacity 0.5s ease;
-}
-
-.fade-enter-start, .fade-leave-end {
-    opacity: 0;
-}
-
-.fade-enter-end, .fade-leave-start {
-    opacity: 1;
-}
-</style>
+    </div>
   {% endif %}
 </header>

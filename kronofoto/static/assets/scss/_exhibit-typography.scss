@@ -21,3 +21,8 @@ h2 {
     line-height: 28px;
   }
 }
+
+small, small *, .text-small, .text-small * {
+  font-size: 12px !important;
+  line-height: 18px !important;
+}
