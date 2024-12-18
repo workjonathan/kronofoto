@@ -169,6 +169,7 @@ class LdIdQuerySet(models.QuerySet):
             db_obj.circa = object['circa']
             db_obj.is_published = object['is_published']
             db_obj.donor = donor.content_object
+            db_obj.remote_image = object['url']
             db_obj.category, _ = kf_models.Category.objects.get_or_create(
                 slug=object['category']['slug'],
                 defaults={"name": object['category']['name']},

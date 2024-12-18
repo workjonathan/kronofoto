@@ -203,6 +203,7 @@ def assertPhotosEqual(photo_a, photo_b):
     assert photo_b.circa == photo_a.circa
     assert photo_b.is_published == photo_a.is_published
     assert photo_b.donor.first_name == photo_a.donor.first_name
+    assert photo_a.original.url == photo_b.remote_image
     assert set(t.term for t in photo_b.terms.all()) == set(t.term for t in photo_a.terms.all())
     assert set(t.tag for t in photo_b.get_accepted_tags()) == set(t.tag for t in photo_a.get_accepted_tags())
 

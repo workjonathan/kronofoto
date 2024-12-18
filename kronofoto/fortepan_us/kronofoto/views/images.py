@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpRequest
 from django.core.signing import Signer, BadSignature
-from typing import Optional, Any, Dict, Union, List
+from typing import Optional, Any, Dict, Union, List, Tuple
 from dataclasses import dataclass
 from fortepan_us.kronofoto.imageutil import ImageCacher
 
@@ -11,7 +11,7 @@ def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) 
     try:
         unsigned = signer.unsign_object(profile)
         try:
-            path = unsigned[0]
+            path: Union[str, Tuple[int, str]] = unsigned[0]
             width = unsigned[1]
             height = unsigned[2]
         except:

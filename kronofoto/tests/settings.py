@@ -14,6 +14,7 @@ ALLOWED_HOSTS = ['example.com']
 GOOGLE_MAPS_KEY = 'fake-gmaps-key'
 GRID_DISPLAY_COUNT = 3
 
+MEDIA_URL = "http://example.com/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media2', 'media')
 
 CSS_VERSION = 1
