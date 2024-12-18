@@ -38,18 +38,21 @@ def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
     figures = []
     for (i, form) in enumerate(card_types):
         if form.cleaned_data['cardform_type'] != 'figure':
-            assert form.prefix
+            if not form.prefix:
+                return HttpResponse("main form with missing prefix", status=400)
             data[form.prefix + "-card_type"] = str(new_alignment)
             if new_type:
                 data[form.prefix + '-cardform_type'] = new_type
             data[form.prefix + '-figure_count'] = str(new_count)
             mainform = CardForm(data, prefix=form.prefix)
             if not mainform.is_valid():
-                print(mainform.errors)
+                return HttpResponse("invalid main form", status=400)
         else:
             figures.append(FigureForm(data, prefix=form.prefix))
-            assert figures[-1].is_valid()
-    assert mainform
+            if not figures[-1].is_valid():
+                return HttpResponse("invalid main form", status=400)
+    if not mainform:
+        return HttpResponse("main form missing", status=400)
     for _ in range(len(figures), new_count):
         figures.append(FigureForm(prefix=str(uuid.uuid4()), initial={"cardform_type": "figure", "parent": mainform.prefix }))
     cardcontext = CardContext()
