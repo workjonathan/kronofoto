@@ -1,4 +1,4 @@
-from django.forms import ModelForm, Form, CharField, HiddenInput, RadioSelect
+from django.forms import ModelForm, Form, CharField, HiddenInput, RadioSelect, IntegerField
 from django.db.models import QuerySet
 from fortepan_us.kronofoto.models import Card, PhotoCard, Figure, Photo
 from dataclasses import dataclass, field
@@ -10,6 +10,11 @@ class CardFormType(Form):
     cardform_type = CharField(required=True, widget=HiddenInput)
 
 class CardForm(ModelForm, CardFormType):
+    figure_count = IntegerField(required=False, widget=HiddenInput)
+
+    def clean_figure_count(self) -> int:
+        return self.cleaned_data.get('figure_count', 0)
+
     class Meta:
         model = Card
         fields = ['title', 'description', "smalltext", 'photo', 'fill_style', "card_type"]
@@ -36,7 +41,6 @@ class FigureForm(ModelForm, CardFormType):
 
 PhotoCardForm = CardForm
 
-
 @dataclass
 class CardFormWrapper:
     form: ModelForm
@@ -60,6 +64,13 @@ class CardFormWrapper:
     @property
     def title(self) -> str:
         return self.form['title'].value() or ""
+
+    @property
+    def figure_count(self) -> int:
+        try:
+            return int(self.form['figure_count'].value())
+        except ValueError:
+            return 0
 
     @property
     def card_type(self) -> int:

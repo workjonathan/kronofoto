@@ -14,6 +14,12 @@
             @remove-empty="empty=false"
         {% endif %}>
         {% if edit %}
+        {% for figure in card.figures %}
+            {% for field in figure.form %}
+                {{ field.as_hidden }}
+            {% endfor %}
+            <input type="hidden" name="prefix" value="{{ figure.form.prefix }}">
+        {% endfor %}
         {{ form.photo.errors }}
         <div class="full-image-area__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal"></div>
         {% endif %}

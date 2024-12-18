@@ -7,6 +7,12 @@
     <div data-card class="content-area">
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}
+            {% for figure in card.figures %}
+                {% for field in figure.form %}
+                    {{ field.as_hidden }}
+                {% endfor %}
+                <input type="hidden" name="prefix" value="{{ figure.form.prefix }}">
+            {% endfor %}
             {{ form.title.errors }}
             <h2 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ card.title }}</h2>
             {{ form.description.errors }}
@@ -21,3 +27,7 @@
         </div>
     </div>
 {% endblock content_body %}
+{% block formfields %}
+    {{ block.super }}
+    {{ form.fill_style.as_hidden }}
+{% endblock formfields %}

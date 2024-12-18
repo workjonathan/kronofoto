@@ -38,18 +38,24 @@ def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
     figures = []
     for (i, form) in enumerate(card_types):
         if form.cleaned_data['cardform_type'] != 'figure':
+            assert form.prefix
             data[form.prefix + "-card_type"] = str(new_alignment)
-            data[form.prefix + '-cardform_type'] = new_type
+            if new_type:
+                data[form.prefix + '-cardform_type'] = new_type
+            data[form.prefix + '-figure_count'] = str(new_count)
             mainform = CardForm(data, prefix=form.prefix)
-            assert mainform.is_valid()
+            if not mainform.is_valid():
+                print(mainform.errors)
         else:
             figures.append(FigureForm(data, prefix=form.prefix))
             assert figures[-1].is_valid()
-
+    assert mainform
+    for _ in range(len(figures), new_count):
+        figures.append(FigureForm(prefix=str(uuid.uuid4()), initial={"cardform_type": "figure", "parent": mainform.prefix }))
     cardcontext = CardContext()
-    context, i = cardcontext.context(card=mainform, i=0, two_column_count=0, mode="EDIT_POST")
+    context, i = cardcontext.context(card=CardFormWrapper(form=mainform, figures=[FigureFormWrapper(figure) for figure in figures]), i=0, two_column_count=0, mode="EDIT_POST")
     context['exhibit'] = exhibit
-    print(context)
+    context['edit'] = True
     return TemplateResponse(
         template=context['template'],
         request=request,
@@ -93,7 +99,6 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
         )
     elif card_type == "figure":
         parent_uuid = str(uuid.uuid4())
-        cardform = FigureListForm(initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
         figures = []
         form = FigureCountForm(request.GET, initial={"count": 1})
         if form.is_valid() and form.cleaned_data['count']:
@@ -104,7 +109,9 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
                 FigureFormWrapper(FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent_uuid, "cardform_type": "figure"}))
                 for _ in range(form.cleaned_data['count'])
             ]
+            cardform = FigureListForm(initial={"cardform_type": "figure_list", "figure_count": form.cleaned_data['count']}, prefix=parent_uuid)
         context['card'] = FigureListFormWrapper(form=cardform, figures=figures)
+        context['figure_count'] = form.cleaned_data['count']
         context['form'] = cardform
         return TemplateResponse(
             template="kronofoto/components/figure-card.html",
@@ -357,10 +364,15 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                 from fortepan_us.kronofoto.models import Figure
                 exhibit.card_set.all().delete()
                 card_objs = {}
+
                 for order, card_form in enumerate(forms):
                     if card_form.cleaned_data["cardform_type"] != 'figure':
                         card = card_form.save(commit=False)
+                        figure_count = card_form.cleaned_data['figure_count']
                         card_objs[card_form.prefix] = card
+                        card.figure_count = 0
+                        card.figure_total = card_form.cleaned_data['figure_count']
+                        print(card.figure_total)
                         card.exhibit = exhibit
                         card.order = order
                         card.card_style = 0
@@ -370,7 +382,9 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         figure = card_form.save(commit=False)
                         figure.card = card_objs[card_form.cleaned_data['parent']]
                         figure.order = order
-                        figure.save()
+                        if figure.card.figure_count < figure.card.figure_total:
+                            figure.save()
+                            figure.card.figure_count += 1
                 messages.success(request, "Your exhibit has been saved")
                 return HttpResponseRedirect(reverse("kronofoto:exhibit-edit", kwargs={"pk": pk}))
             else:
@@ -414,6 +428,7 @@ class CardContext:
             "zindex": 200 - i,
             "edit": is_edit,
         }
+        obj['figure_count'] = 0
         if mode == "DISPLAY":
             assert isinstance(card, Card)
             if card.card_type != Card.CardType.TEXT_ONLY:
@@ -437,6 +452,7 @@ class CardContext:
                     obj['image_area_classes'] += ['full-image-area--cover']
             else:
                 if card.figure_set.all().exists():
+                    obj['figure_count'] = card.figure_set.count()
                     obj['styles'] = {
                         'border-top': '1px solid #ffffff',
                     }
@@ -494,7 +510,8 @@ class CardContext:
                         )
                     )
                 if len(figures):
-                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
+                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"cardform_type": "figure_list", 'figure_count': len(figures)}, prefix=parent_uuid)
+                    obj['figure_count'] = len(figures)
                     obj['form'] = cardform
                     obj['card'] = FigureListFormWrapper(form=cardform, figures=figures)
                     obj['template'] = 'kronofoto/components/figure-card.html'
@@ -513,6 +530,7 @@ class CardContext:
                     }
         else: # EDIT_POST
             assert not isinstance(card, Card)
+            obj['figure_count'] = card.figure_count
             if card.form["cardform_type"].value() == 'figure_list':
                 assert isinstance(card, FigureListFormWrapper)
                 obj['form'] = card.form
