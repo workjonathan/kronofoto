@@ -9,7 +9,7 @@ from django.utils.html import escape
 from django.core.cache import cache
 from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure
 from fortepan_us.kronofoto.imageutil import ImageSigner
-from typing import Union, Dict, Any, Union, Optional, Tuple
+from typing import Union, Dict, Any, Union, Optional, Tuple, overload
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
@@ -58,8 +58,23 @@ def page_links(formatter: Any, page_obj: Any, target: Any=None) -> Dict[str, Any
         page_obj=page_obj
     )
 
+# caller must either photo or photo id (and path which is ignored until other branches are adjusted).
+# caller must provide at least a width or a height (or both).
+@overload
+def image_url(*, width: int, height: Optional[int]=None, photo: Photo) -> str:
+    ...
+@overload
+def image_url(*, width: int, height: Optional[int]=None, id: int, path: Any) -> str:
+    ...
+@overload
+def image_url(*, width: Optional[int]=None, height: int, photo: Photo) -> str:
+    ...
+@overload
+def image_url(*, width: Optional[int]=None, height: int, id: int, path: Any) -> str:
+    ...
+
 @register.simple_tag(takes_context=False)
-def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: Optional[Photo]=None, id: Optional[int]=None) -> str:
+def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: Optional[Photo]=None, id: Optional[int]=None, path: Any=None) -> str:
     if photo is None:
         assert id is not None
         photo = Photo.objects.get(id=id)
