@@ -54,7 +54,7 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
             "links": links,
             'data': {
                 "photos": [dict(
-                    url=image_url(id=position.photo.id, path=position.photo.original.name, height=1400),
+                    url=image_url(photo=position.photo, height=1400),
                     height=position.photo.h700.height if position.photo.h700 else 700,
                     width=position.photo.h700.width if position.photo.h700 else 400,
                     azimuth=position.azimuth+object.heading-90,

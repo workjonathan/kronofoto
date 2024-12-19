@@ -59,8 +59,12 @@ def page_links(formatter: Any, page_obj: Any, target: Any=None) -> Dict[str, Any
     )
 
 @register.simple_tag(takes_context=False)
-def image_url(*, id: int, path: str, width: Optional[int]=None, height: Optional[int]=None) -> str:
-    return ImageSigner(id=id, path=path, width=width, height=height).url
+def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: Optional[Photo]=None, id: Optional[int]=None) -> str:
+    if photo is None:
+        assert id is not None
+        photo = Photo.objects.get(id=id)
+    path = photo.original.name
+    return ImageSigner(id=photo.id, path=path, width=width, height=height).url
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()

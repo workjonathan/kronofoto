@@ -5,6 +5,6 @@
 </figure>
 <ul class="photo-grid" id="photo-grid">
     {% for photo in photos %}
-    <li><a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" /></a></li>
+    <li><a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a></li>
     {% endfor %}
 </ul>

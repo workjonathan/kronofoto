@@ -3,7 +3,7 @@
         <div class="photo-tiles">
             <div class="photo-tiles__tiles">
             {% for photo in collection.photos.all %}
-            <img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=200 height=200 %}" data-photo-target="{{ target }}" data-id="{{ photo.id }}">
+            <img loading="lazy" src="{% image_url photo=photo width=200 height=200 %}" data-photo-target="{{ target }}" data-id="{{ photo.id }}">
             {% endfor %}
             </div>
         </div>
