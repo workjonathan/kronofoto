@@ -67,8 +67,38 @@
   cursor: pointer;
 }
 
+@mixin plus-button-icon {
+  background-image: url("data:image/svg+xml,%3Csvg id='Group_218' data-name='Group 218' xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cline id='Line_77' data-name='Line 77' y2='20' transform='translate(10)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cline id='Line_78' data-name='Line 78' x1='20' transform='translate(0 10)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+@mixin plus-button-icon--variation-2 {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cg id='Group_104' data-name='Group 104' transform='translate(-305.5 -907.5)'%3E%3Cpath id='Path_481' data-name='Path 481' d='M318,907.5v15' transform='translate(-5 0)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_482' data-name='Path 482' d='M0,0V15' transform='translate(320.5 915) rotate(90)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 @mixin edit-image-button--empty {
   &:before {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cg id='Group_104' data-name='Group 104' transform='translate(-305.5 -907.5)'%3E%3Cpath id='Path_481' data-name='Path 481' d='M318,907.5v15' transform='translate(-5 0)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_482' data-name='Path 482' d='M0,0V15' transform='translate(320.5 915) rotate(90)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+    @include plus-button-icon--variation-2;
+  }
+}
+
+@mixin plus-button {
+  cursor: pointer;
+  @include plus-button-icon;
+}
+
+@mixin off-canvas-button {
+  font-size: 0px;
+  border: none;
+  border-radius: 0px;
+  background-color: white;
+  width: 40px;
+  padding: 0;
+  height: 40px;
+  &:hover {
+    background-color: #eeeeee;
   }
 }

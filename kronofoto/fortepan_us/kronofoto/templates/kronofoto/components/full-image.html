@@ -1,3 +1,9 @@
 {% load widgets %}
+{% load krono_urls %}
 
+<a class="full-image-area__info info-button info-button--top" href="{% object_url photo %}" target="_blank">
+    <span class="info-button__icon"></span>
+    <div class="info-button__text">
+    {% include "kronofoto/components/attribution.html" with object=photo %}</div>
+</a>
 <img loading="lazy" src="{% image_url photo=photo width=2000 %}">

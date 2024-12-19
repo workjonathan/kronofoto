@@ -3,7 +3,7 @@
 {% load widgets %}
 
 {% block content %}
-
+{% block user_header %}
 <div class="user-header">
     <div class="user-header__wrapper column">
         <div class=user-header__info>
@@ -22,63 +22,20 @@
         {% endif %}
     </div>
 </div>
-
-{% collections request=request profile_user=profile_user %}
-
-<section id="my-exhibits" class="border-bottom">
-
-    <div class="row">
-        <div class="columns small-9">
-            <h2>My FotoStories</h2>
-            {% with exhibits_count=exhibits.count %}
-            <p class="paragraph color-light padding-bottom-2">A FotoStory is a digital exhibit built with Fortepan photos; build a FotoStory with a combination of text + image content blocks. You can share and embed any FotoStory.</p>
-            {% endwith %}
-        </div>
-
-        <div class="columns small-12 large-5">
-            <form class="form form--collection" x-post="{% krono_url "kronofoto:exhibit-create" %}" method="post" action="{% krono_url "kronofoto:exhibit-create" %}">
-                {% csrf_token %}
-                <h3>Create a FotoStory</h3>
-                {% for field in form %}
-                {# <input class="border" type="text" id="exhibit_name" name="exhibit_name" placeholder="Exhibit Name" /> #}
-                {{ field }}
-                {% endfor %}
-                <input type="submit" class="button" value="Create" />
-            </form>
-        </div>
-
-        <div class="columns small-12 large-7">
-            <div class="collection collection--list collection--2">
-                {% for exhibit in exhibits %}
-                <div class="collection__item">
-                    <div class="collection__item-label"><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">{{ exhibit.name }}</a></div>
-                    {% if profile_user == request.user %}
-                    <div class="collection__item-menu context-menu" id="exhibit-{{ exhibit.id }}" data-toggler=".expanded">
-                        <div class="context-menu__button" data-toggle="exhibit-{{ exhibit.id }}"></div>
-                        <div class="context-menu__items">
-                            <ul>
-                                <li><a href="{% krono_url "kronofoto:exhibit-edit" pk=exhibit.id %}">Edit</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}">View</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}" data-clipboard-copy>Share</a></li>
-                                <li><a href="{% krono_url "kronofoto:exhibit-embed" pk=exhibit.id %}">Embed</a></li>
-                                <li><a href="{% krono_url "kronofoto:exhibit-delete" pk=exhibit.pk %}">Delete</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
+{% endblock user_header %}
+{% block collections %}
+{% include "kronofoto/components/collections.html" %}
+{% endblock collections %}
+{% block exhibits %}
+{% include "kronofoto/components/exhibits.html" %}
+{% endblock exhibits %}
 
 <section id="my-fotosphers" class="border-bottom">
 
     <div class="row">
 
         <div class="columns small-8">
-            <h2>My FotoSphere Tours</h2>
+            <h2>My FotoSpheres</h2>
             <p class="paragraph color-light padding-bottom-2">A FotoSphere is a Fortepan photo that is both geolocated and matched to a modern day 360º image. You can search for FotoSpheres in the Fortepan US portal, and collect them in a list here. You can also share and embed any FotoSphere, and use a collection of FotoSpheres to create a FotoSphere Tour.</p>
         </div>
 

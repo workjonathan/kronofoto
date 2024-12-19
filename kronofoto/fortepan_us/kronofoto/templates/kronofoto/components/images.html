@@ -1,5 +1,5 @@
 {% load widgets %}
-        <h1>{{ collection.name }}</h1>
+        <h1><a href="{{ collection.get_absolute_url }}" target="_blank">{{ collection.name }}</a></h1>
         <div class="photo-tiles">
             <div class="photo-tiles__tiles">
             {% for photo in collection.photos.all %}

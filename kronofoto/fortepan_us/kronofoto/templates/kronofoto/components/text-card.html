@@ -8,12 +8,15 @@
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}
             {{ form.title.errors }}
-            <h2 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ card.title }}</h2>
+            <h2 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ card.title }}</h2>
             {{ form.description.errors }}
-            <span contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ card.description }}</span>
+            <span contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ card.description }}</span>
+            {{ form.smalltext.errors }}
+            <span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
-            {% if card.description %}<span>{{ card.description | linebreaks }}</span>{% endif %}
+            {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
+            {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
             {% endif %}
         </div>
     </div>

@@ -54,12 +54,16 @@ from .models import Exhibit, Card, PhotoCard, Figure
 class CardInline(admin.StackedInline):
     model = Card
     extra = 1
+    raw_id_fields = ['photo',]
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        return super().get_queryset(request).filter(photocard__isnull=True)
+        return super().get_queryset(request).filter(card_type=0)
+
 class PhotoCardInline(admin.StackedInline):
-    model = PhotoCard
+    model = Card
     raw_id_fields = ['photo',]
     extra = 1
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).exclude(card_type=0)
 
 
 @admin.register(Exhibit)

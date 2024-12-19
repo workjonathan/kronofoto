@@ -16,6 +16,9 @@
           <div class="collection-name">
             <a href="{% url "kronofoto:random-image" %}"><i class="fas fa-times"></i></a> {{ collection_name }}
           </div>
+          {% else %}
+          <template class="collection-name">
+          </template>
           {% endif %}
 
         </div>

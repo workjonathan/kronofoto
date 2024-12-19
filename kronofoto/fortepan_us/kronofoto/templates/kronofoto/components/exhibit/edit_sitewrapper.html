@@ -13,18 +13,22 @@
 {% block hero_content_wrapper %}
     <div class="hero__title">
         {{ form.title.errors }}
-        <h1 contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.title.auto_id }}">{{ exhibit.title }}</h1>
+        <h1 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ exhibit.title }}</h1>
     </div>
     {{ form.description.errors }}
-    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" data-target="{{ form.description.auto_id }}">{{ exhibit.description }}</p>
+    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ exhibit.description }}</p>
+    {{ form.smalltext.errors }}
+    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ exhibit.smalltext }}</p>
 {% endblock hero_content_wrapper %}
 
 {% block hero_background %}
     {{ form.photo.errors }}
-    <div class="hero__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal" data-target="{{ form.photo.auto_id }}"></div>
+    <div class="hero__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal"></div>
     <div class="hero__background"
         hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">
+        {% if exhibit.photo %}
         <img src="{% image_url photo=exhibit.photo width=2000 %}">
+        {% endif %}
     </div>
 {% endblock hero_background %}
 
@@ -33,9 +37,25 @@
 {% endblock info_text %}
 
 {% block hero_formfields %}
-    {% for field in form %}
-        {{ field.as_hidden }}
-    {% endfor %}
+    {{ form }}
 {% endblock hero_formfields %}
 
 
+{% block insert_card %}
+    <div x-data="{open: false}" class="between-card" x-bind:class="{ 'opened': open }">
+        <button type="button" class="between-card__add-button" aria-label="Insert Card" @click="open=!open">Insert card</button>
+        <div class="between-card__indicator"></div>
+        <div class="toolbar" x-show="open">
+            <label class="toolbar__label">Add a content block</label>
+            <div class="toolbar__buttons">
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="text" %}"><i class="icon--add-text">Text Card</i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=1"><i class="icon--add-text-image">Photo Card</i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=2"><i class="icon--add-text-image-2"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="figure" %}?count=3"><i class="icon--add-text-image-3"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=2"><i class="icon--add-image-left"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=3"><i class="icon--add-image-right"></i></button>
+                <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .between-card" hx-swap="afterend" hx-get="{% krono_url "kronofoto:exhibit-card-form" pk=exhibit.id card_type="photo" %}?align=1"><i class="icon--add-image-full"></i></button>
+            </div>
+        </div>
+    </div>
+{% endblock insert_card %}

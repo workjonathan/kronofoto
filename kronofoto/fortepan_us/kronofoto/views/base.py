@@ -62,7 +62,6 @@ class ArchiveRequest:
         context['constraint'] = json.dumps({'Constraint': self.constraint})
         context['url_kwargs'] = self.url_kwargs
         context['base_template'] = self.base_template
-        context['collection_name'] = self.collection_name
         context['timeline_url'] = '#'
         context['push_url'] = not self.is_embedded
         return context

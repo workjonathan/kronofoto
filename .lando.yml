@@ -11,7 +11,7 @@ services:
     services:
       build: .
       command: tail -f /dev/null
-    command: su -c 'python /app/kronofoto/manage.py runserver 0.0.0.0:80' www-data
+    command: su -c 'python /app/kronofoto/fortepan_us/manage.py runserver 0.0.0.0:80' www-data
     build:
       - cd /app && pip install --upgrade pip && pip install --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org -r requirements.txt
       - cd /app && npm install
@@ -42,15 +42,22 @@ tooling:
     cmd: pip
   manage:
     service: appserver
-    dir: /app/kronofoto
+    dir: /app/kronofoto/fortepan_us
     cmd: python manage.py
   runserver:
     service: appserver
-    dir: /app/kronofoto
-    cmd: python manage.py runserver 0.0.0.0:80
+    dir: /app/kronofoto/fortepan_us
+    cmd: hatch run manage runserver 0.0.0.0:80
+  migrate:
+    service: appserver
+    dir: /app/kronofoto/fortepan_us
+    cmd: hatch run manage migrate
   psql:
     service: db
     cmd: psql -U postgres
   npm:
     service: node
     dir: /app
+  watch:
+    service: node
+    cmd: npm run dev

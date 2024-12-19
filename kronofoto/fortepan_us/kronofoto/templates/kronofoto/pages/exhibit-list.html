@@ -3,52 +3,5 @@
 {% load krono_urls %}
 
 {% block content %}
-<section id="my-exhibits" class="border-bottom">
-
-    <div class="row">
-        <div class="columns small-12">
-            <h2>My Exhibits</h2>
-            <div role="doc-subtitle">3 exhibits</div>
-        </div>
-
-        <div class="columns small-12 large-4">
-            <form class="form form--collection" x-post="{% krono_url "kronofoto:exhibit-create" %}" method="post" action="{% krono_url "kronofoto:exhibit-create" %}">
-                {% csrf_token %}
-                <h3>Create an Exhibit</h3>
-                <p class="paragraph color-light">You can use exhibits to tell your own stories with Fortepan photos.</p>
-                {% for field in form %}
-                <div class="form-item">
-                    {{ field }}
-                </div>
-                {% endfor %}
-                <input type="submit" class="button" value="Create" />
-            </form>
-        </div>
-
-        <div class="columns small-12 large-8">
-            <div class="collection collection--list collection--2">
-                {% for exhibit in exhibits %}
-                <div class="collection__item">
-                    <div class="collection__item-label"><a href="{{ exhibit.get_absolute_url }}">{{ exhibit.name }}</a></div>
-                    {% if profile_user == request.user %}
-                    <div class="collection__item-menu dropdown-menu" id="exhibit-{{ exhibit.id }}" data-toggler=".expanded">
-                        <div class="dropdown-menu__button" data-toggle="exhibit-{{ exhibit.id }}"></div>
-                        <div class="dropdown-menu__items">
-                            <ul>
-                                <li><a href="#">Edit</a></li>
-                                <li><a href="{{ exhibit.get_absolute_url }}">Copy Share Link</a></li>
-                                <li><a href="#">Add to List</a></li>
-                                {% comment %}
-                                <li><a href="href="{% url "kronofoto:collection-delete" collection.id %}">Delete</a></li>
-                                {% endcomment %}
-                            </ul>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
+{% include "kronofoto/components/exhibits.html" %}
 {% endblock %}

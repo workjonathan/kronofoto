@@ -131,45 +131,12 @@
         hx-swap="beforeend"
         hx-sync="this:drop"
     >
-        {% block thumbnails %}
 
         {% carousel_form %}
         <div class="fi-thumbnail-carousel" hx-target="#fi-image" hx-push-url="{{ push_url|yesno:"true,false"}}" hx-swap="innerHTML">
-            <div class="back-arrows" data-back-arrows>
-                {% block back_arrows %}
-                <a id="backward-zip"></a>
-                <a
-                    id="backward"
-                    href="{% object_url prev_photo url_kwargs get_params %}"
-                    hx-get="{% object_url prev_photo url_kwargs get_params %}"
-                ></a>
-                {% endblock back_arrows %}
-            </div>
-
-            <div class="slide-container">
-                <ul id="fi-preload-zone"></ul>
-                <div data-fi-load-thumbnails class="hide"></div>
-                <ul id="fi-thumbnail-carousel-images" style="left: 0px;" data-fi-thumbnail-carousel-images>
-                    {% include "kronofoto/components/thumbnails.html" %}
-                </ul>
-            </div>
-
-            <div class="forward-arrows" data-forward-arrows>
-                {% block forward_arrows %}
-                <a
-                    id="forward"
-                    href="{% object_url next_photo url_kwargs get_params %}"
-                    hx-get="{% object_url next_photo url_kwargs get_params %}"
-                ></a>
-                <a id="forward-zip">
-                    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
-                </a>
-                {% endblock forward_arrows %}
-            </div>
-
+            {% include "kronofoto/components/thumbnail-carousel.html" %}
         </div>
 
-    {% endblock thumbnails %}
     </form>
     </nav>
 

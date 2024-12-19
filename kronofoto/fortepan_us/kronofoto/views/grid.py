@@ -106,6 +106,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        context['collection_name'] = self.archive_request.collection_name
         page_obj = context['page_obj']
         object_list = context['object_list']
         context['formatter'] = KeysetViewFormatter(self.url_kwargs, self.params)

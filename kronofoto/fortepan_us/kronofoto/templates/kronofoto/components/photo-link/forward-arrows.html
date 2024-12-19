@@ -1,0 +1,14 @@
+{% load krono_urls %}
+<a 
+    id="forward"
+    href="{% object_url next_photo url_kwargs get_params %}"
+    {% if is_mainstreet %}
+    @click.prevent="$dispatch('kronofoto-select-node', {{next_photo.id}})"
+    {% else %}
+    hx-get="{% object_url next_photo url_kwargs get_params %}"
+    {% endif %}
+></a>
+<a id="forward-zip">
+    <span data-tooltip class="top" data-click-open="false" title="Click to jump,&#xA; hold to crawl"></span>
+</a>
+

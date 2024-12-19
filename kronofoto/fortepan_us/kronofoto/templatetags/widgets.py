@@ -1,4 +1,5 @@
 from django import template
+from django.http import QueryDict
 from django.core.signing import Signer
 from django.http import HttpRequest
 from fortepan_us.kronofoto.reverse import reverse
@@ -9,7 +10,7 @@ from django.utils.html import escape
 from django.core.cache import cache
 from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure
 from fortepan_us.kronofoto.imageutil import ImageSigner
-from typing import Union, Dict, Any, Union, Optional, Tuple, overload
+from typing import Union, Dict, Any, Union, Optional, Tuple, List, overload
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
@@ -89,13 +90,28 @@ def photo_count() -> Optional[Any]:
 
 @register.filter(is_safe=True)
 @stringfilter
-def markdown(text: str) -> str:
+def markdown(text: str, extension: Optional[str]=None) -> str:
+    # disable ParagraphProcessor?
     from .urlify import URLifyExtension
-    return mark_safe(md.markdown(escape(text), extensions=[URLifyExtension()]))
+    extensions = []
+    extensions.append(URLifyExtension())
+    if extension:
+        extensions.append(extension)
+    return mark_safe(md.markdown(escape(text), output_format="html", extensions=extensions))
 
 @register.simple_tag(takes_context=False)
 def thumb_left(*, index: int, offset: int, width: int) -> int:
     return index * width + offset
+
+
+@register.inclusion_tag('kronofoto/components/thumbnails.html', takes_context=False)
+def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]], url_kwargs=Optional[Dict[str, Any]], get_params: Optional[QueryDict]) -> Dict[str, Any]:
+    return  {
+        "object_list": object_list,
+        "positioning": positioning,
+        "url_kwargs": url_kwargs,
+        "get_params": get_params,
+    }
 
 @register.inclusion_tag("kronofoto/components/collections.html", takes_context=False)
 def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
@@ -107,3 +123,4 @@ def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
         filter_kwargs['visibility'] = "PU"
     context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
     return context
+

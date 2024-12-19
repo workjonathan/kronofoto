@@ -2,8 +2,15 @@
 {% load static %}
 {% load widgets %}
 {% load krono_urls %}
+{% load searchform %}
 
 {% block content %}
+<style>
+    svg.leaflet-tile {
+        overflow: visible
+    }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <div x-data="{ open: false }" @kronofoto-select-photosphere-marker="open = true" @node-changed="open = false">
     <div id="fi-photosphere-metadata">
         {% block photosphere_metadata %}
@@ -13,7 +20,7 @@
         {% endblock photosphere_metadata %}
     </div>
     <form hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-        <div data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh">
+        <div id="fi-photosphere" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw; height: 80vh" data-mainstreet-tiles="{{ mainstreet_tiles }}">
             <input name="id" type="hidden">
         </div>
     </form>
@@ -29,5 +36,27 @@
             hx-push-url="false">
         </div>
     </div>
+    <nav id="fi-timeline" class="fi-timeline">
+        <form 
+            hx-trigger="kronofoto:loadThumbnails" 
+            hx-target="#fi-thumbnail-carousel-images" 
+            hx-get="{% krono_url "kronofoto:mainstreetview-carousel" %}"
+            hx-push-url="false"
+            hx-swap="beforeend"
+            hx-sync="this:drop"
+        >
+        {{ thumbnails_form }}
+        <ul id="fi-preload-zone"></ul>
+        <div data-fi-load-thumbnails class="hide"></div>
+        <div class="fi-thumbnail-carousel" hx-target="#fi-photosphere-metadata" hx-swap="innerHTML">
+            {% include "kronofoto/components/thumbnail-carousel.html" with object_list=photos width_element="#fi-photosphere" is_mainstreet=True %}
+        </div>
+        </form>
+    </nav>
+    <ul>
+        {% for mainstreet in mainstreet_links %}
+        <li><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}

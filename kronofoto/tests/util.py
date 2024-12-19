@@ -1,7 +1,7 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from django.db import transaction
-from fortepan_us.kronofoto.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair
+from fortepan_us.kronofoto.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair, MainStreetSet
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
@@ -98,9 +98,15 @@ def a_photo(a_category, an_archive):
     )
 
 @pytest.fixture
-def a_photosphere():
+def a_mainstreetset():
+    return MainStreetSet.objects.create(name="a mainstreet set")
+
+@pytest.fixture
+def a_photosphere(a_mainstreetset):
     return PhotoSphere.objects.create(
         image=SimpleUploadedFile("small.gif", small_gif, content_type="image/gif"),
+        mainstreetset=a_mainstreetset,
+        location="POINT (1 0)",
     )
 
 @pytest.fixture

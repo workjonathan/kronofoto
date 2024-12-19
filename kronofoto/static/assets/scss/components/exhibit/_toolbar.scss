@@ -1,0 +1,104 @@
+@use '../../colors' as *;
+@use 'buttons' as *;
+@use '../../exhibit-typography' as *;
+@use '../../typography' as *;
+
+.toolbar {
+  box-sizing: border-box;
+  padding: 6px 15px 15px 15px;
+  background-color: $white;
+  position: relative;
+  overflow: hidden;
+
+  .toolbar__buttons {
+    display: flex;
+  }
+
+  .toolbar__button {
+    margin-right: 10px;
+    padding: 0px;
+    width: 100%;
+    &:last-child {
+      margin-right: 0px;
+    }
+  }
+
+  .toolbar__button--icon {
+    appearance: none;
+    padding: 0px;
+    width: 100px;
+    height: 69px;
+    background-color: $white;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all ease-in-out 200ms;
+    border: 1px solid #D6D6D6;
+    &:hover {
+      box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .16);
+    }
+    i {
+      font-size: 0px;
+      display: block;
+    }
+    &:last-child {
+      margin-right: 0px;
+    }
+  }
+
+  .toolbar__button--icon.toolbar__button--small {
+    width: 50px;
+    height: 50px;
+    border: none;
+    position: relative;
+    &:hover {
+      box-shadow: none;
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+        height: 2px;
+        width: 35px;
+        background-color: #D6D6D6;
+        transform: translateX(-50%);
+      }
+    }
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    padding-top: 15px;
+    &:first-child {
+      padding-top: 0px;
+    }
+    &:after {
+      content: '';
+      display: block;
+      min-width: 300px;
+      height: 1px;
+      background-color: #D6D6D6;
+      position: absolute;
+      bottom: 0px;
+    }
+    &:last-child:after {
+      display: none;
+    }
+  }
+
+  label {
+    color: #838383;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+}
