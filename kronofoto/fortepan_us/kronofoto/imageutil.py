@@ -1,5 +1,4 @@
 from django.core.signing import Signer, BadSignature
-from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
 from PIL import Image, ImageOps
 from io import BytesIO
 from django.core.files.storage import default_storage
@@ -24,6 +23,7 @@ class ImageCacher:
         return "images/{}/{}/{}/.jpg".format(self.block1, self.block2, self.sig)
 
     def precache(self) -> Optional[bytes]:
+        from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
         Image.MAX_IMAGE_PIXELS = 195670000
         if default_storage.exists(self.name):
             return default_storage.open(self.name).read()

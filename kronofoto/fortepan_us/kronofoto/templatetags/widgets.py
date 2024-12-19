@@ -78,8 +78,7 @@ def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: O
     if photo is None:
         assert id is not None
         photo = Photo.objects.get(id=id)
-    path = photo.original.name
-    return ImageSigner(id=photo.id, path=path, width=width, height=height).url
+    return photo.image_url(width=width, height=height)
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()

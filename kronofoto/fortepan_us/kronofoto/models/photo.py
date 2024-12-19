@@ -34,8 +34,9 @@ from .place import Place
 import requests
 from dataclasses import dataclass
 from django.core.cache import cache
-from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol, overload
 from typing_extensions import Self
+from fortepan_us.kronofoto.imageutil import ImageSigner
 
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
 
@@ -271,6 +272,22 @@ class Photo(PhotoBase):
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
+
+    @overload
+    def image_url(self, *, height: int) -> str:
+        ...
+    @overload
+    def image_url(self, *, height: Optional[int]=None, width: int) -> str:
+        ...
+    def image_url(self, *, height: Optional[int]=None, width: Optional[int]=None) -> str:
+        assert height is not None or width is not None
+
+        if self.remote_image is None:
+            path = self.original.name
+        else:
+            path = (0, self.remote_image)
+        return ImageSigner(id=self.id, path=path, width=width, height=height).url
+
     @property
     def h700(self) -> Optional[ImageData]:
         from fortepan_us.kronofoto.imageutil import ImageSigner
