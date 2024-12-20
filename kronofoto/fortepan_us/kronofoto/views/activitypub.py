@@ -3,6 +3,7 @@ from django.template.response import TemplateResponse
 from typing import Dict, List, Any, Optional, Type, TypeVar, Protocol, Union, NamedTuple
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import permission_required
+from django.contrib.gis.db.models.functions import AsGeoJSON
 from urllib.parse import urlparse
 import requests
 from fortepan_us.kronofoto import signed_requests
@@ -123,6 +124,13 @@ class CreateContact:
             models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
             return InboxResponse(data={"status": "contact created"})
         return None
+
+
+
+#@require_json_ld
+def service_place(request: HttpRequest, pk: int) -> HttpResponse:
+    place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)
+    return JsonLDResponse(PlaceSchema().dump(place))
 
 @csrf_exempt
 @require_json_ld
@@ -310,6 +318,35 @@ class ObjectSchema(Schema):
     url = fields.Url(relative=True)
     content = fields.Str()
 
+class GeomField(fields.Field):
+    def _serialize(self, value: Any, attr: Any, obj: Any, **kwargs: Any) -> Dict[str, Any]:
+        return MultiPolygonSchema().dump(value)
+
+    def _deserialize(self, value: Dict[str, Any], *args: Any, **kwargs: Any) -> Any:
+        if value['type'] in ["MultiPolygon",]:
+            return MultiPolygonSchema().load(value)
+        raise ValueError(value['type'])
+
+class MultiPolygonSchema(Schema):
+    type = fields.Constant("MultiPolygon")
+    coordinates = fields.List(fields.List(fields.List(fields.List(fields.Float()))))
+
+class PlaceSchema(ObjectSchema):
+    name = fields.Str()
+    parent = fields.Url(relative=True)
+    geom = GeomField()
+
+    @pre_dump
+    def extract_fields_from_object(self, object: models.Place, **kwargs: Any) -> Dict[str, Any]:
+        data : Dict[str, Any] = {}
+        data['id'] = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": object.id})
+        data['name'] = object.name
+        if object.geom:
+            data['geom'] = json.loads(object.geom.json)
+        if object.parent:
+            data['parent'] = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": object.parent.id})
+        return data
+
 class LinkSchema(Schema):
     href = fields.Url()
 
@@ -326,6 +363,7 @@ class Image(ObjectSchema):
     contributor = fields.Url(relative=True)
     terms = fields.List(fields.Str)
     tags = fields.List(fields.Str)
+    place = fields.Url(relative=True)
 
     @pre_dump
     def extract_fields_from_object(self, object: Photo, **kwargs: Any) -> Dict[str, Any]:
@@ -342,6 +380,8 @@ class Image(ObjectSchema):
             "terms": [t.term for t in object.terms.all()],
             "tags": [t.tag for t in object.get_accepted_tags()],
         }
+        if object.place:
+            data['place'] = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": object.place.id})
         if object.donor:
             data["contributor"] = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={'short_name': object.archive.slug, "pk": object.donor.id})
         return data
