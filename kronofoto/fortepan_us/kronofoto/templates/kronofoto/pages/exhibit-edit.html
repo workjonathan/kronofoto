@@ -22,6 +22,14 @@
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="{% static "kronofoto/js/main.js" %}?version={{ CSS_VERSION }}"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css"
+    />
     <style>
         :root {
             --fp-main-font: 'Montserrat', sans-serif;
@@ -49,6 +57,7 @@
                 {% include "kronofoto/components/exhibit/edit_sitewrapper.html" %}
                 {% include "kronofoto/components/exhibit/credits.html" %}
             </div>
+{% comment %}
 <!--            <div class="page-editor__toolbar toolbar">-->
 <!--                <div class="toolbar__section">-->
 <!--                    <label class="toolbar__label" @click="hasChanges=true" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center">Content blocks</label>-->
@@ -63,9 +72,214 @@
 <!--                </div>-->
 
 <!--            </div>-->
+{% endcomment %}
         </div>
     </form>
     <div class="reveal tiny" id="add-image-modal" data-reveal>
     </div>
+    <script type="module">
+        import Shepherd from 'https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs'
+        const tour = new Shepherd.Tour({
+            useModalOverlay: true,
+            steps: [
+                {
+                    text: 'pick an image for the Title page',
+                    attachTo: {
+                        element: '.hero__edit-image-button',
+                        on: 'top'
+                    },
+                    advanceOn: {
+                        selector: '.hero__edit-image-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    text: 'choose title text',
+                    beforeShowPromise: () => {
+                        return new Promise(resolve => {
+                            document.addEventListener("kronofoto-close-modal", resolve, {once: true})
+
+                        })
+                    },
+                    attachTo: {
+                        element: '.hero__title > h1:nth-child(1)',
+                        on: 'right'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'Second text-size option (for title of subtitle)',
+                    attachTo: {
+                        element: 'p.hero__content:nth-child(2)',
+                        on: 'right'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'Third text-size option (for subtitle or reference',
+                    attachTo: {
+                        element: 'p.hero__content:nth-child(3)',
+                        on: 'right'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'adjust URL Here',
+                    attachTo: {
+                        element: '#content-editable-name',
+                        on: 'right'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'Add first content block here',
+                    attachTo: {
+                        element: '.between-card__add-button',
+                        on: 'bottom'
+                    },
+                    advanceOn: {
+                        selector: '.between-card__add-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    text: 'select 1 of 7 content blocks to build the FotoStory. for now, let\'s add a full size image',
+                    attachTo: {
+                        element: 'button.toolbar__button--icon:nth-child(7)',
+                        on: 'top'
+                    },
+                    advanceOn: {
+                        selector: 'body',
+                        event: 'htmx:afterSettle'
+                    },
+                },
+                {
+                    text: 'Anywhere it says "Click to change text" you can add text',
+                    attachTo: {
+                        element: '.full-image-area__text > h2:nth-child(1)',
+                        on: 'bottom'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'fill the page means that the image will fill the entire content box',
+                    attachTo: {
+                        element: '.full-image-area__select-alignment',
+                        on: 'bottom'
+                    },
+                    showOn: () => {
+                        return document.querySelectorAll('.full-image-area__select-alignment').length > 0
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'fit the page means the image will retain its aspect ratio',
+                    attachTo: {
+                        element: '.full-image-area__select-alignment',
+                        on: 'bottom'
+                    },
+                    showOn: () => {
+                        return document.querySelectorAll('.full-image-area__select-alignment').length > 0
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'move content blocks up or down as needed',
+                    attachTo: {
+                        element: '.component-menu--off-canvas',
+                        on: 'left'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'swap out a new image',
+                    attachTo: {
+                        element: '.full-image-area__edit-image-button',
+                        on: 'right'
+                    },
+                    advanceOn: {
+                        selector: '.full-image-area__edit-image-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    text: 'swap out a new content block',
+                    attachTo: {
+                        element: '[data-recard]',
+                        on: 'left'
+                    },
+                    beforeShowPromise: () => {
+                        return new Promise(resolve => {
+                            document.addEventListener("kronofoto-close-modal", resolve, {once: true})
+                        })
+                    },
+                    advanceOn: {
+                        selector: '[data-recard]',
+                        event: 'click'
+                    },
+                    buttons: [
+                        {
+                            text: "Next",
+                            action: () => tour.next(),
+                        },
+                    ]
+                },
+                {
+                    text: 'save and preview here',
+                    attachTo: {
+                        element: '.main-nav__actions',
+                        on: 'bottom'
+                    },
+                    advanceOn: {
+                        selector: '.main-nav__actions',
+                        event: 'click'
+                    },
+                },
+            ],
+        })
+        {% if can_show_exhibit %}
+            tour.start()
+        {% endif %}
+    </script>
 </body>
 </html>

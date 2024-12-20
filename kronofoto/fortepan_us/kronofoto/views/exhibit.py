@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import user_passes_test
 from functools import cached_property
 from django.shortcuts import get_object_or_404
-from fortepan_us.kronofoto.models import Photo, Exhibit, Card, Collection, PhotoCard
+from fortepan_us.kronofoto.models import Photo, Exhibit, Card, Collection, PhotoCard, UserData
 from django.db.models.functions import Length
 from django.db.models import QuerySet, Exists, OuterRef, Max, F, Q
 from django.db import transaction
@@ -146,6 +146,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
 
 
 class ExhibitForm(ModelForm):
+    has_tour = forms.BooleanField(required=False, widget=forms.HiddenInput)
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if 'instance' in kwargs:
@@ -322,9 +323,15 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
     if exhibit.owner.pk != request.user.pk:
         return HttpResponse("", status=400)
-    form = ExhibitForm(instance=exhibit) # type: ignore
-    context['exhibit'] = ExhibitFormWrapper(form)
     cards : Union[QuerySet[Card], List[Any]]
+    cards = exhibit.card_set.all().order_by('order').select_related(
+        'photo',
+        'photo__donor',
+        'photo__place',
+    )
+    context['can_show_exhibit'] = not cards.exists() and (not hasattr(request.user, 'userdata') or not request.user.userdata.has_seen_exhibit_tour)
+    form = ExhibitForm(instance=exhibit, initial={"has_tour": context['can_show_exhibit']}) # type: ignore
+    context['exhibit'] = ExhibitFormWrapper(form)
     if request.method == 'POST':
         card_types = [CardFormType(request.POST, prefix=prefix) for prefix in request.POST.getlist("prefix")]
         if all(typeform.is_valid() for typeform in card_types):
@@ -363,6 +370,11 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             form = ExhibitForm(request.POST, instance=exhibit)
             context['exhibit'] = ExhibitFormWrapper(form)
             if all(form_.is_valid() for form_ in forms) and form.is_valid() and 'save' in request.POST and request.POST['save'] == "Save":
+                if form.cleaned_data['has_tour']:
+                    userdata, created = UserData.objects.get_or_create(user=request.user)
+                    userdata.has_seen_exhibit_tour = True
+                    userdata.save()
+
                 form.save()
                 from fortepan_us.kronofoto.models import Figure
                 exhibit.card_set.all().delete()
@@ -375,7 +387,6 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         card_objs[card_form.prefix] = card
                         card.figure_count = 0
                         card.figure_total = card_form.cleaned_data['figure_count']
-                        print(card.figure_total)
                         card.exhibit = exhibit
                         card.order = order
                         card.card_style = 0
@@ -412,6 +423,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
         'photo__donor',
         'photo__place',
     )
+    context['can_show_exhibit'] = not cards.exists() and (not hasattr(request.user, 'userdata') or not request.user.userdata.has_seen_exhibit_tour)
     objs = []
     two_column_count = 0
     obj_context = CardContext()

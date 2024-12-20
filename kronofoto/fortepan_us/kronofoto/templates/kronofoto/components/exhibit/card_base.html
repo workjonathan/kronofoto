@@ -9,7 +9,7 @@
             <button type="button" @click="hasChanges = true" class="down" aria-label="Move down">Move down</button>
             <button type="button" @click="hasChanges = true" class="delete" aria-label="Delete">Delete</button>
             <div x-data="{open: false}">
-                <button type="button" aria-label="Change Card" @click="open=!open">Change card</button>
+                <button type="button" data-recard aria-label="Change Card" @click="open=!open">Change card</button>
                 <div class="toolbar" x-show="open">
                     <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="outerHTML" hx-include="closest .card" hx-get="{% krono_url "kronofoto:exhibit-recard" pk=exhibit.pk %}" hx-vals='{"assign_type":"text"}' hx-select=".card"><i class="icon--add-text">Text Card</i></button>
                     <button class="toolbar__button--icon" @click="open=false; hasChanges=true" hx-target="closest .card" hx-swap="outerHTML" hx-include="closest .card" hx-get="{% krono_url "kronofoto:exhibit-recard" pk=exhibit.pk %}" hx-vals='{"assign_type":"figure_list", "count": 1}' hx-select=".card"><i class="icon--add-text-image">Photo Card</i></button>
