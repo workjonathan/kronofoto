@@ -18,11 +18,11 @@
             {{ form.description.errors }}
             <span contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ card.description }}</span>
             {{ form.smalltext.errors }}
-            <span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span>
+            <small><span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span></small>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
             {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
-            {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
+            {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" }}</small>{% endif %}
             {% endif %}
         </div>
     </div>

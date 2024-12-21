@@ -1,4 +1,5 @@
 @use "sass:map";
+@use '../../exhibit-typography' as *;
 @import 'foundation-sites/scss/global';
 
 .header {
@@ -86,4 +87,39 @@ header nav div img {
   font-size: 16px;
   min-width: 200px;
   padding: 8px 5px;
+}
+
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  &__text {
+    font-family: Montserrat;
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: bold;
+    color: var(--fp-main-blue);
+    svg * {
+      fill:  var(--fp-main-blue);
+    }
+  }
+}
+
+.logo-img {
+  @include breakpoint(small up) {
+    width: 75px;
+  }
+  @include breakpoint(large up) {
+    width: 11.5vw;
+    min-width: 165px;
+  }
+  vertical-align: middle;
+  &--icon {
+    @include breakpoint(small up) {
+      min-width: initial;
+      width: 50px;
+    }
+    vertical-align: middle;
+    margin-right: 10px;
+  }
 }

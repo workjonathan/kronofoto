@@ -1,0 +1,83 @@
+@use '../../typography' as *;
+@use 'buttons' as *;
+
+.shepherd-element {
+  border-radius: 0px;
+  &[data-popper-placement="top"] {
+    transform: translateY(-37px);
+    .shepherd-arrow {
+      bottom: -32px;
+    }
+  }
+  &[data-popper-placement="bottom"] {
+    transform: translateY(37px);
+    .shepherd-arrow {
+      top: -32px;
+      transform: rotate(180deg);
+    }
+  }
+  &[data-popper-placement="left"] {
+    transform: translateX(-37px);
+    .shepherd-arrow {
+      right: -32px;
+      transform: rotate(270deg);
+    }
+  }
+  &[data-popper-placement="right"] {
+    transform: translateX(37px);
+    .shepherd-arrow {
+      left: -32px;
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.shepherd-content {
+  padding: 25px;
+}
+
+.shepherd-text {
+  color: #747474;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0px;
+}
+.shepherd-has-title .shepherd-content .shepherd-header {
+  background: transparent;
+  padding: 0px;
+  margin: 0px;
+  display: block;
+  height: auto;
+  h3 {
+    font-size: 14px;
+    font-weight: $font-weight-bold;
+  }
+}
+
+.shepherd-footer {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 30px;
+  .shepherd-button {
+    @include button--round;
+  }
+}
+
+.shepherd-arrow {
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='14.487' height='22.009' viewBox='0 0 14.487 22.009'%3E%3Cdefs%3E%3CclipPath id='clip-path'%3E%3Crect id='Rectangle_176' data-name='Rectangle 176' width='22.009' height='14.487' transform='translate(0 0)' fill='none' stroke='%23fff' stroke-width='1'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg id='Group_238' data-name='Group 238' transform='translate(14.487) rotate(90)'%3E%3Cg id='Group_237' data-name='Group 237' clip-path='url(%23clip-path)'%3E%3Cpath id='Path_532' data-name='Path 532' d='M13.7,13.427l6.183-6.183L13.7,1.061' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3Cline id='Line_82' data-name='Line 82' x1='19.888' transform='translate(0 7.244)' fill='none' stroke='%23fff' stroke-miterlimit='10' stroke-width='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A");
+  background-repeat: no-repeat;
+  background-position: center;
+  &:before {
+    display: none;
+  }
+}
+
+.shepherd-cancel-icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #7F7F7F !important;
+  width: 37px;
+  height: 37px;
+}

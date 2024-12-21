@@ -7,15 +7,15 @@
 {% block content_body %}
     <div data-card class="two-column {{ image_area_classes | join:" "}}{% if not card.photo %} empty{% endif %}" {% if edit %} x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }} }" :class="{ 'two-column--cover': fitStyle == 1, 'two-column--contain': fitStyle == 2, 'empty': empty}" @remove-empty="empty=false"{% endif %}>
         {% with target_id=form.photo.auto_id photo=card.photo %}
-        <div 
+        <div
             class="two-column__image"
-            {% if form %} 
-                hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}" 
-                hx-swap="innerHTML show:top" 
-                hx-include="#{{ form.photo.auto_id }}" 
-                hx-vals='{"field": "{{ form.photo.auto_id }}", "html_name": "{{ form.photo.html_name }}", "fill_style_id": "{{ form.fill_style.auto_id }}"}' 
+            {% if form %}
+                hx-get="{% krono_url "kronofoto:exhibit-two-column-image" pk=exhibit.pk %}"
+                hx-swap="innerHTML show:top"
+                hx-include="#{{ form.photo.auto_id }}"
+                hx-vals='{"field": "{{ form.photo.auto_id }}", "html_name": "{{ form.photo.html_name }}", "fill_style_id": "{{ form.fill_style.auto_id }}"}'
                 hx-trigger="change from:#{{ target_id }}"
-            {% endif %} 
+            {% endif %}
         >
             {% include "kronofoto/components/two-column-image.html" %}
         </div>
@@ -41,9 +41,9 @@
                 {% endif %}
                 {% if edit %}
                 {{ form.smalltext.errors }}
-                <div contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</div>
+                <div class="text-small" contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</div>
                 {% elif card.smalltext %}
-                <div>{{ card.smalltext | markdown:"nl2br" }}</div>
+                <div class="text-small">{{ card.smalltext | markdown:"nl2br" }}</div>
                 {% endif %}
             </div>
         </div>

@@ -451,8 +451,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -461,10 +469,6 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
             else:
                 if card.figure_set.all().exists():
                     obj['figure_count'] = card.figure_set.count()
@@ -494,8 +498,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -504,10 +516,6 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
             else:
                 figures = []
                 parent_uuid = str(uuid.uuid4())
@@ -571,8 +579,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -581,10 +597,6 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
         return obj, two_column_count
 
 def embed(request : HttpRequest, pk: int) -> HttpResponse:
