@@ -10,6 +10,7 @@
     <title>Fortepan Exhibit</title>
     <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css" rel="stylesheet"/>
     <link href="{% static "kronofoto/css/exhibit.css" %}?version={{ CSS_VERSION }}" rel="stylesheet">
 	<link rel="apple-touch-icon" sizes="180x180" href="{% static "kronofoto/favicon/apple-touch-icon.png" %}">
 	<link rel="icon" type="image/png" sizes="32x32" href="{% static "kronofoto/favicon/favicon-32x32.png" %}">
@@ -26,10 +27,6 @@
       type="module"
       src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"
     ></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css"
-    />
     <style>
         :root {
             --fp-main-font: 'Montserrat', sans-serif;
@@ -81,8 +78,23 @@
         import Shepherd from 'https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs'
         const tour = new Shepherd.Tour({
             useModalOverlay: true,
+              defaultStepOptions: {
+                title: "FotoStory",
+                cancelIcon: {
+                  enabled: true  // This adds a clickable close (X) icon in the top corner of the tooltip
+                },
+                classes: 'shadow-md bg-purple-dark',
+                scrollTo: true,
+                scrollToHandler: function(element) {
+                  if (element) {
+                    // Using `scrollIntoView` with smooth behavior
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                },
+              },
             steps: [
                 {
+                    title: 'This is a title',
                     text: 'pick an image for the Title page',
                     attachTo: {
                         element: '.hero__edit-image-button',
@@ -106,6 +118,10 @@
                         on: 'right'
                     },
                     buttons: [
+                        {
+                            text: "Back",
+                            action: () => tour.back(),
+                        },
                         {
                             text: "Next",
                             action: () => tour.next(),
@@ -221,7 +237,7 @@
                 {
                     text: 'move content blocks up or down as needed',
                     attachTo: {
-                        element: '.component-menu--off-canvas',
+                        element: '#move-buttons-anchor',
                         on: 'left'
                     },
                     buttons: [
@@ -275,8 +291,12 @@
                         event: 'click'
                     },
                 },
-            ],
+            ]
         })
+        document.querySelector('#start-tour').addEventListener('click', function(e) {
+          e.preventDefault();
+          tour.start();
+        });
         {% if can_show_exhibit %}
             tour.start()
         {% endif %}

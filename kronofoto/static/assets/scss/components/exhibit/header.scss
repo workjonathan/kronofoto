@@ -99,6 +99,9 @@ header nav div img {
     line-height: 22px;
     font-weight: bold;
     color: var(--fp-main-blue);
+    svg * {
+      fill:  var(--fp-main-blue);
+    }
   }
 }
 

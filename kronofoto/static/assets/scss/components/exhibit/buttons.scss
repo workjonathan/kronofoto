@@ -1,4 +1,5 @@
 @use '../../colors' as *;
+@use '../../typography' as *;
 
 .info-button {
   display: flex;
@@ -102,5 +103,22 @@
   background-repeat: no-repeat;
   &:hover {
     background-color: #eeeeee;
+  }
+}
+
+@mixin button--round {
+  border-radius: 3px;
+  text-transform: uppercase;
+  color: $white;
+  background-color: var(--fp-main-color);
+  font-weight: $font-weight-semibold;
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 48px;
+  padding: 0px 25px;
+  border: none;
+  cursor: pointer;
+  &:not([disabled]):hover {
+    background-color: var(--fp-main-color-darker);
   }
 }

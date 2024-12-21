@@ -10,7 +10,8 @@
 @use 'components/exhibit/image-collection';
 @use 'components/exhibit/photo-tiles';
 @use 'components/exhibit/two-column';
-@use 'components/exhibit/_toolbar';
+@use 'components/exhibit/toolbar';
+@use 'components/exhibit/tour';
 @use 'components/messages' as messages;
 @include messages.styles(20px);
 

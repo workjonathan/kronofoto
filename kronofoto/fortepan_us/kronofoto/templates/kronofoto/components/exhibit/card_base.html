@@ -5,8 +5,10 @@
     {% block component_menu_off_canvas %}
     {% if form %}
         <div class="component-menu component-menu--off-canvas">
-            <button type="button" @click="hasChanges = true" class="component-menu__button up" aria-label="Move up">Move up</button>
-            <button type="button" @click="hasChanges = true" class="component-menu__button down" aria-label="Move down">Move down</button>
+            <div id="move-buttons-anchor" class="component-menu__group">
+                <button type="button" @click="hasChanges = true" class="component-menu__button up" aria-label="Move up">Move up</button>
+                <button type="button" @click="hasChanges = true" class="component-menu__button down" aria-label="Move down">Move down</button>
+            </div>
             <div class="component-menu__separator"></div>
             <button type="button" @click="hasChanges = true" class="component-menu__button delete" aria-label="Delete">Delete</button>
             <div class="component-menu__separator--large"></div>
