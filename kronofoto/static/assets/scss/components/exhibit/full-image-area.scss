@@ -10,6 +10,10 @@
     }
   }
 
+  span + small {
+    display: block;
+    margin-top: 20px;
+  }
 
   &__edit-image-button {
     @include edit-image-button;
