@@ -73,8 +73,14 @@ dependencies = [
   "hypothesis==6.84.3",
   "mypy>=1.0.0",
   "django-debug-toolbar",
+  "mutmut<3.0.0",
+  "junit-xml==1.9"
 ]
 [tool.hatch.envs.default.scripts]
+mutmut = 'python -m mutmut {args}'
+run-mutmut = 'python -m mutmut run --simple-output --runner "bash -c \"python -m pytest\"" --paths-to-mutate=fortepan_us/kronofoto/models/activity.py {args}'
+run-mutmut2 = 'python -m mutmut run --simple-output --runner "bash -c \"python -m mypy -p fortepan_us.kronofoto && python -m pytest\"" --paths-to-mutate=fortepan_us/kronofoto/models/activity.py {args}'
+results-mutmut = "python -m mutmut results"
 manage = "python -m fortepan_us.manage {args}"
 runserver = [
     "manage migrate",
@@ -93,6 +99,7 @@ cov = [
   "test-cov",
   "cov-report",
 ]
+
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]

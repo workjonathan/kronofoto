@@ -36,6 +36,15 @@ def test_decode_signature_headers():
         "(request-target)", "host", "date", "digest"
     ]
 
+@pytest.mark.django_db
+def test_service_actor_key_can_be_accessed():
+    actor = models.ServiceActor.get_instance()
+    actor.keyId
+
+@pytest.mark.django_db
+def test_service_actor_key_is_idempotent():
+    actor = models.ServiceActor.get_instance()
+    assert actor.guaranteed_public_key() == actor.guaranteed_public_key()
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

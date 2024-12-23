@@ -79,7 +79,7 @@ def service(request: HttpRequest) -> HttpResponse:
          "outbox": reverse("kronofoto:activitypub-main-service-outbox"),
          "following": [archive.actor.profile for archive in models.Archive.objects.filter(actor__isnull=False) if archive.actor],
          "publicKey": {
-            "id": reverse("kronofoto:activitypub-main-service") + "#mainKey",
+            "id": models.ServiceActor.get_instance().keyId,
             "owner": reverse("kronofoto:activitypub-main-service"),
             "publicKeyPem": models.ServiceActor.get_instance().guaranteed_public_key().decode("utf-8"),
          },

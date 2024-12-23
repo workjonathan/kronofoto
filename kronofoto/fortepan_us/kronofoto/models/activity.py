@@ -26,7 +26,8 @@ class ServiceActor(models.Model):
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:
             self.generate_new_keys()
-        return self.serialized_public_key or b""
+        assert self.serialized_public_key
+        return self.serialized_public_key
 
     @property
     def keyId(self) -> str:
