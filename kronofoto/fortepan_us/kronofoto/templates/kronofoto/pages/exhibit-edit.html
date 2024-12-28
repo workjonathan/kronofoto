@@ -90,10 +90,28 @@
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
                 },
+                buttons: [
+                  {
+                    text: "Back",
+                    action: () => tour.back(),
+                  },
+                  {
+                    text: "Next",
+                    action: () => tour.next(),
+                  },
+                ]
               },
             steps: [
                 {
-                    title: 'This is a title',
+                    title: 'Welcome to FotoStory',
+                    buttons: [
+                      {
+                        text: "Here's a quick tour",
+                        action: () => tour.next(),
+                      },
+                    ]
+                },
+                {
                     text: 'pick an image for the Title page',
                     attachTo: {
                         element: '.hero__edit-image-button',
@@ -116,16 +134,6 @@
                         element: '.hero__title > h1:nth-child(1)',
                         on: 'right'
                     },
-                    buttons: [
-                        {
-                            text: "Back",
-                            action: () => tour.back(),
-                        },
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'Second text-size option (for title of subtitle)',
@@ -133,12 +141,6 @@
                         element: 'p.hero__content:nth-child(2)',
                         on: 'right'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'Third text-size option (for subtitle or reference',
@@ -146,12 +148,6 @@
                         element: 'p.hero__content:nth-child(3)',
                         on: 'right'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'adjust URL Here',
@@ -159,12 +155,6 @@
                         element: '#content-editable-name',
                         on: 'right'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'Add first content block here',
@@ -194,12 +184,6 @@
                         element: '.full-image-area__text > h2:nth-child(1)',
                         on: 'bottom'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'fill the page means that the image will fill the entire content box',
@@ -210,12 +194,6 @@
                     showOn: () => {
                         return document.querySelectorAll('.full-image-area__select-alignment').length > 0
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'fit the page means the image will retain its aspect ratio',
@@ -226,12 +204,6 @@
                     showOn: () => {
                         return document.querySelectorAll('.full-image-area__select-alignment').length > 0
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'move content blocks up or down as needed',
@@ -239,12 +211,6 @@
                         element: '#move-buttons-anchor',
                         on: 'left'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'swap out a new image',
@@ -272,12 +238,6 @@
                         selector: '[data-recard]',
                         event: 'click'
                     },
-                    buttons: [
-                        {
-                            text: "Next",
-                            action: () => tour.next(),
-                        },
-                    ]
                 },
                 {
                     text: 'save and preview here',
