@@ -12,7 +12,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse, resolve
 from fortepan_us.kronofoto import models as kf_models
-from .activity_dicts import ActivitypubData, LdIdUrl
+from . import activity_dicts
+from . import activity_schema
+from marshmallow.exceptions import ValidationError
 
 
 class ServiceActor(models.Model):
@@ -114,7 +116,7 @@ class OutboxActivity(models.Model):
 
 
 class LdIdQuerySet(models.QuerySet["LdId"]):
-    def get_or_create_ld_object(self, ld_id: LdIdUrl) -> tuple["LdId", bool]:
+    def get_or_create_ld_object(self, ld_id: activity_dicts.LdIdUrl) -> tuple["LdId", bool]:
         server_domain = urlparse(ld_id).netloc
         if Site.objects.filter(domain=server_domain).exists():
             resolved = resolve(ld_id)
@@ -132,16 +134,22 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
             ).json()
             assert object['id'] == ld_id
             if object['type'] == 'Contact':
-                archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=object['attributedTo'][0])
-                db_obj = kf_models.Donor.objects.create(first_name=object['firstName'], last_name=object['lastName'], archive=archive)
-                ct = ContentType.objects.get_for_model(kf_models.Donor)
-                ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
-                return ldid, True
+                try:
+                    data : activity_dicts.ActivitypubContact = activity_schema.Contact().load(object)
+                    archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=data['attributedTo'][0])
+                    db_obj = kf_models.Donor()
+                    db_obj.archive = archive
+                    db_obj.reconcile(data)
+                    ct = ContentType.objects.get_for_model(kf_models.Donor)
+                    ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
+                    return ldid, True
+                except ValidationError:
+                    raise NotImplementedError
             else:
                 raise NotImplementedError
 
 
-    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: ActivitypubData) -> tuple["LdId" | None, bool]:
+    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
         ldid = None
         try:
             ldid = self.get(ld_id=object['id'])
@@ -182,7 +190,7 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
 
 
 class LdId(models.Model):
-    ld_id = cast("models.Field[LdIdUrl, LdIdUrl]", models.URLField(unique=True))
+    ld_id = cast("models.Field[activity_dicts.LdIdUrl, activity_dicts.LdIdUrl]", models.URLField(unique=True))
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
