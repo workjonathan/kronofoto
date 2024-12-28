@@ -18,9 +18,19 @@ from cryptography.hazmat.primitives import hashes
 from datetime import datetime, timezone
 import base64
 import hashlib
-from .util import photos, donors, archives, small_gif, a_photo, a_category, an_archive, a_donor
+from .util import photos, donors, archives, archives, small_gif, a_photo, a_category, an_archive, a_donor
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
+from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact
+
+@pytest.mark.django_db
+@given(st.from_type(ActivitypubContact), archives())
+def test_donor_reconcile(data, archive):
+    donor = models.Donor()
+    donor.archive = archive
+    donor.reconcile(data)
+    assert models.Donor.objects.filter(first_name=data['firstName'], last_name=data['lastName']).exists()
+
 
 def test_decode_signature():
     signature = 'keyId="https://my-example.com/actor#main-key",headers="(request-target) host date digest",signature="asdf"'
@@ -45,6 +55,7 @@ def test_service_actor_key_can_be_accessed():
 def test_service_actor_key_is_idempotent():
     actor = models.ServiceActor.get_instance()
     assert actor.guaranteed_public_key() == actor.guaranteed_public_key()
+
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

@@ -8,10 +8,11 @@ from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
-from typing import final, Any, Type, List, Dict
+from typing import final, Any, Type, List, Dict, Literal
+from .activity_dicts import ActivitypubContact
 
 
-class DonorQuerySet(models.QuerySet):
+class DonorQuerySet(models.QuerySet["Donor"]):
     def annotate_photographedcount(self) -> Self:
         Photo: Any = self.model._meta.get_field('kronofoto_photo_photographed').related_model # type: ignore
         q = Photo.objects.filter(photographer=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
@@ -54,6 +55,11 @@ class Donor(Collectible, models.Model):
             models.Index(fields=['last_name', 'first_name']),
         )
 
+    def reconcile(self, object: ActivitypubContact) -> None:
+        self.first_name = object['firstName']
+        self.last_name = object['lastName']
+        self.save()
+
     def display_format(self) -> str:
         return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
 
@@ -66,10 +72,4 @@ class Donor(Collectible, models.Model):
         params['donor'] = self.id
         return params.urlencode()
 
-    @staticmethod
-    def index() -> Any:
-        return [
-            {'name': '{last}, {first}'.format(last=donor.last_name, first=donor.first_name), 'count': donor.count, 'href': donor.get_absolute_url()}
-            for donor in Donor.objects.annotate(count=Count('photo__id')).order_by('last_name', 'first_name').filter(count__gt=0)
-        ]
 

@@ -22,8 +22,11 @@ def tags_view(request: HttpRequest, photo: int, **kwargs: Any) -> HttpResponse:
             form.add_tag(object, user=request.user)
         else:
             raise BadRequest
+    tag_args = {}
+    if not request.user.is_anonymous:
+        tag_args['user'] = request.user
     return TemplateResponse(
         request,
         "kronofoto/components/tags.html",
-        {"tags": object.get_all_tags(user=request.user)}
+        {"tags": object.get_all_tags(**tag_args)}
     )

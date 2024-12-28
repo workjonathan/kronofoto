@@ -135,6 +135,7 @@ def photosphere_carousel(request: HttpRequest) -> HttpResponse:
             photo__is_published=True,
         ).select_related("photo", "photosphere")
         offset = form.cleaned_data['offset']
+        assert photo.year
         if form.cleaned_data['forward']:
             objects = PhotoPairForwardList(queryset=nearby, year=photo.year, id=photo.id).carousel_list(item_count=40, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
         else:
@@ -235,7 +236,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         else:
             photo = None
         if photo:
-            photo.active = True
+            photo.active = True # type: ignore
             if photo.year is not None:
                 backlist : List = PhotoPairBackwardList(queryset=nearby, id=photo.id, year=photo.year).carousel_list(item_count=20, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
                 forwardlist : List = PhotoPairForwardList(queryset=nearby, id=photo.id, year=photo.year).carousel_list(item_count=20, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))

@@ -1,9 +1,10 @@
+from __future__ import annotations
 from django.db import models
 import requests
 from urllib.parse import urlparse
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from typing import Optional, Tuple, Dict, Any
+from typing import Any, TypedDict, List, Literal, NewType, Union, cast
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from cryptography.hazmat.primitives import serialization
@@ -11,6 +12,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse, resolve
 from fortepan_us.kronofoto import models as kf_models
+from .activity_dicts import ActivitypubData, LdIdUrl
+
 
 class ServiceActor(models.Model):
     serialized_public_key = models.BinaryField(null=True, blank=True)
@@ -79,8 +82,8 @@ class RemoteActor(models.Model):
     archives_followed = models.ManyToManyField('kronofoto.Archive')
     requested_archive_follows : models.ManyToManyField = models.ManyToManyField("kronofoto.Archive", through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
 
-    def public_key(self) -> Optional[bytes]:
-        def _() -> Optional[str]:
+    def public_key(self) -> bytes | None:
+        def _() -> str | None:
             resp = requests.get(
                 self.profile,
                 headers={
@@ -110,8 +113,8 @@ class OutboxActivity(models.Model):
     created = models.DateTimeField(auto_now=True)
 
 
-class LdIdQuerySet(models.QuerySet):
-    def get_or_create_ld_object(self, ld_id: str) -> Tuple["LdId", bool]:
+class LdIdQuerySet(models.QuerySet["LdId"]):
+    def get_or_create_ld_object(self, ld_id: LdIdUrl) -> tuple["LdId", bool]:
         server_domain = urlparse(ld_id).netloc
         if Site.objects.filter(domain=server_domain).exists():
             resolved = resolve(ld_id)
@@ -138,7 +141,7 @@ class LdIdQuerySet(models.QuerySet):
                 raise NotImplementedError
 
 
-    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: Dict[str, Any]) -> Tuple[Optional["LdId"], bool]:
+    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: ActivitypubData) -> tuple["LdId" | None, bool]:
         ldid = None
         try:
             ldid = self.get(ld_id=object['id'])
@@ -150,36 +153,28 @@ class LdIdQuerySet(models.QuerySet):
         except self.model.DoesNotExist:
             if object['type'] == "Contact":
                 db_obj = kf_models.Donor()
+                db_obj.archive = owner
                 created = True
             elif object['type'] == "Image":
                 db_obj = kf_models.Photo()
+                db_obj.archive = owner
                 created = True
         if not db_obj:
             return (None, False)
         if isinstance(db_obj, kf_models.Donor):
-            db_obj.first_name = object['firstName']
-            db_obj.last_name = object['lastName']
-            db_obj.archive = owner
-            db_obj.save()
+            assert object['type'] == 'Contact'
+            db_obj.reconcile(object)
             ct = ContentType.objects.get_for_model(kf_models.Donor)
         elif isinstance(db_obj, kf_models.Photo):
+            assert object['type'] == 'Image'
             donor, _ = self.get_or_create_ld_object(object['contributor'])
-            db_obj.caption = object['content']
-            db_obj.year = object['year']
-            db_obj.archive = owner
-            db_obj.circa = object['circa']
-            db_obj.is_published = object['is_published']
-            db_obj.donor = donor.content_object
-            db_obj.remote_image = object['url']
-            db_obj.category, _ = kf_models.Category.objects.get_or_create(
-                slug=object['category']['slug'],
-                defaults={"name": object['category']['name']},
-            )
+            assert donor.content_object
+            db_obj.reconcile(object, donor.content_object)
             ct = ContentType.objects.get_for_model(kf_models.Photo)
             db_obj.save()
             for tag in object['tags']:
-                tag, _ = kf_models.Tag.objects.get_or_create(tag=tag)
-                kf_models.PhotoTag.objects.get_or_create(tag=tag, photo=db_obj, accepted=True)
+                new_tag, _ = kf_models.Tag.objects.get_or_create(tag=tag)
+                kf_models.PhotoTag.objects.get_or_create(tag=new_tag, photo=db_obj, accepted=True)
             for term in object['terms']:
                 db_obj.terms.add(kf_models.Term.objects.get_or_create(term=term)[0])
         ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
@@ -187,7 +182,7 @@ class LdIdQuerySet(models.QuerySet):
 
 
 class LdId(models.Model):
-    ld_id = models.URLField(unique=True)
+    ld_id = cast("models.Field[LdIdUrl, LdIdUrl]", models.URLField(unique=True))
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")

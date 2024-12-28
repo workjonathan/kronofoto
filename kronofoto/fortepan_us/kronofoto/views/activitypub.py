@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404
 from fortepan_us.kronofoto.models.photo import Photo
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, Donor
 from fortepan_us.kronofoto import models
+from fortepan_us.kronofoto.models import activity_dicts
 from fortepan_us.kronofoto.models.archive import ArchiveSchema
 import json
 import parsy # type: ignore
@@ -102,7 +103,7 @@ class UpdateImage:
 class CreateImage:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
         if root_type in ('Create', 'Update') and object['type'] == "Image":
-            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object) # type: ignore
             return InboxResponse(data={"status": "image created"})
         return None
 
@@ -121,7 +122,7 @@ class DeleteObject:
 class CreateContact:
     def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
         if root_type in ('Create', 'Update') and object['type'] == "Contact":
-            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object) # type: ignore
             return InboxResponse(data={"status": "contact created"})
         return None
 
@@ -404,10 +405,10 @@ class Contact(ObjectSchema):
     lastName = fields.Str()
 
     @pre_dump
-    def extract_fields_from_object(self, object: Donor, **kwargs: Any) -> Dict[str, Any]:
+    def extract_fields_from_object(self, object: Donor, **kwargs: Any) -> activity_dicts.ActivitypubContact:
         return {
-            "id": reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": object.archive.slug, "pk": object.id}),
-            "attributedTo": [reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug})],
+            "id": activity_dicts.str_to_ldidurl(reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": object.archive.slug, "pk": object.id})),
+            "attributedTo": [activity_dicts.str_to_ldidurl(reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.archive.slug}))],
             "name": object.display_format(),
             "firstName": object.first_name,
             "lastName": object.last_name,

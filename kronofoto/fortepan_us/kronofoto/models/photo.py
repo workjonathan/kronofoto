@@ -40,6 +40,7 @@ from fortepan_us.kronofoto.imageutil import ImageSigner
 from itertools import chain, cycle, islice
 from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
 from typing_extensions import Self
+from .activity_dicts import ActivitypubImage
 
 EMPTY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs)-1)
@@ -53,7 +54,7 @@ class Thumbnail(TypedDict):
 EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
-class PhotoQuerySet(models.QuerySet):
+class PhotoQuerySet(models.QuerySet['Photo']):
     def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max('year'), start=Min('year'))
 
@@ -363,6 +364,20 @@ class Photo(PhotoBase):
             models.Index(fields=['archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="archive_pyear_id_sort"),
             models.Index(fields=['category', 'archive', 'place_id', 'year', 'id'], condition=Q(is_published=True, year__isnull=False), name="category_archive_pyear_id_sort"),
         )
+
+    def reconcile(self, object: ActivitypubImage, donor: Donor) -> None:
+        self.caption = object['content']
+        self.donor = donor
+        self.year = object['year']
+        self.circa = object['circa']
+        self.is_published = object['is_published']
+        self.donor = donor
+        self.remote_image = object['url']
+        self.category, _ = Category.objects.get_or_create(
+            slug=object['category']['slug'],
+            defaults={"name": object['category']['name']},
+        )
+        self.save()
 
     @property
     def activity_dict(self) -> Dict[str, Any]:
