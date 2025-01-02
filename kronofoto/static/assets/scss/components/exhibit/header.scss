@@ -5,7 +5,7 @@
 .header {
   padding: 15px;
   width: calc(100% - 30px);
-  z-index: 2000;
+  z-index: 1000;
   display: flex;
   @media screen and (min-width: 48em) {
     position: absolute;

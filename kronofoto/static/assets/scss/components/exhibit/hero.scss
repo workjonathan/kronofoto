@@ -2,7 +2,7 @@
 @use '../../typography' as *;
 
 .hero {
-  z-index: 1000;
+  z-index: 999;
   background-color: #555555;
   color: white;
   text-align: center;
@@ -16,7 +16,7 @@
   width: 100%;
 
   &--empty {
-
+    background-color: #909090;
   }
 
   &__title {
