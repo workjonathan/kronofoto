@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from typing import Any, TypedDict, List, Literal, NewType, Union, cast
+from typing_extensions import Never
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from cryptography.hazmat.primitives import serialization
@@ -82,7 +83,7 @@ class RemoteActor(models.Model):
     app_follows_actor = models.BooleanField(default=False)
     follow_app_request = models.JSONField(null=True)
     archives_followed = models.ManyToManyField('kronofoto.Archive')
-    requested_archive_follows : models.ManyToManyField = models.ManyToManyField("kronofoto.Archive", through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
+    requested_archive_follows : models.ManyToManyField["kf_models.Archive", "FollowArchiveRequest"] = models.ManyToManyField("kronofoto.Archive", through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
 
     def public_key(self) -> bytes | None:
         def _() -> str | None:

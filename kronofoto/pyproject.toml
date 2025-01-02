@@ -94,6 +94,7 @@ cov-report = [
 ]
 
 check = "dmypy run -- -p fortepan_us.kronofoto"
+killdmypy = "dmypy stop"
 cov = [
   "check",
   "test-cov",

@@ -138,7 +138,7 @@ class Collection(ObjectSchema):
     first = fields.Nested(lambda: CollectionPage())
 
     @pre_dump
-    def extract_fields_from_object(self, object: QuerySet, **kwargs: Any) -> Dict[str, Any]:
+    def extract_fields_from_object(self, object: "Union[QuerySet[models.Photo], QuerySet[models.Donor]]", **kwargs: Any) -> Dict[str, Any]:
         return {
             "id": self.context['url'],
             "summary": self.context['summary'],
@@ -151,7 +151,7 @@ class CollectionPage(Collection):
     items = fields.List(PageItem)
 
     @pre_dump
-    def extract_fields_from_object(self, object: QuerySet, **kwargs: Any) -> Dict[str, Any]:
+    def extract_fields_from_object(self, object: "Union[QuerySet[models.Photo], QuerySet[models.Donor]]", **kwargs: Any) -> Dict[str, Any]:
         next = "{}?pk={}".format(
             self.context['url'],
             object[99].pk,
