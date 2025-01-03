@@ -376,6 +376,7 @@ class PageEditor {
             this.context.addEventListener("kronofoto:modal:reveal", (evt) => {
                 $(modal).foundation("open")
             })
+            $(modal).on("closed.zf.reveal", () => modal.dispatchEvent(new Event("kronofoto-close-modal", {bubbles: true})))
         }
         for (const img of elem.querySelectorAll("[data-photo-target]")) {
             img.addEventListener("click", (evt) => {
