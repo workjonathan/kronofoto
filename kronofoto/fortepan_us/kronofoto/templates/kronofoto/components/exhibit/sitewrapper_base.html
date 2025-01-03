@@ -23,10 +23,16 @@
         </div>
         {% block hero_background %}{% endblock %}
         {% if exhibit.photo %}
-        <a href="{% object_url exhibit.photo %}" target="_blank" class="hero__info-button info-button info-button--bottom">
-            <span class="info-button__icon"></span>
-            {% block info_text %}{% endblock %}
-        </a>
+        {% include "kronofoto/components/exhibit/info-button.html" with photo=exhibit.photo %}
+        {% elif form %}
+            <div
+                hx-get="{% krono_url "kronofoto:info-button" %}" 
+                hx-swap="outerHTML"
+                hx-include="#{{ form.photo.auto_id }}" 
+                hx-vals='{"html_name": "{{ form.photo.html_name }}" }' 
+                hx-trigger="change from:#{{ form.photo.auto_id }}"
+            ></div>
+
         {% endif %}
         {% block hero_formfields %}{% endblock %}
     </div>

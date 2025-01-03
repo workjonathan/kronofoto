@@ -129,6 +129,7 @@ urlpatterns = urlpatterns + [
     path('users/<str:username>', views.profile_view, name='user-page'),
     path('attribution', views.attribution, name="attribution"),
     path("exhibits", views.exhibit_list, name="exhibit-list"),
+    path("exhibits/info-button", views.exhibit.exhibit_info_button, name="info-button"),
     path("exhibits/<int:pk>-<slug:title>", views.exhibit.view, name='exhibit-view'),
     path("exhibits/<int:pk>/embed", views.exhibit.embed, name='exhibit-embed'),
     path("exhibits/<int:pk>/edit", views.exhibit_edit, name='exhibit-edit'),

@@ -23,6 +23,20 @@ from collections import defaultdict
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 
+def exhibit_info_button(request: HttpRequest) -> HttpResponse:
+    html_name = request.GET.get("html_name", "")
+    target_id = request.GET.get("field", "")
+    try:
+        photo_id = int(request.GET.get(html_name, ""))
+        photo = get_object_or_404(Photo.objects.all(), pk=photo_id)
+        context = {
+            "form": {'photo': {'auto_id': target_id, 'html_name': html_name }},
+            "photo": photo,
+        }
+        return TemplateResponse(request=request, context=context, template="kronofoto/components/exhibit/info-button.html")
+    except ValueError:
+        return HttpResponse("", status=400)
+
 @csrf_exempt
 def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
     data = request.GET.copy()
