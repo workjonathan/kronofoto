@@ -34,11 +34,11 @@ class PlaceType(models.Model): # type: ignore
         )
 
 class Place(MPTTModel):
-    place_type = models.ForeignKey(PlaceType, null=False, on_delete=models.PROTECT)
-    name = models.CharField(max_length=64, null=False, blank=False)
-    geom = models.GeometryField(null=True, srid=4326, blank=False)
+    place_type: models.ForeignKey[PlaceType, PlaceType] = models.ForeignKey(PlaceType, null=False, on_delete=models.PROTECT)
+    name: models.CharField = models.CharField(max_length=64, null=False, blank=False)
+    geom: models.GeometryField = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey('self', related_name='children', null=True, db_index=True, on_delete=models.PROTECT)
-    fullname = models.CharField(max_length=128, null=False, default="")
+    fullname: models.CharField = models.CharField(max_length=128, null=False, default="")
 
     def get_absolute_url(self, kwargs: Optional[Dict[str, Any]]=None, params: Optional[QueryDict]=None) -> str:
         kwargs = kwargs or {}
