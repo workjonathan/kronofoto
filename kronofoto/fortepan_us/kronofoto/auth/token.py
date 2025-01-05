@@ -10,9 +10,9 @@ from django.conf import settings
 from typing import Any, Dict, List, Union, Optional, Protocol
 
 class TokenGen(Protocol):
-    def make_token(self, user: AbstractBaseUser) -> str:
+    def make_token(self, user: User) -> str:
         ...
-    def check_token(self, user: Optional[AbstractBaseUser], token: Optional[str]) -> bool:
+    def check_token(self, user: Optional[User], token: Optional[str]) -> bool:
         ...
 
 class AccountActivationTokenGenerator(PasswordResetTokenGenerator):

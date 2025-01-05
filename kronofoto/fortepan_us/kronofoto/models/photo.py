@@ -398,13 +398,13 @@ class Photo(PhotoBase):
         return list(tags) + list(terms)
 
 
-    def get_accepted_tags(self, user: Optional[User]=None) -> TagQuerySet:
+    def get_accepted_tags(self, user: Optional[User]=None) -> models.QuerySet[Tag]:
         query = Q(phototag__accepted=True)
         if user:
             query |= Q(phototag__creator__pk=user.pk)
         return self.tags.filter(query)
 
-    def get_proposed_tags(self) -> TagQuerySet:
+    def get_proposed_tags(self) -> models.QuerySet[Tag]:
         return self.tags.filter(phototag__accepted=False)
 
     def add_params(self, url: str, params: Optional[QueryDict]) -> str:

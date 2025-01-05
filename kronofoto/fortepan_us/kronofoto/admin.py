@@ -81,7 +81,7 @@ class HasPhotoFilter(base_admin.SimpleListFilter):
             ("No", "No"),
         )
 
-    def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
+    def queryset(self, request: HttpRequest, queryset: QuerySet[ConnecticutRecord]) -> QuerySet[ConnecticutRecord]:
         if self.value() == 'Yes':
             return queryset.exclude(photo__isnull=True)
         elif self.value() == 'No':
@@ -98,7 +98,7 @@ class HasYearFilter(base_admin.SimpleListFilter):
             ("No", "No"),
         )
 
-    def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
+    def queryset(self, request: HttpRequest, queryset: QuerySet[ConnecticutRecord]) -> QuerySet[ConnecticutRecord]:
         if self.value() == 'Yes':
             return queryset.filter(cleaned_year__isnull=False)
         elif self.value() == 'No':
@@ -115,7 +115,7 @@ class IsPublishableFilter(base_admin.SimpleListFilter):
             ("No", "No"),
         )
 
-    def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
+    def queryset(self, request: HttpRequest, queryset: QuerySet[ConnecticutRecord]) -> QuerySet[ConnecticutRecord]:
         if self.value() == 'Yes':
             return queryset.filter(publishable=True)
         elif self.value() == 'No':
@@ -132,7 +132,7 @@ class LocationEnteredFilter(base_admin.SimpleListFilter):
             ("No", "No"),
         )
 
-    def queryset(self, request: HttpRequest, queryset: QuerySet[Photo]) -> QuerySet[Photo]:
+    def queryset(self, request: HttpRequest, queryset: QuerySet[ConnecticutRecord]) -> QuerySet[ConnecticutRecord]:
         if self.value() == 'Yes':
             return queryset.exclude(cleaned_city='', cleaned_county='', cleaned_state='', cleaned_country='')
         elif self.value() == 'No':
@@ -322,7 +322,7 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
 
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
-    ) -> forms.ModelChoiceField:
+    ) -> Optional[forms.ModelChoiceField]:
         if not self.has_view_or_change_all(request):
             opts = self.opts
             codename_add = get_permission_codename('add', opts)
@@ -899,16 +899,17 @@ class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.GISModelAdmin):
 
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
-    ) -> forms.ModelChoiceField:
+    ) -> Optional[forms.ModelChoiceField]:
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == 'archive':
             url = reverse('admin:kronofoto_photo_categories')
-            field.widget.attrs.update({
-                'hx-get': url,
-                'hx-trigger': 'change',
-                'data-archive': '',
-                'hx-target': '[data-category]',
-            })
+            if field:
+                field.widget.attrs.update({
+                    'hx-get': url,
+                    'hx-trigger': 'change',
+                    'data-archive': '',
+                    'hx-target': '[data-category]',
+                })
         return field
 
 class AdminCommunication(Protocol):
@@ -1101,13 +1102,14 @@ class SubmissionAdmin(PhotoBaseAdmin):
 
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
-    ) -> forms.ModelChoiceField:
+    ) -> Optional[forms.ModelChoiceField]:
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == 'category':
             url = reverse('admin:kronofoto_photo_terms')
-            field.widget.attrs.update({
-                'data-category': '',
-            })
+            if field:
+                field.widget.attrs.update({
+                    'data-category': '',
+                })
         return field
 
     def get_urls(self) -> List[URLPattern]:
@@ -1408,17 +1410,18 @@ class PhotoAdmin(PhotoBaseAdmin):
 
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
-    ) -> forms.ModelChoiceField:
+    ) -> Optional[forms.ModelChoiceField]:
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == 'category':
             url = reverse('admin:kronofoto_photo_terms')
-            field.widget.attrs.update({
-                'hx-get': url,
-                'hx-trigger': 'change',
-                'data-category': '',
-                'hx-include': '[data-archive]',
-                'hx-target': '[data-terms]',
-            })
+            if field:
+                field.widget.attrs.update({
+                    'hx-get': url,
+                    'hx-trigger': 'change',
+                    'data-category': '',
+                    'hx-include': '[data-archive]',
+                    'hx-target': '[data-terms]',
+                })
         return field
 
     def formfield_for_manytomany(self, db_field: ManyToManyField, request: HttpRequest, **kwargs: Any) -> Optional[forms.ModelMultipleChoiceField]:

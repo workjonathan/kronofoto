@@ -29,7 +29,7 @@ dependencies = [
     "django-google-tag-manager",
     "django-stubs",
     "django-stubs-ext",
-    "deal",
+    "icontract",
     "mapbox-vector-tile",
     "mercantile",
     "requests",
@@ -71,7 +71,7 @@ dependencies = [
   "pytest",
   "pytest-django",
   "hypothesis==6.84.3",
-  "mypy>=1.0.0",
+  "mypy>=1.0.0,<1.14",
   "django-debug-toolbar",
   "mutmut<3.0.0",
   "junit-xml==1.9"
