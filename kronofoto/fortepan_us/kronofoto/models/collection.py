@@ -3,7 +3,7 @@ from fortepan_us.kronofoto.reverse import reverse
 from django.utils.http import urlencode
 from django.contrib.auth.models import User
 import uuid
-import deal
+import icontract
 from .photo import Photo
 from django.db.models import QuerySet
 from django.db.models.functions import Lower
@@ -11,7 +11,7 @@ from typing import Optional
 from typing import Dict, Any, Protocol
 
 class CollectionQuerySet(models.QuerySet):
-    @deal.ensure(lambda self, photo, result:
+    @icontract.ensure(lambda self, photo, result:
         all(bool(collection.membership) == collection.photos.filter(id=photo).exists() for collection in result)
     )
     def count_photo_instances(self, *, photo: Any) -> Dict[str, Any]:

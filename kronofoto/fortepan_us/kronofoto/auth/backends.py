@@ -1,11 +1,11 @@
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import Permission, AbstractBaseUser, AnonymousUser
+from django.contrib.auth.models import Permission, AbstractBaseUser, AnonymousUser, User
 from django.db.models import Q, Exists, OuterRef, QuerySet
 from fortepan_us.kronofoto.models.archive import Archive
 from typing import Any, Union, Optional, List, Dict, Set, Tuple
 
 class ArchiveBackend(ModelBackend):
-    def get_group_permissions(self, user_obj: Union[AbstractBaseUser, AnonymousUser], obj: Any=None) -> Set[str]:
+    def get_group_permissions(self, user_obj: Union[User, AnonymousUser], obj: Any=None) -> Set[str]:
         if user_obj.is_anonymous:
             return set()
         perm_cache = super().get_group_permissions(user_obj, obj)
@@ -45,7 +45,7 @@ class ArchiveBackend(ModelBackend):
             for label, codename in values
         }
 
-    def get_user_permissions(self, user_obj: Union[AbstractBaseUser, AnonymousUser], obj: Any=None) -> Set[str]:
+    def get_user_permissions(self, user_obj: Union[User, AnonymousUser], obj: Any=None) -> Set[str]:
         assert hasattr(user_obj, "is_superuser")
         perm_cache = super().get_user_permissions(user_obj, obj)
         perms: QuerySet = Permission.objects.filter(
@@ -76,5 +76,5 @@ class ArchiveBackend(ModelBackend):
         user_obj._user_perm_cache = perm_cache # type: ignore
         return perm_cache
 
-    def has_perm(self, user_obj: Union[AbstractBaseUser, AnonymousUser], perm: str, obj: Any=None) -> bool:
+    def has_perm(self, user_obj: Union[User, AnonymousUser], perm: str, obj: Any=None) -> bool:
         return super().has_perm(user_obj, perm, obj)

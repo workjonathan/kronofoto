@@ -366,7 +366,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             forms = []
             for form in card_types:
                 if form.cleaned_data["cardform_type"] == "text":
-                    card_form: ModelForm = CardForm(request.POST, prefix=form.prefix)
+                    card_form: Union[CardForm, FigureListForm, PhotoCardForm, FigureForm] = CardForm(request.POST, prefix=form.prefix)
                     cards.append(CardFormWrapper(form=card_form)) # type: ignore
                     forms.append(card_form)
                 elif form.cleaned_data["cardform_type"] == "figure_list":
