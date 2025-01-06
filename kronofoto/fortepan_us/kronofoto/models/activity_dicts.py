@@ -1,4 +1,4 @@
-from typing import TypedDict, NewType, Literal, List, Union, Type, cast
+from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict
 from marshmallow import Schema, fields
 
 
@@ -21,7 +21,7 @@ ActivitypubCategory = TypedDict(
 ActivitypubObject = TypedDict(
     "ActivitypubObject",
     {
-        "_context": str,
+        "@context": str,
         "id": LdIdUrl,
         #"type": str,
         "attributedTo": List[LdIdUrl],
@@ -30,6 +30,19 @@ ActivitypubObject = TypedDict(
     },
     total=False,
 )
+
+class ArchiveDict(ActivitypubObject, total=False):
+    type: Literal['Organization']
+    name: str
+    slug: str
+    publicKey: Dict[str, str]
+
+    inbox: Url
+    outbox: Url
+    contributors: Url
+    photos: Url
+    following: Url
+    followers: Url
 
 class ActivitypubContact(ActivitypubObject, total=False):
     type: Literal["Contact"]

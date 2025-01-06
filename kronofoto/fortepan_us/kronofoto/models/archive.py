@@ -10,14 +10,17 @@ from .category import Category, ValidCategory
 from .activity import RemoteActor
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from typing import Tuple, Any, Dict
+from typing import Tuple, Any, Dict, Optional
 from django.contrib.sites.models import Site
 import requests
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load, ValidationError
+import icontract
+from . import activity_dicts, activity_schema
 
 class InvalidArchive(Exception): pass
 
-class ArchiveSchema(Schema):
+
+class ArchiveSchema(activity_schema.ObjectSchema):
     type = fields.Constant("Organization")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
@@ -32,57 +35,98 @@ class ArchiveSchema(Schema):
     followers = fields.Url(relative=True)
 
     @pre_dump
-    def extract_fields_from_object(self, object: "Archive", **kwargs: Any) -> Dict[str, Any]:
+    def extract_fields_from_object(self, object: "Archive", **kwargs: Any) -> activity_dicts.ArchiveDict:
         return {
-            "id": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
+            "id": activity_dicts.str_to_ldidurl(reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug})),
             "name": object.name,
             "slug": object.slug,
-            "inbox": reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug}),
-            "outbox": reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug}),
-            "contributors": reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug}),
-            "photos": reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug}),
-            "followers": reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug}),
-            "following": reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug}),
+            "inbox": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug})),
+            "outbox": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug})),
+            "contributors": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug})),
+            "photos": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug})),
+            "followers": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug})),
+            "following": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug})),
             "publicKey": {
                 "id": object.keyId,
                 "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
-                "publicKeyPem": object.guaranteed_public_key(),
+                "publicKeyPem": object.guaranteed_public_key(), # type: ignore
             },
         }
 
 class ArchiveQuerySet(models.QuerySet):
-    def get_or_create_by_profile(self, profile: str) -> Tuple["Archive", bool]:
-        server_domain = urlparse(profile).netloc
+    @icontract.require(lambda self, profile: self.have_remote_by_profile(profile))
+    @icontract.ensure(lambda self, profile, result: not result[1] and result[0].actor is not None and result[0].actor.profile == profile)
+    def get_remote_by_profile(self, profile: str) -> Tuple["Archive", bool]:
+        return Archive.objects.get(actor__profile=profile, type=Archive.ArchiveType.REMOTE), False
+
+    @icontract.ensure(lambda self, profile, result: result == Archive.objects.filter(actor__profile=profile, type=Archive.ArchiveType.REMOTE).exists())
+    def have_remote_by_profile(self, profile: str) -> bool:
+        return Archive.objects.filter(actor__profile=profile, type=Archive.ArchiveType.REMOTE).exists()
+
+    @icontract.ensure(lambda self, profile, result: not result or result in profile)
+    def extract_slug(self, profile: str) -> Optional[str]:
         try:
-            return self.get(actor__profile=profile, type=Archive.ArchiveType.REMOTE), False
-        except self.model.DoesNotExist:
-            try:
-                if Site.objects.filter(domain=server_domain).exists():
-                    resolved = resolve(profile)
-                    if resolved.match.url_name == "actor":
-                        return self.get(slug=resolved.match.kwargs['short_name']), False
-                raise NotImplementedError
-            except Resolver404:
-                data = requests.get(
-                    profile,
-                    headers={
-                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                    },
-                ).json()
-                try:
-                    data = ArchiveSchema().load(data)
-                    if data['id'] != profile:
-                        raise InvalidArchive
-                    actor = RemoteActor.objects.create(profile=profile)
-                    return self.create(
-                        type=Archive.ArchiveType.REMOTE,
-                        server_domain=server_domain,
-                        name=data['name'],
-                        slug=data['slug'],
-                    ), True
-                except ValidationError:
-                    raise InvalidArchive
-            raise NotImplementedError
+            if not Site.objects.filter(domain=urlparse(profile).netloc).exists():
+                return None
+            else:
+                resolved = resolve(profile)
+                if resolved.match.url_name == "actor":
+                    return resolved.match.kwargs['short_name']
+                else:
+                    return None
+        except Resolver404:
+            return None
+
+
+    @icontract.require(lambda self, profile: not Site.objects.filter(domain=urlparse(profile).netloc).exists() and not self.have_remote_by_profile(profile))
+    @icontract.ensure(lambda self, profile, result: (result[0] is not None) == result[1])
+    @icontract.ensure(lambda self, profile, result: result[0] is None or (result[0].actor is not None and result[0].actor.profile == profile))
+    def create_remote_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+        data : activity_dicts.ArchiveDict = requests.get(
+            profile,
+            headers={
+                'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+        ).json()
+        try:
+            data = ArchiveSchema().load(data)
+            if data['id'] != profile:
+                return None, False
+            actor = RemoteActor.objects.create(profile=profile)
+            server_domain = urlparse(profile).netloc
+            return self.create(
+                type=Archive.ArchiveType.REMOTE,
+                actor=actor,
+                server_domain=server_domain,
+                name=data['name'],
+                slug=data['slug'],
+            ), True
+        except ValidationError as e:
+            print(e)
+            return None, False
+
+    @icontract.require(lambda self, profile: Site.objects.filter(domain=urlparse(profile).netloc).exists())
+    @icontract.ensure(lambda self, profile, result: not result[1] and (
+            slug := self.extract_slug(profile),
+            archive_exists := Archive.objects.filter(slug=slug, type=Archive.ArchiveType.LOCAL).exists(),
+            (archive_exists == result[0] is not None) and (not archive_exists or result[0] is not None and result[0].slug == slug)
+        )[1]
+    )
+    def get_local_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+        slug = self.extract_slug(profile)
+        if slug is not None and self.filter(slug=slug, type=Archive.ArchiveType.LOCAL).exists():
+            return self.get(slug=slug, type=Archive.ArchiveType.LOCAL), False
+        return None, False
+
+    @icontract.ensure(lambda self, profile, result: not result[0] or ((not result[0].actor or result[0].actor.profile == profile) and result[0].slug in profile))
+    def get_or_create_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+        server_domain = urlparse(profile).netloc
+        if Site.objects.filter(domain=server_domain).exists():
+            return self.get_local_by_profile(profile)
+        elif self.have_remote_by_profile(profile=profile):
+            return self.get_remote_by_profile(profile=profile)
+        else:
+            return self.create_remote_profile(profile)
 
 class Archive(models.Model):
     class ArchiveType(models.IntegerChoices):

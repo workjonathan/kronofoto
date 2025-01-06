@@ -73,6 +73,11 @@ CACHES = {
         "LOCATION": "unique-snowflake",
     },
 }
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
+    },
+}
 
 AUTHENTICATION_BACKENDS = ['fortepan_us.kronofoto.auth.backends.ArchiveBackend']
 KF_URL_SCHEME = ""

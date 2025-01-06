@@ -16,6 +16,7 @@ from fortepan_us.kronofoto import models as kf_models
 from . import activity_dicts
 from . import activity_schema
 from marshmallow.exceptions import ValidationError
+import icontract
 
 
 class ServiceActor(models.Model):
@@ -138,6 +139,8 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
                 try:
                     data : activity_dicts.ActivitypubContact = activity_schema.Contact().load(object)
                     archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=data['attributedTo'][0])
+                    if not archive:
+                        raise NotImplementedError
                     db_obj = kf_models.Donor()
                     db_obj.archive = archive
                     db_obj.reconcile(data)

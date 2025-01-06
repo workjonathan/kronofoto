@@ -9,9 +9,9 @@ import json
 class ObjectSchema(Schema):
     _context = fields.Raw(data_key="@context")
     id = fields.Url(required=False)
-    type = fields.Str()
+    #type = fields.Str()
     attributedTo = fields.List(fields.Url())
-    url = fields.Url(relative=True)
+    url = fields.Url(relative=True, required=False)
     content = fields.Str()
 
 class GeomField(fields.Field):

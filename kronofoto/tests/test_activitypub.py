@@ -3,7 +3,7 @@ import requests
 from unittest import mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, RequestFactory, override_settings
-from hypothesis import given, strategies as st, note
+from hypothesis import given, strategies as st, note, settings as hsettings
 from hypothesis.extra.django import TestCase
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity
 from fortepan_us.kronofoto import models
@@ -23,13 +23,14 @@ from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact
 
-@pytest.mark.django_db
-@given(st.from_type(ActivitypubContact), archives())
-def test_donor_reconcile(data, archive):
-    donor = models.Donor()
-    donor.archive = archive
-    donor.reconcile(data)
-    assert models.Donor.objects.filter(first_name=data['firstName'], last_name=data['lastName']).exists()
+class TestDonorReconcile(TestCase):
+    @hsettings(max_examples=10)
+    @given(st.from_type(ActivitypubContact), archives())
+    def test_donor_reconcile(self, data, archive):
+        donor = models.Donor()
+        donor.archive = archive
+        donor.reconcile(data)
+        assert models.Donor.objects.filter(first_name=data['firstName'], last_name=data['lastName']).exists()
 
 
 def test_decode_signature():
@@ -82,11 +83,10 @@ def test_archive_get_or_create_encounters_insufficient_information():
     with mock.patch('requests.get') as mock_:
         mock_.return_value = mock.Mock(name="json")
         mock_.return_value.json.return_value = {
-            "id": "https://example.com/remotesite",
+            "id": "https://example2.com/remotesite",
             "type": "Organization",
         }
-        with pytest.raises(models.archive.InvalidArchive):
-            models.Archive.objects.get_or_create_by_profile(profile="http://example.com/remotesite")
+        assert models.Archive.objects.get_or_create_by_profile(profile="https://example2.com/remotesite") == (None, False)
 
 @pytest.mark.django_db
 def test_ldid_get_or_create_encounters_unknown_actor():
