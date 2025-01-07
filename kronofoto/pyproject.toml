@@ -69,7 +69,7 @@ dependencies = [
   "pytest",
   "pytest-django",
   "hypothesis==6.84.3",
-  "mypy>=1.0.0,<1.14",
+  "mypy>=1.14.0,<1.15",
   "django-debug-toolbar",
 ]
 [tool.hatch.envs.default.scripts]
@@ -85,7 +85,8 @@ cov-report = [
   "coverage report",
 ]
 
-check = "dmypy run -- -p fortepan_us.kronofoto"
+check = "mypy -p fortepan_us.kronofoto"
+check_daemonized = "dmypy run -- -p fortepan_us.kronofoto"
 cov = [
   "check",
   "test-cov",
