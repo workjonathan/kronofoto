@@ -94,20 +94,20 @@ def test_ldid_get_or_create_encounters_unknown_actor():
         mock_.return_value = mock.Mock(name="json")
         mock_.return_value.json.side_effect = [
             {
-                "id": "http://127.0.0.1:8000/kf/activitypub/archives/an-archive/contributors/1",
+                "id": "http://example3.com/kf/activitypub/archives/an-archive/contributors/1",
                 "type": "Contact",
-                "attributedTo": ["https://example.com/remotesite"],
+                "attributedTo": ["https://example2.com/remotesite"],
                 "firstName": "first",
                 "lastName": "last",
             },
             {
-                "id": "https://example.com/remotesite",
+                "id": "https://example2.com/remotesite",
                 "type": "Organization",
                 "name": "OrgName",
                 "slug": "an-archive",
             },
         ]
-        models.LdId.objects.get_or_create_ld_object(ld_id="http://127.0.0.1:8000/kf/activitypub/archives/an-archive/contributors/1")
+        models.LdId.objects.get_or_create_ld_object(ld_id="http://example3.com/kf/activitypub/archives/an-archive/contributors/1")
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

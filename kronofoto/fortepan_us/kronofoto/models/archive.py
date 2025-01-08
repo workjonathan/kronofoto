@@ -118,7 +118,7 @@ class ArchiveQuerySet(models.QuerySet):
             return self.get(slug=slug, type=Archive.ArchiveType.LOCAL), False
         return None, False
 
-    @icontract.ensure(lambda self, profile, result: not result[0] or ((not result[0].actor or result[0].actor.profile == profile) and result[0].slug in profile))
+    @icontract.ensure(lambda self, profile, result: not result[0] or ((not result[0].actor or result[0].actor.profile == profile) and (result[0].actor or result[0].slug in profile)))
     def get_or_create_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
         server_domain = urlparse(profile).netloc
         if Site.objects.filter(domain=server_domain).exists():

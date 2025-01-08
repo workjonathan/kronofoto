@@ -85,6 +85,7 @@ class Image(ObjectSchema):
 
 class Contact(ObjectSchema):
     id = fields.Url()
+    type = fields.Constant("Contact")
     attributedTo = fields.List(fields.Url())
     name = fields.Str()
     firstName = fields.Str()

@@ -1,4 +1,6 @@
+from __future__ import annotations
 from django.contrib.gis.db import models
+import icontract
 import base64
 import json
 from django.core.files.storage import default_storage
@@ -55,6 +57,10 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
 class PhotoQuerySet(models.QuerySet['Photo']):
+    #@icontract.require(
+    def update_or_create_ld_object(self, owner: Archive, object: ActivitypubImage) -> tuple["Photo" | None, bool]:
+        return (None, False)
+
     def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max('year'), start=Min('year'))
 

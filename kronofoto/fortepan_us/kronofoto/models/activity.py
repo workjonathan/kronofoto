@@ -118,13 +118,13 @@ class OutboxActivity(models.Model):
 
 
 class LdIdQuerySet(models.QuerySet["LdId"]):
-    def get_or_create_ld_object(self, ld_id: activity_dicts.LdIdUrl) -> tuple["LdId", bool]:
+    def get_or_create_ld_object(self, ld_id: activity_dicts.LdIdUrl) -> tuple["LdId" | None, bool]:
         server_domain = urlparse(ld_id).netloc
         if Site.objects.filter(domain=server_domain).exists():
             resolved = resolve(ld_id)
             if resolved.match.namespaces == ['kronofoto', 'activitypub_data', 'archives', 'contributors'] and resolved.match.url_name == 'detail':
                 return LdId(content_object=kf_models.Donor.objects.get(archive__slug=resolved.match.kwargs['short_name']), id=resolved.match.kwargs['pk']), False
-            raise NotImplementedError
+            return None, False
         try:
             return (self.get(ld_id=ld_id), False)
         except self.model.DoesNotExist:
@@ -140,20 +140,26 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
                     data : activity_dicts.ActivitypubContact = activity_schema.Contact().load(object)
                     archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=data['attributedTo'][0])
                     if not archive:
-                        raise NotImplementedError
+                        return None, False
                     db_obj = kf_models.Donor()
                     db_obj.archive = archive
                     db_obj.reconcile(data)
                     ct = ContentType.objects.get_for_model(kf_models.Donor)
                     ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
                     return ldid, True
-                except ValidationError:
-                    raise NotImplementedError
+                except ValidationError as e:
+                    print(e, object)
+                    return None, False
             else:
                 raise NotImplementedError
 
 
+
+    @icontract.require(lambda self, owner, object: owner.type == kf_models.Archive.ArchiveType.REMOTE)
+    @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Donor) or object['type'] == "Contact")
+    @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Photo) or object['type'] == "Image")
     def update_or_create_ld_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
+        "This function is valid for object['id'] that are external domains only."
         ldid = None
         try:
             ldid = self.get(ld_id=object['id'])
@@ -173,14 +179,13 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
                 created = True
         if not db_obj:
             return (None, False)
-        if isinstance(db_obj, kf_models.Donor):
-            assert object['type'] == 'Contact'
+        if isinstance(db_obj, kf_models.Donor) and object['type'] == "Contact":
             db_obj.reconcile(object)
             ct = ContentType.objects.get_for_model(kf_models.Donor)
-        elif isinstance(db_obj, kf_models.Photo):
-            assert object['type'] == 'Image'
+        elif isinstance(db_obj, kf_models.Photo) and object['type'] == "Image":
             donor, _ = self.get_or_create_ld_object(object['contributor'])
-            assert donor.content_object
+            if not donor or not donor.content_object:
+                return None, False
             db_obj.reconcile(object, donor.content_object)
             ct = ContentType.objects.get_for_model(kf_models.Photo)
             db_obj.save()
