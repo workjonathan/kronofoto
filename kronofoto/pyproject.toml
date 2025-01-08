@@ -71,7 +71,7 @@ dependencies = [
   "pytest",
   "pytest-django",
   "hypothesis==6.84.3",
-  "mypy>=1.0.0,<1.14",
+  "mypy>=1.14.0,<1.15",
   "django-debug-toolbar",
   "mutmut<3.0.0",
   "junit-xml==1.9"
@@ -93,8 +93,8 @@ cov-report = [
   "coverage report",
 ]
 
-check = "dmypy run -- -p fortepan_us.kronofoto"
-killdmypy = "dmypy stop"
+check = "mypy -p fortepan_us.kronofoto"
+check_daemonized = "dmypy run -- -p fortepan_us.kronofoto"
 cov = [
   "check",
   "test-cov",
