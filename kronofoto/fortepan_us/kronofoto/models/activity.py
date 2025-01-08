@@ -128,6 +128,17 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
         try:
             return (self.get(ld_id=ld_id), False)
         except self.model.DoesNotExist:
+            raise NotImplementedError
+            # After some consideration, we have determined that loading objects in this way is not a good idea.
+            # It is a hack to check the domains and we don't want to invent a signature system to be include
+            # with all get requests.
+            # It seems acceptable to create an empty or undefined or poorly defined object in the event that we do not
+            # already know the object. Hopefully the object will be discovered eventually via authenticated Activities
+            # or through loading/refreshing an actor's collections.
+            # To be clear, an object is probably authentic if it is received via an authenticated Activity or by loading
+            # an actor's collections. If we accept the attributedTo field as reliable, we could receive a Create
+            # activity that references a LD-ID for a place or donor that we have not seen. That object could be loaded
+            # from anywhere and attribute the object to any actor, which allows for spoofing.
             object = requests.get(
                 ld_id,
                 headers={
