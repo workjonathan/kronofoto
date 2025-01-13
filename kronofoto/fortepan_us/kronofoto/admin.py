@@ -1359,6 +1359,7 @@ class PhotoAdmin(PhotoBaseAdmin):
         'state',
         'country',
         'caption',
+        'local_context_id',
         'is_featured',
         'is_published',
         'scanner',
