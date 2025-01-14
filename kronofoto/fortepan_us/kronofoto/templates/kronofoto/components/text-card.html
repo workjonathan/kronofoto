@@ -20,7 +20,7 @@
             {{ form.smalltext.errors }}
             <small><span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span></small>
             {% else %}
-            {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
+            {% if card.title %}<h2>{{ card.title | markdown:"nl2br" }}</h2>{% endif %}
             {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
             {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" }}</small>{% endif %}
             {% endif %}

@@ -10,7 +10,7 @@
 
 {% block hero_content_wrapper %}
     <div class="hero__title">
-        <h1>{{ exhibit.title }}</h1>
+        <h1>{{ exhibit.title | markdown:"nl2br" }}</h1>
     </div>
     <div class="hero__content">
         {{ exhibit.description | markdown:"nl2br" }}
