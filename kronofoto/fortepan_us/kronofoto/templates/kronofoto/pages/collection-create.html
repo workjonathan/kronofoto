@@ -2,5 +2,5 @@
 {% load widgets %}
 
 {% block content %}
-{% include "kronofoto/components/collections.html" %}
+    {% collections user=request.user profile_user=profile_user form=form %}
 {% endblock content %}

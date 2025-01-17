@@ -9,6 +9,7 @@ from fortepan_us.kronofoto.reverse import reverse
 from django.template.response import TemplateResponse
 from django.forms import formset_factory, ModelForm, Form, BaseFormSet
 from django.shortcuts import get_object_or_404
+from fortepan_us.kronofoto.templatetags import widgets
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -39,15 +40,10 @@ def profile_view(request: HttpRequest, username: str) -> HttpResponse:
     context = ArchiveRequest(request=request).common_context
     profile_user = get_object_or_404(User.objects.all(), username=username)
     context['profile_user'] = profile_user
-    filter_kwargs = {}
-    if request.user.id != profile_user.id:
-        filter_kwargs['visibility'] = "PU"
-    context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
     if not request.user.is_anonymous and request.user.id == profile_user.id:
         context['form'] = CollectionForm()
         context['exhibit_form'] = ExhibitCreateForm()
         context['exhibit_form'].fields['collection'].queryset = Collection.objects.filter(owner=request.user).filter(Exists(Photo.objects.filter(collection__id=OuterRef("id"))))
-    context['exhibits'] = Exhibit.objects.filter(owner=profile_user)
     return TemplateResponse(request=request, context=context, template="kronofoto/pages/user-page.html")
 
 def collection_view(request: HttpRequest, pk: int) -> HttpResponse:
@@ -123,8 +119,8 @@ class CollectionPostBehaviorSelection:
 
     def responder(self, *, request: HttpRequest, user: User) -> Responder:
         if self.areq.is_hx_request:
-            template = "kronofoto/components/collections.html"
-            return FormResponse(request=request, user=user, template=template, context=self.areq.common_context)
+            template = "kronofoto/components/user-content-section.html"
+            return FormResponse(request=request, user=user, template=template, context=widgets.collections(user=user, profile_user=user, form=CollectionForm()))
         else:
             return UserPageRedirect(user=user)
 
