@@ -8,7 +8,8 @@ from .photo import Photo
 from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from typing import Optional
-from typing import Dict, Any, Protocol
+from typing import Dict, Any, Protocol, List, Tuple
+import json
 
 class CollectionQuerySet(models.QuerySet):
     @icontract.ensure(lambda self, photo, result:
@@ -38,6 +39,64 @@ class Collection(models.Model):
     photos = models.ManyToManyField('kronofoto.Photo', blank=True)
 
     objects = CollectionQuerySet.as_manager()
+
+    @icontract.require(lambda self: self.id != None)
+    def menu_items(self) -> List[Tuple[str, Dict[str, str]]]:
+        return [
+            (
+                "Edit",
+                {
+                    "href": reverse("kronofoto:collection-edit", kwargs={"pk": self.id}),
+                    "hx-get": reverse("kronofoto:collection-edit", kwargs={"pk": self.id}),
+                    "hx-target": "#app",
+                },
+            ),
+            (
+                "View",
+                {
+                    "href": self.get_absolute_url(),
+                    "hx-get": self.get_absolute_url(),
+                    "hx-target": "#app",
+                },
+            ),
+            (
+                "Share",
+                {
+                    "href": self.get_absolute_url(),
+                    "data-clipboard-copy": "",
+                },
+            ),
+            (
+                "Embed",
+                {
+                    "href": reverse("kronofoto:collection-embed", kwargs={"pk": self.id}),
+                    "hx-get": reverse("kronofoto:collection-embed", kwargs={"pk": self.id}),
+                    "hx-target": "#app",
+                },
+            ),
+            (
+                "Delete",
+                {
+                    "href": reverse("kronofoto:collection-delete", kwargs={"pk": self.id}),
+                    "hx-get": reverse("kronofoto:collection-delete", kwargs={"pk": self.id}),
+                    "hx-target": "closest section",
+                    "hx-select": "#my-lists",
+                    "hx-swap": "outerHTML",
+                },
+            ),
+            (
+                "Use in a FotoStory",
+                {
+                    "href": "{}?collection={}".format(reverse("kronofoto:exhibit-create"), self.id),
+                    "hx-post": reverse("kronofoto:exhibit-create"),
+                    "hx-vals": json.dumps({"collection": self.id}),
+                    "hx-target": "#app",
+                },
+            ),
+        ]
+
+    def get_main_menu_url(self) -> str:
+        return self.get_absolute_url()
 
     def get_absolute_url(self) -> str:
         return '{}?{}'.format(reverse('kronofoto:gridview'), urlencode({'query': 'collection:{}'.format(self.uuid)}))

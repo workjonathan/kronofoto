@@ -1,0 +1,20 @@
+{% load krono_urls %}
+
+<form
+    class="form form--collection"
+    method="post"
+    action="{% krono_url "kronofoto:collection-create" %}"
+    hx-post="{% krono_url "kronofoto:collection-create" %}"
+    hx-target="#my-lists"
+    hx-push-url="false"
+    hx-swap="outerHTML"
+>
+    {% csrf_token %}
+    <h3>Create a FotoAlbum</h3>
+    {% for field in form %}
+    <div class="form-item">
+        <input class="border" type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" placeholder="FotoAlbum Name" />
+    </div>
+    {% endfor %}
+    <input type="submit" class="button" value="Create" />
+</form>
