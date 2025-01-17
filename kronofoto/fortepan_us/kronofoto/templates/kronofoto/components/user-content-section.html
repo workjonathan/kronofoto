@@ -1,0 +1,38 @@
+
+<section id="{{ section_id }}" class="border-bottom">
+    <div class="row">
+        <div class="columns small-9">
+            <h2>{{ section_name }}</h2>
+            <p class="paragraph color-light padding-bottom-2">
+                {{ section_description }}
+            </p>
+        </div>
+        {% if profile_user == request.user %}
+            <div class="columns small-12 large-5 small-push-7">
+                {% include form_template %}
+            </div>
+        {% endif %}
+        <div class="columns small-12 large-7">
+            <div class="collection collection--list collection--2">
+            {% for object in object_list %}
+                <div class="collection__item">
+                    <div class="collection__item-label">
+                        <a href="{{ object.get_main_menu_url }}">{{ object.name }}</a>
+                    </div>
+                    {% if profile_user == request.user %}
+                        <div class="collection__item-menu context-menu" id="{{ section_id }}-{{ object.id }}" data-toggler=".expanded">
+                            <div class="context-menu__button" data-toggle="{{ section_id }}-{{ object.id }}"></div>
+                            <div class="context-menu__items">
+                                <ul hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                    {% for label, attrs in object.menu_items %}
+                                        <li><a {% for attr, value in attrs.items %}{{ attr }}="{{ value }}" {% endfor %}>{{ label }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+    </div>
+</section>
