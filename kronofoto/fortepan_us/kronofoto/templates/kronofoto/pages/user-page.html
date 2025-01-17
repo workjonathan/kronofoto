@@ -24,18 +24,11 @@
 </div>
 {% endblock user_header %}
 {% block collections %}
-{% with section_id="my-lists" object_list=object_list section_name="My FotoAlbums" form_template="kronofoto/components/forms/collection-create.html" %}
-    {% with section_description="A FotoAlbum is a collection of Fortepan photos organized by a customizable theme. You can share and embed any FotoAlbum, and use a FotoAlbum to create a FotoStory." %}
-    {% include "kronofoto/components/user-content-section.html" %}
-    {% endwith %}
-{% endwith %}
+    {% collections user=request.user profile_user=profile_user form=form %}
 {% endblock collections %}
+
 {% block exhibits %}
-{% with section_id="my-exhibits" object_list=exhibits section_name="My FotoStories" form=exhibit_form form_template="kronofoto/components/forms/exhibit-create.html" %}
-    {% with section_description="A FotoStory is a digital exhibit built with Fortepan photos; build a FotoStory with a combination of text + image content blocks. You can share and embed any FotoStory." %}
-    {% include "kronofoto/components/user-content-section.html" %}
-    {% endwith %}
-{% endwith %}
+    {% exhibits user=request.user profile_user=profile_user form=exhibit_form %}
 {% endblock exhibits %}
 
 {% comment %}

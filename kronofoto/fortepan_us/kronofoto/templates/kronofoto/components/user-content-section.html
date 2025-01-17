@@ -1,4 +1,3 @@
-
 <section id="{{ section_id }}" class="border-bottom">
     <div class="row">
         <div class="columns small-9">
@@ -7,7 +6,7 @@
                 {{ section_description }}
             </p>
         </div>
-        {% if profile_user == request.user %}
+        {% if profile_user == request_user %}
             <div class="columns small-12 large-5 small-push-7">
                 {% include form_template %}
             </div>
@@ -19,7 +18,7 @@
                     <div class="collection__item-label">
                         <a href="{{ object.get_main_menu_url }}">{{ object.name }}</a>
                     </div>
-                    {% if profile_user == request.user %}
+                    {% if profile_user == request_user %}
                         <div class="collection__item-menu context-menu" id="{{ section_id }}-{{ object.id }}" data-toggler=".expanded">
                             <div class="context-menu__button" data-toggle="{{ section_id }}-{{ object.id }}"></div>
                             <div class="context-menu__items">
