@@ -1,13 +1,12 @@
 from django.db import models
 from django.db.models import Count, QuerySet
-from django_stubs_ext import WithAnnotations
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
 from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
-from typing import final, Any, Type, List
+from typing import final, Any, Type, List, TYPE_CHECKING
 
 class DonorQuerySet(models.QuerySet):
     def annotate_photographedcount(self) -> Self:
