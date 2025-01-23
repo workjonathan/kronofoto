@@ -779,17 +779,18 @@ class PhotoOpacityElement extends HTMLElement {
         super()
     }
     connectedCallback() {
-        const dom = this.attachShadow({mode: "open"})
+        const dom = this //.attachShadow({mode: "open"})
+        dom.classList.add("photo-opacity-host")
         const style = document.createElement('style')
         style.innerText = `
-:host {
+fortepan-opacity-input {
     display: flex;
     align-items: center;
     background: rgba(0, 0, 0, 0.5);
     padding: 0 10px;
 }
 
-#title {
+.title {
     font-weight: bold;
 }
 
@@ -797,7 +798,7 @@ input {
     margin: 0 10px;
 }
 
-#value {
+.value {
     font-family: monospace;
     width: 2em;
 }
@@ -805,7 +806,7 @@ input {
         dom.appendChild(style)
 
         const title = document.createElement('span')
-        title.id = 'title'
+        title.classList.add('title')
         title.innerText = 'Opacity'
         dom.appendChild(title)
 
@@ -815,7 +816,7 @@ input {
         this.input.value = 100
 
         this.value = document.createElement('span')
-        this.value.id = 'value'
+        this.value.classList.add('value')
         dom.appendChild(this.value)
         this.value.innerText = 100
 
@@ -823,7 +824,6 @@ input {
             this.viewer.getPlugin(ImagePlanePlugin).material.opacity = this.input.valueAsNumber/100
             this.value.innerText = this.input.valueAsNumber
             this.viewer.needsUpdate()
-
         })
     }
 
