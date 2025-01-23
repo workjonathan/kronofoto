@@ -774,6 +774,74 @@ class MapPlugin {
     }
 }
 
+class PhotoOpacityElement extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        const dom = this.attachShadow({mode: "open"})
+        const style = document.createElement('style')
+        style.innerText = `
+:host {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0 10px;
+}
+
+#title {
+    font-weight: bold;
+}
+
+input {
+    margin: 0 10px;
+}
+
+#value {
+    font-family: monospace;
+    width: 2em;
+}
+`
+        dom.appendChild(style)
+
+        const title = document.createElement('span')
+        title.id = 'title'
+        title.innerText = 'Opacity'
+        dom.appendChild(title)
+
+        this.input = document.createElement('input')
+        this.input.type = 'range'
+        dom.appendChild(this.input)
+        this.input.value = 100
+
+        this.value = document.createElement('span')
+        this.value.id = 'value'
+        dom.appendChild(this.value)
+        this.value.innerText = 100
+
+        this.input.addEventListener('input', () => {
+            this.viewer.getPlugin(ImagePlanePlugin).material.opacity = this.input.valueAsNumber/100
+            this.value.innerText = this.input.valueAsNumber
+            this.viewer.needsUpdate()
+
+        })
+    }
+
+
+    attachViewer(viewer) {
+        this.viewer = viewer
+        viewer
+            .getPlugin(VirtualTourPlugin)
+            .addEventListener("node-changed", () => {
+                this.value.innerText = 100
+                this.input.value = 100
+                
+            })
+    }
+}
+
+customElements.define('fortepan-opacity-input', PhotoOpacityElement)
+
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -792,6 +860,18 @@ class PhotoSpherePlugin {
 
             const viewer = new Viewer({
                 container: elem2,
+                navbar: [
+                    "zoom",
+                    "move",
+                    "markers",
+                    "markersList",
+                    {
+                        content: document.createElement("fortepan-opacity-input"),
+                    },
+                    "description", 
+                    "caption",
+                    "fullscreen",
+                ],
                 plugins: [
                     [ImagePlanePlugin, {photos: []}],
                     MarkersPlugin,
