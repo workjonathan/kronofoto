@@ -17,6 +17,9 @@ export class ImagePlanePlugin extends AbstractPlugin {
         this.viewer.addEventListener(events.PanoramaLoadedEvent.type, this, {
             once: true,
         })
+        this.viewer.addEventListener('click', ({ data }) => {
+            console.log(`${data.rightclick ? 'right ' : ''}clicked at yaw: ${data.yaw} pitch: ${data.pitch}`);
+        });
     }
     destroy() {
         this.viewer.removeEventListener(events.PanoramaLoadedEvent.type, this)
@@ -43,12 +46,42 @@ export class ImagePlanePlugin extends AbstractPlugin {
                     transparent: true,
                     map: texture,
                 })
+                console.log(this)
                 this.material.opacity = 1
                 this.mesh = new THREE.Mesh(this.geometry, this.material)
+                this.mesh.data = photo
+                this.mesh.getObjectCorner = function() {
+                    const width = this.geometry.parameters.width
+                    const height = this.geometry.parameters.height
+                    const matrixWorld = this.matrixWorld
+                    if (width <= 0) {
+                        throw TypeError("width must be positive")
+                    }   
+                    if (height <= 0) {
+                        throw TypeError("height must be positive")
+                    }   
+                    if (!(matrixWorld instanceof THREE.Matrix4)) {
+                        throw TypeError("matrixWorld must be a Matrix4")
+                    }   
+                    const corner = new THREE.Vector3(-width/2, -height/2, 0)
+                    corner.applyMatrix4(matrixWorld)
+                    const origin = new THREE.Vector3(0, 0, 0)
+                    const direction = corner.clone().sub(origin).normalize()
+
+                    const result = {
+                        yaw: Math.atan2(-direction.x, direction.z),
+                        pitch: Math.asin(direction.y),
+                    }
+                    if (!(result.yaw >= -3.1416 && result.yaw <= 3.1416 && result.pitch >= -3.1416 && result.pitch <= 3.1416)) {
+                        throw TypeError("object corner is not in valid range")
+                    }
+                    return result
+                }
                 this.meshes.push(this.mesh)
                 this.updatePosition()
                 this.viewer.renderer.addObject(this.mesh)
                 this.viewer.needsUpdate()
+                this.dispatchEvent(new CustomEvent("image-added", {detail: this.mesh}))
                 if (photo.container) {
                     const gui = new GUI({container: photo.container, width: 400})
                     gui.domElement.addEventListener("mousedown", (evt) =>
@@ -70,6 +103,30 @@ export class ImagePlanePlugin extends AbstractPlugin {
                 }
             })
         }
+    }
+    getObjectCorner({width=1, height=1, matrixWorld}) {
+        if (width <= 0) {
+            throw TypeError("width must be positive")
+        }   
+        if (height <= 0) {
+            throw TypeError("height must be positive")
+        }   
+        if (!(matrixWorld instanceof THREE.Matrix4)) {
+            throw TypeError("matrixWorld must be a Matrix4")
+        }   
+        const corner = new THREE.Vector3(-width/2, -height/2, 0)
+        corner.applyMatrix4(matrixWorld)
+        const origin = new THREE.Vector3(0, 0, 0)
+        const direction = corner.clone().sub(origin).normalize()
+
+        const result = {
+            yaw: Math.atan2(-direction.x, direction.z),
+            pitch: Math.asin(direction.y),
+        }
+        if (!(result.yaw >= -3.1416 && result.yaw <= 3.1416 && result.pitch >= -3.1416 && result.pitch <= 3.1416)) {
+            throw TypeError("object corner is not in valid range")
+        }
+        return result
     }
     handleEvent(e) {
         if (e instanceof events.PanoramaLoadedEvent) {
@@ -94,7 +151,7 @@ export class ImagePlanePlugin extends AbstractPlugin {
         if (this.distance_el) {
             this.distance_el.setAttribute("value", this.distance)
         }
-        this.viewer.needsUpdate()
+        //this.viewer.needsUpdate()
     }
 }
 /*export default class PhotoSphere {
