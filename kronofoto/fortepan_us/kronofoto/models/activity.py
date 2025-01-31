@@ -78,7 +78,7 @@ class ServiceActor(models.Model):
         self.generate_new_keys()
         return self.public_key
 
-class RemoteActor(models.Model):
+class RemoteActor(models.Model): # type: ignore [django-manager-missing]
     profile = models.URLField(unique=True)
     actor_follows_app = models.BooleanField(default=False)
     app_follows_actor = models.BooleanField(default=False)
@@ -128,26 +128,6 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
         try:
             return (self.get(ld_id=ld_id), False)
         except self.model.DoesNotExist:
-            raise NotImplementedError
-            # After some consideration, we have determined that loading objects in this way is not a good idea.
-            # It is a hack to check the domains and we don't want to invent a signature system to include
-            # with all get reponses.
-            # It seems acceptable to create an empty or undefined or poorly defined object in the event that we do not
-            # already know the object. Hopefully the object will be discovered eventually via authenticated Activities
-            # or through loading/refreshing an actor's collections.
-            # To be clear, an object is probably authentic if it is received via an authenticated Activity or by loading
-            # an actor's collections. If we accept the attributedTo field as reliable, we could receive a Create
-            # activity that references a LD-ID for a place or donor that we have not seen. That object could be loaded
-            # from anywhere and attribute the object to any actor, which allows for spoofing.
-
-            # On the other hand, donors cannot be created without archives. Solutions:
-            # * Domain check hack
-            # * Making an "unknown archive"
-            # * Making archives nullable would produce a lot of type errors, but default manager could filter them.
-            #   * photo.donor.archive could still be a problem
-            # * Unprocessed inbox table for storing incomplete data. Potentially very confusing if create/delete happen
-            #   before finding the rest of the necessary data. CPS transform with defunctonalization make this possible.
-            # Domain hack or unknown archive seem least painful.
             object = requests.get(
                 ld_id,
                 headers={
@@ -158,6 +138,8 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
             if object['type'] == 'Contact':
                 try:
                     data : activity_dicts.ActivitypubContact = activity_schema.Contact().load(object)
+                    if urlparse(data['attributedTo'][0]).netloc != urlparse(ld_id).netloc:
+                        return None, False
                     archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=data['attributedTo'][0])
                     if not archive:
                         return None, False
@@ -174,12 +156,16 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
                 raise NotImplementedError
 
 
+    def update_or_create_ld_service_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
+        return None, False
+
 
     @icontract.require(lambda self, owner, object: owner.type == kf_models.Archive.ArchiveType.REMOTE)
     @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Donor) or object['type'] == "Contact")
     @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Photo) or object['type'] == "Image")
     def update_or_create_ld_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
         "This function is valid for object['id'] that are external domains only."
+        "This function is only valid for Contact/Donor and Image/Photo, which should be all that is needed."
         ldid = None
         try:
             ldid = self.get(ld_id=object['id'])
