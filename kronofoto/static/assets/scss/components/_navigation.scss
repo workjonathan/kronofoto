@@ -1,3 +1,5 @@
+
+@use '../colors' as colors;
 @use '../typography' as *;
 
 .hamburger-container {
@@ -181,6 +183,7 @@
 
 .main-nav__left {
   flex-grow: 1;
+  width: 50%;
   margin-right: 10px;
   @include breakpoint(large up) {
     padding-left: 20px;
@@ -188,10 +191,16 @@
 }
 
 .main-nav__title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: $font-weight-regular;
-  color: #666;
+
+  color: colors.$clr-light-gray;
+  margin-top: 0px;
   margin-bottom: 0px;
+  &--large {
+    font-size: 20px;
+    line-height: 22px;
+  }
 }
 
 #kfroot {
@@ -225,6 +234,7 @@
 }
 .main-nav__right {
   justify-content: flex-end;
+  width: 50%;
 
   @include breakpoint(medium up) {
     flex-grow: 1;

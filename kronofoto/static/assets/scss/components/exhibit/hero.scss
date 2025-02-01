@@ -2,7 +2,7 @@
 @use '../../typography' as *;
 
 .hero {
-  z-index: 1000;
+  z-index: 999;
   background-color: #555555;
   color: white;
   text-align: center;
@@ -16,7 +16,7 @@
   width: 100%;
 
   &--empty {
-
+    background-color: #909090;
   }
 
   &__title {
@@ -52,6 +52,21 @@
 
   &__content {
     padding: 20px;
+    font-weight: $font-weight-medium;
+    font-size: 16px;
+    line-height: 22px;
+    @media screen and (min-width: 48em) {
+      font-size: 24px;
+      line-height: 30px;
+    }
+    .text-small {
+      font-size: 12px;
+      line-height: 18px;
+      @media screen and (min-width: 48em) {
+        font-size: 16px;
+        line-height: 22px;
+      }
+    }
     .page-editor & {
       opacity: 1 !important;
     }
@@ -73,15 +88,6 @@
       @media screen and (min-width: 48em) {
         font-size: 72px;
         line-height: 80px;
-      }
-    }
-    p {
-      font-weight: $font-weight-medium;
-      font-size: 16px;
-      line-height: 22px;
-      @media screen and (min-width: 48em) {
-        font-size: 24px;
-        line-height: 30px;
       }
     }
   }

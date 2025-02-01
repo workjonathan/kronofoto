@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import Count, QuerySet
-from django_stubs_ext import WithAnnotations
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
@@ -8,7 +7,7 @@ from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
-from typing import final, Any, Type, List, Dict, Literal
+from typing import final, Any, Type, List, Dict, Literal, TYPE_CHECKING
 from .activity_dicts import ActivitypubContact
 
 

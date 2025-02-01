@@ -1,0 +1,17 @@
+{% load krono_urls %}
+
+<form class="form form--collection" 
+    hx-post="{% krono_url "kronofoto:exhibit-create" %}" 
+    method="post" 
+    action="{% krono_url "kronofoto:exhibit-create" %}"
+    hx-target="#app"
+>
+    {% csrf_token %}
+    <h3>Create a FotoStory</h3>
+    {% for field in form %}
+        <div class="form-item">
+            {{ field }}
+        </div>
+    {% endfor %}
+    <input type="submit" class="button" value="Create" />
+</form>

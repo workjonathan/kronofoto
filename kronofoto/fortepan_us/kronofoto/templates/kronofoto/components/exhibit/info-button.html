@@ -1,0 +1,16 @@
+{% load krono_urls %}
+<a 
+    href="{% object_url photo %}" 
+    target="_blank" 
+    class="hero__info-button info-button info-button--bottom" 
+    {% if form %}
+        hx-get="{% krono_url "kronofoto:info-button" %}" 
+        hx-swap="outerHTML"
+        hx-include="#{{ form.photo.auto_id }}" 
+        hx-vals='{"html_name": "{{ form.photo.html_name }}", "field": "{{ form.photo.auto_id }}" }' 
+        hx-trigger="change from:#{{ form.photo.auto_id }}"
+    {% endif %}
+>
+    <span class="info-button__icon"></span>
+    <div class="info-button__text">{% include "kronofoto/components/attribution.html" with object=photo %}</div>
+</a>

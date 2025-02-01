@@ -10,6 +10,10 @@
     }
   }
 
+  span + small {
+    display: block;
+    margin-top: 20px;
+  }
 
   &__edit-image-button {
     @include edit-image-button;
@@ -117,7 +121,7 @@
   &__image {
     height: 100vh;
     //@media screen and (min-width: 48em) {
-      width: 100vw;
+      width: 100%;
       .page-editor & {
         height: 100%;
         width: 100%;

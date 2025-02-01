@@ -24,12 +24,15 @@
 </div>
 {% endblock user_header %}
 {% block collections %}
-{% include "kronofoto/components/collections.html" %}
+    {% collections user=request.user profile_user=profile_user form=form %}
 {% endblock collections %}
+
 {% block exhibits %}
-{% include "kronofoto/components/exhibits.html" %}
+    {% exhibits user=request.user profile_user=profile_user form=exhibit_form %}
 {% endblock exhibits %}
 
+{% comment %}
+These sections have been commented out because we haven't decided what they actually do.
 <section id="my-fotosphers" class="border-bottom">
 
     <div class="row">
@@ -102,5 +105,6 @@
     </div>
 
 </section>
+{% endcomment %}
 
 {% endblock %}

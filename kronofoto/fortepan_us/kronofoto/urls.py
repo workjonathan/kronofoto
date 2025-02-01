@@ -13,6 +13,7 @@ from fortepan_us.kronofoto.views.donor import ContributorCreateView
 from fortepan_us.kronofoto.views import activitypub
 from fortepan_us.kronofoto.views import tags_view
 from fortepan_us.kronofoto.views import photosphere
+from fortepan_us.kronofoto.views import exhibit
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -134,6 +135,7 @@ urlpatterns = urlpatterns + [
     path('users/<str:username>', views.profile_view, name='user-page'),
     path('attribution', views.attribution, name="attribution"),
     path("exhibits", views.exhibit_list, name="exhibit-list"),
+    path("exhibits/info-button", views.exhibit.exhibit_info_button, name="info-button"),
     path("exhibits/<int:pk>-<slug:title>", views.exhibit.view, name='exhibit-view'),
     path("exhibits/<int:pk>/embed", views.exhibit.embed, name='exhibit-embed'),
     path("exhibits/<int:pk>/edit", views.exhibit_edit, name='exhibit-edit'),
@@ -143,6 +145,7 @@ urlpatterns = urlpatterns + [
     path("exhibits/<int:pk>/figure-image", views.exhibit_figure_image, name='exhibit-figure-image'),
     path("exhibits/<int:pk>/two-column-image", views.exhibit_two_column_image, name='exhibit-two-column-image'),
     path("exhibits/full-image", views.exhibit_full_image, name='exhibit-full-image'),
+    path("exhibits/recard/<int:pk>", exhibit.exhibit_recard, name='exhibit-recard'),
     path("exhibits/<int:pk>/<str:card_type>-form", views.exhibit_card_form, name='exhibit-card-form'),
     path("exhibits/add", views.exhibit_create, name='exhibit-create'),
     path('<slug:short_name>/contributors/add', ContributorCreateView.as_view(), name='contributor-create'),

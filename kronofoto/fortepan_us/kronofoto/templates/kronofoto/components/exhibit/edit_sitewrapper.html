@@ -18,14 +18,20 @@
     {{ form.description.errors }}
     <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ exhibit.description }}</p>
     {{ form.smalltext.errors }}
-    <p class="hero__content" contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ exhibit.smalltext }}</p>
+    <p class="hero__content text-small" contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ exhibit.smalltext }}</p>
 {% endblock hero_content_wrapper %}
 
 {% block hero_background %}
     {{ form.photo.errors }}
     <div class="hero__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal"></div>
-    <div class="hero__background"
-        hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" hx-include="#{{ form.photo.auto_id }}" hx-vals='{"html_name": "{{ form.photo.html_name }}" }' hx-trigger="change from:#{{ form.photo.auto_id }}">
+    <div 
+        class="hero__background"
+        hx-get="{% krono_url "kronofoto:exhibit-full-image" %}"
+        hx-include="#{{ form.photo.auto_id }}"
+        hx-vals='{"html_name": "{{ form.photo.html_name }}" }'
+        hx-trigger="change from:#{{ form.photo.auto_id }}"
+        hx-select="img"
+    >
         {% if exhibit.photo %}
         <img src="{% image_url photo=exhibit.photo width=2000 %}">
         {% endif %}

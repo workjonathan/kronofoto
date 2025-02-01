@@ -6,21 +6,35 @@
   <nav aria-label="Main navigation">
     <div class="main-nav">
         <div class="main-nav__left">
-            <div id="logo">
-                <a href="{% url "kronofoto:random-image" %}">
-                <img class="logo-img" src="{{ theme.logoicon }}" alt="Fortepan Iowa Logo">
-                </a>
-            </div>
-            <div class="nav-title" contenteditable="{{ contenteditable }}" role="textbox" @input="name = $el.innerText" id="content-editable-name">{{ exhibit.name }}</div>
+            <a id="logo" class="logo" href="{% url "kronofoto:random-image" %}">
+                <img class="logo-img logo-img--icon" src="{{ theme.logoicon }}" alt="Fortepan Iowa Logo">
+                <div class="logo__text" aria-label="FotoStory"><svg xmlns="http://www.w3.org/2000/svg" width="90.315" height="9.732" viewBox="0 0 90.315 9.732">
+                    <path id="Path_517" data-name="Path 517" d="M60.556,10.338h6.067v1.595H62.449v2.4h3.92V15.9h-3.92v3.9H60.556Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_518" data-name="Path 518" d="M77.921,15.028c0,2.725-1.317,4.916-4.3,4.916-2.92,0-4.168-2.247-4.168-4.938,0-2.332,1.277-4.794,4.3-4.794,2.863,0,4.167,2.268,4.167,4.816m-6.472-.015c0,1.89.753,3.4,2.252,3.4,1.646,0,2.239-1.4,2.239-3.38,0-1.743-.586-3.281-2.272-3.281-1.565,0-2.219,1.445-2.219,3.265" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_519" data-name="Path 519" d="M83.317,11.935H80.751v-1.6h7.077v1.6H85.261v7.871H83.317Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_520" data-name="Path 520" d="M99.126,15.028c0,2.725-1.317,4.916-4.3,4.916-2.921,0-4.169-2.247-4.169-4.938,0-2.332,1.276-4.794,4.3-4.794,2.863,0,4.167,2.268,4.167,4.816m-6.472-.015c0,1.89.753,3.4,2.251,3.4,1.647,0,2.24-1.4,2.24-3.38,0-1.743-.586-3.281-2.272-3.281-1.565,0-2.219,1.445-2.219,3.265" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_521" data-name="Path 521" d="M103.864,17.01a1.572,1.572,0,0,0,1.705,1.421c1.079,0,1.455-.469,1.455-1.139,0-.859-.521-1.212-1.889-1.6-2.194-.607-2.943-1.395-2.943-2.762,0-1.756,1.4-2.715,3.209-2.715,2.271,0,3.232,1.182,3.341,2.7h-1.894a1.3,1.3,0,0,0-1.464-1.23c-.849,0-1.268.394-1.268,1.052,0,.706.475.906,1.817,1.3,2.417.707,3.051,1.672,3.051,3.03,0,1.544-1.025,2.862-3.5,2.862-2.067,0-3.409-1.041-3.525-2.917Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_522" data-name="Path 522" d="M114.379,11.935h-2.565v-1.6h7.077v1.6h-2.568v7.871h-1.944Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_523" data-name="Path 523" d="M130.189,15.028c0,2.725-1.317,4.916-4.3,4.916-2.921,0-4.169-2.247-4.169-4.938,0-2.332,1.276-4.794,4.3-4.794,2.863,0,4.167,2.268,4.167,4.816m-6.472-.015c0,1.89.753,3.4,2.251,3.4,1.647,0,2.24-1.4,2.24-3.38,0-1.743-.586-3.281-2.272-3.281-1.565,0-2.219,1.445-2.219,3.265" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_524" data-name="Path 524" d="M134.914,15.9v3.911h-1.9V10.338h3.857c1.787,0,3.065.887,3.065,2.561a2.162,2.162,0,0,1-1.473,2.214c.94.364,1.277,1.105,1.277,2.281v.245a16.244,16.244,0,0,0,.126,2.167h-1.861a7.737,7.737,0,0,1-.176-2.2v-.249c0-1.083-.394-1.464-1.631-1.464Zm0-1.532h1.44c.918,0,1.673-.246,1.673-1.294,0-.875-.633-1.2-1.407-1.2h-1.706Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                    <path id="Path_525" data-name="Path 525" d="M145.846,19.806V16.238a.539.539,0,0,0-.081-.307l-2.995-5.593h2.174c.666,1.426,1.535,3.233,1.956,4.115.621-1.347,1.342-2.8,1.959-4.115h2.012l-3.017,5.554a.486.486,0,0,0-.077.29v3.624Z" transform="translate(-60.556 -10.212)" fill="#6e85b8"/>
+                </svg>
+                </div>
+            </a>
         </div> <!-- end nav left -->
+
+      <div class="main-nav__center">
+          <h1 class="main-nav__title main-nav__title--large" contenteditable="{{ contenteditable }}" role="textbox" @input="name = $el.innerText" id="content-editable-name">{{ exhibit.name }}</h1>
+      </div>
 
       <div class="main-nav__right">
 
           <div class="main-nav__actions">
 <!--              <button class="icon" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center"><i class="icon&#45;&#45;embed"></i></button>-->
 <!--              <button data-form-target="" data-tooltip title="Share Link" data-position="bottom" data-alignment="center" class="icon"><i class="icon&#45;&#45;link"></i></button>-->
-              <button data-form-target="_blank" data-tooltip title="Preview" data-position="bottom" data-alignment="center" name="preview" class="icon"><i class="icon--preview"></i></button>
-              <button data-form-target="" type="submit" @click="hasChanges = false" name="save" value="Save" class="button">Save</button>
+              <button data-tooltip title="Start Tour" data-position="bottom" data-alignment="center" id="start-tour" name="start-tour" class="icon"><i class="icon--help"></i></button>
+              <button id="preview-tour" data-form-target="_blank" data-tooltip title="Preview" data-position="bottom" data-alignment="center" name="preview" class="icon"><i class="icon--preview"></i></button>
+              <button id="save-tour" data-form-target="" type="submit" @click="hasChanges = false" name="save" value="Save" class="button">Save</button>
           </div>
 
           <div class="login-container" data-tooltip title="My Account" data-position="bottom" data-alignment="center">
@@ -51,41 +65,23 @@
 </div>
 
   {% if messages %}
-    <ul  
-		x-data="{ show: true }" 
-        x-init="setTimeout(() => show = false, 5000)" 
-        x-show="show"
-        x-transition:enter="fade-enter"
-        x-transition:enter-start="fade-enter-start"
-        x-transition:enter-end="fade-enter-end"
-        x-transition:leave="fade-leave"
-        x-transition:leave-start="fade-leave-start"
-        x-transition:leave-end="fade-leave-end"
-        class="notification">
+    <div id="messages">
         {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        <div
+            x-data="{ show: true }"
+            x-init="setTimeout(() => show = false, 5000)"
+            x-show="show"
+            x-transition:enter="fade-enter"
+            x-transition:enter-start="fade-enter-start"
+            x-transition:enter-end="fade-enter-end"
+            x-transition:leave="fade-leave"
+            x-transition:leave-start="fade-leave-start"
+            x-transition:leave-end="fade-leave-end"
+            class="callout{% if message.tags %} {{ message.tags }}{% endif %}">
+            {{ message }}
+            <button class="close-button" aria-label="Dismiss alert" type="button" @click="show = false"></button>
+        </div>
         {% endfor %}
-    </ul>
-<style>
-.notification {
-    padding: 1rem;
-    background-color: tomato;
-    color: white;
-    border-radius: 8px;
-}
-
-/* Transition classes */
-.fade-enter, .fade-leave {
-    transition: opacity 0.5s ease;
-}
-
-.fade-enter-start, .fade-leave-end {
-    opacity: 0;
-}
-
-.fade-enter-end, .fade-leave-start {
-    opacity: 1;
-}
-</style>
+    </div>
   {% endif %}
 </header>

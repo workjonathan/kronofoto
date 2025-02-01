@@ -4,9 +4,10 @@
 {% load widgets %}
 
 {% block content_body %}
-<div class="content-area">
+<div data-card class="content-area">
     <div class="image-collection image-collection--{{ card.figures|length }}">
     {% for figure in card.figures %}
+        {% if forloop.counter0 < figure_count %}
         <figure{% if not figure.photo %} class="empty"{% endif %}{% if edit %} x-data="{ 'empty': {{ figure.photo|yesno:"false,true" }}, caption: '{{ figure.caption | escapejs }}' }" :class="{'empty': empty}" @remove-empty="empty=false"{% endif %}>
             <div class="image-collection__wrapper">
                 {% with form=figure.form target_id=figure.form.photo.auto_id photo=figure.photo html_name=figure.form.photo.html_name %}
@@ -16,18 +17,27 @@
                 {% endwith %}
             </div>
             {% if edit %}
+                {{ figure.form }}
                 {% with form=figure.form %}
                 {{ form.caption.errors }}
                 <figcaption contenteditable="{{ contenteditable }}" role="textbox" @input="caption = $el.innerText">{{ figure.caption }}</figcaption>
-                {{ form }}
-                <input type="hidden" name="prefix" value="{{ form.prefix }}">
                 {% endwith %}
             {% else %}
                 <figcaption>{{ figure.caption | markdown }}</figcaption>
             {% endif %}
         </figure>
+        {% else %}
+        {% for field in figure.form %}
+            {{ field.as_hidden }}
+        {% endfor %}
+        {% endif %}
+        <input type="hidden" name="prefix" value="{{ figure.form.prefix }}">
     {% endfor %}
     </div>
 </div>
 {% endblock content_body %}
+{% block formfields %}
+    {{ block.super }}
+    {{ form.fill_style.as_hidden }}
+{% endblock formfields %}
 

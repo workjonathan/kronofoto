@@ -5,14 +5,21 @@
 {% block container_classes %}container--full-width container--no-padding{% endblock %}
 
 {% block content_body %}
-    <div 
-        class="full-image-area {{ image_area_classes | join:" " }}{% if not card.photo %} empty{% endif %}" 
-        {% if edit %} 
-            x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }}, }" 
+    <div
+        data-card
+        class="full-image-area {{ image_area_classes | join:" " }}{% if not card.photo %} empty{% endif %}"
+        {% if edit %}
+            x-data="{ dropdownExpanded: false, fitStyle: {{ form.fill_style.value }}, empty: {{ card.photo|yesno:"false,true" }}, }"
             :class="{ 'full-image-area--cover': fitStyle == 1, 'full-image-area--contain': fitStyle == 2, 'empty': empty}"
             @remove-empty="empty=false"
         {% endif %}>
         {% if edit %}
+        {% for figure in card.figures %}
+            {% for field in figure.form %}
+                {{ field.as_hidden }}
+            {% endfor %}
+            <input type="hidden" name="prefix" value="{{ figure.form.prefix }}">
+        {% endfor %}
         {{ form.photo.errors }}
         <div class="full-image-area__edit-image-button" hx-get="{% krono_url "kronofoto:exhibit-images" pk=exhibit.pk %}?target={{ form.photo.auto_id }}" hx-target="#add-image-modal"></div>
         {% endif %}
@@ -23,25 +30,25 @@
             {{ form.description.errors }}
             <span contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ card.description }}</span>
             {{ form.smalltext.errors }}
-            <span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span>
+            <small><span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span></small>
             {% else %}
                 {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
                 {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
-                {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
+                {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" }}</small>{% endif %}
             {% endif %}
         </div>
-        <div 
-            class="full-image-area__image" 
-            data-aos="fade-zoom-in" 
-            data-aos-easing="ease-in-back" 
-            data-aos-delay="300" 
+        <div
+            class="full-image-area__image"
+            data-aos="fade-zoom-in"
+            data-aos-easing="ease-in-back"
+            data-aos-delay="300"
             data-aos-offset="0"
-            {% if form %} 
-            hx-get="{% krono_url "kronofoto:exhibit-full-image" %}" 
-            hx-include="#{{ form.photo.auto_id }}" 
-            hx-vals='{"html_name": "{{ form.photo.html_name }}" }' 
-            hx-trigger="change from:#{{ form.photo.auto_id }}" 
-            hx-swap="innerHTML show:top" 
+            {% if form %}
+            hx-get="{% krono_url "kronofoto:exhibit-full-image" %}"
+            hx-include="#{{ form.photo.auto_id }}"
+            hx-vals='{"html_name": "{{ form.photo.html_name }}" }'
+            hx-trigger="change from:#{{ form.photo.auto_id }}"
+            hx-swap="innerHTML show:top"
             {% endif %}>
             {% if card.photo %}
             {% include "kronofoto/components/full-image.html" with photo=card.photo %}

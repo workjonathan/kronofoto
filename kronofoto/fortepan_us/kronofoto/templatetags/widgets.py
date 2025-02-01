@@ -8,7 +8,7 @@ from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
-from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure
+from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure, Exhibit
 from fortepan_us.kronofoto.imageutil import ImageSigner
 from typing import Union, Dict, Any, Union, Optional, Tuple, List, overload
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
@@ -113,14 +113,34 @@ def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]
         "get_params": get_params,
     }
 
-@register.inclusion_tag("kronofoto/components/collections.html", takes_context=False)
-def collections(request: HttpRequest, profile_user: User) -> Dict[str, Any]:
-    from fortepan_us.kronofoto.forms import CollectionForm
-    context = {'request': request, 'profile_user': profile_user}
-    context['form'] = CollectionForm()
+@register.inclusion_tag("kronofoto/components/user-content-section.html", takes_context=False)
+def collections(user: User, profile_user: User, form: Union[forms.ModelForm, forms.Form]) -> Dict[str, Any]:
+    context = {
+        'request_user': user,
+        'profile_user': profile_user,
+        "form": form,
+        "section_id":"my-lists",
+        "section_name": "My FotoAlbums",
+        "form_template": "kronofoto/components/forms/collection-create.html",
+        "section_description": "A FotoAlbum is a collection of Fortepan photos organized by a customizable theme. You can share and embed any FotoAlbum, and use a FotoAlbum to create a FotoStory.",
+    }
+
     filter_kwargs = {}
-    if request.user.id != profile_user.id:
+    if user.id != profile_user.id:
         filter_kwargs['visibility'] = "PU"
     context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
     return context
 
+@register.inclusion_tag("kronofoto/components/user-content-section.html", takes_context=False)
+def exhibits(user: User, profile_user: User, form: forms.Form) -> Dict[str, Any]:
+    context = {
+        'request_user': user,
+        'profile_user': profile_user,
+        "form": form,
+        "section_id": "my-exhibits",
+        "section_name": "My FotoStories",
+        "form_template": "kronofoto/components/forms/exhibit-create.html",
+        "section_description": "A FotoStory is a digital exhibit built with Fortepan photos; build a FotoStory with a combination of text + image content blocks. You can share and embed any FotoStory.",
+    }
+    context['object_list'] = Exhibit.objects.filter(owner=profile_user)
+    return context

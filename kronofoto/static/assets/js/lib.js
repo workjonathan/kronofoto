@@ -376,6 +376,7 @@ class PageEditor {
             this.context.addEventListener("kronofoto:modal:reveal", (evt) => {
                 $(modal).foundation("open")
             })
+            $(modal).on("closed.zf.reveal", () => modal.dispatchEvent(new Event("kronofoto-close-modal", {bubbles: true})))
         }
         for (const img of elem.querySelectorAll("[data-photo-target]")) {
             img.addEventListener("click", (evt) => {
@@ -433,16 +434,19 @@ class PageEditor {
     moveComponentUp(event) {
         const button = event.target
         const card = button.closest(".card")
+        const betweenCard = card.nextElementSibling
+
         let previous = card
-        while ((previous = previous.previousElementSibling)) {
+        while (previous = previous.previousElementSibling) {
             if (previous.classList.contains("card")) {
                 break
             }
         }
-        if (previous !== card) {
+        if (previous !== card && previous && previous.classList.contains("card")) {
             previous.insertAdjacentElement("beforebegin", card)
-            previous.style["z-index"]--
-            card.style["z-index"]++
+            card.insertAdjacentElement("afterend", betweenCard)
+
+            [previous.style["z-index"], card.style["z-index"]] = [card.style['z-index'], previous.style['z-index']]
             AOS.refreshHard()
         }
     }
@@ -450,16 +454,17 @@ class PageEditor {
     moveComponentDown(event) {
         const button = event.target
         const card = button.closest(".card")
+        const betweenCard = card.nextElementSibling
         let next = card
-        while ((next = next.nextElementSibling)) {
+        while (next = next.nextElementSibling) {
             if (next.classList.contains("card")) {
                 break
             }
         }
-        if (next !== card) {
+        if (next !== card && next && next.classList.contains("card")) {
             next.insertAdjacentElement("afterend", card)
-            card.style["z-index"]--
-            next.style["z-index"]++
+            card.insertAdjacentElement("afterend", betweenCard)
+            [next.style["z-index"], card.style["z-index"]] = [card.style['z-index'], next.style['z-index']]
             AOS.refreshHard()
         }
     }
@@ -467,7 +472,9 @@ class PageEditor {
     deleteComponent(event) {
         const button = event.target
         const card = button.closest(".card")
+        const betweenCard = card.nextElementSibling
         card.remove()
+        betweenCard.remove()
     }
 
     updateHiddenField(event) {

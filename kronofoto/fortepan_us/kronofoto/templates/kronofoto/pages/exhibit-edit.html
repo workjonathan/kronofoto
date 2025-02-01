@@ -10,6 +10,7 @@
     <title>Fortepan Exhibit</title>
     <link rel="stylesheet" href="https://use.typekit.net/kol0uny.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css" rel="stylesheet"/>
     <link href="{% static "kronofoto/css/exhibit.css" %}?version={{ CSS_VERSION }}" rel="stylesheet">
 	<link rel="apple-touch-icon" sizes="180x180" href="{% static "kronofoto/favicon/apple-touch-icon.png" %}">
 	<link rel="icon" type="image/png" sizes="32x32" href="{% static "kronofoto/favicon/favicon-32x32.png" %}">
@@ -22,6 +23,10 @@
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="{% static "kronofoto/js/main.js" %}?version={{ CSS_VERSION }}"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs"
+    ></script>
     <style>
         :root {
             --fp-main-font: 'Montserrat', sans-serif;
@@ -49,6 +54,7 @@
                 {% include "kronofoto/components/exhibit/edit_sitewrapper.html" %}
                 {% include "kronofoto/components/exhibit/credits.html" %}
             </div>
+{% comment %}
 <!--            <div class="page-editor__toolbar toolbar">-->
 <!--                <div class="toolbar__section">-->
 <!--                    <label class="toolbar__label" @click="hasChanges=true" data-tooltip title="Embed FotoStory" data-position="bottom" data-alignment="center">Content blocks</label>-->
@@ -63,9 +69,334 @@
 <!--                </div>-->
 
 <!--            </div>-->
+{% endcomment %}
         </div>
     </form>
     <div class="reveal tiny" id="add-image-modal" data-reveal>
     </div>
+    <script type="module">
+        import Shepherd from 'https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/esm/shepherd.mjs'
+
+        function makeModalPromise() {
+            return new Promise(resolve =>
+                document.addEventListener("kronofoto-close-modal", resolve, {once: true})
+            )
+        }
+        const tour = new Shepherd.Tour({
+            useModalOverlay: true,
+              defaultStepOptions: {
+                title: "FotoStory",
+                cancelIcon: {
+                  enabled: true  // This adds a clickable close (X) icon in the top corner of the tooltip
+                },
+                scrollTo: true,
+                scrollToHandler: function(element) {
+                  if (element) {
+                    // Using `scrollIntoView` with smooth behavior
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                },
+              },
+            steps: [
+                {
+                    title: '<div style="text-align:center; width: 100%">Welcome to FotoStory</div>',
+                    buttons: [
+                      {
+                        text: "Here's a quick tour",
+                        action: () => tour.next(),
+                      },
+                    ]
+                },
+                {
+                    title: 'Start tour',
+                    text: 'You can take the tour again by clicking this',
+                    attachTo: {
+                        element: '#start-tour',
+                        on: 'bottom'
+                    },
+                    showOn: () => !userStartedTour,
+                    advanceOn: {
+                        selector: '#start-tour',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Start by picking your Title image',
+                    text: 'All images come from the FotoAlbum you chose for this FotoStory',
+                    attachTo: {
+                        element: '.hero__edit-image-button',
+                        on: 'top'
+                    },
+                    advanceOn: {
+                        selector: '.hero__edit-image-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    title: 'Add Title page text',
+                    text: `Enter text into the box–you can change it any time and also leave it empty<br>
+                     All text boxes  are markdown enabled<br>
+                     Here are some short cuts–<br>
+                     For italics:  *italics*   <br>
+                     For bold: ** bold** <br>
+                     For a link: [fortepan us](https://fortepan.us)<br>
+                     For an image or logo:  ![](https://fortepan.us/golden/logo.svg)<br>
+                     Please check the Basic Syntax portion of <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank">the Markdown Cheat Sheet</a> to find out what can be done.
+                     `,
+                    beforeShowPromise: makeModalPromise,
+                    attachTo: {
+                        element: '.hero__title > h1:nth-child(1)',
+                        on: 'right'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Second text size option',
+                    text: 'Use for title or subtitle',
+                    attachTo: {
+                        element: 'p.hero__content:nth-child(2)',
+                        on: 'right'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Third text size option',
+                    text: 'Use for subtitle or reference',
+                    attachTo: {
+                        element: 'p.hero__content:nth-child(3)',
+                        on: 'right'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Hover over the "i" to see the image’s attribution',
+                    text: 'All images are automatically attributed and link back to the Timeline',
+                    attachTo: {
+                        element: '.hero__info-button',
+                        on: 'top',
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Adjust URL here',
+                    text: 'Your URL should be short and sweet',
+                    attachTo: {
+                        element: '#content-editable-name',
+                        on: 'right'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Add your first content block here',
+                    text: 'You will have 7 options',
+                    attachTo: {
+                        element: '.between-card__add-button',
+                        on: 'bottom'
+                    },
+                    advanceOn: {
+                        selector: '.between-card__add-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    title: 'Select 1 of 7 content blocks to build a story',
+                    text: "For now, let's select a full-size image",
+                    attachTo: {
+                        element: 'button.toolbar__button--icon:nth-child(7)',
+                        on: 'top'
+                    },
+                    advanceOn: {
+                        selector: 'body',
+                        event: 'htmx:afterSettle'
+                    },
+                },
+                {
+                    title: 'Choose a new photo here',
+                    text: 'Click the "+" to choose a new photo',
+                    attachTo: {
+                        element: '.full-image-area__edit-image-button',
+                        on: 'right'
+                    },
+                    advanceOn: {
+                        selector: '.full-image-area__edit-image-button',
+                        event: 'click'
+                    },
+                },
+                {
+                    title: 'All text boxes are active',
+                    text: 'Anywhere it says "Click to change text" you can add text',
+                    attachTo: {
+                        element: '.full-image-area__text > h2:nth-child(1)',
+                        on: 'bottom'
+                    },
+                    beforeShowPromise: makeModalPromise,
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Choose an image size option for large content blocks',
+                    text: '"Fit to page" means you keep the aspect ratio of the image<br>"Fill page" means that the image will fill the entire content box',
+                    attachTo: {
+                        element: '.full-image-area__select-alignment',
+                        on: 'bottom'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'These are up and down arrows',
+                    text: 'Move content blocks up or down as needed',
+                    attachTo: {
+                        element: '#move-buttons-anchor',
+                        on: 'left'
+                    },
+                    advanceOn: {
+                        selector: '#move-buttons-anchor',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'This is the Swap button',
+                    text: 'Swap out a content block and choose another',
+                    attachTo: {
+                        element: '[data-recard]',
+                        on: 'left'
+                    },
+                    advanceOn: {
+                        selector: '[data-recard]',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Click on the Trashcan icon to delete a content block',
+                    text: 'The content block will be deleted permanently',
+                    attachTo: {
+                        element: '.delete',
+                        on: 'left'
+                    },
+                    advanceOn: {
+                        selector: '.delete',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Add credits and references here',
+                    text: 'Credit the author and other sources',
+                    attachTo: {
+                        element: '.credits div span',
+                        on: 'top'
+                    },
+                    advanceOn: {
+                        selector: '.credits div span',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Preview',
+                    text: 'Preview opens your FotoStory in a new tab',
+                    attachTo: {
+                        element: '#preview-tour',
+                        on: 'bottom'
+                    },
+                    advanceOn: {
+                        selector: '#preview-tour',
+                        event: 'click'
+                    },
+                    buttons: [
+                      {
+                        text: "Next",
+                        action: () => tour.next(),
+                      },
+                    ],
+                },
+                {
+                    title: 'Save',
+                    text: 'Save will save your FotoStory choices',
+                    attachTo: {
+                        element: '#save-tour',
+                        on: 'bottom'
+                    },
+                    advanceOn: {
+                        selector: '#save-tour',
+                        event: 'click'
+                    },
+                },
+            ]
+        })
+        let userStartedTour = false
+        document.querySelector('#start-tour').addEventListener('click', function(e) {
+            e.preventDefault()
+            userStartedTour = true
+            if (!tour.isActive()) {
+                tour.start()
+            }
+        })
+        {% if can_show_exhibit %}
+            tour.start()
+        {% endif %}
+    </script>
 </body>
 </html>

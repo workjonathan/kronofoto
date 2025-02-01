@@ -22,7 +22,6 @@ from fortepan_us.kronofoto.models.category import Category, ValidCategory
 from fortepan_us.kronofoto.models.csvrecord import ConnecticutRecord
 from fortepan_us.kronofoto.forms import PhotoSphereAddForm, PhotoSphereChangeForm, PhotoSpherePairInlineForm, SubmissionForm, PhotoForm, PhotoSphereInfoInlineForm
 from django.db.models import Count, Q, Exists, OuterRef, F, ManyToManyField, QuerySet, ForeignKey, Model, Manager
-from django_stubs_ext import WithAnnotations
 from django.db import IntegrityError, router, transaction
 from django.db.models.options import Options
 from django.conf import settings
@@ -39,6 +38,7 @@ from typing import Any, Optional, Type, DefaultDict, Set, Dict, Callable, List, 
 from django.urls import URLPattern
 if TYPE_CHECKING:
     from django.contrib.admin.options import _FieldsetSpec
+    from django_stubs_ext import WithAnnotations
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.utils.html import format_html, format_html_join, html_safe
 from django.shortcuts import get_object_or_404
@@ -263,7 +263,7 @@ class ArchivePermissionMixin:
 
 
 class FilteringArchivePermissionMixin(ArchivePermissionMixin):
-    def get_queryset(self, request: HttpRequest) -> WithAnnotations[Any]:
+    def get_queryset(self, request: HttpRequest) -> "WithAnnotations[Any]":
         qs = super().get_queryset(request) # type: ignore
         if not self.has_view_or_change_all(request):
             opts = self.opts # type: ignore
@@ -1363,6 +1363,7 @@ class PhotoAdmin(PhotoBaseAdmin):
         'caption',
         'is_featured',
         'is_published',
+        'local_context_id',
         'scanner',
     ]
     class Media:

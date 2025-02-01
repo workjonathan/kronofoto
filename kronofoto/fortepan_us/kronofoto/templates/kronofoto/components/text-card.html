@@ -4,20 +4,30 @@
 {% load widgets %}
 
 {% block content_body %}
-    <div class="content-area">
+    <div data-card class="content-area">
         <div class="content-area__content"{% for attr, value in content_attrs.items %} {{ attr }}="{{ value }}"{% endfor %}>
             {% if edit %}
+            {% for figure in card.figures %}
+                {% for field in figure.form %}
+                    {{ field.as_hidden }}
+                {% endfor %}
+                <input type="hidden" name="prefix" value="{{ figure.form.prefix }}">
+            {% endfor %}
             {{ form.title.errors }}
             <h2 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ card.title }}</h2>
             {{ form.description.errors }}
             <span contenteditable="{{ contenteditable }}" role="textbox" @input="description = $el.innerText">{{ card.description }}</span>
             {{ form.smalltext.errors }}
-            <span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span>
+            <small><span contenteditable="{{ contenteditable }}" role="textbox" @input="smalltext = $el.innerText">{{ card.smalltext }}</span></small>
             {% else %}
             {% if card.title %}<h2>{{ card.title }}</h2>{% endif %}
             {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
-            {% if card.smalltext %}{{ card.smalltext | markdown:"nl2br" }}{% endif %}
+            {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" }}</small>{% endif %}
             {% endif %}
         </div>
     </div>
 {% endblock content_body %}
+{% block formfields %}
+    {{ block.super }}
+    {{ form.fill_style.as_hidden }}
+{% endblock formfields %}

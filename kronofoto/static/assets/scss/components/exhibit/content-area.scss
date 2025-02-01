@@ -3,6 +3,11 @@
 
 .content-area {
   padding-top: 4px;
+  small {
+    display: block;
+    font-size: 12px;
+    margin-top: 20px;
+  }
   &__content {
     max-width: 600px;
     margin: auto;

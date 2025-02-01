@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import user_passes_test
 from functools import cached_property
 from django.shortcuts import get_object_or_404
-from fortepan_us.kronofoto.models import Photo, Exhibit, Card, Collection, PhotoCard
+from fortepan_us.kronofoto.models import Photo, Exhibit, Card, Collection, PhotoCard, UserData
 from django.db.models.functions import Length
 from django.db.models import QuerySet, Exists, OuterRef, Max, F, Q
 from django.db import transaction
@@ -21,6 +21,64 @@ import uuid
 from dataclasses import dataclass
 from collections import defaultdict
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+
+def exhibit_info_button(request: HttpRequest) -> HttpResponse:
+    html_name = request.GET.get("html_name", "")
+    target_id = request.GET.get("field", "")
+    try:
+        photo_id = int(request.GET.get(html_name, ""))
+        photo = get_object_or_404(Photo.objects.all(), pk=photo_id)
+        context = {
+            "form": {'photo': {'auto_id': target_id, 'html_name': html_name }},
+            "photo": photo,
+        }
+        return TemplateResponse(request=request, context=context, template="kronofoto/components/exhibit/info-button.html")
+    except ValueError:
+        return HttpResponse("", status=400)
+
+@csrf_exempt
+def exhibit_recard(request: HttpRequest, pk: int) -> HttpResponse:
+    data = request.GET.copy()
+    exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
+    card_types = [CardFormType(data, prefix=prefix) for prefix in request.GET.getlist("prefix")]
+    new_type = request.GET.get("assign_type")
+    new_alignment = int(request.GET.get("assign_alignment", "0"))
+    new_count = int(request.GET.get("count", "0"))
+    for t in card_types:
+        if not t.is_valid():
+            return HttpResponse("invalid type", status=400)
+    mainform = None
+    figures = []
+    for (i, form) in enumerate(card_types):
+        if form.cleaned_data['cardform_type'] != 'figure':
+            if not form.prefix:
+                return HttpResponse("main form with missing prefix", status=400)
+            data[form.prefix + "-card_type"] = str(new_alignment)
+            if new_type:
+                data[form.prefix + '-cardform_type'] = new_type
+            data[form.prefix + '-figure_count'] = str(new_count)
+            mainform = CardForm(data, prefix=form.prefix)
+            if not mainform.is_valid():
+                return HttpResponse("invalid main form", status=400)
+        else:
+            figures.append(FigureForm(data, prefix=form.prefix))
+            if not figures[-1].is_valid():
+                return HttpResponse("invalid main form", status=400)
+    if not mainform:
+        return HttpResponse("main form missing", status=400)
+    for _ in range(len(figures), new_count):
+        figures.append(FigureForm(prefix=str(uuid.uuid4()), initial={"cardform_type": "figure", "parent": mainform.prefix }))
+    cardcontext = CardContext()
+    context, i = cardcontext.context(card=CardFormWrapper(form=mainform, figures=[FigureFormWrapper(figure) for figure in figures]), i=0, two_column_count=0, mode="EDIT_POST")
+    context['exhibit'] = exhibit
+    context['edit'] = True
+    return TemplateResponse(
+        template=context['template'],
+        request=request,
+        context=context,
+    )
+
 
 def exhibit_figure_form(request: HttpRequest, pk: int, parent: str) -> HttpResponse:
     context = {}
@@ -58,7 +116,6 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
         )
     elif card_type == "figure":
         parent_uuid = str(uuid.uuid4())
-        cardform = FigureListForm(initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
         figures = []
         form = FigureCountForm(request.GET, initial={"count": 1})
         if form.is_valid() and form.cleaned_data['count']:
@@ -69,7 +126,9 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
                 FigureFormWrapper(FigureForm(prefix=str(uuid.uuid4()), initial={"parent": parent_uuid, "cardform_type": "figure"}))
                 for _ in range(form.cleaned_data['count'])
             ]
+            cardform = FigureListForm(initial={"cardform_type": "figure_list", "figure_count": form.cleaned_data['count']}, prefix=parent_uuid)
         context['card'] = FigureListFormWrapper(form=cardform, figures=figures)
+        context['figure_count'] = form.cleaned_data['count']
         context['form'] = cardform
         return TemplateResponse(
             template="kronofoto/components/figure-card.html",
@@ -101,6 +160,7 @@ def exhibit_card_form(request: HttpRequest, pk: int, card_type: str) -> HttpResp
 
 
 class ExhibitForm(ModelForm):
+    has_tour = forms.BooleanField(required=False, widget=forms.HiddenInput)
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         if 'instance' in kwargs:
@@ -277,9 +337,15 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
     exhibit = get_object_or_404(Exhibit.objects.all(), pk=pk)
     if exhibit.owner.pk != request.user.pk:
         return HttpResponse("", status=400)
-    form = ExhibitForm(instance=exhibit) # type: ignore
-    context['exhibit'] = ExhibitFormWrapper(form)
     cards : Union[QuerySet[Card], List[Any]]
+    cards = exhibit.card_set.all().order_by('order').select_related(
+        'photo',
+        'photo__donor',
+        'photo__place',
+    )
+    context['can_show_exhibit'] = not cards.exists() and (not hasattr(request.user, 'userdata') or not request.user.userdata.has_seen_exhibit_tour)
+    form = ExhibitForm(instance=exhibit, initial={"has_tour": context['can_show_exhibit']}) # type: ignore
+    context['exhibit'] = ExhibitFormWrapper(form)
     if request.method == 'POST':
         card_types = [CardFormType(request.POST, prefix=prefix) for prefix in request.POST.getlist("prefix")]
         if all(typeform.is_valid() for typeform in card_types):
@@ -318,14 +384,23 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
             form = ExhibitForm(request.POST, instance=exhibit)
             context['exhibit'] = ExhibitFormWrapper(form)
             if all(form_.is_valid() for form_ in forms) and form.is_valid() and 'save' in request.POST and request.POST['save'] == "Save":
+                if form.cleaned_data['has_tour']:
+                    userdata, created = UserData.objects.get_or_create(user=request.user)
+                    userdata.has_seen_exhibit_tour = True
+                    userdata.save()
+
                 form.save()
                 from fortepan_us.kronofoto.models import Figure
                 exhibit.card_set.all().delete()
                 card_objs = {}
+
                 for order, card_form in enumerate(forms):
                     if card_form.cleaned_data["cardform_type"] != 'figure':
                         card = card_form.save(commit=False)
+                        figure_count = card_form.cleaned_data['figure_count']
                         card_objs[card_form.prefix] = card
+                        card.figure_count = 0
+                        card.figure_total = card_form.cleaned_data['figure_count']
                         card.exhibit = exhibit
                         card.order = order
                         card.card_style = 0
@@ -335,7 +410,9 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
                         figure = card_form.save(commit=False)
                         figure.card = card_objs[card_form.cleaned_data['parent']]
                         figure.order = order
-                        figure.save()
+                        if figure.card.figure_count < figure.card.figure_total:
+                            figure.save()
+                            figure.card.figure_count += 1
                 messages.success(request, "Your exhibit has been saved")
                 return HttpResponseRedirect(reverse("kronofoto:exhibit-edit", kwargs={"pk": pk}))
             else:
@@ -360,6 +437,7 @@ def exhibit_edit(request : HttpRequest, pk: int) -> HttpResponse:
         'photo__donor',
         'photo__place',
     )
+    context['can_show_exhibit'] = not cards.exists() and (not hasattr(request.user, 'userdata') or not request.user.userdata.has_seen_exhibit_tour)
     objs = []
     two_column_count = 0
     obj_context = CardContext()
@@ -379,6 +457,7 @@ class CardContext:
             "zindex": 200 - i,
             "edit": is_edit,
         }
+        obj['figure_count'] = 0
         if mode == "DISPLAY":
             assert isinstance(card, Card)
             if card.card_type != Card.CardType.TEXT_ONLY:
@@ -386,8 +465,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -396,12 +483,9 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
             else:
                 if card.figure_set.all().exists():
+                    obj['figure_count'] = card.figure_set.count()
                     obj['styles'] = {
                         'border-top': '1px solid #ffffff',
                     }
@@ -428,8 +512,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -438,10 +530,6 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
             else:
                 figures = []
                 parent_uuid = str(uuid.uuid4())
@@ -459,7 +547,8 @@ class CardContext:
                         )
                     )
                 if len(figures):
-                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"cardform_type": "figure_list"}, prefix=parent_uuid)
+                    cardform: Union[FigureListForm, CardForm] = FigureListForm(instance=card, initial={"cardform_type": "figure_list", 'figure_count': len(figures)}, prefix=parent_uuid)
+                    obj['figure_count'] = len(figures)
                     obj['form'] = cardform
                     obj['card'] = FigureListFormWrapper(form=cardform, figures=figures)
                     obj['template'] = 'kronofoto/components/figure-card.html'
@@ -478,6 +567,7 @@ class CardContext:
                     }
         else: # EDIT_POST
             assert not isinstance(card, Card)
+            obj['figure_count'] = card.figure_count
             if card.form["cardform_type"].value() == 'figure_list':
                 assert isinstance(card, FigureListFormWrapper)
                 obj['form'] = card.form
@@ -503,8 +593,16 @@ class CardContext:
                 obj['image_area_classes'] = []
                 if card.card_type == Card.CardType.FULL:
                     obj['template'] = 'kronofoto/components/full-image-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['full-image-area--contain']
+                    else:
+                        obj['image_area_classes'] += ['full-image-area--cover']
                 else:
                     obj['template'] = 'kronofoto/components/two-column-card.html'
+                    if card.fill_style == PhotoCard.Fill.CONTAIN:
+                        obj['image_area_classes'] += ['two-column--contain']
+                    else:
+                        obj['image_area_classes'] += ['two-column--cover']
                     obj['image_area_classes'] += (
                         ['two-column--image-left', 'two-column--variation-1']
                         if card.card_type == Card.CardType.LEFT
@@ -513,10 +611,6 @@ class CardContext:
                     if two_column_count % 2 == 0:
                         obj['image_area_classes'].append("two-column--alt")
                     two_column_count += 1
-                if card.fill_style == PhotoCard.Fill.CONTAIN:
-                    obj['image_area_classes'] += ['full-image-area--contain']
-                else:
-                    obj['image_area_classes'] += ['full-image-area--cover']
         return obj, two_column_count
 
 def embed(request : HttpRequest, pk: int) -> HttpResponse:
