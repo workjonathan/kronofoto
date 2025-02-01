@@ -13,23 +13,37 @@ from .activity_dicts import ActivitypubContact
 
 class DonorQuerySet(models.QuerySet["Donor"]):
     def annotate_photographedcount(self) -> Self:
-        Photo: Any = self.model._meta.get_field('kronofoto_photo_photographed').related_model # type: ignore
-        q = Photo.objects.filter(photographer=OuterRef('id')).annotate(count=Func(F('id'), function='COUNT')).values('count')[:1]
+        Photo: Any = self.model._meta.get_field("kronofoto_photo_photographed").related_model  # type: ignore
+        q = (
+            Photo.objects.filter(photographer=OuterRef("id"))
+            .annotate(count=Func(F("id"), function="COUNT"))
+            .values("count")[:1]
+        )
         return self.annotate(photographed_count=Subquery(q))
 
     def annotate_scannedcount(self) -> Self:
-        Photo: Any = self.model._meta.get_field('kronofoto_photo_scanned').related_model # type: ignore
-        q = Photo.objects.filter(scanner=OuterRef('id')).annotate(scanned_count=Func(F('id'), function='COUNT')).values('scanned_count')[:1]
+        Photo: Any = self.model._meta.get_field("kronofoto_photo_scanned").related_model  # type: ignore
+        q = (
+            Photo.objects.filter(scanner=OuterRef("id"))
+            .annotate(scanned_count=Func(F("id"), function="COUNT"))
+            .values("scanned_count")[:1]
+        )
         return self.annotate(scanned_count=Subquery(q))
 
     def annotate_donatedcount(self) -> Self:
-        Photo: Any = self.model._meta.get_field('photo').related_model # type: ignore
-        q = Photo.objects.filter(donor=OuterRef('id')).annotate(donated_count=Func(F('id'), function='COUNT')).values('donated_count')[:1]
+        Photo: Any = self.model._meta.get_field("photo").related_model  # type: ignore
+        q = (
+            Photo.objects.filter(donor=OuterRef("id"))
+            .annotate(donated_count=Func(F("id"), function="COUNT"))
+            .values("donated_count")[:1]
+        )
         return self.annotate(donated_count=Subquery(q))
 
     def filter_donated(self) -> Self:
-        Photo: Any = self.model._meta.get_field('photo').related_model # type: ignore
-        q = Photo.objects.filter(donor__id=OuterRef('pk'), is_published=True, year__isnull=False)
+        Photo: Any = self.model._meta.get_field("photo").related_model  # type: ignore
+        q = Photo.objects.filter(
+            donor__id=OuterRef("pk"), is_published=True, year__isnull=False
+        )
         return self.filter(Exists(q))
 
 
@@ -60,15 +74,21 @@ class Donor(Collectible, models.Model):
         self.save()
 
     def display_format(self) -> str:
-        return '{first} {last}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+        return (
+            "{first} {last}".format(first=self.first_name, last=self.last_name)
+            if self.first_name
+            else self.last_name
+        )
 
     def __str__(self) -> str:
         if self.first_name or self.last_name:
-            return '{last}, {first}'.format(first=self.first_name, last=self.last_name) if self.first_name else self.last_name
+            return (
+                "{last}, {first}".format(first=self.first_name, last=self.last_name)
+                if self.first_name
+                else self.last_name
+            )
         return "Unnamed contributor"
 
     def encode_params(self, params: Any) -> Any:
-        params['donor'] = self.id
+        params["donor"] = self.id
         return params.urlencode()
-
-

@@ -202,7 +202,6 @@ class Archive(models.Model):
         self.generate_new_keys()
         return self.public_key
 
-
     def __str__(self) -> str:
         return "{}@{}".format(self.slug, self.server_domain) if self.server_domain else self.name
 
@@ -210,6 +209,7 @@ class Archive(models.Model):
 class ArchiveAgreementQuerySet(models.QuerySet):
     def object_for(self, slug: str) -> models.QuerySet["ArchiveAgreement"]:
         return self.filter(archive__slug=slug)
+
 
 class ArchiveAgreement(models.Model):
     text = models.TextField(blank=False, null=False)
@@ -222,7 +222,6 @@ class ArchiveAgreement(models.Model):
     def session_key(self) -> str:
         return "kf.agreement.{}.{}".format(self.pk, self.version)
 
-
     def __str__(self) -> str:
         return "{} agreement".format(self.archive.name)
 
@@ -231,16 +230,22 @@ class ArchiveAgreement(models.Model):
 
 
 class UserAgreement(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False)
-    agreement = models.ForeignKey(ArchiveAgreement, on_delete=models.CASCADE, null=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False
+    )
+    agreement = models.ForeignKey(
+        ArchiveAgreement, on_delete=models.CASCADE, null=False
+    )
     version = models.DateTimeField(null=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['agreement', 'user'], name='unique_agreement_user'),
+            models.UniqueConstraint(
+                fields=["agreement", "user"], name="unique_agreement_user"
+            ),
         ]
         indexes = [
-            models.Index(fields=['agreement', 'user']),
+            models.Index(fields=["agreement", "user"]),
         ]
 
 
@@ -254,13 +259,16 @@ class ArchiveUserPermission(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['archive', 'user'], name='unique_archive_user'),
+            models.UniqueConstraint(
+                fields=["archive", "user"], name="unique_archive_user"
+            ),
         ]
         indexes = [
-            models.Index(fields=['archive', 'user']),
+            models.Index(fields=["archive", "user"]),
         ]
         verbose_name = "user-archive permissions"
         verbose_name_plural = "archive permissions"
+
 
 class ArchiveGroupPermission(models.Model):
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
@@ -272,10 +280,12 @@ class ArchiveGroupPermission(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['archive', 'group'], name='unique_archive_group'),
+            models.UniqueConstraint(
+                fields=["archive", "group"], name="unique_archive_group"
+            ),
         ]
         indexes = [
-            models.Index(fields=['archive', 'group']),
+            models.Index(fields=["archive", "group"]),
         ]
         verbose_name = "archive group permission"
         verbose_name_plural = "archive permissions"

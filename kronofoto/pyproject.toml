@@ -105,6 +105,13 @@ cov = [
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
+[tool.hatch.envs.formatting]
+dependencies = [
+  "black",
+]
+[tool.hatch.envs.formatting.scripts]
+black = "python -m black {args}"
+
 [tool.hatch.envs.types]
 dependencies = [
   "mypy>=1.0.0",

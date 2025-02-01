@@ -7,6 +7,7 @@ from fortepan_us.kronofoto.reverse import reverse
 from typing import Any, List, Dict, Tuple
 import icontract
 
+
 class Exhibit(models.Model):
     name = models.CharField(max_length=256)
     title = models.CharField(max_length=1024, blank=True)
@@ -43,7 +44,9 @@ class Exhibit(models.Model):
                 "Embed",
                 {
                     "href": reverse("kronofoto:exhibit-embed", kwargs={"pk": self.id}),
-                    "hx-get": reverse("kronofoto:exhibit-embed", kwargs={"pk": self.id}),
+                    "hx-get": reverse(
+                        "kronofoto:exhibit-embed", kwargs={"pk": self.id}
+                    ),
                     "hx-target": "#app",
                 },
             ),
@@ -51,7 +54,9 @@ class Exhibit(models.Model):
                 "Delete",
                 {
                     "href": reverse("kronofoto:exhibit-delete", kwargs={"pk": self.id}),
-                    "hx-get": reverse("kronofoto:exhibit-delete", kwargs={"pk": self.id}),
+                    "hx-get": reverse(
+                        "kronofoto:exhibit-delete", kwargs={"pk": self.id}
+                    ),
                     "hx-target": "closest section",
                     "hx-swap": "outerHTML",
                     "hx-select": "#my-exhibits",
@@ -61,16 +66,20 @@ class Exhibit(models.Model):
 
     @icontract.require(lambda self: self.pk is not None)
     def get_main_menu_url(self) -> str:
-        return reverse('kronofoto:exhibit-edit', kwargs={'pk': self.pk})
+        return reverse("kronofoto:exhibit-edit", kwargs={"pk": self.pk})
 
     def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
-        return reverse('kronofoto:exhibit-view', kwargs={'pk': self.pk, 'title': slugify(self.name)})
+        return reverse(
+            "kronofoto:exhibit-view",
+            kwargs={"pk": self.pk, "title": slugify(self.name)},
+        )
 
     def str(self) -> str:
         return self.name
 
     class Meta:
         db_table = "kronofoto_exhibit"
+
 
 class Card(models.Model):
     class CardType(models.IntegerChoices):
@@ -82,35 +91,45 @@ class Card(models.Model):
     class Fill(models.IntegerChoices):
         COVER = 1
         CONTAIN = 2
+
     title = models.TextField(blank=True, default="")
     description = models.TextField(blank=True, default="")
     smalltext = models.TextField(blank=True, default="")
     exhibit = models.ForeignKey(Exhibit, on_delete=models.CASCADE)
     order = models.IntegerField()
     photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
-    card_type = models.IntegerField(choices=CardType.choices, default=CardType.TEXT_ONLY)
+    card_type = models.IntegerField(
+        choices=CardType.choices, default=CardType.TEXT_ONLY
+    )
     fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
     def photo_choices(self) -> models.Q:
-        return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
+        return (
+            models.Q(collection__id=self.exhibit.collection.id)
+            if self.exhibit.collection
+            else models.Q(pk__in=[])
+        )
 
     def figures(self) -> "models.QuerySet[Figure]":
         return self.figure_set.all().order_by("order")
 
     class Meta:
-        indexes = (
-            models.Index(fields=['exhibit', 'order']),
-        )
+        indexes = (models.Index(fields=["exhibit", "order"]),)
         db_table = "kronofoto_card"
+
 
 class PhotoCard(Card):
 
     def photo_choices(self) -> models.Q:
-        return models.Q(collection__id=self.exhibit.collection.id) if self.exhibit.collection else models.Q(pk__in=[])
-
+        return (
+            models.Q(collection__id=self.exhibit.collection.id)
+            if self.exhibit.collection
+            else models.Q(pk__in=[])
+        )
 
     class Meta:
         proxy = True
+
 
 class Figure(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)

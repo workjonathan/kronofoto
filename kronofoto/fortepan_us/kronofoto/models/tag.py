@@ -6,7 +6,6 @@ from .collectible import Collectible
 from typing import Any, Dict, List
 
 
-
 class LowerCaseCharField(models.CharField):
     def get_prep_value(self, value: str) -> str:
         return str(value).lower()
@@ -14,7 +13,7 @@ class LowerCaseCharField(models.CharField):
 
 class TagQuerySet(models.QuerySet):
     def __str__(self) -> str:
-        return ', '.join(str(t) for t in self)
+        return ", ".join(str(t) for t in self)
 
 
 class Tag(Collectible, models.Model):
@@ -29,22 +28,24 @@ class Tag(Collectible, models.Model):
         super().save(*args, **kwargs)
 
     def encode_params(self, params: QueryDict) -> str:
-        params['tag'] = self.tag
+        params["tag"] = self.tag
         return params.urlencode()
 
     @staticmethod
     def dead_tags() -> TagQuerySet:
-        return Tag.objects.annotate(photo_count=Count('phototag')).filter(photo_count=0)
+        return Tag.objects.annotate(photo_count=Count("phototag")).filter(photo_count=0)
 
     @staticmethod
     def index() -> List[Dict[str, Any]]:
         return [
-            {'name': tag.tag, 'count': tag.count, 'href': tag.get_absolute_url()}
-            for tag in Tag.objects.filter(phototag__accepted=True).annotate(count=Count('phototag__id')).order_by('tag')
+            {"name": tag.tag, "count": tag.count, "href": tag.get_absolute_url()}
+            for tag in Tag.objects.filter(phototag__accepted=True)
+            .annotate(count=Count("phototag__id"))
+            .order_by("tag")
         ]
 
     def __str__(self) -> str:
         return self.tag
 
     class Meta:
-        ordering = ('tag',)
+        ordering = ("tag",)
