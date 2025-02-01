@@ -8,8 +8,10 @@ from .donor import Donor
 from .archive import Archive
 from typing_extensions import Self
 
+
 class ConnecticutRecordQuerySet(models.QuerySet):
     pass
+
 
 class ConnecticutRecord(models.Model):
     file_id1 = models.IntegerField(null=False)
@@ -21,12 +23,18 @@ class ConnecticutRecord(models.Model):
     location = models.TextField(null=False)
     cleaned_year = models.IntegerField(null=True)
     cleaned_city = models.CharField(max_length=128, null=False, default="", blank=True)
-    cleaned_county = models.CharField(max_length=128, null=False, default="", blank=True)
+    cleaned_county = models.CharField(
+        max_length=128, null=False, default="", blank=True
+    )
     cleaned_state = models.CharField(max_length=128, null=False, default="", blank=True)
-    cleaned_country = models.CharField(max_length=128, null=False, default="", blank=True)
+    cleaned_country = models.CharField(
+        max_length=128, null=False, default="", blank=True
+    )
     publishable = models.BooleanField(null=False, default=False)
 
-    photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True, unique=True, blank=True)
+    photo = models.OneToOneField(
+        "Photo", on_delete=models.SET_NULL, null=True, unique=True, blank=True
+    )
 
     objects = ConnecticutRecordQuerySet.as_manager()
 
@@ -41,7 +49,9 @@ class ConnecticutRecord(models.Model):
     def photo_record(self, *, archive: Archive) -> Photo:
         photo = Photo(
             archive=archive,
-            donor=Donor.objects.get_or_create(last_name=self.contributor, archive=archive)[0],
+            donor=Donor.objects.get_or_create(
+                last_name=self.contributor, archive=archive
+            )[0],
             city=self.cleaned_city,
             county=self.cleaned_county,
             state=self.cleaned_state,
@@ -51,27 +61,33 @@ class ConnecticutRecord(models.Model):
             is_published=self.publishable,
             is_featured=True,
         )
-        photo.original = SimpleUploadedFile('original/{}.jpg'.format(photo.uuid), self.hq_jpeg(), content_type="image/jpeg")
+        photo.original = SimpleUploadedFile(
+            "original/{}.jpg".format(photo.uuid),
+            self.hq_jpeg(),
+            content_type="image/jpeg",
+        )
         photo.save()
         self.photo = photo
         self.save()
         return photo
 
     def tiff_url(self) -> str:
-        return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(str(self))
+        return "https://ctdigitalarchive.org/islandora/object/{}/datastream/OBJ".format(
+            str(self)
+        )
 
     def __str__(self) -> str:
-        return '{}:{}'.format(self.file_id1, self.file_id2)
+        return "{}:{}".format(self.file_id1, self.file_id2)
 
     class Meta:
         indexes = [
-            models.Index(fields=['file_id1', 'file_id2']),
+            models.Index(fields=["file_id1", "file_id2"]),
         ]
         constraints = [
-            models.UniqueConstraint(fields=['file_id1', 'file_id2'], name='unique_id_combo'),
+            models.UniqueConstraint(
+                fields=["file_id1", "file_id2"], name="unique_id_combo"
+            ),
         ]
-
-
 
 
 class CSVRecordQuerySet(models.QuerySet):
@@ -82,21 +98,22 @@ class CSVRecordQuerySet(models.QuerySet):
         self.bulk_update(
             records,
             [
-                'donorFirstName',
-                'donorLastName',
-                'scanner',
-                'photographer',
-                'address',
-                'city',
-                'county',
-                'state',
-                'country',
-                'comments',
+                "donorFirstName",
+                "donorLastName",
+                "scanner",
+                "photographer",
+                "address",
+                "city",
+                "county",
+                "state",
+                "country",
+                "comments",
             ],
         )
 
     def exclude_geocoded(self) -> Self:
         return self.filter(photo__isnull=False, photo__location_point__isnull=True)
+
 
 class CSVRecord(models.Model):
     filename = models.TextField(unique=True)
@@ -117,7 +134,7 @@ class CSVRecord(models.Model):
     country = models.TextField()
     comments = models.TextField()
     added_to_archive = models.DateField()
-    photo = models.OneToOneField('Photo', on_delete=models.SET_NULL, null=True)
+    photo = models.OneToOneField("Photo", on_delete=models.SET_NULL, null=True)
 
     objects = CSVRecordQuerySet.as_manager()
 
@@ -133,8 +150,7 @@ class CSVRecord(models.Model):
             components.append(self.county)
         if self.address:
             components.append(self.address)
-        return ' '.join(reversed(components))
-
+        return " ".join(reversed(components))
 
     def clean_whitespace(self) -> None:
         self.donorFirstName = self.donorFirstName.strip()

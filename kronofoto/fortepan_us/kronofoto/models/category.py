@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.text import slugify
 from .term import Term
 
+
 class Category(models.Model):
     name = models.CharField(max_length=64, null=False, blank=False)
     slug = models.SlugField(unique=True, blank=False)
@@ -11,6 +12,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
+
 
 class ValidCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
@@ -22,9 +24,10 @@ class ValidCategory(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['category', 'archive'], name='unique_category_archive'),
+            models.UniqueConstraint(
+                fields=["category", "archive"], name="unique_category_archive"
+            ),
         ]
         indexes = [
-            models.Index(fields=['category', 'archive']),
+            models.Index(fields=["category", "archive"]),
         ]
-
