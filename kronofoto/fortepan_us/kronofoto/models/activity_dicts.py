@@ -3,11 +3,18 @@ from marshmallow import Schema, fields
 
 
 Url = NewType("Url", str)
+
+
 def str_to_url(s: str) -> Url:
     return cast(Url, s)
+
+
 LdIdUrl = NewType("LdIdUrl", Url)
+
+
 def str_to_ldidurl(s: str) -> LdIdUrl:
     return cast(LdIdUrl, s)
+
 
 ActivitypubCategory = TypedDict(
     "ActivitypubCategory",
@@ -23,16 +30,17 @@ ActivitypubObject = TypedDict(
     {
         "@context": str,
         "id": LdIdUrl,
-        #"type": str,
+        # "type": str,
         "attributedTo": List[LdIdUrl],
         "url": Url,
-        'content': str,
+        "content": str,
     },
     total=False,
 )
 
+
 class ArchiveDict(ActivitypubObject, total=False):
-    type: Literal['Organization']
+    type: Literal["Organization"]
     name: str
     slug: str
     publicKey: Dict[str, str]
@@ -43,6 +51,7 @@ class ArchiveDict(ActivitypubObject, total=False):
     photos: Url
     following: Url
     followers: Url
+
 
 class ActivitypubContact(ActivitypubObject, total=False):
     type: Literal["Contact"]
@@ -61,5 +70,6 @@ class ActivitypubImage(ActivitypubObject, total=False):
     terms: List[str]
     tags: List[str]
     place: LdIdUrl
+
 
 ActivitypubData = Union[ActivitypubImage, ActivitypubContact]

@@ -63,14 +63,12 @@ class Donor(Collectible, models.Model):
     objects = DonorQuerySet.as_manager()
 
     class Meta:
-        ordering = ('last_name', 'first_name')
-        indexes = (
-            models.Index(fields=['last_name', 'first_name']),
-        )
+        ordering = ("last_name", "first_name")
+        indexes = (models.Index(fields=["last_name", "first_name"]),)
 
     def reconcile(self, object: ActivitypubContact) -> None:
-        self.first_name = object['firstName']
-        self.last_name = object['lastName']
+        self.first_name = object["firstName"]
+        self.last_name = object["lastName"]
         self.save()
 
     def display_format(self) -> str:

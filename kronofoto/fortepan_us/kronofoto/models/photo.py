@@ -80,9 +80,11 @@ class Thumbnail(TypedDict):
 EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
-class PhotoQuerySet(models.QuerySet['Photo']):
-    #@icontract.require(
-    def update_or_create_ld_object(self, owner: Archive, object: ActivitypubImage) -> tuple["Photo" | None, bool]:
+class PhotoQuerySet(models.QuerySet["Photo"]):
+    # @icontract.require(
+    def update_or_create_ld_object(
+        self, owner: Archive, object: ActivitypubImage
+    ) -> tuple["Photo" | None, bool]:
         return (None, False)
 
     def year_range(self) -> Dict[str, Any]:
@@ -366,19 +368,24 @@ class Photo(PhotoBase):
         null=True,
         editable=True,
     )
-    original = models.ImageField(upload_to=get_original_path, storage=OverwriteStorage(), null=True, editable=True)
+    original = models.ImageField(
+        upload_to=get_original_path,
+        storage=OverwriteStorage(),
+        null=True,
+        editable=True,
+    )
     remote_image = models.URLField(null=True, editable=False)
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
 
     @overload
-    def image_url(self, *, height: int) -> str:
-        ...
+    def image_url(self, *, height: int) -> str: ...
     @overload
-    def image_url(self, *, height: Optional[int]=None, width: int) -> str:
-        ...
-    def image_url(self, *, height: Optional[int]=None, width: Optional[int]=None) -> str:
+    def image_url(self, *, height: Optional[int] = None, width: int) -> str: ...
+    def image_url(
+        self, *, height: Optional[int] = None, width: Optional[int] = None
+    ) -> str:
         assert height is not None or width is not None
 
         if self.remote_image is None:
@@ -528,28 +535,37 @@ class Photo(PhotoBase):
         )
 
     def reconcile(self, object: ActivitypubImage, donor: Donor) -> None:
-        self.caption = object['content']
+        self.caption = object["content"]
         self.donor = donor
-        self.year = object['year']
-        self.circa = object['circa']
-        self.is_published = object['is_published']
+        self.year = object["year"]
+        self.circa = object["circa"]
+        self.is_published = object["is_published"]
         self.donor = donor
-        self.remote_image = object['url']
+        self.remote_image = object["url"]
         self.category, _ = Category.objects.get_or_create(
-            slug=object['category']['slug'],
-            defaults={"name": object['category']['name']},
+            slug=object["category"]["slug"],
+            defaults={"name": object["category"]["name"]},
         )
         self.save()
 
     @property
     def activity_dict(self) -> Dict[str, Any]:
         return {
-            "id": reverse("kronofoto:activitypub-photo", kwargs={"short_name": self.archive.slug, "pk": self.id}),
+            "id": reverse(
+                "kronofoto:activitypub-photo",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            ),
             "type": "Image",
-            "attributedTo": [reverse("kronofoto:activitypub-archive", kwargs={"short_name": self.archive.slug})],
+            "attributedTo": [
+                reverse(
+                    "kronofoto:activitypub-archive",
+                    kwargs={"short_name": self.archive.slug},
+                )
+            ],
             "content": self.caption,
             "url": self.original.url,
         }
+
     def page_number(self) -> Dict[str, Optional[int]]:
         return {"year:gte": self.year, "id:gt": self.id - 1}
 
@@ -791,6 +807,7 @@ class Photo(PhotoBase):
             return val
         else:
             return []
+
 
 def get_resized_path(instance: Any, filename: str) -> str:
     return path.join(

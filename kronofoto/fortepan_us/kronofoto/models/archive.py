@@ -17,7 +17,9 @@ from marshmallow import Schema, fields, pre_dump, post_load, pre_load, Validatio
 import icontract
 from . import activity_dicts, activity_schema
 
-class InvalidArchive(Exception): pass
+
+class InvalidArchive(Exception):
+    pass
 
 
 class ArchiveSchema(activity_schema.ObjectSchema):
@@ -35,33 +37,90 @@ class ArchiveSchema(activity_schema.ObjectSchema):
     followers = fields.Url(relative=True)
 
     @pre_dump
-    def extract_fields_from_object(self, object: "Archive", **kwargs: Any) -> activity_dicts.ArchiveDict:
+    def extract_fields_from_object(
+        self, object: "Archive", **kwargs: Any
+    ) -> activity_dicts.ArchiveDict:
         return {
-            "id": activity_dicts.str_to_ldidurl(reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug})),
+            "id": activity_dicts.str_to_ldidurl(
+                reverse(
+                    "kronofoto:activitypub_data:archives:actor",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
             "name": object.name,
             "slug": object.slug,
-            "inbox": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:inbox", kwargs={"short_name": object.slug})),
-            "outbox": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:outbox", kwargs={"short_name": object.slug})),
-            "contributors": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": object.slug})),
-            "photos": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": object.slug})),
-            "followers": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:followers", kwargs={"short_name": object.slug})),
-            "following": activity_dicts.str_to_url(reverse("kronofoto:activitypub_data:archives:following", kwargs={"short_name": object.slug})),
+            "inbox": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:inbox",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
+            "outbox": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:outbox",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
+            "contributors": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:contributors:page",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
+            "photos": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:photos:page",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
+            "followers": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:followers",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
+            "following": activity_dicts.str_to_url(
+                reverse(
+                    "kronofoto:activitypub_data:archives:following",
+                    kwargs={"short_name": object.slug},
+                )
+            ),
             "publicKey": {
                 "id": object.keyId,
-                "owner": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": object.slug}),
-                "publicKeyPem": object.guaranteed_public_key(), # type: ignore
+                "owner": reverse(
+                    "kronofoto:activitypub_data:archives:actor",
+                    kwargs={"short_name": object.slug},
+                ),
+                "publicKeyPem": object.guaranteed_public_key(),  # type: ignore
             },
         }
 
+
 class ArchiveQuerySet(models.QuerySet):
     @icontract.require(lambda self, profile: self.have_remote_by_profile(profile))
-    @icontract.ensure(lambda self, profile, result: not result[1] and result[0].actor is not None and result[0].actor.profile == profile)
+    @icontract.ensure(
+        lambda self, profile, result: not result[1]
+        and result[0].actor is not None
+        and result[0].actor.profile == profile
+    )
     def get_remote_by_profile(self, profile: str) -> Tuple["Archive", bool]:
-        return Archive.objects.get(actor__profile=profile, type=Archive.ArchiveType.REMOTE), False
+        return (
+            Archive.objects.get(
+                actor__profile=profile, type=Archive.ArchiveType.REMOTE
+            ),
+            False,
+        )
 
-    @icontract.ensure(lambda self, profile, result: result == Archive.objects.filter(actor__profile=profile, type=Archive.ArchiveType.REMOTE).exists())
+    @icontract.ensure(
+        lambda self, profile, result: result
+        == Archive.objects.filter(
+            actor__profile=profile, type=Archive.ArchiveType.REMOTE
+        ).exists()
+    )
     def have_remote_by_profile(self, profile: str) -> bool:
-        return Archive.objects.filter(actor__profile=profile, type=Archive.ArchiveType.REMOTE).exists()
+        return Archive.objects.filter(
+            actor__profile=profile, type=Archive.ArchiveType.REMOTE
+        ).exists()
 
     @icontract.ensure(lambda self, profile, result: not result or result in profile)
     def extract_slug(self, profile: str) -> Optional[str]:
@@ -71,55 +130,89 @@ class ArchiveQuerySet(models.QuerySet):
             else:
                 resolved = resolve(profile)
                 if resolved.match.url_name == "actor":
-                    return resolved.match.kwargs['short_name']
+                    return resolved.match.kwargs["short_name"]
                 else:
                     return None
         except Resolver404:
             return None
 
-
-    @icontract.require(lambda self, profile: not Site.objects.filter(domain=urlparse(profile).netloc).exists() and not self.have_remote_by_profile(profile))
-    @icontract.ensure(lambda self, profile, result: (result[0] is not None) == result[1])
-    @icontract.ensure(lambda self, profile, result: result[0] is None or (result[0].actor is not None and result[0].actor.profile == profile))
+    @icontract.require(
+        lambda self, profile: not Site.objects.filter(
+            domain=urlparse(profile).netloc
+        ).exists()
+        and not self.have_remote_by_profile(profile)
+    )
+    @icontract.ensure(
+        lambda self, profile, result: (result[0] is not None) == result[1]
+    )
+    @icontract.ensure(
+        lambda self, profile, result: result[0] is None
+        or (result[0].actor is not None and result[0].actor.profile == profile)
+    )
     def create_remote_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
-        data : activity_dicts.ArchiveDict = requests.get(
+        data: activity_dicts.ArchiveDict = requests.get(
             profile,
             headers={
-                'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             },
         ).json()
         try:
             data = ArchiveSchema().load(data)
-            if data['id'] != profile:
+            if data["id"] != profile:
                 return None, False
             actor = RemoteActor.objects.create(profile=profile)
             server_domain = urlparse(profile).netloc
-            return self.create(
-                type=Archive.ArchiveType.REMOTE,
-                actor=actor,
-                server_domain=server_domain,
-                name=data['name'],
-                slug=data['slug'],
-            ), True
+            return (
+                self.create(
+                    type=Archive.ArchiveType.REMOTE,
+                    actor=actor,
+                    server_domain=server_domain,
+                    name=data["name"],
+                    slug=data["slug"],
+                ),
+                True,
+            )
         except ValidationError as e:
             print(e)
             return None, False
 
-    @icontract.require(lambda self, profile: Site.objects.filter(domain=urlparse(profile).netloc).exists())
-    @icontract.ensure(lambda self, profile, result: not result[1] and (
+    @icontract.require(
+        lambda self, profile: Site.objects.filter(
+            domain=urlparse(profile).netloc
+        ).exists()
+    )
+    @icontract.ensure(
+        lambda self, profile, result: not result[1]
+        and (
             slug := self.extract_slug(profile),
-            archive_exists := Archive.objects.filter(slug=slug, type=Archive.ArchiveType.LOCAL).exists(),
-            (archive_exists == result[0] is not None) and (not archive_exists or result[0] is not None and result[0].slug == slug)
+            archive_exists := Archive.objects.filter(
+                slug=slug, type=Archive.ArchiveType.LOCAL
+            ).exists(),
+            (archive_exists == result[0] is not None)
+            and (
+                not archive_exists or result[0] is not None and result[0].slug == slug
+            ),
         )[1]
     )
     def get_local_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
         slug = self.extract_slug(profile)
-        if slug is not None and self.filter(slug=slug, type=Archive.ArchiveType.LOCAL).exists():
+        if (
+            slug is not None
+            and self.filter(slug=slug, type=Archive.ArchiveType.LOCAL).exists()
+        ):
             return self.get(slug=slug, type=Archive.ArchiveType.LOCAL), False
         return None, False
 
-    @icontract.ensure(lambda self, profile, result: not result[0] or ((not result[0].actor or result[0].actor.profile == profile) and (result[0].actor or result[0].slug in profile)))
-    def get_or_create_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+    @icontract.ensure(
+        lambda self, profile, result: not result[0]
+        or (
+            (not result[0].actor or result[0].actor.profile == profile)
+            and (result[0].actor or result[0].slug in profile)
+        )
+    )
+    def get_or_create_by_profile(
+        self, profile: str
+    ) -> Tuple[Optional["Archive"], bool]:
         server_domain = urlparse(profile).netloc
         if Site.objects.filter(domain=server_domain).exists():
             return self.get_local_by_profile(profile)
@@ -127,6 +220,7 @@ class ArchiveQuerySet(models.QuerySet):
             return self.get_remote_by_profile(profile=profile)
         else:
             return self.create_remote_profile(profile)
+
 
 class Archive(models.Model):
     class ArchiveType(models.IntegerChoices):
@@ -141,13 +235,12 @@ class Archive(models.Model):
 
     class Meta:
         unique_together = ("slug", "server_domain")
-        indexes = (
-            models.Index(fields=['slug'], name="archivebase_slug_idx"),
-        )
-
+        indexes = (models.Index(fields=["slug"], name="archivebase_slug_idx"),)
 
     cms_root = models.CharField(max_length=16, null=True, blank=False)
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission")
+    users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission"
+    )
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
     categories = models.ManyToManyField(Category, through=ValidCategory)
     serialized_public_key = models.BinaryField(null=True, blank=True)
@@ -162,7 +255,13 @@ class Archive(models.Model):
 
     @property
     def keyId(self) -> str:
-        return reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": self.slug}) + "#mainKey"
+        return (
+            reverse(
+                "kronofoto:activitypub_data:archives:actor",
+                kwargs={"short_name": self.slug},
+            )
+            + "#mainKey"
+        )
 
     def generate_new_keys(self) -> None:
         private_key = rsa.generate_private_key(
@@ -170,12 +269,15 @@ class Archive(models.Model):
             key_size=2048,
         )
         self.serialized_public_key = private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
         self.encrypted_private_key = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.BestAvailableEncryption(settings.ENCRYPTION_KEY),
+            encryption_algorithm=serialization.BestAvailableEncryption(
+                settings.ENCRYPTION_KEY
+            ),
         )
         self.save()
 
@@ -203,7 +305,11 @@ class Archive(models.Model):
         return self.public_key
 
     def __str__(self) -> str:
-        return "{}@{}".format(self.slug, self.server_domain) if self.server_domain else self.name
+        return (
+            "{}@{}".format(self.slug, self.server_domain)
+            if self.server_domain
+            else self.name
+        )
 
 
 class ArchiveAgreementQuerySet(models.QuerySet):

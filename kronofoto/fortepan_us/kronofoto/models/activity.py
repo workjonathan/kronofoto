@@ -46,12 +46,15 @@ class ServiceActor(models.Model):
             key_size=2048,
         )
         self.serialized_public_key = private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
         self.encrypted_private_key = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.BestAvailableEncryption(settings.ENCRYPTION_KEY),
+            encryption_algorithm=serialization.BestAvailableEncryption(
+                settings.ENCRYPTION_KEY
+            ),
         )
         self.save()
 
@@ -78,13 +81,20 @@ class ServiceActor(models.Model):
         self.generate_new_keys()
         return self.public_key
 
-class RemoteActor(models.Model): # type: ignore [django-manager-missing]
+
+class RemoteActor(models.Model):  # type: ignore [django-manager-missing]
     profile = models.URLField(unique=True)
     actor_follows_app = models.BooleanField(default=False)
     app_follows_actor = models.BooleanField(default=False)
     follow_app_request = models.JSONField(null=True)
-    archives_followed = models.ManyToManyField('kronofoto.Archive')
-    requested_archive_follows : models.ManyToManyField["kf_models.Archive", "FollowArchiveRequest"] = models.ManyToManyField("kronofoto.Archive", through="FollowArchiveRequest", related_name="%(app_label)s_%(class)s_request_follows")
+    archives_followed = models.ManyToManyField("kronofoto.Archive")
+    requested_archive_follows: models.ManyToManyField[
+        "kf_models.Archive", "FollowArchiveRequest"
+    ] = models.ManyToManyField(
+        "kronofoto.Archive",
+        through="FollowArchiveRequest",
+        related_name="%(app_label)s_%(class)s_request_follows",
+    )
 
     def public_key(self) -> bytes | None:
         def _() -> str | None:
@@ -98,19 +108,26 @@ class RemoteActor(models.Model): # type: ignore [django-manager-missing]
             if resp.status_code == 200:
                 data = resp.json()
                 print(data)
-                key = data.get('publicKey', {}).get('publicKeyPem', None)
-            return key.encode('utf-8') if key else None
+                key = data.get("publicKey", {}).get("publicKeyPem", None)
+            return key.encode("utf-8") if key else None
+
         return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=10)
+
 
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
     request_body = models.JSONField()
-    archive = models.ForeignKey("kronofoto.Archive", on_delete=models.CASCADE, null=False)
+    archive = models.ForeignKey(
+        "kronofoto.Archive", on_delete=models.CASCADE, null=False
+    )
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["archive", "remote_actor"], name="unique_actor_archive_follows"),
+            models.UniqueConstraint(
+                fields=["archive", "remote_actor"], name="unique_actor_archive_follows"
+            ),
         ]
+
 
 class OutboxActivity(models.Model):
     body = models.JSONField()
@@ -118,12 +135,26 @@ class OutboxActivity(models.Model):
 
 
 class LdIdQuerySet(models.QuerySet["LdId"]):
-    def get_or_create_ld_object(self, ld_id: activity_dicts.LdIdUrl) -> tuple["LdId" | None, bool]:
+    def get_or_create_ld_object(
+        self, ld_id: activity_dicts.LdIdUrl
+    ) -> tuple["LdId" | None, bool]:
         server_domain = urlparse(ld_id).netloc
         if Site.objects.filter(domain=server_domain).exists():
             resolved = resolve(ld_id)
-            if resolved.match.namespaces == ['kronofoto', 'activitypub_data', 'archives', 'contributors'] and resolved.match.url_name == 'detail':
-                return LdId(content_object=kf_models.Donor.objects.get(archive__slug=resolved.match.kwargs['short_name']), id=resolved.match.kwargs['pk']), False
+            if (
+                resolved.match.namespaces
+                == ["kronofoto", "activitypub_data", "archives", "contributors"]
+                and resolved.match.url_name == "detail"
+            ):
+                return (
+                    LdId(
+                        content_object=kf_models.Donor.objects.get(
+                            archive__slug=resolved.match.kwargs["short_name"]
+                        ),
+                        id=resolved.match.kwargs["pk"],
+                    ),
+                    False,
+                )
             return None, False
         try:
             return (self.get(ld_id=ld_id), False)
@@ -131,23 +162,33 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
             object = requests.get(
                 ld_id,
                 headers={
-                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
             ).json()
-            assert object['id'] == ld_id
-            if object['type'] == 'Contact':
+            assert object["id"] == ld_id
+            if object["type"] == "Contact":
                 try:
-                    data : activity_dicts.ActivitypubContact = activity_schema.Contact().load(object)
-                    if urlparse(data['attributedTo'][0]).netloc != urlparse(ld_id).netloc:
+                    data: activity_dicts.ActivitypubContact = (
+                        activity_schema.Contact().load(object)
+                    )
+                    if (
+                        urlparse(data["attributedTo"][0]).netloc
+                        != urlparse(ld_id).netloc
+                    ):
                         return None, False
-                    archive, _ = kf_models.Archive.objects.get_or_create_by_profile(profile=data['attributedTo'][0])
+                    archive, _ = kf_models.Archive.objects.get_or_create_by_profile(
+                        profile=data["attributedTo"][0]
+                    )
                     if not archive:
                         return None, False
                     db_obj = kf_models.Donor()
                     db_obj.archive = archive
                     db_obj.reconcile(data)
                     ct = ContentType.objects.get_for_model(kf_models.Donor)
-                    ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
+                    ldid, _ = self.get_or_create(
+                        ld_id=object["id"],
+                        defaults={"content_type": ct, "object_id": db_obj.id},
+                    )
                     return ldid, True
                 except ValidationError as e:
                     print(e, object)
@@ -155,57 +196,76 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
             else:
                 raise NotImplementedError
 
-
-    def update_or_create_ld_service_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
+    def update_or_create_ld_service_object(
+        self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData
+    ) -> tuple["LdId" | None, bool]:
         return None, False
 
-
-    @icontract.require(lambda self, owner, object: owner.type == kf_models.Archive.ArchiveType.REMOTE)
-    @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Donor) or object['type'] == "Contact")
-    @icontract.ensure(lambda self, owner, object, result: result[0] is None or not isinstance(result[0].content_object, kf_models.Photo) or object['type'] == "Image")
-    def update_or_create_ld_object(self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData) -> tuple["LdId" | None, bool]:
+    @icontract.require(
+        lambda self, owner, object: owner.type == kf_models.Archive.ArchiveType.REMOTE
+    )
+    @icontract.ensure(
+        lambda self, owner, object, result: result[0] is None
+        or not isinstance(result[0].content_object, kf_models.Donor)
+        or object["type"] == "Contact"
+    )
+    @icontract.ensure(
+        lambda self, owner, object, result: result[0] is None
+        or not isinstance(result[0].content_object, kf_models.Photo)
+        or object["type"] == "Image"
+    )
+    def update_or_create_ld_object(
+        self, owner: "kf_models.Archive", object: activity_dicts.ActivitypubData
+    ) -> tuple["LdId" | None, bool]:
         "This function is valid for object['id'] that are external domains only."
         "This function is only valid for Contact/Donor and Image/Photo, which should be all that is needed."
         ldid = None
         try:
-            ldid = self.get(ld_id=object['id'])
+            ldid = self.get(ld_id=object["id"])
             db_obj = ldid.content_object
             if db_obj and db_obj.archive.id != owner.id:
                 db_obj = None
             else:
                 created = False
         except self.model.DoesNotExist:
-            if object['type'] == "Contact":
+            if object["type"] == "Contact":
                 db_obj = kf_models.Donor()
                 db_obj.archive = owner
                 created = True
-            elif object['type'] == "Image":
+            elif object["type"] == "Image":
                 db_obj = kf_models.Photo()
                 db_obj.archive = owner
                 created = True
         if not db_obj:
             return (None, False)
-        if isinstance(db_obj, kf_models.Donor) and object['type'] == "Contact":
+        if isinstance(db_obj, kf_models.Donor) and object["type"] == "Contact":
             db_obj.reconcile(object)
             ct = ContentType.objects.get_for_model(kf_models.Donor)
-        elif isinstance(db_obj, kf_models.Photo) and object['type'] == "Image":
-            donor, _ = self.get_or_create_ld_object(object['contributor'])
+        elif isinstance(db_obj, kf_models.Photo) and object["type"] == "Image":
+            donor, _ = self.get_or_create_ld_object(object["contributor"])
             if not donor or not donor.content_object:
                 return None, False
             db_obj.reconcile(object, donor.content_object)
             ct = ContentType.objects.get_for_model(kf_models.Photo)
             db_obj.save()
-            for tag in object['tags']:
+            for tag in object["tags"]:
                 new_tag, _ = kf_models.Tag.objects.get_or_create(tag=tag)
-                kf_models.PhotoTag.objects.get_or_create(tag=new_tag, photo=db_obj, accepted=True)
-            for term in object['terms']:
+                kf_models.PhotoTag.objects.get_or_create(
+                    tag=new_tag, photo=db_obj, accepted=True
+                )
+            for term in object["terms"]:
                 db_obj.terms.add(kf_models.Term.objects.get_or_create(term=term)[0])
-        ldid, _ = self.get_or_create(ld_id=object['id'], defaults={"content_type": ct, "object_id":db_obj.id})
+        ldid, _ = self.get_or_create(
+            ld_id=object["id"], defaults={"content_type": ct, "object_id": db_obj.id}
+        )
         return ldid, created
 
 
 class LdId(models.Model):
-    ld_id = cast("models.Field[activity_dicts.LdIdUrl, activity_dicts.LdIdUrl]", models.URLField(unique=True))
+    ld_id = cast(
+        "models.Field[activity_dicts.LdIdUrl, activity_dicts.LdIdUrl]",
+        models.URLField(unique=True),
+    )
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
@@ -214,5 +274,8 @@ class LdId(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["content_type", "object_id"], name="unique_content_id_per_object"),
+            models.UniqueConstraint(
+                fields=["content_type", "object_id"],
+                name="unique_content_id_per_object",
+            ),
         ]
