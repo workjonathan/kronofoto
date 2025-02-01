@@ -1,6 +1,7 @@
 {% extends "./sitewrapper_base.html" %}
 
 {% load widgets %}
+{% load custom_filters %}
 
 {% block header_title %}
 <div class="header__title">
@@ -10,7 +11,7 @@
 
 {% block hero_content_wrapper %}
     <div class="hero__title">
-        <h1>{{ exhibit.title | markdown:"nl2br" }}</h1>
+        <h1>{{ exhibit.title | markdown:"nl2br" | strip_p_tags }}</h1>
     </div>
     <div class="hero__content">
         {{ exhibit.description | markdown:"nl2br" }}
