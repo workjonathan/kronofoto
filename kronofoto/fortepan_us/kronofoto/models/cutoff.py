@@ -8,7 +8,7 @@ class NewCutoff(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if not self.pk and NewCutoff.objects.exists():
-            raise ValidationError('There can be only one instance of this object')
+            raise ValidationError("There can be only one instance of this object")
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
