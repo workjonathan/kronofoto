@@ -11,32 +11,39 @@ from typing import Optional
 from typing import Dict, Any, Protocol, List, Tuple
 import json
 
+
 class CollectionQuerySet(models.QuerySet):
-    @icontract.ensure(lambda self, photo, result:
-        all(bool(collection.membership) == collection.photos.filter(id=photo).exists() for collection in result)
+    @icontract.ensure(
+        lambda self, photo, result: all(
+            bool(collection.membership) == collection.photos.filter(id=photo).exists()
+            for collection in result
+        )
     )
     def count_photo_instances(self, *, photo: Any) -> Dict[str, Any]:
         return self.annotate(
-            membership=models.Count('photos', filter=models.Q(photos__id=photo))
+            membership=models.Count("photos", filter=models.Q(photos__id=photo))
         )
 
-    def by_user(self, *, user: User, visibility: Optional[str]=None) -> "CollectionQuerySet":
+    def by_user(
+        self, *, user: User, visibility: Optional[str] = None
+    ) -> "CollectionQuerySet":
         objs = self.filter(owner=user)
         if visibility:
             objs.filter(visibility=visibility)
         return objs.order_by(Lower("name"))
 
+
 class Collection(models.Model):
     PRIVACY_TYPES = [
-        ('PR', 'Private'),
-        ('UL', 'Unlisted'),
-        ('PU', 'Public'),
+        ("PR", "Private"),
+        ("UL", "Unlisted"),
+        ("PU", "Public"),
     ]
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField(max_length=512)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     visibility = models.CharField(max_length=2, choices=PRIVACY_TYPES)
-    photos = models.ManyToManyField('kronofoto.Photo', blank=True)
+    photos = models.ManyToManyField("kronofoto.Photo", blank=True)
 
     objects = CollectionQuerySet.as_manager()
 
@@ -46,8 +53,12 @@ class Collection(models.Model):
             (
                 "Edit",
                 {
-                    "href": reverse("kronofoto:collection-edit", kwargs={"pk": self.id}),
-                    "hx-get": reverse("kronofoto:collection-edit", kwargs={"pk": self.id}),
+                    "href": reverse(
+                        "kronofoto:collection-edit", kwargs={"pk": self.id}
+                    ),
+                    "hx-get": reverse(
+                        "kronofoto:collection-edit", kwargs={"pk": self.id}
+                    ),
                     "hx-target": "#app",
                 },
             ),
@@ -69,16 +80,24 @@ class Collection(models.Model):
             (
                 "Embed",
                 {
-                    "href": reverse("kronofoto:collection-embed", kwargs={"pk": self.id}),
-                    "hx-get": reverse("kronofoto:collection-embed", kwargs={"pk": self.id}),
+                    "href": reverse(
+                        "kronofoto:collection-embed", kwargs={"pk": self.id}
+                    ),
+                    "hx-get": reverse(
+                        "kronofoto:collection-embed", kwargs={"pk": self.id}
+                    ),
                     "hx-target": "#app",
                 },
             ),
             (
                 "Delete",
                 {
-                    "href": reverse("kronofoto:collection-delete", kwargs={"pk": self.id}),
-                    "hx-get": reverse("kronofoto:collection-delete", kwargs={"pk": self.id}),
+                    "href": reverse(
+                        "kronofoto:collection-delete", kwargs={"pk": self.id}
+                    ),
+                    "hx-get": reverse(
+                        "kronofoto:collection-delete", kwargs={"pk": self.id}
+                    ),
                     "hx-target": "closest section",
                     "hx-select": "#my-lists",
                     "hx-swap": "outerHTML",
@@ -87,7 +106,9 @@ class Collection(models.Model):
             (
                 "Use in a FotoStory",
                 {
-                    "href": "{}?collection={}".format(reverse("kronofoto:exhibit-create"), self.id),
+                    "href": "{}?collection={}".format(
+                        reverse("kronofoto:exhibit-create"), self.id
+                    ),
                     "hx-post": reverse("kronofoto:exhibit-create"),
                     "hx-vals": json.dumps({"collection": self.id}),
                     "hx-target": "#app",
@@ -99,8 +120,10 @@ class Collection(models.Model):
         return self.get_absolute_url()
 
     def get_absolute_url(self) -> str:
-        return '{}?{}'.format(reverse('kronofoto:gridview'), urlencode({'query': 'collection:{}'.format(self.uuid)}))
+        return "{}?{}".format(
+            reverse("kronofoto:gridview"),
+            urlencode({"query": "collection:{}".format(self.uuid)}),
+        )
 
     def __str__(self) -> str:
         return self.name
-
