@@ -71,5 +71,11 @@ class ActivitypubImage(ActivitypubObject, total=False):
     tags: List[str]
     place: LdIdUrl
 
+class ActivitypubLocation(ActivitypubObject, total=False):
+    name: str
+    parent: LdIdUrl
+    type: Literal["Location"]
+    geom: List[List[List[List[float]]]]
+
 
 ActivitypubData = Union[ActivitypubImage, ActivitypubContact]

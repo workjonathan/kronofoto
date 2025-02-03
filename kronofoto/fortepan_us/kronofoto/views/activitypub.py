@@ -158,7 +158,7 @@ def service_inbox(request: HttpRequest) -> HttpResponse:
                 server_domain = urlparse(activity.body['object']).netloc
                 Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=request.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
                 return JsonLDResponse({})
-        if not request.actor.app_follows_actor and not Archive.objects.filter(actor=request.actor).exists():
+        if not request.actor.app_follows_actor or not Archive.objects.filter(actor=request.actor).exists():
             return JsonResponse({"error": "Not following this actor"}, status=401)
         root_type = deserialized.get('type')
         object = deserialized.get('object', {})
