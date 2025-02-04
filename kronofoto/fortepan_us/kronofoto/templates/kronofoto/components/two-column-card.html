@@ -31,7 +31,8 @@
                 {% endfor %}
                 {{ form.title.errors }}
                 <h2 contenteditable="{{ contenteditable }}" role="textbox" @input="title = $el.innerText">{{ card.title }}</h2>
-                {% elif card.title %}<h2>{{ card.title | markdown:"nl2br" | p_to_br }}</h2>
+                {% elif card.title %}
+                    <h2>{{ card.title | markdown:"nl2br" | p_to_br }}</h2>
                 {% endif %}
                 {% if edit %}
                 {{ form.description.errors }}

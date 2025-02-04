@@ -34,7 +34,7 @@
             {% else %}
                 {% if card.title %}<h2>{{ card.title | markdown:"nl2br" | p_to_br }}</h2>{% endif %}
                 {% if card.description %}{{ card.description | markdown:"nl2br" }}{% endif %}
-                {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" }}</small>{% endif %}
+                {% if card.smalltext %}<small>{{ card.smalltext | markdown:"nl2br" | p_to_br }}</small>{% endif %}
             {% endif %}
         </div>
         <div
