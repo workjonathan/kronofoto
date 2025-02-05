@@ -48,6 +48,8 @@ dependencies = [
     "djangocms-text-ckeditor==5.1.*",
     "cryptography",
     "marshmallow",
+    "lxml==5.3.*",
+    "lxml-stubs==0.5.*",
 ]
 [project.optional-dependencies]
 postgres = [

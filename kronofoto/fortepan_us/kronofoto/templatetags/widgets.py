@@ -10,7 +10,7 @@ from django.utils.html import escape
 from django.core.cache import cache
 from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure, Exhibit
 from fortepan_us.kronofoto.imageutil import ImageSigner
-from typing import Union, Dict, Any, Union, Optional, Tuple, List, overload
+from typing import Union, Dict, Any, Union, Optional, Tuple, List, Set, TypedDict, overload
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
@@ -18,6 +18,8 @@ from django.db.models.functions import Lower
 import json
 import uuid
 from django import forms
+from lxml import etree, html
+import icontract
 
 register = template.Library()
 
@@ -34,11 +36,11 @@ def figure_form(figure_parent: Tuple[Figure, str], photos: QuerySet[Photo]) -> f
     return form
 
 @register.filter
-def all_tags_with(photo: Photo, user: Optional[User]=None) -> QuerySet:
+def all_tags_with(photo: Photo, user: Optional[User]=None) -> List[str]:
     return photo.get_all_tags(user=user)
 
 @register.filter
-def describe(object: Photo, user: Optional[User]=None) -> str:
+def describe(object: Photo, user: Optional[User]=None) -> Set[str]:
     return object.describe(user)
 
 @register.inclusion_tag('kronofoto/components/page-links.html', takes_context=False)
@@ -74,12 +76,17 @@ def image_url(*, width: Optional[int]=None, height: int, photo: Photo) -> str:
 def image_url(*, width: Optional[int]=None, height: int, id: int, path: Any) -> str:
     ...
 
+@icontract.require(lambda *, width, height, photo, id, path: width is not None or height is not None)
 @register.simple_tag(takes_context=False)
 def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: Optional[Photo]=None, id: Optional[int]=None, path: Any=None) -> str:
     if photo is None:
         assert id is not None
         photo = Photo.objects.get(id=id)
-    return photo.image_url(width=width, height=height)
+    if height and not width:
+        return photo.image_url(height=height)
+    else:
+        assert width is not None
+        return photo.image_url(width=width, height=height)
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()
@@ -93,7 +100,7 @@ def photo_count() -> Optional[Any]:
 def markdown(text: str, extension: Optional[str]=None) -> str:
     # disable ParagraphProcessor?
     from .urlify import URLifyExtension
-    extensions = []
+    extensions : List[Union[str, URLifyExtension]] = []
     extensions.append(URLifyExtension())
     if extension:
         extensions.append(extension)
@@ -105,7 +112,7 @@ def thumb_left(*, index: int, offset: int, width: int) -> int:
 
 
 @register.inclusion_tag('kronofoto/components/thumbnails.html', takes_context=False)
-def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]], url_kwargs=Optional[Dict[str, Any]], get_params: Optional[QueryDict]) -> Dict[str, Any]:
+def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]], url_kwargs: Optional[Dict[str, Any]], get_params: Optional[QueryDict]) -> Dict[str, Any]:
     return  {
         "object_list": object_list,
         "positioning": positioning,
@@ -113,9 +120,19 @@ def thumbnails(*, object_list: List[Photo], positioning: Optional[Dict[str, Any]
         "get_params": get_params,
     }
 
+class UserContentListContext(TypedDict, total=False):
+    request_user: User
+    profile_user: User
+    form: Union[forms.Form, forms.ModelForm]
+    section_id: str
+    section_name: str
+    form_template: str
+    section_description: str
+    object_list: Union[QuerySet["Exhibit"], QuerySet['Collection']]
+
 @register.inclusion_tag("kronofoto/components/user-content-section.html", takes_context=False)
-def collections(user: User, profile_user: User, form: Union[forms.ModelForm, forms.Form]) -> Dict[str, Any]:
-    context = {
+def collections(user: User, profile_user: User, form: Union[forms.ModelForm, forms.Form]) -> UserContentListContext:
+    context: UserContentListContext = {
         'request_user': user,
         'profile_user': profile_user,
         "form": form,
@@ -131,9 +148,11 @@ def collections(user: User, profile_user: User, form: Union[forms.ModelForm, for
     context['object_list'] = Collection.objects.by_user(user=profile_user, **filter_kwargs)
     return context
 
+
+
 @register.inclusion_tag("kronofoto/components/user-content-section.html", takes_context=False)
-def exhibits(user: User, profile_user: User, form: forms.Form) -> Dict[str, Any]:
-    context = {
+def exhibits(user: User, profile_user: User, form: forms.Form) -> UserContentListContext:
+    context : UserContentListContext = {
         'request_user': user,
         'profile_user': profile_user,
         "form": form,
@@ -144,3 +163,45 @@ def exhibits(user: User, profile_user: User, form: forms.Form) -> Dict[str, Any]
     }
     context['object_list'] = Exhibit.objects.filter(owner=profile_user)
     return context
+
+def rewrite_tree(tree: etree._Element) -> etree._Element:
+    newTree = etree.Element(tree.tag)
+    newTree.text = tree.text
+    newTree.tail = tree.tail
+    count = len(tree)
+    for i, child in enumerate(tree):
+        if child.tag != "p":
+            newTree.append(rewrite_tree(child))
+        else:
+            if i != 0 or newTree.text:
+                br = etree.Element("br")
+                br.tail = child.text
+                newTree.append(br)
+            else:
+                newTree.text = child.text
+            for pchild in child:
+                newTree.append(rewrite_tree(pchild))
+            if i != count - 1 or child.tail:
+                br = etree.Element("br")
+                br.tail = child.tail
+                newTree.append(br)
+    return newTree
+
+
+@register.filter
+@stringfilter
+def p_to_br(value: str) -> str:
+    """Convert html string consisting of a list of <p> tags to one element separated by <br> pairs."""
+    print(f"{value=}")
+    try:
+        tree = html.fromstring(value)
+    except Exception as e:
+        return value
+    rewritten = rewrite_tree(tree)
+    nodes = []
+    if rewritten.text:
+        nodes.append(rewritten.text)
+    nodes += [etree.tostring(child).decode('utf-8') for child in rewritten]
+    if rewritten.tail:
+        nodes.append(rewritten.tail)
+    return mark_safe("".join(nodes))
