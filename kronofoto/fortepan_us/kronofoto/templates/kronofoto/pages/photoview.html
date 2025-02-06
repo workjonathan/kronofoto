@@ -77,6 +77,8 @@
                 </button>
             </div>
             <div class="gallery__controls-bottom">
+                {% include "kronofoto/components/buttons/mainstreet.html" %}
+                <div style="flex-grow:1"></div>
                 <!--Add to List Button-->
                 <button class="image-control-button" data-toggle="add-to-list-popup">
                     <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}" data-tooltip title="Add to FotoAlbum" data-position="top" data-alignment="center">
