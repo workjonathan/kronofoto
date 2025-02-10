@@ -117,7 +117,7 @@ class CollectionReporter:
 
 class MainstreetPhotosReporter:
     def describe(self, exprs):
-        return "has mainstreet" if exprs[0]._value.value else 'has no mainstreet'
+        return "has FotoSphere" if exprs[0]._value.value else 'has no FotoSphere'
 
 class NewPhotosReporter:
     def describe(self, exprs):
@@ -156,7 +156,7 @@ class Description:
             return DonorFilterReporter('photographed by')
         if group == 'donor':
             return DonorFilterReporter('contributed by')
-        if group == 'mainstreet':
+        if group == 'fotosphere':
             return MainstreetPhotosReporter()
         if group == 'new':
             return NewPhotosReporter()
@@ -465,10 +465,10 @@ class MultiWordValueBase(ValueBase):
 class HasPhotoSphereValue(ValueBase):
     value: str
     def serialize(self):
-        return 'has_mainstreet:"{}"'.format(self.value)
+        return 'has_fotosphere:"{}"'.format(self.value)
 
     def short_label(self):
-        return "Mainstreet: {}".format(self.value.lower())
+        return "FotoSphere: {}".format(self.value.lower())
 
     def filter_related(self, *, related):
         return related.filter(photo__pk=OuterRef('pk'))
@@ -477,7 +477,7 @@ class HasPhotoSphereValue(ValueBase):
         return models.PhotoSpherePair.objects.all()
 
     def group(self):
-        return "mainstreet"
+        return "fotosphere"
 
 @dataclass
 class MultiWordTagValue(MultiWordValueBase):

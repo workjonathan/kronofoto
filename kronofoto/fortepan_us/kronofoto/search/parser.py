@@ -36,7 +36,7 @@ countyExpr = parsy.string('county:') >> string.map(County)
 captionExpr = parsy.string('caption:') >> string.map(Caption)
 accessionExpr = parsy.string('FI') >> number.map(AccessionNumber)
 isNewExpr = parsy.string('is_new:') >> boolean.map(IsNew)
-hasPhotoSphereExpr = parsy.string('has_mainstreet:') >> boolean.map(HasPhotoSphere)
+hasPhotoSphereExpr = parsy.string('has_fotosphere:') >> boolean.map(HasPhotoSphere)
 collectionExpr = parsy.string('collection:') >> string.map(UserCollection)
 
 token = (
