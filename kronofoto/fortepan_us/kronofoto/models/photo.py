@@ -359,6 +359,16 @@ class Photo(PhotoBase):
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
 
+    def get_image_dimensions(self) -> Tuple[int, int]:
+        if self.original_height == 0 or self.original_width == 0:
+            Image.MAX_IMAGE_PIXELS = 195670000
+            self.original_height = self.original.height
+            self.original_width = self.original.width
+            Photo.objects.filter(id=self.id).update(
+                original_height=self.original_height, original_width=self.original_width
+            )
+        return (self.original_width, self.original_height)
+
     @property
     def h700(self) -> Optional[ImageData]:
         from fortepan_us.kronofoto.imageutil import ImageSigner
@@ -366,9 +376,10 @@ class Photo(PhotoBase):
         if not self.original or not self.id:
             return None
         signer = ImageSigner(id=self.id, path=self.original.name, width=0, height=700)
+        width, height = self.get_image_dimensions()
         return ImageData(
             height=700,
-            width=self.original.width / self.original.height * 700,
+            width=round(width / height) * 700,
             url=signer.url,
             name="h700",
         )

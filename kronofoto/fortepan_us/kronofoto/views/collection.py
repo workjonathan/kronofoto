@@ -21,7 +21,7 @@ from fortepan_us.kronofoto.models import Photo, Exhibit, Collection
 from django.views.generic.list import MultipleObjectTemplateResponseMixin, MultipleObjectMixin
 from django.views.decorators.csrf import csrf_exempt
 from dataclasses import dataclass
-from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type
+from typing import Any, Dict, Collection as CollectionT, List, Protocol, Callable, Type, Union
 from .exhibit import ExhibitCreateForm
 
 @login_required
@@ -74,7 +74,7 @@ class FormResponse:
     request: HttpRequest
     user: User
     template: str
-    context: Dict[str, Any]
+    context: Union[widgets.UserContentListContext, Dict[str, Any]]
 
     form_class: Callable[[], CollectionForm] = CollectionForm
 
@@ -83,7 +83,7 @@ class FormResponse:
         self.context['form'] = self.form_class()
         self.context['object_list'] = Collection.objects.by_user(user=self.user)
         self.context['profile_user'] = self.user
-        return TemplateResponse(request=self.request, context=self.context, template=self.template)
+        return TemplateResponse(request=self.request, context={**self.context}, template=self.template)
 
 class ListNullAction:
     def save(self) -> None:

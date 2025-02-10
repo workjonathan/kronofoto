@@ -115,6 +115,10 @@ class CollectionReporter:
     def describe(self, exprs):
         return ', '.join(expr.name for expr in exprs)
 
+class MainstreetPhotosReporter:
+    def describe(self, exprs):
+        return "has FotoSphere" if exprs[0]._value.value else 'has no FotoSphere'
+
 class NewPhotosReporter:
     def describe(self, exprs):
         return "new" if exprs[0]._value.value else 'not new'
@@ -152,6 +156,8 @@ class Description:
             return DonorFilterReporter('photographed by')
         if group == 'donor':
             return DonorFilterReporter('contributed by')
+        if group == 'fotosphere':
+            return MainstreetPhotosReporter()
         if group == 'new':
             return NewPhotosReporter()
         if group == 'user-collection':
@@ -261,6 +267,13 @@ class SubqueryExpression(Expression):
 
     def get_score(self, user=None):
         return self._value.get_subquery(query=self.select_objects(user=user))
+
+class HasPhotoSphereExpression(Expression):
+    def get_search_args(self, user=None):
+        has_photosphere = Exists(self.select_objects(user=user))
+        if not self._value.value:
+            has_photosphere = ~has_photosphere
+        return [has_photosphere]
 
 class PlaceExpression(Expression):
     def get_search_args(self, user=None):
@@ -447,6 +460,24 @@ class MultiWordValueBase(ValueBase):
                 total=Sum(Length(F(field))),
                 perc=F('removed')*1.0/F('total'),
             ).values('perc'))
+
+@dataclass
+class HasPhotoSphereValue(ValueBase):
+    value: str
+    def serialize(self):
+        return 'has_fotosphere:"{}"'.format(self.value)
+
+    def short_label(self):
+        return "FotoSphere: {}".format(self.value.lower())
+
+    def filter_related(self, *, related):
+        return related.filter(photo__pk=OuterRef('pk'))
+
+    def get_related_queryset(self, *, user=None):
+        return models.PhotoSpherePair.objects.all()
+
+    def group(self):
+        return "fotosphere"
 
 @dataclass
 class MultiWordTagValue(MultiWordValueBase):
@@ -816,6 +847,9 @@ def UserCollection(value):
 
 def IsNew(value):
     return IsNewExpression(_value=IsNewValue(value))
+
+def HasPhotoSphere(value):
+    return HasPhotoSphereExpression(_value=HasPhotoSphereValue(value))
 
 def TermExactly(value):
     return ExactMatchExpression(_value=TermExactlyValue(value))

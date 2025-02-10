@@ -1,0 +1,10 @@
+{% load static %}
+
+{% if object.photosphere_set.exists %}
+    <button {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:#fotosphere-button" {% endif %} id="fotosphere-button" class="image-control-button" hx-get="{{ object.photosphere_set.all.0.get_absolute_url }}" hx-target="#app">
+        <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center">
+    </button>
+{% else %}
+    <template {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:#fotosphere-button" {% endif %} id="fotosphere-button"></template>
+{% endif %}
+
