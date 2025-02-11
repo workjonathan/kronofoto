@@ -7,7 +7,7 @@ from fortepan_us.kronofoto.views.basetemplate import BaseTemplateMixin, BasePhot
 from unittest.mock import Mock, sentinel
 from .util import searchTerms, photos, donors
 from fortepan_us.kronofoto.forms import SearchForm
-from fortepan_us.kronofoto.models.photo import Photo
+from fortepan_us.kronofoto.models import Photo
 from fortepan_us.kronofoto.search.expression import YearEquals, Caption
 
 class Base:
