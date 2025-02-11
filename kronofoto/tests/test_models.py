@@ -6,9 +6,9 @@ from hypothesis.stateful import rule, invariant, Bundle, initialize, consumes, p
 from hypothesis.extra.django import TestCase, from_model
 from .util import TransactionalRuleBasedStateMachine, photos as gen_photos
 from .models import FakeDonor, FakePhoto
-from fortepan_us.kronofoto.models.donor import Donor
-from fortepan_us.kronofoto.models.photo import Photo
-from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models import Donor
+from fortepan_us.kronofoto.models import Photo
+from fortepan_us.kronofoto.models import Archive
 from collections import defaultdict
 import pytest
 from django.db.utils import IntegrityError

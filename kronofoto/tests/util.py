@@ -6,9 +6,9 @@ from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
 from hypothesis import strategies as st, note
-from fortepan_us.kronofoto.models.archive import Archive
-from fortepan_us.kronofoto.models.tag import Tag, LowerCaseCharField
-from fortepan_us.kronofoto.models.term import Term
+from fortepan_us.kronofoto.models import Archive
+from fortepan_us.kronofoto.models import Tag, LowerCaseCharField
+from fortepan_us.kronofoto.models import Term
 from typing import NamedTuple, List
 from fortepan_us.kronofoto.search import expression as expr
 import pytest
