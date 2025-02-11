@@ -114,8 +114,6 @@ class ArchiveSchema(activity_schema.ObjectSchema):
         }
 
 
-
-
 class ServiceActor(models.Model):
     serialized_public_key = models.BinaryField(null=True, blank=True)
     encrypted_private_key = models.BinaryField(null=True, blank=True)
@@ -376,6 +374,7 @@ class LdId(models.Model):
                 name="unique_content_id_per_object",
             ),
         ]
+
 
 class ArchiveQuerySet(models.QuerySet):
     @icontract.require(lambda self, profile: self.have_remote_by_profile(profile))

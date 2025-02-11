@@ -71,6 +71,7 @@ class ActivitypubImage(ActivitypubObject, total=False):
     tags: List[str]
     place: LdIdUrl
 
+
 class ActivitypubLocation(ActivitypubObject, total=False):
     name: str
     parent: LdIdUrl
