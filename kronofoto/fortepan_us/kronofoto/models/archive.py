@@ -3,7 +3,6 @@ from django.utils.text import slugify
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.contrib.auth.models import Permission, Group
-from .category import Category, ValidCategory
 
 
 class Archive(models.Model):
@@ -14,7 +13,9 @@ class Archive(models.Model):
         settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission"
     )
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
-    categories = models.ManyToManyField(Category, through=ValidCategory)
+    categories = models.ManyToManyField(
+        "kronofoto.Category", through="kronofoto.ValidCategory"
+    )
 
     class Meta:
         indexes = (models.Index(fields=["slug"], name="archive_slug_idx"),)

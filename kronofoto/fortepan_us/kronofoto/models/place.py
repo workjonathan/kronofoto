@@ -79,53 +79,6 @@ class Place(MPTTModel):
     def __str__(self) -> str:
         return self.fullname
 
-    def collect_and_place_photos(self) -> Any:
-        from .photo import Photo
-
-        if self.place_type.name == "Country":
-            return Photo.objects.filter(
-                place__isnull=True,
-                address="",
-                country__iexact=self.name,
-                city="",
-                state="",
-                county="",
-            ).update(place=self)
-        elif self.place_type.name == "US State":
-            return Photo.objects.filter(
-                place__isnull=True,
-                address="",
-                country=self.parent.name,
-                city="",
-                state__iexact=self.name,
-                county="",
-            ).update(place=self)
-        elif self.place_type.name == "US County":
-            return Photo.objects.filter(
-                place__isnull=True,
-                city="",
-                state__iexact=self.parent.name,
-                county__iexact=self.name,
-            ).update(place=self) + Photo.objects.filter(
-                place__isnull=True,
-                city="",
-                state__iexact=self.parent.name,
-                county__iexact=self.name + " county",
-            ).update(
-                place=self
-            )
-        elif (
-            self.place_type.name == "US Town"
-            or self.place_type.name == "US Unincorporated Area"
-        ):
-            return Photo.objects.filter(
-                place__isnull=True,
-                city__iexact=self.name,
-                state__iexact=self.parent.name,
-            ).update(place=self)
-        else:
-            raise ValueError()
-
     class Meta:
         indexes = (
             models.Index(fields=["name"]),

@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django_stubs_ext import WithAnnotations
 import base64
 import json
 from django.core.files.storage import default_storage
@@ -38,7 +39,6 @@ from functools import reduce
 from fortepan_us.kronofoto.storage import OverwriteStorage
 from .donor import Donor
 from .tag import Tag, TagQuerySet
-from .term import Term
 from .archive import Archive
 from .category import Category
 from .place import Place
@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Any,
     List,
+    Sequence,
     Optional,
     Set,
     Tuple,
@@ -56,6 +57,7 @@ from typing import (
     TypedDict,
     Callable,
     Iterable,
+    Union,
 )
 from typing_extensions import Self
 from itertools import chain, cycle, islice
@@ -73,7 +75,7 @@ class Thumbnail(TypedDict):
 EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
-class PhotoQuerySet(models.QuerySet):
+class PhotoQuerySet(models.QuerySet["Photo"]):
     def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max("year"), start=Min("year"))
 
@@ -160,7 +162,7 @@ class PhotoBase(models.Model):
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    terms = models.ManyToManyField(Term, blank=True)
+    terms = models.ManyToManyField("kronofoto.Term", blank=True)
     photographer = models.ForeignKey(
         Donor,
         models.PROTECT,
@@ -348,6 +350,14 @@ class ImageData:
     name: str
 
 
+class LabelProtocol(Protocol):
+    def label_lower(self) -> str:
+        pass
+
+    def label(self) -> str:
+        pass
+
+
 class Photo(PhotoBase):
     original = models.ImageField(
         upload_to=get_original_path,
@@ -514,13 +524,13 @@ class Photo(PhotoBase):
     def page_number(self) -> Dict[str, Optional[int]]:
         return {"year:gte": self.year, "id:gt": self.id - 1}
 
-    def get_all_tags(self, user: Optional[User] = None) -> List[str]:
+    def get_all_tags(self, user: Optional[User] = None) -> List[LabelProtocol]:
         "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
         tags = self.get_accepted_tags(user=user).annotate(
             label_lower=Lower("tag"), label=models.F("tag")
         )
         terms = self.terms.annotate(label_lower=Lower("term"), label=models.F("term"))
-        return list(tags) + list(terms)
+        return list(tags) + list(terms)  # type: ignore
 
     def get_accepted_tags(self, user: Optional[User] = None) -> models.QuerySet[Tag]:
         query = Q(phototag__accepted=True)

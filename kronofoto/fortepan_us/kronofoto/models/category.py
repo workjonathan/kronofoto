@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.text import slugify
-from .term import Term
 
 
 class Category(models.Model):
@@ -17,7 +16,7 @@ class Category(models.Model):
 class ValidCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
     archive = models.ForeignKey("Archive", on_delete=models.CASCADE, null=False)
-    terms = models.ManyToManyField(Term)
+    terms = models.ManyToManyField("kronofoto.Term")
 
     def __str__(self) -> str:
         return "{} categories".format(self.category)

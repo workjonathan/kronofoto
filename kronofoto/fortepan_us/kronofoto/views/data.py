@@ -129,7 +129,7 @@ def datadump(request: HttpRequest, short_name: Optional[str]=None) -> HttpRespon
         response = HttpResponse("", content_type="application/json")
         if len(data) > size:
             query_params = QueryDict(mutable=True)
-            query_params['after'] = photos[photos.count()-1].id
+            query_params['after'] = str(photos[photos.count()-1].id)
             if since:
                 query_params['since'] = since
             json.dump({
