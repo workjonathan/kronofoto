@@ -9,10 +9,10 @@ from unittest.mock import Mock
 from hypothesis import strategies as st, given, note, settings
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertRedirects
-from fortepan_us.kronofoto.models.photo import Photo
-from fortepan_us.kronofoto.models.photosphere import PhotoSphere
-from fortepan_us.kronofoto.models.archive import Archive
-from fortepan_us.kronofoto.models.donor import Donor
+from fortepan_us.kronofoto.models import Photo
+from fortepan_us.kronofoto.models import PhotoSphere
+from fortepan_us.kronofoto.models import Archive
+from fortepan_us.kronofoto.models import Donor
 from fortepan_us.kronofoto.models import Category
 from fortepan_us.kronofoto.views.photo import PhotoView
 from django.core.files.uploadedfile import SimpleUploadedFile

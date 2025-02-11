@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from fortepan_us.kronofoto.models.donor import DonorQuerySet
-from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models import DonorQuerySet
+from fortepan_us.kronofoto.models import Archive
 
 class UserAgreement(models.Model):
     version = models.IntegerField()

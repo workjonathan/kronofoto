@@ -9,9 +9,9 @@ from hypothesis.provisional import urls, domains
 from hypothesis.extra.django import TestCase, from_model
 from .util import TransactionalRuleBasedStateMachine, photos as gen_photos, archives
 from .models import FakeDonor, FakePhoto
-from fortepan_us.kronofoto.models.donor import Donor
-from fortepan_us.kronofoto.models.photo import Photo
-from fortepan_us.kronofoto.models.archive import Archive, InvalidArchive
+from fortepan_us.kronofoto.models import Donor
+from fortepan_us.kronofoto.models import Photo
+from fortepan_us.kronofoto.models import Archive, InvalidArchive
 from fortepan_us.kronofoto import models
 from collections import defaultdict
 import pytest

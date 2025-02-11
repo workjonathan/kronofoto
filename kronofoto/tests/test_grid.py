@@ -4,7 +4,7 @@ from hypothesis.extra.django import from_model, register_field_strategy, TestCas
 from hypothesis import strategies as st, given, note, settings
 from unittest.mock import Mock, sentinel, MagicMock
 from fortepan_us.kronofoto.views.grid import GridView
-from fortepan_us.kronofoto.models.archive import Archive
+from fortepan_us.kronofoto.models import Archive
 from fortepan_us.kronofoto.forms import SearchForm
 from dataclasses import dataclass
 

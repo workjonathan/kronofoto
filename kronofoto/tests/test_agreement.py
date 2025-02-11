@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from django import forms
 from fortepan_us.kronofoto.views.agreement import AgreementDetailView, AgreementFormView, UserAgreementCheck, BaseAgreementView, AgreementCheckFactory
 from .models import Agreement, UserAgreement
-from fortepan_us.kronofoto.models.archive import ArchiveAgreement, Archive
+from fortepan_us.kronofoto.models import ArchiveAgreement, Archive
 
 class AgreementForm(forms.Form):
     agree = forms.BooleanField(required=True, label="I agree to these terms.")

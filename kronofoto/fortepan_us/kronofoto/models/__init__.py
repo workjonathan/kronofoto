@@ -1,7 +1,7 @@
 # from django.contrib.gis.db import models
 from .userdata import UserData
 from django.contrib.auth.models import User
-from .donor import Donor
+from .donor import Donor, DonorQuerySet
 from .tag import Tag, LowerCaseCharField
 from .term import Term, TermGroup
 from .collection import Collection
@@ -17,7 +17,7 @@ from .photosphere import (
     MainStreetSet,
     PhotoSphereInfo,
 )
-from .archive import Archive, ArchiveAgreement
+from .archive import Archive, ArchiveAgreement, InvalidArchive
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
 from .exhibit import Exhibit, Card, PhotoCard, Figure

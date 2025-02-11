@@ -8,10 +8,10 @@ from io import BytesIO
 from unittest.mock import Mock, sentinel, MagicMock
 from django.contrib.admin.sites import AdminSite
 from fortepan_us.kronofoto.admin import *
-from fortepan_us.kronofoto.models.donor import Donor
-from fortepan_us.kronofoto.models.archive import Archive
-from fortepan_us.kronofoto.models.photo import Photo
-from fortepan_us.kronofoto.models.photosphere import PhotoSphere
+from fortepan_us.kronofoto.models import Donor
+from fortepan_us.kronofoto.models import Archive
+from fortepan_us.kronofoto.models import Photo
+from fortepan_us.kronofoto.models import PhotoSphere
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .util import donors, small_gif, archives, TransactionalRuleBasedStateMachine
 from django.contrib.contenttypes.models import ContentType
