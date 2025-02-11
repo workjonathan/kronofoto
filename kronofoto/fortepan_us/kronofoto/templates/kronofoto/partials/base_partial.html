@@ -4,7 +4,7 @@
 <div hx-swap-oob="delete:#grid-icon"></div>
 <div hx-swap-oob="innerHTML:[data-fpi-fpilink]">
     {% block fpi_link %}
-    <a class="fpi-fpilink" href="{{ timeline_url }}"><img src="{% static "kronofoto/images/01-fi-logo.svg" %}" alt="Fortepan Iowa icon" title="Fortepan Iowa"></a>
+    <a class="fpi-fpilink" href="{{ timeline_url }}"><img src="{% static "kronofoto/images/01-fi-logo.svg" %}" alt="Fortepan US icon" title="Fortepan US"></a>
     {% endblock %}
 </div>
 <div hx-swap-oob="outerHTML:.collection-name">
@@ -28,6 +28,10 @@
     <script>
         {# this is absolutely not the right way to do this. #}
         document.documentElement.setAttribute("route", "{{ route_name }}")
+        for (const tooltip of document.querySelectorAll(".tooltip[data-is-active='true']")) {
+            tooltip.setAttribute("data-is-active", "false")
+            tooltip.style.display = "none"
+        }
     </script>
 {% endif %}
 {% block content %}

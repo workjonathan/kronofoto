@@ -10,7 +10,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData, CarouselList
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List, TypedDict, Tuple
 from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from djgeojson.views import GeoJSONLayerView # type: ignore
@@ -72,19 +72,53 @@ def info_text(request: HttpRequest) -> HttpResponse:
     else:
         return HttpResponse(status_code=400)
 
+class LinksDict(TypedDict):
+    nodeId: str
+    gps: Tuple[float, float]
+
+class ImagePlaneDict(TypedDict):
+    url: str
+    height: int
+    width: int
+    azimuth: float
+    inclination: float
+    distance: float
+    id: int
+
+class InfoBoxDict(TypedDict):
+    id: int
+    yaw: float
+    pitch: float
+    image: str
+    content: str
+
+class PhotoSphereDict(TypedDict):
+    photos: List[ImagePlaneDict]
+    infoboxes: List[InfoBoxDict]
+
+class NodeData(TypedDict, total=False):
+    id: str
+    panorama: str
+    sphereCorrection: Dict[str, float]
+    gps: Tuple[float, float]
+    links: List[LinksDict]
+    data: PhotoSphereDict
+    thumbnail: str
+
+
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
         info_template = get_template(template_name="kronofoto/components/mainstreet-info.html")
         object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
-        links = [
+        links: List[LinksDict] = [
             {
                 "nodeId": str(link.id),
-                "gps": [link.location.x, link.location.y], # type: ignore
+                "gps": (link.location.x, link.location.y),
             }
-            for link in object.links.all()
+            for link in object.links.all() if link.location is not None
         ]
-        node = {
+        node: NodeData = {
             "id": str(object.id),
             "panorama": object.image.url,
             "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
@@ -109,6 +143,9 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                 } for info in object.photosphereinfo_set.all()]
             },
         }
+        if object.photos.all().exists():
+            photo = object.photos.all()[0]
+            node["thumbnail"] = image_url(id=photo.id, path=photo.original.name, height=500, width=500)
         return JsonResponse(node)
     else:
         return JsonResponse({}, status=400)
