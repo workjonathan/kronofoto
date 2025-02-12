@@ -22,7 +22,7 @@ def contributor_search(request: HttpRequest) -> HttpResponse:
     for s in txts:
         if s:
             donors = donors.filter(Q(first_name__istartswith=s) | Q(last_name__istartswith=s))
-    donors = donors.filter_donated()
+    donors = Photo.objects.filter_donated(donors)
     results = [{'id': donor.id, 'text': str(donor)} for donor in donors[:20]]
     response = HttpResponse(content_type="application/json")
     json.dump({"results": results, "pagination": {"more": False}}, response)

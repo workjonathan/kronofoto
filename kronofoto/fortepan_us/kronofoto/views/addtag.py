@@ -8,7 +8,7 @@ from .basetemplate import BaseTemplateMixin
 from fortepan_us.kronofoto.models import Photo
 from django.http import HttpRequest, HttpResponse, QueryDict
 from django.template.response import TemplateResponse
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 
 def tags_view(request: HttpRequest, photo: int, **kwargs: Any) -> HttpResponse:
@@ -22,8 +22,9 @@ def tags_view(request: HttpRequest, photo: int, **kwargs: Any) -> HttpResponse:
             form.add_tag(object, user=request.user)
         else:
             raise BadRequest
+    user = None if request.user.is_anonymous else request.user
     return TemplateResponse(
         request,
         "kronofoto/components/tags.html",
-        {"tags": object.get_all_tags(user=request.user)}
+        {"tags": object.get_all_tags(user=user)},
     )

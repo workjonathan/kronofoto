@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from fortepan_us.kronofoto.models import DonorQuerySet
+from fortepan_us.kronofoto.models import DonorQuerySet, PhotoQuerySet
 from fortepan_us.kronofoto.models import Archive
 
 class UserAgreement(models.Model):
@@ -35,5 +35,6 @@ class FakePhoto(models.Model):
     scanner = models.ForeignKey(
         FakeDonor, null=True, on_delete=models.SET_NULL, blank=True, related_name="kronofoto_photo_scanned"
     )
+    objects = PhotoQuerySet.as_manager()
     def __str__(self):
         return str(self.pk)

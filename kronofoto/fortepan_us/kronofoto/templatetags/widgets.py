@@ -9,6 +9,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.core.cache import cache
 from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure, Exhibit
+from fortepan_us.kronofoto.models.photo import LabelProtocol
 from fortepan_us.kronofoto.imageutil import ImageSigner
 from typing import Union, Dict, Any, Union, Optional, Tuple, List, Set, TypedDict
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
@@ -35,7 +36,7 @@ def figure_form(figure_parent: Tuple[Figure, str], photos: QuerySet[Photo]) -> f
     return form
 
 @register.filter
-def all_tags_with(photo: Photo, user: Optional[User]=None) -> List[str]:
+def all_tags_with(photo: Photo, user: Optional[User]=None) -> List[LabelProtocol]:
     return photo.get_all_tags(user=user)
 
 @register.filter

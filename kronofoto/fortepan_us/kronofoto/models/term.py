@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 from django.http import QueryDict
 
 
-class TermQuerySet(models.QuerySet):
+class TermQuerySet(models.QuerySet["Term"]):
     def objects_for(self, archive: "Archive", category: int) -> models.QuerySet["Term"]:
         return self.filter(
             validcategory__archive=archive, validcategory__category=category
@@ -54,15 +54,6 @@ class Term(Collectible, models.Model):  # type: ignore
         ordering = ["term"]
         verbose_name = "Subcategory"
         verbose_name_plural = "Subcategories"
-
-    @staticmethod
-    def index() -> List[Dict[str, Any]]:
-        return [
-            {"name": term.term, "count": term.count, "href": term.get_absolute_url()}
-            for term in Term.objects.annotate(count=Count("photo__id"))
-            .order_by("term")
-            .filter(count__gt=0)
-        ]
 
     def __str__(self) -> str:
         return self.term
