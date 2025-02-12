@@ -37,7 +37,7 @@ import operator
 from bisect import bisect_left
 from functools import reduce
 from fortepan_us.kronofoto.storage import OverwriteStorage
-from .donor import Donor
+from .donor import Donor, DonorQuerySet
 from .tag import Tag, TagQuerySet
 from .archive import Archive
 from .category import Category
@@ -76,6 +76,34 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
+    def filter_donated(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = self.filter(donor__id=OuterRef("pk"), is_published=True, year__isnull=False)
+        return donors.filter(models.Exists(q))
+
+    def with_scanned_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(scanner=OuterRef("id"))
+            .annotate(scanned_count=models.Func(F("id"), function="COUNT"))
+            .values("scanned_count")[:1]
+        )
+        return donors.annotate(scanned_count=Subquery(q))
+
+    def with_donated_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(donor=OuterRef("id"))
+            .annotate(donated_count=models.Func(F("id"), function="COUNT"))
+            .values("donated_count")[:1]
+        )
+        return donors.annotate(donated_count=Subquery(q))
+
+    def with_photographed_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(photographer=OuterRef("id"))
+            .annotate(count=models.Func(F("id"), function="COUNT"))
+            .values("count")[:1]
+        )
+        return donors.annotate(photographed_count=Subquery(q))
+
     def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max("year"), start=Min("year"))
 
