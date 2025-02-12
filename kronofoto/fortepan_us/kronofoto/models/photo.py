@@ -1,6 +1,7 @@
 from __future__ import annotations
 from django.contrib.gis.db import models
 import icontract
+from django_stubs_ext import WithAnnotations
 import base64
 import json
 from django.core.files.storage import default_storage
@@ -38,9 +39,8 @@ import operator
 from bisect import bisect_left
 from functools import reduce
 from fortepan_us.kronofoto.storage import OverwriteStorage
-from .donor import Donor
+from .donor import Donor, DonorQuerySet
 from .tag import Tag, TagQuerySet
-from .term import Term
 from .archive import Archive
 from .category import Category
 from .place import Place
@@ -51,6 +51,7 @@ from typing import (
     Dict,
     Any,
     List,
+    Sequence,
     Optional,
     Set,
     Tuple,
@@ -59,6 +60,7 @@ from typing import (
     Callable,
     Iterable,
     overload,
+    Union,
 )
 from typing_extensions import Self
 from fortepan_us.kronofoto.imageutil import ImageSigner
@@ -81,11 +83,40 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
+
     # @icontract.require(
     def update_or_create_ld_object(
         self, owner: Archive, object: ActivitypubImage
     ) -> tuple["Photo" | None, bool]:
         return (None, False)
+
+    def filter_donated(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = self.filter(donor__id=OuterRef("pk"), is_published=True, year__isnull=False)
+        return donors.filter(models.Exists(q))
+
+    def with_scanned_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(scanner=OuterRef("id"))
+            .annotate(scanned_count=models.Func(F("id"), function="COUNT"))
+            .values("scanned_count")[:1]
+        )
+        return donors.annotate(scanned_count=Subquery(q))
+
+    def with_donated_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(donor=OuterRef("id"))
+            .annotate(donated_count=models.Func(F("id"), function="COUNT"))
+            .values("donated_count")[:1]
+        )
+        return donors.annotate(donated_count=Subquery(q))
+
+    def with_photographed_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+        q = (
+            self.filter(photographer=OuterRef("id"))
+            .annotate(count=models.Func(F("id"), function="COUNT"))
+            .values("count")[:1]
+        )
+        return donors.annotate(photographed_count=Subquery(q))
 
     def year_range(self) -> Dict[str, Any]:
         return self.aggregate(end=Max("year"), start=Min("year"))
@@ -173,7 +204,7 @@ class PhotoBase(models.Model):
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
-    terms = models.ManyToManyField(Term, blank=True)
+    terms = models.ManyToManyField("kronofoto.Term", blank=True)
     photographer = models.ForeignKey(
         Donor,
         models.PROTECT,
@@ -359,6 +390,14 @@ class ImageData:
     width: int
     url: str
     name: str
+
+
+class LabelProtocol(Protocol):
+    def label_lower(self) -> str:
+        pass
+
+    def label(self) -> str:
+        pass
 
 
 class Photo(PhotoBase):
@@ -580,13 +619,13 @@ class Photo(PhotoBase):
     def page_number(self) -> Dict[str, Optional[int]]:
         return {"year:gte": self.year, "id:gt": self.id - 1}
 
-    def get_all_tags(self, user: Optional[User] = None) -> List[str]:
+    def get_all_tags(self, user: Optional[User] = None) -> List[LabelProtocol]:
         "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
         tags = self.get_accepted_tags(user=user).annotate(
             label_lower=Lower("tag"), label=models.F("tag")
         )
         terms = self.terms.annotate(label_lower=Lower("term"), label=models.F("term"))
-        return list(tags) + list(terms)
+        return list(tags) + list(terms)  # type: ignore
 
     def get_accepted_tags(self, user: Optional[User] = None) -> models.QuerySet[Tag]:
         query = Q(phototag__accepted=True)

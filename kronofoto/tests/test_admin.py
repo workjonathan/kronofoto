@@ -47,19 +47,6 @@ def test_permissionmixin_hasadd():
 
 
 
-def test_queryset():
-    model = Mock()
-    qs = Mock(spec=Donor.objects)
-    qs.annotate_scannedcount.return_value = qs
-    qs.annotate_donatedcount.return_value = qs
-    qs.annotate_photographedcount.return_value = qs
-    model._default_manager.get_queryset.return_value = qs
-    admin = DonorAdmin(model=model, admin_site=AdminSite())
-    request = RequestFactory().get('/')
-    request.user = Mock()
-    qs = admin.get_queryset(request)
-    qs.annotate_scannedcount.assert_called_once_with()
-    qs.annotate_donatedcount.assert_called_once_with()
 
 def test_donor_formfield():
     #model = Mock()

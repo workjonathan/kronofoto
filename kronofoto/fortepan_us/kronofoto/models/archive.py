@@ -7,7 +7,6 @@ from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse, resolve
 from django.urls.exceptions import Resolver404
 from django.contrib.auth.models import Permission, Group
-from .category import Category, ValidCategory
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from typing import Tuple, Any, Dict, Optional
@@ -522,7 +521,9 @@ class Archive(models.Model):
         settings.AUTH_USER_MODEL, through="kronofoto.ArchiveUserPermission"
     )
     groups = models.ManyToManyField(Group, through="kronofoto.ArchiveGroupPermission")
-    categories = models.ManyToManyField(Category, through=ValidCategory)
+    categories = models.ManyToManyField(
+        "kronofoto.Category", through="kronofoto.ValidCategory"
+    )
     serialized_public_key = models.BinaryField(null=True, blank=True)
     encrypted_private_key = models.BinaryField(null=True, blank=True)
 

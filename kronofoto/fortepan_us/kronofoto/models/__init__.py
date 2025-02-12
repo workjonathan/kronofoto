@@ -7,7 +7,14 @@ from .term import Term, TermGroup
 from .collection import Collection
 from .collectible import Collectible
 from .csvrecord import CSVRecord, ConnecticutRecord
-from .photo import Photo, get_original_path, format_location, PhotoTag, Submission
+from .photo import (
+    Photo,
+    get_original_path,
+    format_location,
+    PhotoTag,
+    Submission,
+    PhotoQuerySet,
+)
 from .wordcount import WordCount, PlaceWordCount
 from .cutoff import NewCutoff
 from .photosphere import (

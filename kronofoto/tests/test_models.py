@@ -96,7 +96,7 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
     def check_filter_donated(self):
         db_donors = set()
         model_donors = set()
-        for donor in FakeDonor.objects.filter_donated().annotate_donatedcount():
+        for donor in FakePhoto.objects.with_donated_annotation(FakePhoto.objects.filter_donated(FakeDonor.objects.all())):
             db_donors.add(donor.pk)
             assert len(self.donor_model[donor.pk]) == donor.donated_count
         for donor in self.donor_model:
@@ -111,11 +111,11 @@ class DonorMachine(TransactionalRuleBasedStateMachine):
         #qs = FakeDonor.objects.annotate_donatedcount()
         #for donor in qs:
         #    assert donor.donated_count == len(self.donor_model[donor.pk])
-        qs = FakeDonor.objects.annotate_scannedcount()
+        qs = FakePhoto.objects.with_scanned_annotation(FakeDonor.objects.all())
         for donor in qs:
             note(f"{self.scanner_model}")
             assert donor.scanned_count == len(self.scanner_model[donor.pk])
-        qs = FakeDonor.objects.annotate_photographedcount()
+        qs = FakePhoto.objects.with_photographed_annotation(FakeDonor.objects.all())
         for donor in qs:
             note(f"{self.photographer_model}")
             assert donor.photographed_count == len(self.photographer_model[donor.pk])

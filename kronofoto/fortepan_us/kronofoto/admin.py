@@ -318,7 +318,11 @@ class DonorAdmin(FilteringArchivePermissionMixin, admin.ModelAdmin):
 
     def get_queryset(self, request: HttpRequest) -> "QuerySet[WithAnnotations[Donor, WithCounts]]":
         qs = super().get_queryset(request)
-        return qs.annotate_scannedcount().annotate_donatedcount().annotate_photographedcount()
+        return Photo.objects.with_scanned_annotation(
+            Photo.objects.with_donated_annotation(
+                Photo.objects.with_photographed_annotation(qs)
+            )
+        )
 
     def formfield_for_foreignkey(
         self, db_field: ForeignKey, request: HttpRequest, **kwargs: Any
