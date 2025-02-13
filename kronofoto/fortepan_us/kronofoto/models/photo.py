@@ -417,7 +417,7 @@ class Photo(PhotoBase):
         width, height = self.get_image_dimensions()
         return ImageData(
             height=700,
-            width=round(width / height) * 700,
+            width=round(width / height * 700),
             url=signer.url,
             name="h700",
         )
