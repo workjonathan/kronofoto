@@ -705,14 +705,14 @@ class MapPlugin2 {
             icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
             const tileLayer = vectorTileLayer(
                 "/tiles/mainstreets/{z}/{x}/{y}.mvt",
-                {style: { 
+                {style: {
                     // icon,
                     interactive: true
                 }},
             )
             tileLayer.addEventListener("click", evt => {
                 map_elem.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
-                
+
             })
             tileLayer.addTo(map)
             const position = [y, x]
@@ -781,29 +781,6 @@ class PhotoOpacityElement extends HTMLElement {
     connectedCallback() {
         const dom = this //.attachShadow({mode: "open"})
         dom.classList.add("photo-opacity-host")
-        const style = document.createElement('style')
-        style.innerText = `
-fortepan-opacity-input {
-    display: flex;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 0 10px;
-}
-
-.title {
-    font-weight: bold;
-}
-
-input {
-    margin: 0 10px;
-}
-
-.value {
-    font-family: monospace;
-    width: 2em;
-}
-`
-        dom.appendChild(style)
 
         const title = document.createElement('span')
         title.classList.add('title')
@@ -835,7 +812,7 @@ input {
             .addEventListener("node-changed", () => {
                 this.value.innerText = 100
                 this.input.value = 100
-                
+
             })
     }
 }
@@ -863,14 +840,9 @@ class PhotoSpherePlugin {
                 navbar: [
                     "zoom",
                     "move",
-                    "markers",
-                    "markersList",
                     {
                         content: document.createElement("fortepan-opacity-input"),
                     },
-                    "description", 
-                    "caption",
-                    "fullscreen",
                 ],
                 plugins: [
                     [ImagePlanePlugin, {photos: []}],
@@ -901,7 +873,7 @@ class PhotoSpherePlugin {
                         },
                     ],
                     [
-                        PlanPlugin, 
+                        PlanPlugin,
                         {
                             defaultZoom: 19,
                             position: "bottom right",
@@ -919,7 +891,7 @@ class PhotoSpherePlugin {
                                 icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
                                 const tileLayer = vectorTileLayer(
                                     tileset,
-                                    {style: { 
+                                    {style: {
                                         // icon,
                                         interactive: true
                                     }},
@@ -927,10 +899,11 @@ class PhotoSpherePlugin {
                                 tileLayer.addEventListener("click", evt => {
                                     const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
                                     tourPlugin.setCurrentNode(evt.layer.feature.properties.id)
-                                    
+
                                 })
                                 tileLayer.addTo(map)
                             },
+                            buttons: { close: false, reset: false }
                         },
                     ]
                 ],
@@ -982,7 +955,7 @@ class PhotoSpherePlugin {
                             pitch: `${node.data.photos[0].inclination}deg`,
                             speed: "120rpm",
                         })
-                        
+
                     } else {
                         viewer.rotate({
                             yaw: `${90-node.data.photos[0].azimuth}deg`,

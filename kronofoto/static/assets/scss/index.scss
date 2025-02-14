@@ -3,7 +3,9 @@
 @use 'components/gallery' as gallery;
 @use 'components/header' as header;
 @use 'components/header-group' as header-group;
+
 @use 'components/messages' as messages;
+@use 'components/photo-tiles' as photo-tiles;
 @use 'components/reveal' as reveal;
 @use 'components/section' as section;
 @use 'components/social-share-icons' as shareSocialIcons;
@@ -140,3 +142,4 @@ body, #kfroot {
 @import "templates/gallery";
 @import "templates/cms";
 @import "templates/user-page";
+@import "templates/mainstreet";
