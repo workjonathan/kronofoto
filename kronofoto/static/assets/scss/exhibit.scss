@@ -1,5 +1,5 @@
 @use 'typography' as *;
-@use 'scrollbar' as *;
+@use 'components/scrollbar' as *;
 @use 'components/exhibit/buttons' as *;
 @use 'components/exhibit/content-area';
 @use 'components/exhibit/page-editor';
@@ -8,7 +8,7 @@
 @use 'components/exhibit/header';
 @use 'components/exhibit/hero';
 @use 'components/exhibit/image-collection';
-@use 'components/exhibit/photo-tiles';
+@use 'components/photo-tiles';
 @use 'components/exhibit/two-column';
 @use 'components/exhibit/toolbar';
 @use 'components/exhibit/tour';

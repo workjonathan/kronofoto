@@ -1,0 +1,38 @@
+@use 'scrollbar' as *;
+
+.photo-tiles {
+  overflow: auto;
+  @include hover-scrollbar(#999999);
+  &__tiles {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: calc((181px * 5) + (12px * 4));
+    margin: 20px auto;
+    // Default size
+    > * {
+      width: 181px;
+      height: 181px;
+    }
+  }
+  // 4 Columns
+  &--4 {
+    .photo-tiles__tiles {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      > * {
+        //width: 25%;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+        > img {
+          width: 100%;
+          height: auto;
+          aspect-ratio: 1;
+        }
+      }
+    }
+  }
+}

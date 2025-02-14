@@ -1,0 +1,28 @@
+{% load widgets %}
+{% load krono_urls %}
+{% load login %}
+<div id="overlay" class="overlay"></div>
+<header>
+  <nav aria-label="Main navigation">
+    <div class="main-nav main-nav--fotosphere">
+
+        <div class="main-nav__left">
+            <div id="logo" class="logo">
+                <a href="{% url "kronofoto:random-image" %}">
+                <img class="logo-img logo-img--icon" src="{{ theme.logoicon }}" alt="Fortepan Iowa Logo">
+                <span class="logo__text">360 Tour</span>
+                </a>
+            </div>
+        </div> <!-- end nav left -->
+
+        <div class="main-nav__center">
+            <h1 class="main-nav__title main-nav__title--large">The UNI Campanile</h1>
+        </div> <!-- end nav center -->
+
+        <div class="main-nav__right">
+            <h2 class="main-nav__title">University of Northern Iowa, Cedar Falls, IA</h2>
+        </div> <!-- end nav right -->
+
+    </div>
+  </nav>
+</header>
