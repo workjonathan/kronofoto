@@ -962,19 +962,19 @@ class PhotoSpherePlugin {
                         })
                     }
                     const imgplane = viewer.getPlugin(ImagePlanePlugin)
-                    imgplane.addEventListener("image-added", (evt) => {
-                        const corner = evt.detail.getObjectCorner()
-                        console.log(corner)
-                        markersPlugin.addMarker({
-                            id: `photo-timeline-${evt.detail.data.id}`,
-                            data: evt.detail.data,
-                            position: corner,
-                            imageLayer: "http://127.0.0.1:8000/static/kronofoto/images/info-icon.png",
-                            size: {width: 32, height: 32},
-                            content: "content",
-                        })
+                    //imgplane.addEventListener("image-added", (evt) => {
+                    //    const corner = evt.detail.getObjectCorner()
+                    //    console.log(corner)
+                    //    markersPlugin.addMarker({
+                    //        id: `photo-timeline-${evt.detail.data.id}`,
+                    //        data: evt.detail.data,
+                    //        position: corner,
+                    //        imageLayer: "http://127.0.0.1:8000/static/kronofoto/images/info-icon.png",
+                    //        size: {width: 32, height: 32},
+                    //        content: "content",
+                    //    })
 
-                    })
+                    //})
                     imgplane.setPhotos(node.data.photos)
                     /*
                     const animate = Math.random() > 0.5
