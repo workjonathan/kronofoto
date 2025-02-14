@@ -36,7 +36,7 @@ a.button, button.button {
   @include button--round;
   display: inline-block;
   &--secondary {
-    background-color: #747474;
+    background-color: #747474 !important;
   }
 }
 
@@ -251,4 +251,27 @@ button#login-btn:hover {
 
 [data-clipboard-target] {
   margin-left: 10px;
+}
+
+.year-button {
+  display: block;
+  width: 60px;
+  cursor: pointer;
+  font-weight: $font-weight-bold;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 6px;
+  box-sizing: border-box;
+  user-select: none;
+  transition: color 0.3s $ease-out-expo, background-color 0.3s $ease-out-expo;
+
+  color: #333333; // Todo: Add to color palette
+  background: #DEDEDE; // Todo: Add to color palette
+
+  &.active, &:hover {
+    color: $white;
+    background: var(--fp-main-color);
+  }
 }

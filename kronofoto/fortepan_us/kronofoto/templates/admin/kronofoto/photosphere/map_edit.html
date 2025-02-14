@@ -10,7 +10,7 @@
 {% block result_list %}
    {{ map_points|json_script:"photosphere-points" }}
    {{ map_links|json_script:"photosphere-links" }}
-   <div id="map" style="width:100%; height: 80vh; border: 1px solid black"></div>
+   <div id="map" style="width:100%; border: 1px solid black"></div>
    <script>
     const map = L.map('map').setView([43, -92], 8)
     const base = {
@@ -47,7 +47,7 @@
         const matches = []
         for (const l of links.getLayers()) {
             const f = l.feature
-            if (f.properties.from_pk === a && f.properties.to_pk === b || 
+            if (f.properties.from_pk === a && f.properties.to_pk === b ||
                 f.properties.from_pk === b && f.properties.to_pk === a
             ) {
                 matches.push(l)
@@ -92,7 +92,7 @@
                         } else {
                             const params = new URLSearchParams()
                             params.append("pk", layer.feature.properties.pk)
-                            fetch(activePoint.connect + "?" + params.toString()).then(resp => 
+                            fetch(activePoint.connect + "?" + params.toString()).then(resp =>
                                 resp.json()
                             ).then(resp => {
                                 const line = L.polyline(resp.coordinates, {color: "red"})
