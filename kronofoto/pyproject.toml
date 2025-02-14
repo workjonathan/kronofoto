@@ -27,8 +27,8 @@ classifiers = [
 dependencies = [
     "django>=4.2.13,<5.0.0",
     "django-google-tag-manager",
-    "django-stubs",
-    "django-stubs-ext",
+    "django-stubs==5.1.1",
+    "django-stubs-ext==5.1.1",
     "icontract",
     "mapbox-vector-tile",
     "mercantile",

@@ -114,7 +114,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
         return context
 
     def get_queryset(self) -> PhotoQuerySet:
-        qs = super().get_queryset()
+        qs = super().get_queryset().prefetch_related("photosphere_set")
         try:
             raise Redirect("single object found", url=qs.order_by('year', 'id').get().get_absolute_url())
         except (MultipleObjectsReturned, self.model.DoesNotExist):

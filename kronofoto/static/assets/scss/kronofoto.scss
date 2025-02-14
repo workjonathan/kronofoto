@@ -289,15 +289,25 @@ main article.fi-image {
   list-style-type: none;
   margin-top: 1.5rem;
   padding-bottom: 50px;
+  & li {
+    position: relative;
+  }
+  & li a:nth-of-type(1) img {
+    object-fit: cover;
+    max-height: 100%;
+    width: 100%;
+    display: block;
+    height: 45vh;
+  }
+  & li a:nth-of-type(2) {
+    height: 30px;
+    width: 30px;
+    position: absolute;
+    left: 5px;
+    bottom: 5px;
+  }
 }
 
-.photo-grid li a img {
-  object-fit: cover;
-  max-height: 100%;
-  width: 100%;
-  display: block;
-  height: 45vh;
-}
 
 //
 //.user-header {
