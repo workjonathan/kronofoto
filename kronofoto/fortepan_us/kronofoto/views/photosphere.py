@@ -84,6 +84,8 @@ class ImagePlaneDict(TypedDict):
     inclination: float
     distance: float
     id: int
+    name: str
+    href: str
 
 class InfoBoxDict(TypedDict):
     id: int
@@ -133,6 +135,8 @@ def photosphere_data(request: HttpRequest) -> JsonResponse:
                     inclination=position.inclination,
                     distance=position.distance,
                     id=position.photo.id,
+                    name=position.photo.accession_number,
+                    href=position.photo.get_absolute_url(),
                 ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk)],
                 "infoboxes": [{
                     "id": info.id,

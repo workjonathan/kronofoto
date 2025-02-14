@@ -819,6 +819,32 @@ class PhotoOpacityElement extends HTMLElement {
 
 customElements.define('fortepan-opacity-input', PhotoOpacityElement)
 
+class PhotoTimelineElement extends HTMLElement {
+    constructor() {
+        super()
+    }
+    connectedCallback() {
+        const dom = this 
+        dom.classList.add("photo-timeline-host")
+
+        this.link = document.createElement('a')
+        this.link.innerText = 'FI123'
+        this.link.setAttribute("href", "/")
+        dom.appendChild(this.link)
+    }
+    attachViewer(viewer) {
+        this.viewer = viewer
+        viewer
+            .getPlugin(VirtualTourPlugin)
+            .addEventListener("node-changed", ({node}) => {
+                this.link.innerText = node.data.photos[0].name
+                this.link.setAttribute('href', node.data.photos[0].href)
+            })
+    }
+}
+customElements.define('fortepan-timeline-link', PhotoTimelineElement)
+
+
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -840,6 +866,9 @@ class PhotoSpherePlugin {
                 navbar: [
                     "zoom",
                     "move",
+                    {
+                        content: document.createElement("fortepan-timeline-link"),
+                    },
                     {
                         content: document.createElement("fortepan-opacity-input"),
                     },
