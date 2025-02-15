@@ -247,7 +247,8 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
         context['thumbnails_form'] = MainstreetThumbnails(initial={
             "mainstreet": object.mainstreetset.id,
         })
-        assert object.location
+        if not object.location:
+            return HttpResponse("bad configuration: missing location", status=400)
         all_nearby = PhotoSpherePair.objects.filter(
             photosphere__mainstreetset__id=OuterRef("id"),
             photosphere__location__within=object.location.buffer(0.003),

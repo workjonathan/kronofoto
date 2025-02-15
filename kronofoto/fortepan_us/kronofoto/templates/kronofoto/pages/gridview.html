@@ -1,6 +1,7 @@
 {% extends base_template %}
 {% load widgets %}
 {% load krono_urls %}
+{% load static %}
 
 {% block viewbuttons %}
 {% include "kronofoto/components/view-buttons.html" with gridclass="current-view" photo=page_obj.0 %}
@@ -22,7 +23,14 @@
 
 <ul class="photo-grid">
     {% for photo in page_obj %}
-    <li><a href="{% object_url photo url_kwargs get_params %}" hx-target="#app" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a></li>
+    <li>
+        <a href="{% object_url photo url_kwargs get_params %}" hx-target="#app" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a>
+        {% if photo.photosphere_set.all.exists %}
+        <a href="{{ photo.photosphere_set.all.0.get_absolute_url }}" hx-target="#app" hx-get="{{ photo.photosphere_set.all.0.get_absolute_url }}">
+            <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center" style="cursor: pointer">
+        </a>
+        {% endif %}
+    </li>
     {% endfor %}
 </ul>
 
