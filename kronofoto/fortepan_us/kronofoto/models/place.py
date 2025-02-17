@@ -3,11 +3,14 @@ from django.db.models.functions import Concat, Upper
 from mptt.models import MPTTModel, TreeForeignKey  # type: ignore
 from fortepan_us.kronofoto.reverse import reverse
 from django.http import QueryDict
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, TYPE_CHECKING
+from .archive import RemoteActor
 
 
-class PlaceType(models.Model):  # type: ignore
+class PlaceType(models.Model): # type: ignore[django-manager-missing]
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
+    if TYPE_CHECKING:
+        place_set : models.QuerySet["Place"]
 
     def name_places(self) -> None:
         if self.name == "Country":
@@ -46,6 +49,7 @@ class Place(MPTTModel):
     place_type: models.ForeignKey[PlaceType, PlaceType] = models.ForeignKey(
         PlaceType, null=False, on_delete=models.PROTECT
     )
+    owner: models.ForeignKey[RemoteActor, RemoteActor] = models.ForeignKey(RemoteActor, null=True, on_delete=models.CASCADE)
     name: models.CharField = models.CharField(max_length=64, null=False, blank=False)
     geom: models.GeometryField = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey(

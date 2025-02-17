@@ -1,5 +1,6 @@
-from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict
+from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict, Tuple
 from marshmallow import Schema, fields
+from django.contrib.gis.geos import MultiPolygon, Point
 
 
 Url = NewType("Url", str)
@@ -76,7 +77,8 @@ class ActivitypubLocation(ActivitypubObject, total=False):
     name: str
     parent: LdIdUrl
     type: Literal["Location"]
-    geom: List[List[List[List[float]]]]
+    geom: Union[MultiPolygon, Point]
+    place_type: str
 
 
 ActivitypubData = Union[ActivitypubImage, ActivitypubContact]

@@ -4,7 +4,7 @@ from unittest import mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, RequestFactory, override_settings
 from hypothesis import given, strategies as st, note, settings as hsettings
-from hypothesis.extra.django import TestCase
+from hypothesis.extra.django import TestCase, from_model
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.views.activitypub import decode_signature, decode_signature_headers, SignatureHeaders, Contact, Image
@@ -21,7 +21,26 @@ import hashlib
 from .util import photos, donors, archives, archives, small_gif, a_photo, a_category, an_archive, a_donor
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
-from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact
+from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation
+from django.contrib.gis.geos import Polygon, MultiPolygon, Point
+
+st.register_type_strategy(Point, st.builds(Point, st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False))))
+st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3).map(lambda lst: lst + [lst[0]])))
+st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1)))
+
+class TestLdPlace(TestCase):
+    @given(
+        st.from_type(ActivitypubLocation),
+        from_model(models.RemoteActor),
+    )
+    def test_create_place(self, location, actor):
+        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=actor, object=location)
+        assert created
+        assert obj
+        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=actor, object=location)
+        assert not created
+
+
 
 class TestDonorReconcile(TestCase):
     @hsettings(max_examples=10)

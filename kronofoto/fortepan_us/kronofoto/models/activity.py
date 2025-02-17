@@ -3,5 +3,4 @@ from .archive import (
     RemoteActor,
     OutboxActivity,
     ServiceActor,
-    LdId,
 )
