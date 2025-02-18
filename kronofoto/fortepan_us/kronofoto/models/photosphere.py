@@ -37,6 +37,7 @@ class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=512, blank=False)
     description = models.TextField()
+    is_published = models.BooleanField(default=True)
     image = models.ImageField(
         upload_to=get_photosphere_path,
         storage=OverwriteStorage(),

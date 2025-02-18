@@ -167,7 +167,7 @@ def test_photosphere_form():
     ma = PhotoSphereAdmin(model=PhotoSphere, admin_site=AdminSite())
     request = RequestFactory().get('/')
     assert ['title', 'description', 'image'] == list(ma.get_form(request, obj=None).base_fields)
-    assert ['title', 'description', 'image', 'heading', 'location', "mainstreetset", "links"] == list(ma.get_form(request, obj=PhotoSphere()).base_fields)
+    assert ['title', 'description', 'is_published', 'image', 'heading', 'location', "mainstreetset", "links"] == list(ma.get_form(request, obj=PhotoSphere()).base_fields)
 
 class Photo2:
     def __init__(self):

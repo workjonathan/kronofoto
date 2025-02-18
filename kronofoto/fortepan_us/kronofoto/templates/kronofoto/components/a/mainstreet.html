@@ -1,6 +1,6 @@
 {% load static %}
 
-{% if object.photosphere_set.exists %}
+{% if object.photosphere_set.exists and object.photosphere_set.all.0.is_published %}
     <a {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:#fotosphere-button" {% endif %} id="fotosphere-button" class="image-control-button" href="{{ object.photosphere_set.all.0.get_absolute_url }}">
         <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center">
     </a>
