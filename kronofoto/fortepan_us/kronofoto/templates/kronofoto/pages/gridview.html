@@ -26,7 +26,7 @@
     <li>
         <a href="{% object_url photo url_kwargs get_params %}" hx-target="#app" hx-get="{% object_url photo url_kwargs get_params %}"><img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" /></a>
         {% if photo.photosphere_set.all.exists %}
-        <a href="{{ photo.photosphere_set.all.0.get_absolute_url }}" hx-target="#app" hx-get="{{ photo.photosphere_set.all.0.get_absolute_url }}">
+        <a href="{{ photo.photosphere_set.all.0.get_absolute_url }}">
             <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center" style="cursor: pointer">
         </a>
         {% endif %}
