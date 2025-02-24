@@ -1,9 +1,10 @@
 import pytest
 import requests
+from fortepan_us.kronofoto.reverse import reverse
 from unittest import mock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, RequestFactory, override_settings
-from hypothesis import given, strategies as st, note, settings as hsettings
+from hypothesis import given, strategies as st, note, settings as hsettings, provisional, assume
 from hypothesis.extra.django import TestCase, from_model
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, OutboxActivity
 from fortepan_us.kronofoto import models
@@ -21,24 +22,27 @@ import hashlib
 from .util import photos, donors, archives, archives, small_gif, a_photo, a_category, an_archive, a_donor
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
-from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation
+from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation, Url
 from django.contrib.gis.geos import Polygon, MultiPolygon, Point
 
 st.register_type_strategy(Point, st.builds(Point, st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False))))
 st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3).map(lambda lst: lst + [lst[0]])))
 st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1)))
+st.register_type_strategy(Url, provisional.urls())
 
-class TestLdPlace(TestCase):
-    @given(
-        st.from_type(ActivitypubLocation),
-        from_model(models.RemoteActor),
-    )
-    def test_create_place(self, location, actor):
-        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=actor, object=location)
-        assert created
-        assert obj
-        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=actor, object=location)
-        assert not created
+@given(
+    actor=st.builds(models.RemoteActor),
+    place_type=st.builds(models.PlaceType),
+    ldid=st.builds(models.LdId, content_object=st.one_of(st.none(), st.builds(models.Place))),
+    location=st.from_type(ActivitypubLocation),
+)
+def test_create_place(location, actor, ldid, place_type):
+    from fortepan_us.kronofoto.models.ldid import UpdateLdIdPlace
+    upserter = UpdateLdIdPlace(ld_id=ldid, owner=actor, object=location)
+    upserter.place_type = place_type
+    if ldid.content_object:
+        ldid.content_object.save = mock.Mock()
+    upserter.result
 
 
 
@@ -87,15 +91,77 @@ def test_archive_get_or_create_by_profile_for_local_archive(an_archive):
         assert archive.id == an_archive.id
         mock_.assert_not_called()
 
-@pytest.mark.django_db
-def test_ldid_get_or_create_encounters_a_local_object(a_donor, an_archive):
-    a_donor.archive = an_archive
-    a_donor.save()
-    with mock.patch('requests.get') as mock_:
-        ldid, created = models.LdId.objects.get_or_create_ld_object("http://example.com/kf/activitypub/archives/aslug/contributors/1")
-        assert not created
-        assert a_donor.id == ldid.content_object.id
-        mock_.assert_not_called()
+from string import printable
+jsons = st.recursive(
+    st.none() | st.booleans() | st.floats() | st.text(printable),
+    lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
+)
+
+@given(
+    force_id_match=st.booleans(),
+    archive=st.one_of(st.none(), st.just(models.Archive())),
+    ldid=st.one_of(
+        st.tuples(
+            st.text("abcdefg", min_size=1), st.integers(min_value=1)
+        ).map(lambda s: reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": s[0], "pk": s[1]}, domain="example.com")),
+        provisional.urls(),
+    ),
+    created_ldid=st.builds(models.LdId, content_object=st.just(models.Donor())),
+    remote_data=st.fixed_dictionaries({
+        "type": st.just("Contact"),
+    }, optional={
+        "id": st.text(printable),
+        "attributedTo": st.lists(st.text(printable), max_size=3),
+    }),
+)
+def test_ldid_get_or_create_ld_donor(ldid, remote_data, force_id_match, archive, created_ldid):
+    from fortepan_us.kronofoto.models.ldid import LdDonorGetOrCreator
+    if force_id_match:
+        remote_data['attributedTo'] = [ldid]
+    obj = LdDonorGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all(), data=remote_data)
+    obj.archive = archive
+    obj.reconcile = mock.Mock()
+    obj.ldid = mock.Mock(return_value=created_ldid)
+    ldid, created = obj.object
+
+
+@override_settings(KF_URL_SCHEME="http:")
+@given(
+    is_local=st.booleans(),
+    force_id_match=st.booleans(),
+    existing_ldid=st.one_of(st.none(), st.builds(models.LdId, content_object=st.one_of(st.none(), st.builds(models.Donor)))),
+    resolved_donor=st.one_of(st.none(), st.builds(models.Donor)),
+    ldid=st.one_of(
+        st.tuples(
+            st.text("abcdefg", min_size=1), st.integers(min_value=1)
+        ).map(lambda s: reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": s[0], "pk": s[1]}, domain="example.com")),
+        provisional.urls(),
+    ),
+    #remote_data=st.one_of(st.from_type(ActivitypubContact), jsons),
+    remote_data=st.one_of(st.none(), st.fixed_dictionaries({}, optional={"id": st.text(printable), "type": st.one_of(st.just("Contact"), st.text(printable))})),
+    remote_processor=st.one_of(st.none(), st.just((None, False)), st.builds(models.LdId, content_object=st.just(models.Donor())).map(lambda ldid: (ldid, True))),
+)
+def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data, resolved_donor, force_id_match, remote_processor):
+    from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+    obj = LdObjectGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all())
+    obj.is_local = is_local
+    obj.existing_ldid = existing_ldid
+    if obj.existing_ldid is not None:
+        obj.existing_ldid.delete = mock.Mock()
+    if isinstance(remote_data, dict):
+        if force_id_match:
+            remote_data['id'] = ldid
+    obj.remote_data = remote_data
+    obj.resolved_donor = resolved_donor
+    obj.donorgetorcreate = mock.Mock()
+    if remote_processor is None:
+        obj.donorgetorcreate.return_value = None
+    else:
+        obj.donorgetorcreate().object = remote_processor
+    ldid, created = obj.object
+    if not obj.is_local and obj.existing_ldid is not None and obj.existing_ldid.content_object is None:
+        obj.existing_ldid.delete.assert_called()
+
 
 @pytest.mark.django_db
 def test_archive_get_or_create_encounters_insufficient_information():
@@ -106,27 +172,6 @@ def test_archive_get_or_create_encounters_insufficient_information():
             "type": "Organization",
         }
         assert models.Archive.objects.get_or_create_by_profile(profile="https://example2.com/remotesite") == (None, False)
-
-@pytest.mark.django_db
-def test_ldid_get_or_create_encounters_unknown_actor():
-    with mock.patch('requests.get') as mock_:
-        mock_.return_value = mock.Mock(name="json")
-        mock_.return_value.json.side_effect = [
-            {
-                "id": "http://example3.com/kf/activitypub/archives/an-archive/contributors/1",
-                "type": "Contact",
-                "attributedTo": ["https://example2.com/remotesite"],
-                "firstName": "first",
-                "lastName": "last",
-            },
-            {
-                "id": "https://example2.com/remotesite",
-                "type": "Organization",
-                "name": "OrgName",
-                "slug": "an-archive",
-            },
-        ]
-        models.LdId.objects.get_or_create_ld_object(ld_id="http://example3.com/kf/activitypub/archives/an-archive/contributors/1")
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

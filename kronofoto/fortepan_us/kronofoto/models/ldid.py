@@ -1,6 +1,7 @@
 from __future__ import annotations
 import icontract
-from typing import cast
+from functools import cached_property
+from typing import cast, Any
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from urllib.parse import urlparse
@@ -10,6 +11,7 @@ from . import activity_dicts, activity_schema
 from .archive import RemoteActor
 import requests
 from marshmallow.exceptions import ValidationError
+from django.urls.exceptions import Resolver404
 from .place import Place, PlaceType
 from .donor import Donor
 from .photo import Photo, PhotoTag
@@ -17,71 +19,220 @@ from .archive import Archive
 from .tag import Tag
 from .term import Term
 
-from fortepan_us.kronofoto.reverse import reverse, resolve
+from fortepan_us.kronofoto.reverse import reverse, resolve, ResolveResults
+from dataclasses import dataclass
+
+@dataclass
+class LdDonorGetOrCreator:
+    queryset: "LdIdQuerySet"
+    ld_id: activity_dicts.LdIdUrl
+    data: activity_dicts.ActivitypubContact
+
+    @cached_property
+    def archive(self) -> Archive | None:
+        if len(self.data.get("attributedTo", [])) > 0:
+            return Archive.objects.get_or_create_by_profile(
+                profile=self.data["attributedTo"][0]
+            )[0]
+        else:
+            return None
+
+    def reconcile(self, db_obj: Donor) -> None:
+        db_obj.reconcile(self.data)
+
+    def ldid(self, db_obj: Donor) -> "LdId":
+        ct = ContentType.objects.get_for_model(Donor)
+        ldid, _ = self.queryset.get_or_create(
+            ld_id=self.data["id"],
+            defaults={"content_type": ct, "object_id": db_obj.id},
+        )
+        return ldid
+
+    @property
+    @icontract.ensure(lambda self, result: result[1] == (result[0] is not None))
+    @icontract.ensure(lambda self, result: result[0] is None or result[0].content_object is not None)
+    def object(self) -> tuple["LdId" | None, bool]:
+        if (
+            len(self.data.get("attributedTo", [])) == 0 or
+            urlparse(self.data["attributedTo"][0]).netloc
+            != urlparse(self.ld_id).netloc
+        ):
+            return None, False
+        archive = self.archive
+        if not archive:
+            return None, False
+        db_obj = Donor()
+        db_obj.archive = archive
+        self.reconcile(db_obj)
+
+        return self.ldid(db_obj), True
+
+@dataclass
+class LdObjectGetOrCreator:
+    queryset: "LdIdQuerySet"
+    ld_id: activity_dicts.LdIdUrl
+
+    @cached_property
+    def is_local(self) -> bool:
+        server_domain = urlparse(self.ld_id).netloc
+        return Site.objects.filter(domain=server_domain).exists()
+
+    @property
+    def resolved(self) -> ResolveResults | None:
+        try:
+            return resolve(self.ld_id)
+        except Resolver404:
+            return None
+
+    @cached_property
+    def resolved_donor(self) -> Donor:
+        assert self.resolved
+        return Donor.objects.get(
+            archive__slug=self.resolved.match.kwargs["short_name"]
+        )
+
+    @cached_property
+    def existing_ldid(self) -> "LdId" | None:
+        try:
+            return self.queryset.get(ld_id=self.ld_id)
+        except self.queryset.model.DoesNotExist:
+            return None
+
+    @cached_property
+    def remote_data(self) -> dict[str, Any]:
+        return requests.get(
+            self.ld_id,
+            headers={
+                "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+        ).json()
+
+    @property
+    @icontract.ensure(lambda self, result: (not result[1] or result[0] is not None) and (result[0] is None or result[0].content_object is not None))
+    def object(self) -> tuple["LdId" | None, bool]:
+        if self.is_local:
+            if (
+                self.resolved and
+                self.resolved.match.namespaces
+                == ["kronofoto", "activitypub_data", "archives", "contributors"]
+                and self.resolved.match.url_name == "detail"
+            ):
+                donor = self.resolved_donor
+                if donor is not None:
+                    return (
+                        LdId(
+                            content_object=self.resolved_donor,
+                        ),
+                        False,
+                    )
+            return None, False
+
+        local = self.existing_ldid
+        if local is not None:
+            if local.content_object is not None:
+                return (local, False)
+            else:
+                local.delete()
+
+        object = self.remote_data
+        if object is None or not isinstance(object, dict) or object.get("id") != self.ld_id:
+            return (None, False)
+
+        if object.get("type") == "Contact":
+            getter = self.donorgetorcreate(object)
+            if getter:
+                return getter.object
+            else:
+                return None, False
+        else:
+            return None, False
+
+    def donorgetorcreate(self, object: dict[str, Any]) -> LdDonorGetOrCreator | None:
+        try:
+            data: activity_dicts.ActivitypubContact = (
+                activity_schema.Contact().load(object)
+            )
+            return LdDonorGetOrCreator(ld_id=self.ld_id, data=data, queryset=self.queryset)
+        except ValidationError as e:
+            print(e, object)
+            return None
+
+@dataclass
+class NewLdIdPlace:
+    queryset: "LdIdQuerySet"
+    owner: RemoteActor
+    object: activity_dicts.ActivitypubLocation
+
+    @property
+    def result(self) -> tuple["LdId" | None, bool]:
+        ct = ContentType.objects.get_for_model(Place)
+        place = Place.objects.create(
+            place_type=PlaceType.objects.get_or_create(name=self.object['place_type'])[0],
+            name=self.object['name'],
+            geom=self.object['geom'],
+            owner=self.owner,
+        )
+        result = self.queryset.update_or_create(
+            ld_id=self.object['id'],
+            defaults={"content_type": ct, "content_object": place},
+        )
+        return result[0], True
+
+@dataclass
+class UpdateLdIdPlace:
+    ld_id: "LdId"
+    owner: RemoteActor
+    object: activity_dicts.ActivitypubLocation
+
+    @cached_property
+    def place_type(self) -> PlaceType:
+        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+
+    @property
+    def result(self) -> tuple["LdId" | None, bool]:
+        place = self.ld_id.content_object
+        if not isinstance(place, Place) or place.owner.id != self.owner.id:
+            return None, False
+        place.geom = self.object['geom']
+        place.place_type = self.place_type
+        place.name = self.object['name']
+        place.save()
+        return self.ld_id, False
+
+@dataclass
+class PlaceUpserter:
+    queryset: "LdIdQuerySet"
+    owner: RemoteActor
+    object: activity_dicts.ActivitypubLocation
+
+    @cached_property
+    def upserter(self) -> UpdateLdIdPlace | NewLdIdPlace:
+        try:
+            placeid = self.object['id']
+            return UpdateLdIdPlace(
+                ld_id=self.queryset.get(ld_id=placeid),
+                owner=self.owner,
+                object=self.object,
+            )
+        except self.queryset.model.DoesNotExist:
+            return NewLdIdPlace(
+                owner=self.owner,
+                queryset=self.queryset,
+                object=self.object,
+            )
+
+
+
+    @property
+    def result(self) -> tuple["LdId" | None, bool]:
+        return self.upserter.result
 
 class LdIdQuerySet(models.QuerySet["LdId"]):
     def get_or_create_ld_object(
         self, ld_id: activity_dicts.LdIdUrl
     ) -> tuple["LdId" | None, bool]:
-        server_domain = urlparse(ld_id).netloc
-        if Site.objects.filter(domain=server_domain).exists():
-            resolved = resolve(ld_id)
-            if (
-                resolved.match.namespaces
-                == ["kronofoto", "activitypub_data", "archives", "contributors"]
-                and resolved.match.url_name == "detail"
-            ):
-                return (
-                    LdId(
-                        content_object=Donor.objects.get(
-                            archive__slug=resolved.match.kwargs["short_name"]
-                        ),
-                        id=resolved.match.kwargs["pk"],
-                    ),
-                    False,
-                )
-            return None, False
-        try:
-            return (self.get(ld_id=ld_id), False)
-        except self.model.DoesNotExist:
-            object = requests.get(
-                ld_id,
-                headers={
-                    "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                },
-            ).json()
-            assert object["id"] == ld_id
-            if object["type"] == "Contact":
-                try:
-                    data: activity_dicts.ActivitypubContact = (
-                        activity_schema.Contact().load(object)
-                    )
-                    if (
-                        urlparse(data["attributedTo"][0]).netloc
-                        != urlparse(ld_id).netloc
-                    ):
-                        return None, False
-                    archive, _ = Archive.objects.get_or_create_by_profile(
-                        profile=data["attributedTo"][0]
-                    )
-                    if not archive:
-                        return None, False
-                    db_obj = Donor()
-                    db_obj.archive = archive
-                    db_obj.reconcile(data)
-                    ct = ContentType.objects.get_for_model(Donor)
-                    ldid, _ = self.get_or_create(
-                        ld_id=object["id"],
-                        defaults={"content_type": ct, "object_id": db_obj.id},
-                    )
-                    return ldid, True
-                except ValidationError as e:
-                    print(e, object)
-                    return None, False
-            else:
-                raise NotImplementedError
+        return LdObjectGetOrCreator(queryset=self, ld_id=ld_id).object
 
-    @icontract.require(lambda self, owner, object: not owner.archive_set.exists())
     @icontract.ensure(
         lambda self, owner, object, result: result[0] is None
         or (isinstance(result[0].content_object, Place) and result[0].content_object.owner.id == owner.id)
@@ -89,30 +240,7 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
     def update_or_create_ld_service_object(
         self, owner: RemoteActor, object: activity_dicts.ActivitypubLocation
     ) -> tuple["LdId" | None, bool]:
-        placeid = object['id']
-        try:
-            ld_id = LdId.objects.get(ld_id=placeid)
-            place = ld_id.content_object
-            if not isinstance(place, Place) or place.owner.id != owner.id:
-                return None, False
-            place.geom = object['geom']
-            place.place_type = PlaceType.objects.get_or_create(name=object['place_type'])[0]
-            place.name = object['name']
-            place.save()
-            return ld_id, False
-        except LdId.DoesNotExist:
-            ct = ContentType.objects.get_for_model(Place)
-            place = Place.objects.create(
-                place_type=PlaceType.objects.get_or_create(name=object['place_type'])[0],
-                name=object['name'],
-                geom=object['geom'],
-                owner=owner,
-            )
-            result = LdId.objects.update_or_create(
-                ld_id=object['id'],
-                defaults={"content_type": ct, "content_object": place},
-            )
-            return result[0], True
+        return PlaceUpserter(queryset=self, owner=owner, object=object).result
 
     @icontract.require(
         lambda self, owner, object: owner.type == Archive.ArchiveType.REMOTE
