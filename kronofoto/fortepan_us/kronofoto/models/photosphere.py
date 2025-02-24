@@ -21,16 +21,23 @@ class IncompleteGPSInfo(Exception):
 def get_photosphere_path(instance: "PhotoSphere", filename: str) -> str:
     return path.join("photosphere", "{}.jpg".format(instance.uuid))
 
-
-class MainStreetSet(models.Model):
-    name = models.CharField(max_length=256)
+class PhotoSphereSetData(models.Model):
+    name = models.CharField(max_length=256, unique=True)
     description = models.TextField(blank=True)
 
-    def get_absolute_url(self) -> str:
-        return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
+    class Meta:
+        abstract = True
 
     def __str__(self) -> str:
         return self.name
+
+class PhotoSphereTour(PhotoSphereSetData, models.Model):
+    pass
+
+
+class MainStreetSet(PhotoSphereSetData, models.Model):
+    def get_absolute_url(self) -> str:
+        return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
 
 
 class PhotoSphere(models.Model):
@@ -53,6 +60,9 @@ class PhotoSphere(models.Model):
     )
     photos = models.ManyToManyField(Photo, through="kronofoto.PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
+    tour = models.ForeignKey(
+        PhotoSphereTour, default=None, null=True, on_delete=models.SET_NULL
+    )
     mainstreetset = models.ForeignKey(
         MainStreetSet, default=None, null=True, on_delete=models.SET_NULL
     )
