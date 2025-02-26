@@ -1,5 +1,7 @@
+from __future__ import annotations
 from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.template.response import TemplateResponse
+from functools import cached_property
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import get_resolver, reverse as django_reverse
 from django.template.loader import get_template
@@ -10,12 +12,13 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData, CarouselList
-from typing import Any, Dict, Optional, Union, List, TypedDict, Tuple
+from typing import Any, Dict, Optional, Union, List, TypedDict, Tuple, Iterable
 from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 from django.db.models import OuterRef, Exists, Q, QuerySet, Subquery
+from django_stubs_ext import WithAnnotations
 from django.contrib.gis.db.models.functions import Distance
 from django.conf import settings
 from django import forms
@@ -23,6 +26,7 @@ from .base import ArchiveRequest
 from dataclasses import dataclass
 from django.utils.html import format_html, format_html_join, html_safe
 from django.templatetags.static import static
+import icontract
 import json
 
 class DataParams(forms.Form):
@@ -221,58 +225,93 @@ class PhotoPairForwardList(CarouselList):
     def wrapped_queryset(self) -> QuerySet:
         return self.queryset.order_by('photo__year', 'photo__id')
 
-def photosphere_view(request: HttpRequest) -> HttpResponse:
-    query = DataParams(request.GET)
-    if query.is_valid():
-        object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'])
+class DistanceAnnotation(TypedDict):
+    distance_: Any
+
+class ClosestAnnotation(TypedDict):
+    closest: Any
+
+@dataclass
+class ValidPhotoSphereView:
+    pk: int
+    request: HttpRequest
+
+    @cached_property
+    def object(self) -> PhotoSphere:
+        return get_object_or_404(PhotoSphere.objects.all(), pk=self.pk)
+
+    @cached_property
+    def domain(self) -> str:
+        return get_current_site(self.request).domain
+
+    @cached_property
+    def all_nearby(self) -> "QuerySet[WithAnnotations[PhotoSpherePair, DistanceAnnotation]]":
+        assert self.object.location is not None
+        return PhotoSpherePair.objects.filter(
+            photosphere__mainstreetset__id=OuterRef("id"),
+            photosphere__location__within=self.object.location.buffer(0.003),
+            photo__year__isnull=False,
+            photo__is_published=True,
+        ).annotate(distance_=Distance("photosphere__location", self.object.location)).order_by("distance_")
+
+    @cached_property
+    def nearby_mainstreets(self) -> Iterable["WithAnnotations[MainStreetSet, ClosestAnnotation]"]:
+        return MainStreetSet.objects.filter(Exists(self.all_nearby)).annotate(closest=Subquery(self.all_nearby.values("id")[:1])).order_by("name")
+
+    @cached_property
+    def nearby(self) -> QuerySet[PhotoSpherePair]:
+        assert self.object.mainstreetset is not None
+        assert self.object.location is not None
+        return PhotoSpherePair.objects.filter(
+            photosphere__mainstreetset__id=self.object.mainstreetset.id,
+            photosphere__location__within=self.object.location.buffer(0.003),
+            photo__year__isnull=False,
+            photo__is_published=True,
+        ).select_related("photo", "photosphere")
+
+    @cached_property
+    def photo(self) -> Photo | None:
+        if self.object.photos.exists():
+            photo = self.object.photos.all()[0]
+        elif self.nearby.exists():
+            photo = self.nearby[0].photo
+        else:
+            photo = None
+        return photo
+
+    @property
+    #@icontract.ensure(lambda self, result: getattr(result, "context_data", None) is None)
+    def response(self) -> HttpResponse:
+        object = self.object
         resolver = get_resolver()
         u = django_reverse("kronofoto:vector-tiles:photosphere", kwargs=dict(zoom=1, mainstreet=1, x=1, y=1))
         info = resolver.resolve(u)
-        assert object.mainstreetset
+        if object.mainstreetset is None:
+            return HttpResponse("bad configuration: missing mainstreet set", status=400)
         pattern = "/" + info.route.replace("<int:zoom>", "{z}").replace(
             "<int:x>", "{x}"
         ).replace("<int:y>", "{y}").replace("<int:mainstreet>", str(object.mainstreetset.id))
-        tile_set = "{}//{}{}".format(settings.KF_URL_SCHEME, get_current_site(request).domain, pattern)
-        archiverequest = PhotoSphereRequest(request)
+        tile_set = "{}//{}{}".format(settings.KF_URL_SCHEME, self.domain, pattern)
+        archiverequest = PhotoSphereRequest(self.request)
         context = archiverequest.common_context
         context['object'] = object
         context['hx_request'] = archiverequest.is_hx_request
         context['mainstreet_tiles'] = tile_set
 
-        Photo = object._meta.get_field("photos").related_model
-        assert not isinstance(Photo, str) and hasattr(Photo, "objects")
-        if not object.mainstreetset:
-            return HttpResponse("bad configuration: missing mainstreet set", status=400)
         context['thumbnails_form'] = MainstreetThumbnails(initial={
             "mainstreet": object.mainstreetset.id,
         })
         if not object.location:
             return HttpResponse("bad configuration: missing location", status=400)
-        all_nearby = PhotoSpherePair.objects.filter(
-            photosphere__mainstreetset__id=OuterRef("id"),
-            photosphere__location__within=object.location.buffer(0.003),
-            photo__year__isnull=False,
-            photo__is_published=True,
-        ).annotate(distance_=Distance("photosphere__location", object.location)).order_by("distance_")
         context['mainstreet_links'] = [
             {
                 "set": set,
                 "photosphere_href": PhotoSpherePair.objects.get(id=set.closest).photosphere.get_absolute_url(),
             }
-            for set in MainStreetSet.objects.filter(Exists(all_nearby)).annotate(closest=Subquery(all_nearby.values("id")[:1])).order_by("name")
+            for set in self.nearby_mainstreets
         ]
-        nearby = PhotoSpherePair.objects.filter(
-            photosphere__mainstreetset__id=object.mainstreetset.id,
-            photosphere__location__within=object.location.buffer(0.003),
-            photo__year__isnull=False,
-            photo__is_published=True,
-        ).select_related("photo", "photosphere")
-        if object.photos.exists():
-            photo = object.photos.all()[0]
-        elif nearby.exists():
-            photo = nearby[0].photo
-        else:
-            photo = None
+        photo = self.photo
+        nearby = self.nearby
         if photo:
             setattr(photo, "active", True)
             if photo.year is not None:
@@ -285,7 +324,7 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
                 context['photos'].append(PhotoWrapper(photo=photo, photosphere=object))
                 context['photos'] += forwardlist
 
-        response = TemplateResponse(request, "kronofoto/pages/mainstreetview.html", context=context)
+        response = TemplateResponse(self.request, "kronofoto/pages/mainstreetview.html", context=context)
         assert object.location
         if archiverequest.is_hx_request:
             response['HX-Trigger'] = json.dumps({
@@ -295,6 +334,16 @@ def photosphere_view(request: HttpRequest) -> HttpResponse:
                 }
             })
         return response
+
+
+
+def photosphere_view(request: HttpRequest) -> HttpResponse:
+    query = DataParams(request.GET)
+    if query.is_valid():
+        return ValidPhotoSphereView(
+            pk=query.cleaned_data['id'],
+            request=request,
+        ).response
     else:
         return HttpResponse("Invalid query", status=400)
 
