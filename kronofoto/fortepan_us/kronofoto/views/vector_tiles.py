@@ -107,6 +107,7 @@ from django.urls import path, include, register_converter, URLPattern, URLResolv
 app_name = "vector-tiles"
 urlpatterns : List[Union[URLPattern, URLResolver]] = [
     path("tiles/", include([
+        path("mainstreets/<int:tour>/<int:mainstreet>/<int:zoom>/<int:x>/<int:y>.mvt", photosphere_vector_tile, name="photosphere"),
         path("mainstreets/<int:mainstreet>/<int:zoom>/<int:x>/<int:y>.mvt", photosphere_vector_tile, name="photosphere"),
     ])),
 ]
