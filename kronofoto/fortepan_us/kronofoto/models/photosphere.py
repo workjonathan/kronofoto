@@ -61,7 +61,7 @@ class PhotoSphere(models.Model):
     photos = models.ManyToManyField(Photo, through="kronofoto.PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
     tour = models.ForeignKey(
-        PhotoSphereTour, default=None, null=True, on_delete=models.SET_NULL
+        PhotoSphereTour, default=None, null=True, blank=True, on_delete=models.SET_NULL
     )
     mainstreetset = models.ForeignKey(
         MainStreetSet, default=None, null=True, on_delete=models.SET_NULL

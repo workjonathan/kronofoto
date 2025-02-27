@@ -1,9 +1,79 @@
 from fortepan_us.kronofoto.views.photosphere import ValidPhotoSphereView
-from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour, Photo
+from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour, Photo, Archive, Category, PhotoSpherePair, Donor
 from hypothesis import given, strategies as st
 from django.test import RequestFactory
 from string import printable
 from django.contrib.gis.geos import Point
+from django.test import TestCase
+
+
+class TestPhotoSphereMainStreetFiltering(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.sets = [
+            MainStreetSet.objects.create(name="set one"),
+            MainStreetSet.objects.create(name="set two"),
+        ]
+        cls.tours = [
+            None,
+            PhotoSphereTour.objects.create(name="tour two"),
+        ]
+        archive = Archive.objects.create()
+        category = Category.objects.create()
+        donor = Donor.objects.create(archive=archive)
+        cls.photospheres = []
+        for tour, mainstreet in zip(cls.tours, cls.sets):
+            photosphere = PhotoSphere.objects.create(
+                mainstreetset=mainstreet,
+                tour=tour,
+                location=Point(1, 1),
+                is_published=True
+            )
+            photo = Photo.objects.create(
+                archive=archive,
+                category=category,
+                year=1950,
+                is_published=True,
+                donor=donor,
+            )
+            PhotoSpherePair.objects.create(photosphere=photosphere, photo=photo)
+            cls.photospheres.append(photosphere)
+
+
+
+    def test_photosphere_object(self):
+        viewer = ValidPhotoSphereView(
+            pk=self.photospheres[0].id,
+            request=None,
+        )
+        assert viewer.object == self.photospheres[0]
+
+    def test_mainstreet_publishedfiltering(self):
+        self.photospheres[1].is_published = False
+        self.photospheres[1].save()
+        viewer = ValidPhotoSphereView(
+            pk=self.photospheres[0].id,
+            request=None,
+        )
+        assert viewer.nearby_mainstreets.count() == 1
+        assert viewer.nearby.count() == 1
+
+    def test_mainstreet_filtering(self):
+        viewer = ValidPhotoSphereView(
+            pk=self.photospheres[0].id,
+            request=None,
+        )
+        assert viewer.nearby_mainstreets.count() == 2
+        assert viewer.nearby.count() == 1
+
+    def test_mainstreet_tour_filtering(self):
+        viewer = ValidPhotoSphereView(
+            pk=self.photospheres[-1].id,
+            request=None,
+        )
+        assert viewer.nearby_mainstreets.count() == 1
+        assert viewer.nearby.count() == 1
+
 
 
 @given(
@@ -15,6 +85,7 @@ from django.contrib.gis.geos import Point
     object=st.builds(
         PhotoSphere,
         mainstreetset=st.one_of(st.none(), st.builds(MainStreetSet, id=st.integers(min_value=1), name=st.text(printable))),
+        tour=st.one_of(st.none(), st.builds(PhotoSphereTour, id=st.integers(min_value=1), name=st.text(printable))),
         location=st.one_of(st.none(), st.builds(Point, st.integers(), st.integers())),
     ),
     photo=st.one_of(st.none(), st.builds(Photo)),
