@@ -163,11 +163,15 @@ class NewLdIdPlace:
     owner: RemoteActor
     object: activity_dicts.ActivitypubLocation
 
+    @cached_property
+    def place_type(self) -> PlaceType:
+        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+
     @property
     def result(self) -> tuple["LdId" | None, bool]:
         ct = ContentType.objects.get_for_model(Place)
         place = Place.objects.create(
-            place_type=PlaceType.objects.get_or_create(name=self.object['place_type'])[0],
+            place_type=self.place_type,
             name=self.object['name'],
             geom=self.object['geom'],
             owner=self.owner,
@@ -189,13 +193,19 @@ class UpdateLdIdPlace:
         return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
 
     @property
+    @icontract.ensure(lambda self, result: not result[1])
+    @icontract.ensure(lambda self, result: (
+        ldid := result[0],
+        ldid is None or (isinstance(ldid.content_object, Place) and self.owner.id == ldid.content_object.owner.id)
+        )[-1]
+    )
     def result(self) -> tuple["LdId" | None, bool]:
         place = self.ld_id.content_object
-        if not isinstance(place, Place) or place.owner.id != self.owner.id:
+        if not isinstance(place, Place) or place.owner is None or place.owner.id != self.owner.id:
             return None, False
-        place.geom = self.object['geom']
+        place.geom = self.object.get('geom')
         place.place_type = self.place_type
-        place.name = self.object['name']
+        place.name = self.object.get('name')
         place.save()
         return self.ld_id, False
 

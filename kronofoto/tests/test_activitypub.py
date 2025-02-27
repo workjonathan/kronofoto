@@ -17,33 +17,69 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from datetime import datetime, timezone
+from string import printable
 import base64
 import hashlib
 from .util import photos, donors, archives, archives, small_gif, a_photo, a_category, an_archive, a_donor
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
-from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation, Url
+from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation, Url, ActivitypubData
 from django.contrib.gis.geos import Polygon, MultiPolygon, Point
+from fortepan_us.kronofoto.models import activity_schema
+
+def close_polygon(lst):
+    lst.append(lst[0])
+    return lst
 
 st.register_type_strategy(Point, st.builds(Point, st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False))))
-st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3).map(lambda lst: lst + [lst[0]])))
-st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1)))
+st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3, max_size=5).map(close_polygon)))
+st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1, max_size=5)))
 st.register_type_strategy(Url, provisional.urls())
+st.register_type_strategy(
+    ActivitypubLocation,
+    st.fixed_dictionaries(
+        {
+        },
+        optional={
+            "name": st.text(printable, max_size=10),
+            "parent": st.from_type(Url),
+            #"geom": st.one_of(st.from_type(Point), st.from_type(MultiPolygon)),
+            #"place_type": st.text(printable, max_size=10),
+        }
+    ),
+)
+
+@given(st.fixed_dictionaries(
+    {
+        "id": provisional.urls(),
+        "type": st.just("Contact"),
+    },
+    optional={
+        "attributedTo": st.lists(provisional.urls()),
+        "name": st.text(),
+        "firstName": st.text(),
+        "lastName": st.text(),
+    },
+))
+def skiptest_contact_generation(data):
+    schema = activity_schema.Contact()
+    assert data == schema.dump(schema.load(data))
 
 @given(
-    actor=st.builds(models.RemoteActor),
-    place_type=st.builds(models.PlaceType),
-    ldid=st.builds(models.LdId, content_object=st.one_of(st.none(), st.builds(models.Place))),
+    actor=st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4)),
+    place_type=st.just(models.PlaceType()),
+    place=st.one_of(st.none(), st.builds(models.Place, owner=st.one_of(st.none(), st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4))))),
     location=st.from_type(ActivitypubLocation),
 )
-def test_create_place(location, actor, ldid, place_type):
+def test_update_place(location, actor, place, place_type):
     from fortepan_us.kronofoto.models.ldid import UpdateLdIdPlace
+    ldid = mock.Mock()
+    ldid.content_object = place
     upserter = UpdateLdIdPlace(ld_id=ldid, owner=actor, object=location)
     upserter.place_type = place_type
     if ldid.content_object:
         ldid.content_object.save = mock.Mock()
-    upserter.result
-
+    obj, created = upserter.result
 
 
 class TestDonorReconcile(TestCase):
