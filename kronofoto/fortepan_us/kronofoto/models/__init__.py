@@ -22,6 +22,7 @@ from .photosphere import (
     PhotoSpherePair,
     get_photosphere_path,
     MainStreetSet,
+    PhotoSphereTour,
     PhotoSphereInfo,
 )
 from .archive import Archive, ArchiveAgreement, InvalidArchive, FollowArchiveRequest, RemoteActor, OutboxActivity, ServiceActor

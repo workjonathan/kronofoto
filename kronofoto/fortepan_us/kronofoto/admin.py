@@ -12,7 +12,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo, PhotoSphereTour
 from fortepan_us.kronofoto.models import donor
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
@@ -508,6 +508,9 @@ unpublish_photos.short_description = 'Unpublish photos' # type: ignore
 @admin.register(TermGroup)
 class TermGroupAdmin(base_admin.ModelAdmin):
     pass
+@admin.register(PhotoSphereTour)
+class PhotoSphereTourAdmin(base_admin.ModelAdmin):
+    pass
 @admin.register(MainStreetSet)
 class MainStreetSetAdmin(base_admin.ModelAdmin):
     pass
@@ -524,6 +527,17 @@ class PhotoInline(admin.StackedInline):
     fields = ['photo', 'position']
     raw_id_fields = ['photo']
     form = PhotoSpherePairInlineForm
+
+class PhotoSphereTourIsSetFilter(StandardSimpleListFilter):
+    # should be deleted when db constraint is enabled
+    title = "belongs to tour"
+    parameter_name = "in_tour"
+    field = 'tour__isnull'
+
+    filters = (
+        ("Yes", False),
+        ("No", True),
+    )
 
 class MainstreetSetIsSetFilter(StandardSimpleListFilter):
     # should be deleted when db constraint is enabled
@@ -580,7 +594,7 @@ from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 class PhotoSphereAdmin(admin.GISModelAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
-    list_filter = (MainstreetSetIsSetFilter, 'mainstreetset') # should be deleted when db constraint is enabled
+    list_filter = (MainstreetSetIsSetFilter, 'mainstreetset', PhotoSphereTourIsSetFilter, "tour") # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline, PhotoInfoInline)
@@ -821,7 +835,7 @@ class PhotoSphereAdmin(admin.GISModelAdmin):
         if obj is None:
             fieldsets: "_FieldsetSpec" = (
                 (None, {
-                    'fields': ('title', 'description', 'image'),
+                    'fields': ('title', 'description', 'image', "is_published", "tour", "mainstreetset"),
                     'description': "First fill out these options. After clicking Save and continue editing, you'll be able to edit more options.",
                 }),
             )
