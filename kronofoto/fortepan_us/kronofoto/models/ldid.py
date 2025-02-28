@@ -162,19 +162,17 @@ class NewLdIdPlace:
     queryset: "LdIdQuerySet"
     owner: RemoteActor
     object: activity_dicts.ActivitypubLocation
-
-    @cached_property
-    def place_type(self) -> PlaceType:
-        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+    place_upserter: "PlaceUpserter"
 
     @property
     def result(self) -> tuple["LdId" | None, bool]:
         ct = ContentType.objects.get_for_model(Place)
         place = Place.objects.create(
-            place_type=self.place_type,
+            place_type=self.place_upserter.place_type,
             name=self.object['name'],
             geom=self.object['geom'],
             owner=self.owner,
+            parent=self.place_upserter.parent,
         )
         result = self.queryset.update_or_create(
             ld_id=self.object['id'],
@@ -187,10 +185,7 @@ class UpdateLdIdPlace:
     ld_id: "LdId"
     owner: RemoteActor
     object: activity_dicts.ActivitypubLocation
-
-    @cached_property
-    def place_type(self) -> PlaceType:
-        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+    place_upserter: "PlaceUpserter"
 
     @property
     @icontract.ensure(lambda self, result: not result[1])
@@ -204,8 +199,9 @@ class UpdateLdIdPlace:
         if not isinstance(place, Place) or place.owner is None or place.owner.id != self.owner.id:
             return None, False
         place.geom = self.object.get('geom')
-        place.place_type = self.place_type
+        place.place_type = self.place_upserter.place_type
         place.name = self.object.get('name')
+        place.parent = self.place_upserter.parent
         place.save()
         return self.ld_id, False
 
@@ -216,6 +212,19 @@ class PlaceUpserter:
     object: activity_dicts.ActivitypubLocation
 
     @cached_property
+    def place_type(self) -> PlaceType:
+        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+
+    @cached_property
+    def parent(self) -> Place | None:
+        parent = self.object.get("parent")
+        if parent:
+            ldid, created = self.queryset.get_or_create_ld_object(parent)
+            if ldid is not None and isinstance(ldid.content_object, Place):
+                return ldid.content_object
+        return None
+
+    @cached_property
     def upserter(self) -> UpdateLdIdPlace | NewLdIdPlace:
         try:
             placeid = self.object['id']
@@ -223,12 +232,14 @@ class PlaceUpserter:
                 ld_id=self.queryset.get(ld_id=placeid),
                 owner=self.owner,
                 object=self.object,
+                place_upserter=self,
             )
         except self.queryset.model.DoesNotExist:
             return NewLdIdPlace(
                 owner=self.owner,
                 queryset=self.queryset,
                 object=self.object,
+                place_upserter=self,
             )
 
 

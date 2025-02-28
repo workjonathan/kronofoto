@@ -70,13 +70,22 @@ def skiptest_contact_generation(data):
     place_type=st.just(models.PlaceType()),
     place=st.one_of(st.none(), st.builds(models.Place, owner=st.one_of(st.none(), st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4))))),
     location=st.from_type(ActivitypubLocation),
+    parent=st.one_of(st.none(), st.builds(models.Place, owner=st.one_of(st.none(), st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4))))),
 )
-def test_update_place(location, actor, place, place_type):
-    from fortepan_us.kronofoto.models.ldid import UpdateLdIdPlace
+def test_update_place(location, actor, place, place_type, parent):
+    from fortepan_us.kronofoto.models.ldid import UpdateLdIdPlace, PlaceUpserter
     ldid = mock.Mock()
     ldid.content_object = place
-    upserter = UpdateLdIdPlace(ld_id=ldid, owner=actor, object=location)
-    upserter.place_type = place_type
+    upserter = UpdateLdIdPlace(
+        ld_id=ldid,
+        owner=actor,
+        object=location,
+        place_upserter=PlaceUpserter(
+            queryset=models.LdId.objects.all(), owner=actor, object=location
+        ),
+    )
+    upserter.place_upserter.place_type = place_type
+    upserter.place_upserter.parent = parent
     if ldid.content_object:
         ldid.content_object.save = mock.Mock()
     obj, created = upserter.result
