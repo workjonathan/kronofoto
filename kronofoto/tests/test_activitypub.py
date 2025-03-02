@@ -91,6 +91,7 @@ def test_update_place(location, actor, place, place_type, parent):
     obj, created = upserter.result
 
 
+
 class TestDonorReconcile(TestCase):
     @hsettings(max_examples=10)
     @given(st.from_type(ActivitypubContact), archives())
@@ -169,6 +170,32 @@ def test_ldid_get_or_create_ld_donor(ldid, remote_data, force_id_match, archive,
     obj.ldid = mock.Mock(return_value=created_ldid)
     ldid, created = obj.object
 
+class TestGetOrCreateObject(TestCase):
+    def test_resolved_donor_can_be_none(self):
+        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        archive = models.Archive.objects.create(slug="asdf")
+        donor = models.Donor.objects.create(archive=archive)
+        url = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": "asdf", "pk": donor.id + 1}, domain="example.com")
+        assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_donor is None
+
+    def test_resolved_donor_can_be_something(self):
+        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        archive = models.Archive.objects.create(slug="asdf")
+        donor = models.Donor.objects.create(archive=archive)
+        url = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": "asdf", "pk": donor.id}, domain="example.com")
+        assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_donor is not None
+
+    def test_resolved_place_can_be_none(self):
+        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        place = models.Place.objects.create(place_type=models.PlaceType.objects.create())
+        url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id+1}, domain="example.com")
+        assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is None
+
+    def test_resolved_place_can_be_something(self):
+        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        place = models.Place.objects.create(place_type=models.PlaceType.objects.create())
+        url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id}, domain="example.com")
+        assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is not None
 
 @override_settings(KF_URL_SCHEME="http:")
 @given(
@@ -176,17 +203,21 @@ def test_ldid_get_or_create_ld_donor(ldid, remote_data, force_id_match, archive,
     force_id_match=st.booleans(),
     existing_ldid=st.one_of(st.none(), st.builds(models.LdId, content_object=st.one_of(st.none(), st.builds(models.Donor)))),
     resolved_donor=st.one_of(st.none(), st.builds(models.Donor)),
+    resolved_place=st.one_of(st.none(), st.builds(models.Place)),
     ldid=st.one_of(
         st.tuples(
             st.text("abcdefg", min_size=1), st.integers(min_value=1)
         ).map(lambda s: reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": s[0], "pk": s[1]}, domain="example.com")),
+        st.integers(min_value=1).map(lambda i: reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": i}, domain="example.com")),
+
         provisional.urls(),
     ),
     #remote_data=st.one_of(st.from_type(ActivitypubContact), jsons),
-    remote_data=st.one_of(st.none(), st.fixed_dictionaries({}, optional={"id": st.text(printable), "type": st.one_of(st.just("Contact"), st.text(printable))})),
+    remote_data=st.one_of(st.none(), st.fixed_dictionaries({}, optional={"id": st.text(printable), "type": st.one_of(st.just("Contact"), st.just("Location"), st.text(printable))})),
     remote_processor=st.one_of(st.none(), st.just((None, False)), st.builds(models.LdId, content_object=st.just(models.Donor())).map(lambda ldid: (ldid, True))),
+    remote_place_processor=st.one_of(st.none(), st.just((None, False)), st.just((models.Place(), True))),
 )
-def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data, resolved_donor, force_id_match, remote_processor):
+def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data, resolved_donor, force_id_match, remote_processor, resolved_place, remote_place_processor):
     from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
     obj = LdObjectGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all())
     obj.is_local = is_local
@@ -198,12 +229,23 @@ def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data
             remote_data['id'] = ldid
     obj.remote_data = remote_data
     obj.resolved_donor = resolved_donor
+    obj.resolved_place = resolved_place
     obj.donorgetorcreate = mock.Mock()
     if remote_processor is None:
         obj.donorgetorcreate.return_value = None
     else:
         obj.donorgetorcreate().object = remote_processor
-    ldid, created = obj.object
+    obj.placegetorcreate = mock.Mock()
+    if remote_place_processor is None:
+        obj.placegetorcreate.return_value = None
+    else:
+        if remote_place_processor[0] is not None:
+            temp = mock.Mock()
+            temp.content_object = remote_place_processor[0]
+            remote_place_processor = (temp, True)
+        obj.placegetorcreate().object = remote_place_processor
+    with mock.patch("fortepan_us.kronofoto.models.ldid.LdId") as m:
+        ldid, created = obj.object
     if not obj.is_local and obj.existing_ldid is not None and obj.existing_ldid.content_object is None:
         obj.existing_ldid.delete.assert_called()
 

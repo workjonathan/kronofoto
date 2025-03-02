@@ -85,17 +85,35 @@ class LdObjectGetOrCreator:
             return None
 
     @cached_property
-    def resolved_donor(self) -> Donor:
+    @icontract.ensure(lambda self, result: not result or result.archive.type == Archive.ArchiveType.LOCAL)
+    def resolved_donor(self) -> Donor | None:
         assert self.resolved
-        return Donor.objects.get(
-            archive__slug=self.resolved.match.kwargs["short_name"]
-        )
+        try:
+            return Donor.objects.get(
+                archive__slug=self.resolved.match.kwargs["short_name"],
+                archive__type=Archive.ArchiveType.LOCAL,
+                pk=self.resolved.match.kwargs['pk'],
+            )
+        except Donor.DoesNotExist:
+            return None
 
     @cached_property
     def existing_ldid(self) -> "LdId" | None:
         try:
             return self.queryset.get(ld_id=self.ld_id)
         except self.queryset.model.DoesNotExist:
+            return None
+
+    @cached_property
+    @icontract.ensure(lambda self, result: not result or result.owner == None)
+    def resolved_place(self) -> Place | None:
+        assert self.resolved
+        try:
+            return Place.objects.get(
+                pk=self.resolved.match.kwargs['pk'],
+                owner__isnull=True,
+            )
+        except Place.DoesNotExist:
             return None
 
     @cached_property
@@ -125,6 +143,20 @@ class LdObjectGetOrCreator:
                         ),
                         False,
                     )
+            elif (
+                self.resolved and
+                self.resolved.match.namespaces
+                == ["kronofoto"]
+                and self.resolved.match.url_name == "activitypub-main-service-places"
+            ):
+                content_object = self.resolved_place
+                if content_object is not None:
+                    return (
+                        LdId(
+                            content_object=content_object,
+                        ),
+                        False,
+                    )
             return None, False
 
         local = self.existing_ldid
@@ -144,8 +176,17 @@ class LdObjectGetOrCreator:
                 return getter.object
             else:
                 return None, False
+        if object.get("type") == "Location":
+            getter = self.placegetorcreate(object)
+            if getter:
+                return getter.object
+            else:
+                return None, False
         else:
             return None, False
+
+    def placegetorcreate(self, object: dict[str, Any]) -> Any | None:
+        return None
 
     def donorgetorcreate(self, object: dict[str, Any]) -> LdDonorGetOrCreator | None:
         try:
