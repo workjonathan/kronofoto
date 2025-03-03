@@ -64,7 +64,7 @@ class TestTile(PhotoSphereTile):
         TestTile,
         x=st.integers(min_value=-10, max_value=10),
         y=st.integers(min_value=-10, max_value=10),
-        zoom=st.integers(min_value=1, max_value=34),
+        zoom=st.integers(min_value=0, max_value=34),
         mainstreet=st.integers(),
         tour=st.one_of(st.none(), st.integers()),
         _photospheres = st.lists(
