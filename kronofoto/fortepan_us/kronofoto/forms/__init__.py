@@ -310,7 +310,7 @@ class AddToListForm(forms.Form):
 class PhotoSphereAddForm(forms.ModelForm):
     class Meta:
         model = PhotoSphere
-        fields = ('title', 'image')
+        fields = ('title', 'image', "is_published", "tour", "mainstreetset")
 
 
     def save(self, commit: bool=False) -> PhotoSphere:

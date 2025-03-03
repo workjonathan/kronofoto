@@ -102,6 +102,25 @@ $headerHeight: 80px;
       padding: 0px;
       transform: translateX(-50%);
       transition: top ease-in-out 350ms, bottom ease-in-out 350ms;
+      > a {
+        background: none;
+        border: none;
+        padding: 0px;
+        cursor: pointer;
+        align-self: center;
+        img {
+          width: 55px;
+          transition: all ease-in-out 100ms;
+          padding: 5px 15px;
+          margin: 0px;
+          cursor: pointer !important;
+        }
+        &:hover {
+          img {
+            transform: translateY(-5px);
+          }
+        }
+      }
       > button {
         background: none;
         border: none;

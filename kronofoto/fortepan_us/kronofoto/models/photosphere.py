@@ -21,22 +21,30 @@ class IncompleteGPSInfo(Exception):
 def get_photosphere_path(instance: "PhotoSphere", filename: str) -> str:
     return path.join("photosphere", "{}.jpg".format(instance.uuid))
 
-
-class MainStreetSet(models.Model):
-    name = models.CharField(max_length=256)
+class PhotoSphereSetData(models.Model):
+    name = models.CharField(max_length=256, unique=True)
     description = models.TextField(blank=True)
 
-    def get_absolute_url(self) -> str:
-        return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
+    class Meta:
+        abstract = True
 
     def __str__(self) -> str:
         return self.name
+
+class PhotoSphereTour(PhotoSphereSetData, models.Model):
+    pass
+
+
+class MainStreetSet(PhotoSphereSetData, models.Model):
+    def get_absolute_url(self) -> str:
+        return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
 
 
 class PhotoSphere(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=512, blank=False)
     description = models.TextField()
+    is_published = models.BooleanField(default=True)
     image = models.ImageField(
         upload_to=get_photosphere_path,
         storage=OverwriteStorage(),
@@ -52,6 +60,9 @@ class PhotoSphere(models.Model):
     )
     photos = models.ManyToManyField(Photo, through="kronofoto.PhotoSpherePair")
     location = models.PointField(null=True, srid=4326, blank=True)
+    tour = models.ForeignKey(
+        PhotoSphereTour, default=None, null=True, blank=True, on_delete=models.SET_NULL
+    )
     mainstreetset = models.ForeignKey(
         MainStreetSet, default=None, null=True, on_delete=models.SET_NULL
     )
