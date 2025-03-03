@@ -16,11 +16,11 @@
         </div> <!-- end nav left -->
 
         <div class="main-nav__center">
-            <h1 class="main-nav__title main-nav__title--large">The UNI Campanile</h1>
+            <h1 class="main-nav__title main-nav__title--large">{{ object.tour.name | default:"FotoSphere" }}</h1>
         </div> <!-- end nav center -->
 
         <div class="main-nav__right">
-            <h2 class="main-nav__title">University of Northern Iowa, Cedar Falls, IA</h2>
+            <h2 class="main-nav__title">{{ object.tour.description | default:"A 360 experience" }}</h2>
         </div> <!-- end nav right -->
 
     </div>
