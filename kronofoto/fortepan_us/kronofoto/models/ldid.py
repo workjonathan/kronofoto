@@ -68,6 +68,12 @@ class LdDonorGetOrCreator:
         return self.ldid(db_obj), True
 
 @dataclass
+class LdPlaceGetOrCreator:
+    queryset: "LdIdQuerySet"
+    ld_id: activity_dicts.LdIdUrl
+    data: activity_dicts.ActivitypubLocation
+
+@dataclass
 class LdObjectGetOrCreator:
     queryset: "LdIdQuerySet"
     ld_id: activity_dicts.LdIdUrl
@@ -186,7 +192,14 @@ class LdObjectGetOrCreator:
             return None, False
 
     def placegetorcreate(self, object: dict[str, Any]) -> Any | None:
-        return None
+        try:
+            data: activity_dicts.ActivitypubLocation = (
+                activity_schema.PlaceSchema().load(object)
+            )
+            return LdPlaceGetOrCreator(ld_id=self.ld_id, data=data, queryset=self.queryset)
+        except ValidationError as e:
+            print(e, object)
+            return None
 
     def donorgetorcreate(self, object: dict[str, Any]) -> LdDonorGetOrCreator | None:
         try:

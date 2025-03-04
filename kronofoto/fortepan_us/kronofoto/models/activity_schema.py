@@ -1,15 +1,25 @@
-from marshmallow import Schema, fields, pre_dump, post_load, pre_load
-from typing import Any, Dict, Union
+from marshmallow import Schema, fields, pre_dump, post_load, pre_load, EXCLUDE
+from marshmallow import validate
+from typing import Any, Dict, Union, TypeVar, List
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.reverse import reverse
+from django.contrib.gis.geos import MultiPolygon, Point, Polygon
 from django.db.models import QuerySet
 from . import activity_dicts
 import json
+import icontract
 
+T = TypeVar("T")
+
+class RingIsClosed(validate.Validator):
+    def __call__(self, value: List[T]) -> List[T]:
+        if len(value) > 0 and value[0] != value[-1]:
+            raise validate.ValidationError("This shape must be closed (the first value and last value should be equal).")
+        return value
 
 class ObjectSchema(Schema):
     _context = fields.Raw(data_key="@context")
-    id = fields.Url(required=False)
+    id = fields.Url(required=True)
     # type = fields.Str()
     attributedTo = fields.List(fields.Url())
     url = fields.Url(relative=True, required=False)
@@ -27,18 +37,68 @@ class GeomField(fields.Field):
             "MultiPolygon",
         ]:
             return MultiPolygonSchema().load(value)
+        elif value['type'] in ['Point']:
+            return PointSchema().load(value)
         raise ValueError(value["type"])
 
+class PointSchema(Schema):
+    type = fields.Constant("Point", required=True)
+    coordinates = fields.Tuple((fields.Float(), fields.Float()), required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> Point:
+        return Point(*data['coordinates'])
 
 class MultiPolygonSchema(Schema):
-    type = fields.Constant("MultiPolygon")
-    coordinates = fields.List(fields.List(fields.List(fields.List(fields.Float()))))
+    type = fields.Constant("MultiPolygon", required=True)
+    coordinates = fields.List(
+        fields.List(
+            fields.List(
+                fields.Tuple((
+                    fields.Float(),
+                    fields.Float(),
+                )),
+                validate=[validate.Length(min=4), RingIsClosed()],
+            ),
+            validate=validate.Length(min=1)
+        ),
+        validate=validate.Length(min=1),
+        required=True,
+    )
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> MultiPolygon:
+        return MultiPolygon([Polygon(*poly) for poly in data['coordinates']])
 
 
 class PlaceSchema(ObjectSchema):
-    name = fields.Str()
+    name = fields.Str(required=True)
+    attributedTo = fields.List(fields.Url(), required=True)
     parent = fields.Url(relative=True)
     geom = GeomField()
+    placeType = fields.Str(required=True)
+    fullName = fields.Str(required=True)
+    type = fields.Constant("Location", required=True)
+
+    class Meta:
+        unknown = EXCLUDE
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.PlaceValue:
+        return activity_dicts.PlaceValue(
+            name=data['name'],
+            fullName=data['fullName'],
+            parent=data.get('parent'),
+            attributedTo=data['attributedTo'],
+            placeType=data['placeType'],
+            geom=data.get('geom'),
+        )
 
     @pre_dump
     def extract_fields_from_object(

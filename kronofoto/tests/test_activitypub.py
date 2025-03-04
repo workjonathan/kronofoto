@@ -31,6 +31,14 @@ def close_polygon(lst):
     lst.append(lst[0])
     return lst
 
+points = st.tuples(
+    st.floats(allow_infinity=False, allow_nan=False),
+    st.floats(allow_infinity=False, allow_nan=False),
+)
+rings = st.lists(points, min_size=3, max_size=6).map(close_polygon)
+polygons = st.lists(rings, min_size=1, max_size=3)
+multipolygons = st.lists(polygons, min_size=1, max_size=3)
+
 st.register_type_strategy(Point, st.builds(Point, st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False))))
 st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3, max_size=5).map(close_polygon)))
 st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1, max_size=5)))
@@ -142,6 +150,36 @@ jsons = st.recursive(
     st.none() | st.booleans() | st.floats() | st.text(printable),
     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
 )
+
+@given(
+    obj=st.fixed_dictionaries(
+        {
+            "type": st.just("Location"),
+            "id": provisional.urls(),
+            "name": st.text(printable, max_size=10),
+            "fullName": st.text(printable, max_size=10),
+            "placeType": st.text(printable, max_size=10),
+            "attributedTo": st.lists(provisional.urls(), min_size=1, max_size=2),
+        },
+        optional={
+            "parent": provisional.urls(),
+            "geom": st.one_of(
+                st.fixed_dictionaries({
+                    "type": st.just("Point"),
+                    "coordinates": points,
+                }),
+                st.fixed_dictionaries({
+                    "type": st.just("MultiPolygon"),
+                    "coordinates": multipolygons,
+                }),
+
+            ),
+        }
+    ),
+)
+def test_get_or_create_parse_place(obj):
+    from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+    assert LdObjectGetOrCreator(None, None).placegetorcreate(obj) is not None
 
 @given(
     force_id_match=st.booleans(),
