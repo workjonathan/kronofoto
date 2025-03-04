@@ -291,6 +291,9 @@ class ValidPhotoSphereView:
             photo = None
         return photo
 
+    def photosphere_pair(self, id: int) -> PhotoSpherePair:
+        return PhotoSpherePair.objects.get(id=id)
+
     @property
     @icontract.ensure(lambda self, result: getattr(result, "context_data", None) is None or result.context_data['object'].tour is None or str(result.context_data['object'].tour.id) in result.context_data['mainstreet_tiles'])
     def response(self) -> HttpResponse:
@@ -323,7 +326,7 @@ class ValidPhotoSphereView:
         context['mainstreet_links'] = [
             {
                 "set": set,
-                "photosphere_href": PhotoSpherePair.objects.get(id=set.closest).photosphere.get_absolute_url(),
+                "photosphere_href": self.photosphere_pair(id=set.closest).photosphere.get_absolute_url(),
             }
             for set in self.nearby_mainstreets
         ]

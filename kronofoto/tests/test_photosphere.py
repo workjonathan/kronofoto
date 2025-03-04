@@ -5,6 +5,7 @@ from django.test import RequestFactory
 from string import printable
 from django.contrib.gis.geos import Point
 from django.test import TestCase
+from unittest.mock import Mock
 
 
 class TestPhotoSphereMainStreetFiltering(TestCase):
@@ -90,10 +91,12 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
     ),
     photo=st.one_of(st.none(), st.builds(Photo)),
     domain=st.text(printable, min_size=1).map(lambda s: s + ".com"),
+    nearby_mainstreets=st.lists(st.builds(Mock, closest=st.integers(min_value=1))),
 )
-def test_photosphere_response(view, object, domain, photo):
+def test_photosphere_response(view, object, domain, photo, nearby_mainstreets):
     view.object = object
     view.domain = domain
-    view.nearby_mainstreets = []
+    view.nearby_mainstreets = nearby_mainstreets
     view.photo = photo
+    view.photosphere_pair = lambda id: Mock(**{"photosphere.get_absolute_url()": "https://www.example.com"})
     view.response
