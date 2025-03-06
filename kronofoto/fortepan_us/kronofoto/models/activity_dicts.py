@@ -74,6 +74,7 @@ class ActivitypubImage(ActivitypubObject, total=False):
     place: LdIdUrl
 
 class PlaceValue(NamedTuple):
+    id: str
     name: str
     attributedTo: List[str]
     parent: Optional[LdIdUrl]

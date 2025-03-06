@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import cached_property
 from django.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.utils.text import slugify
@@ -37,6 +38,15 @@ import icontract
 class InvalidArchive(Exception):
     pass
 
+class ActorSchema(activity_schema.ObjectSchema):
+    type = fields.Constant("Organization")
+    id = fields.Url(relative=True, required=True)
+    name = fields.Str(required=True)
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+
+    inbox = fields.Url(relative=True)
+    outbox = fields.Url(relative=True)
+    places = fields.Url(relative=True)
 
 class ArchiveSchema(activity_schema.ObjectSchema):
     type = fields.Constant("Organization")
@@ -174,6 +184,30 @@ class ServiceActor(models.Model):
         self.generate_new_keys()
         return self.public_key
 
+class RemoteActorQuerySet(models.QuerySet["RemoteActor"]):
+    def get_or_create_by_profile(self, profile: str) -> Tuple[RemoteActor | None, bool]:
+        try:
+            return (self.get(profile=profile), False)
+        except RemoteActor.DoesNotExist:
+            resp = requests.get(
+                profile,
+                headers={
+                    "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                try:
+                    parsed = ActorSchema().load(data)
+                    if parsed['id'] == profile:
+                        return RemoteActor.objects.create(profile=profile), True
+                    else:
+                        return None, False
+                except ValidationError as e:
+                    print(e, data)
+                    return None, False
+            else:
+                return None, False
 
 # Django-stubs cannot make sense of reverse relationships to MPTTModels. That is the reason for django-manager-missing.
 class RemoteActor(models.Model): # type: ignore[django-manager-missing]
@@ -190,6 +224,8 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
         related_name="%(app_label)s_%(class)s_request_follows",
     )
 
+    objects = RemoteActorQuerySet.as_manager()
+
     def public_key(self) -> bytes | None:
         def _() -> str | None:
             resp = requests.get(
@@ -201,7 +237,6 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
             key = None
             if resp.status_code == 200:
                 data = resp.json()
-                print(data)
                 key = data.get("publicKey", {}).get("publicKeyPem", None)
             return key.encode("utf-8") if key else None
 

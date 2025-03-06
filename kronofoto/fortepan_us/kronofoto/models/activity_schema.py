@@ -92,6 +92,7 @@ class PlaceSchema(ObjectSchema):
         self, data: Dict[str, Any], **kwargs: Any
     ) -> activity_dicts.PlaceValue:
         return activity_dicts.PlaceValue(
+            id=data['id'],
             name=data['name'],
             fullName=data['fullName'],
             parent=data.get('parent'),

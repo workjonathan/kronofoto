@@ -9,8 +9,6 @@ from .archive import RemoteActor
 
 class PlaceType(models.Model): # type: ignore[django-manager-missing]
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
-    if TYPE_CHECKING:
-        place_set : models.QuerySet["Place"]
 
     def name_places(self) -> None:
         if self.name == "Country":

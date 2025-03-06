@@ -71,7 +71,34 @@ class LdDonorGetOrCreator:
 class LdPlaceGetOrCreator:
     queryset: "LdIdQuerySet"
     ld_id: activity_dicts.LdIdUrl
-    data: activity_dicts.ActivitypubLocation
+    data: activity_dicts.PlaceValue
+
+    @cached_property
+    def actor(self) -> RemoteActor | None:
+        return RemoteActor.objects.get_or_create_by_profile(
+            profile=self.data.attributedTo[0]
+        )[0]
+
+    def ldid(self, db_obj: Place) -> "LdId":
+        return LdId.objects.create(ld_id=self.data.id, content_object=db_obj)
+
+    def object(self) -> tuple["LdId" | None, bool]:
+        if urlparse(self.data.attributedTo[0]).netloc != urlparse(self.ld_id).netloc:
+            return None, False
+        actor = self.actor
+        if not actor:
+            return None, False
+        db_obj = Place()
+        db_obj.owner = actor
+        if self.data.parent is not None:
+            parent, created = self.queryset.get_or_create_ld_object(ld_id=self.data.parent)
+            db_obj.parent = parent
+        db_obj.place_type = PlaceType.objects.get_or_create(name=self.data.placeType)[0]
+        db_obj.geom = self.data.geom
+        db_obj.fullname = self.data.fullName
+        db_obj.save()
+
+        return self.ldid(db_obj), True
 
 @dataclass
 class LdObjectGetOrCreator:
@@ -193,7 +220,7 @@ class LdObjectGetOrCreator:
 
     def placegetorcreate(self, object: dict[str, Any]) -> Any | None:
         try:
-            data: activity_dicts.ActivitypubLocation = (
+            data: activity_dicts.PlaceValue = (
                 activity_schema.PlaceSchema().load(object)
             )
             return LdPlaceGetOrCreator(ld_id=self.ld_id, data=data, queryset=self.queryset)
