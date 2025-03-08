@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass
 from functools import cached_property
 from django.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
@@ -184,30 +185,67 @@ class ServiceActor(models.Model):
         self.generate_new_keys()
         return self.public_key
 
-class RemoteActorQuerySet(models.QuerySet["RemoteActor"]):
-    def get_or_create_by_profile(self, profile: str) -> Tuple[RemoteActor | None, bool]:
+@dataclass
+class RemoteActorGetOrCreate:
+    queryset: models.QuerySet["RemoteActor"]
+    profile: str
+
+    @cached_property
+    def is_local(self) -> bool:
+        server_domain = urlparse(self.profile).netloc
+        return Site.objects.filter(domain=server_domain).exists()
+
+    @cached_property
+    def local_actor(self) -> RemoteActor | None:
         try:
-            return (self.get(profile=profile), False)
+            return self.queryset.get(profile=self.profile)
         except RemoteActor.DoesNotExist:
-            resp = requests.get(
-                profile,
-                headers={
-                    "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                },
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                try:
-                    parsed = ActorSchema().load(data)
-                    if parsed['id'] == profile:
-                        return RemoteActor.objects.create(profile=profile), True
-                    else:
-                        return None, False
-                except ValidationError as e:
-                    print(e, data)
-                    return None, False
+            return None
+
+    def do_request(self) -> requests.Response:
+        return requests.get(
+            self.profile,
+            headers={
+                "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+        )
+
+    def parse_json(self, data: Dict[str, Any]) -> Dict[str, Any] | None:
+        try:
+            return ActorSchema().load(data)
+        except ValidationError as e:
+            print(e, data)
+            return None
+
+
+    def create_remoteactor(self) -> RemoteActor:
+        return RemoteActor.objects.create(profile=self.profile)
+
+    @property
+    def actor(self) -> Tuple[RemoteActor | None, bool]:
+        if self.is_local: # I don't think this should happen. At least, not in the course of processing a valid object.
+            return None, False
+
+        local_actor = self.local_actor
+        if local_actor:
+            return (local_actor, False)
+
+        resp = self.do_request()
+        if resp.status_code == 200:
+            data = resp.json()
+            parsed = self.parse_json(data)
+            if parsed and parsed['id'] == self.profile:
+                return self.create_remoteactor(), True
             else:
                 return None, False
+        else:
+            return None, False
+
+
+
+class RemoteActorQuerySet(models.QuerySet["RemoteActor"]):
+    def get_or_create_by_profile(self, profile: str) -> Tuple[RemoteActor | None, bool]:
+        return RemoteActorGetOrCreate(queryset=self, profile=profile).actor
 
 # Django-stubs cannot make sense of reverse relationships to MPTTModels. That is the reason for django-manager-missing.
 class RemoteActor(models.Model): # type: ignore[django-manager-missing]

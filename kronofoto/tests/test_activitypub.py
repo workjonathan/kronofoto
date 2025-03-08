@@ -135,6 +135,31 @@ def test_service_actor_key_is_idempotent():
     assert actor.guaranteed_public_key() == actor.guaranteed_public_key()
 
 
+@given(
+    is_local=st.booleans(),
+    force_id_match=st.booleans(),
+    profile=provisional.urls(),
+    local_actor=st.one_of(st.none(), st.just(models.RemoteActor())),
+    parsed=st.one_of(st.none(), st.fixed_dictionaries({"id": provisional.urls()})),
+    status_code=st.one_of(st.just(200), st.integers(min_value=1)),
+    json_response=st.fixed_dictionaries({}, optional={}),
+)
+def test_remote_actor_get_or_create_by_profile(profile, is_local, status_code, json_response, local_actor, parsed, force_id_match):
+    from fortepan_us.kronofoto.models.archive import RemoteActorGetOrCreate
+    thing = RemoteActorGetOrCreate(queryset=models.RemoteActor.objects.all(), profile=profile)
+    thing.is_local = is_local
+    thing.local_actor = local_actor
+    thing.parse_json = mock.Mock()
+    if force_id_match:
+        thing.parse_json.return_value = {"id": profile}
+    else:
+        thing.parse_json.return_value = parsed
+    thing.do_request = mock.Mock()
+    thing.do_request().status_code = 200
+    thing.do_request().json.return_value = json_response
+    thing.create_remoteactor = mock.Mock()
+    thing.actor
+
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
 def test_archive_get_or_create_by_profile_for_local_archive(an_archive):
