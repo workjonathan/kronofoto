@@ -316,6 +316,7 @@ class ActivitySchema(ObjectSchema):
     actor = fields.Url()
     object = ObjectOrLinkField()
     to = fields.List(fields.Url())
+    type = fields.Str(required=True)
 
     @pre_dump
     def extract_fields_from_object(
@@ -327,22 +328,6 @@ class ActivitySchema(ObjectSchema):
                 kwargs={"short_name": object["actor"].slug},
             )
         return object
-
-    @pre_load
-    def preload(
-        self, data: Dict[str, Any], *args: Any, **kwargs: Any
-    ) -> Dict[str, Any]:
-        self.fields["object"].context.setdefault("root_type", data["type"])
-        return data
-
-    @post_load
-    def extract_fields_from_dict(
-        self, data: Dict[str, Any], **kwargs: Any
-    ) -> Dict[str, Any]:
-        data["actor"] = models.RemoteActor.objects.get_or_create(profile=data["actor"])[
-            0
-        ]
-        return data
 
 
 class ActorCollectionSchema(ObjectSchema):

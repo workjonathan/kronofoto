@@ -82,6 +82,9 @@ class PlaceValue(NamedTuple):
     fullName: str
     geom: Optional[Union[Point, MultiPolygon]]
 
+class Something(PlaceValue):
+    test: str
+
 class ActivitypubLocation(ActivitypubObject, total=False):
     name: str
     parent: Optional[LdIdUrl]

@@ -853,6 +853,30 @@ def test_archive_inbox_follow_request():
     assert FollowArchiveRequest.objects.exists()
     assert FollowArchiveRequest.objects.all()[0].request_body['id'] == 'https://anotherinstance.com/123'
 
+@given(
+    body=st.binary(),
+    actor=st.builds(models.RemoteActor, id=st.integers(min_value=1)),
+)
+def test_service_inbox_responder(body, actor):
+    from fortepan_us.kronofoto.views.activitypub import ServiceInboxResponder
+    responder = ServiceInboxResponder(body=body, actor=actor)
+    responder.post_response
+
+from fortepan_us.kronofoto.views.activitypub import JsonError
+
+@given(
+    body=st.binary(),
+    actor=st.builds(models.RemoteActor, id=st.integers(min_value=1)),
+    data=st.one_of(
+        st.builds(mock.Mock, return_value=st.dictionaries(st.text(printable), st.text(printable))),
+        st.builds(mock.Mock, side_effect=st.builds(JsonError, message=st.text(), status=st.integers(min_value=100, max_value=599))),
+    )
+)
+def test_service_inbox_responder(body, actor, data):
+    from fortepan_us.kronofoto.views.activitypub import ServiceInboxResponder
+    responder = ServiceInboxResponder(body=body, actor=actor)
+    responder.data = data
+    responder.post_response
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

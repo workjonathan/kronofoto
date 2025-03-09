@@ -133,46 +133,76 @@ def service_place(request: HttpRequest, pk: int) -> HttpResponse:
     place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)
     return JsonLDResponse(PlaceSchema().dump(place))
 
+class JsonError(Exception):
+    def __init__(self, message: str, status: int):
+        self.message = message
+        self.status = status
+        super().__init__(f'{status}: {message}')
+
+@dataclass
+class ServiceInboxResponder:
+    body: bytes
+    actor: RemoteActor
+
+    def data(self) -> Dict[str, Any]:
+        try:
+            data = json.loads(self.body)
+            if not isinstance(data, dict):
+                raise JsonError("body must be a json object", status=400)
+            return data
+        except json.decoder.JSONDecodeError:
+            raise JsonError("JSON decoding failed!", status=400)
+        except UnicodeDecodeError as e:
+            raise JsonError("UTF-8 decoding failed!", status=400)
+
+    @property
+    def post_response(self) -> HttpResponse:
+        try:
+            data = self.data()
+            schema = ActivitySchema()
+            schema.context['actor'] = self.actor
+            deserialized = schema.load(data)
+            if deserialized['type'] == "Accept":
+                for activity in OutboxActivity.objects.filter(
+                    body__type="Follow",
+                    body__actor=deserialized['object']['actor'].profile,
+                ):
+                    profile = requests.get(
+                        activity.body['object'],
+                        headers={
+                            "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                        },
+                    ).json()
+                    server_domain = urlparse(activity.body['object']).netloc
+                    Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
+                    return JsonLDResponse({})
+            if not self.actor.app_follows_actor or not Archive.objects.filter(actor=self.actor).exists():
+                raise JsonError("Not following this actor", status=401)
+            root_type = deserialized.get('type')
+            object = deserialized.get('object', {})
+            object_type = object.get('type')
+            archive = Archive.objects.get(actor=self.actor)
+            if root_type in ("Create", "Update"):
+                models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+                return JsonLDResponse({"status": "created"})
+            else:
+                handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
+                for handler in handlers:
+                    response = handler.handle(archive=archive, object=object, root_type=root_type)
+                    if response:
+                        return JsonLDResponse(response.data, status=response.status_code)
+            raise JsonError("unrecognized data", status=400)
+        except JsonError as e:
+            return JsonResponse({"error": e.message}, status=e.status)
+
 @csrf_exempt
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
     if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
         return HttpResponse(status=401)
     if request.method == "POST":
-        data = json.loads(request.body)
-        schema = ActivitySchema()
-        schema.context['actor'] = request.actor
-        deserialized = schema.load(data)
-        if deserialized['type'] == "Accept":
-            for activity in OutboxActivity.objects.filter(
-                body__type="Follow",
-                body__actor=deserialized['object']['actor'].profile,
-            ):
-                profile = requests.get(
-                    activity.body['object'],
-                    headers={
-                        "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                    },
-                ).json()
-                server_domain = urlparse(activity.body['object']).netloc
-                Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=request.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
-                return JsonLDResponse({})
-        if not request.actor.app_follows_actor or not Archive.objects.filter(actor=request.actor).exists():
-            return JsonResponse({"error": "Not following this actor"}, status=401)
-        root_type = deserialized.get('type')
-        object = deserialized.get('object', {})
-        object_type = object.get('type')
-        archive = Archive.objects.get(actor=request.actor)
-        if root_type in ("Create", "Update"):
-            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
-            return JsonLDResponse({"status": "created"})
-        else:
-            handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
-            for handler in handlers:
-                response = handler.handle(archive=archive, object=object, root_type=root_type)
-                if response:
-                    return JsonLDResponse(response.data, status=response.status_code)
+        return ServiceInboxResponder(body=request.body, actor=request.actor).post_response
     return HttpResponse(status=401)
 
 @require_json_ld
@@ -502,6 +532,7 @@ class ActivitySchema(ObjectSchema):
     actor = fields.Url()
     object = ObjectOrLinkField()
     to = fields.List(fields.Url())
+    type = fields.Str(required=True)
 
     @pre_dump
     def extract_fields_from_object(self, object: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
