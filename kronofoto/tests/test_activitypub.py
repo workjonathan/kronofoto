@@ -328,6 +328,7 @@ def test_archive_get_or_create_encounters_insufficient_information():
 def test_ignore_activities_from_nonfollows(a_donor):
     remote_archive = Archive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=False))
     data=activitypub.ActivitySchema().dump({
+        "id": "https://www.asdkljfakldsjf.com/asdfklasdjflkasdjf",
         "actor": remote_archive,
         "object": a_donor,
         "type": "Create",
@@ -364,6 +365,7 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo, a_donor):
     ct = ContentType.objects.get_for_model(models.Photo)
     rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/photos/1', object_id=a_photo.id)
     data=activitypub.ActivitySchema().dump({
+        "id": "https://asdlkfjkalsdfkjadskljfjklasdf.com/alsdkjflkadsfj",
         "actor": remote_archive,
         "object": a_photo,
         "type": "Update",

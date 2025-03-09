@@ -132,6 +132,7 @@ class CategorySchema(Schema):
 class Image(ObjectSchema):
     id = fields.Url()
     category = fields.Nested(CategorySchema)
+    type = fields.Constant("Image", required=True)
     year = fields.Integer()
     circa = fields.Boolean()
     is_published = fields.Boolean()
