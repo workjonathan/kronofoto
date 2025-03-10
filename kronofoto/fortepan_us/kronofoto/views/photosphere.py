@@ -204,7 +204,7 @@ class ValidPhotoSphereView:
 
     @cached_property
     def object(self) -> PhotoSphere:
-        return get_object_or_404(PhotoSphere.objects.all(), pk=self.pk, is_published=True)
+        return get_object_or_404(PhotoSphere.objects.all(), pk=self.pk, is_published=True, image__isnull=False)
 
     @cached_property
     def domain(self) -> str:
@@ -275,6 +275,26 @@ class ValidPhotoSphereView:
     def infoboxes(self) -> Iterable[PhotoSphereInfo]:
         return self.object.photosphereinfo_set.all()
 
+    def image_url(self, photo: Photo, height: int, width: Optional[int]=None) -> str:
+        return image_url(id=photo.id, path=photo.original.name, height=height, width=width)
+
+    def dimensions(self, photo:Photo) -> Tuple[int, int]:
+        "Returns a (width, height) tuple"
+        imgdata = photo.h700
+        return (imgdata.width, imgdata.height) if imgdata else (700, 400)
+
+
+    def related_photo_data(self, position: PhotoSpherePair, heading: float) -> ImagePlaneDict:
+        width, height = self.dimensions(photo=position.photo)
+        return dict(
+            url=self.image_url(photo=position.photo, height=1400),
+            height=height,
+            width=width,
+            azimuth=position.azimuth+heading-90,
+            inclination=position.inclination,
+            distance=position.distance,
+            id=position.photo.id,
+        )
     @property
     def json_response(self) -> JsonResponse:
         info_template = get_template(template_name="kronofoto/components/mainstreet-info.html")
@@ -290,18 +310,13 @@ class ValidPhotoSphereView:
             "id": str(object.id),
             "panorama": object.image.url,
             "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
-            "gps": [object.location.x, object.location.y], # type: ignore
+            "gps": (object.location.x, object.location.y) if object.location else (0, 0),
             "links": links,
             'data': {
-                "photos": [dict(
-                    url=image_url(id=position.photo.id, path=position.photo.original.name, height=1400),
-                    height=position.photo.h700.height if position.photo.h700 else 700,
-                    width=position.photo.h700.width if position.photo.h700 else 400,
-                    azimuth=position.azimuth+object.heading-90,
-                    inclination=position.inclination,
-                    distance=position.distance,
-                    id=position.photo.id,
-                ) for position in self.related_photosphere_pairs],
+                "photos": [
+                    self.related_photo_data(position=position, heading=object.heading)
+                    for position in self.related_photosphere_pairs
+                ],
                 "infoboxes": [{
                     "id": info.id,
                     "yaw": info.yaw+(90-object.heading)/180*3.1416,
@@ -313,7 +328,8 @@ class ValidPhotoSphereView:
         }
         if self.photo:
             photo = self.photo
-            node["thumbnail"] = image_url(id=photo.id, path=photo.original.name, height=500, width=500)
+            node["thumbnail"] = self.image_url(photo=photo, height=500, width=500)
+        print(node)
         return JsonResponse(node)
 
     @property
