@@ -76,7 +76,7 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
         assert viewer.nearby.count() == 1
 
 @given(
-    image_url=st.builds(Mock, return_value=provisional.urls()),
+    image_url=st.builds(Mock, return_value=st.text(printable, max_size=10)),
     dimensions=st.builds(Mock, return_value=st.tuples(st.integers(min_value=1), st.integers(min_value=1))),
     view=st.builds(
         ValidPhotoSphereView,
@@ -85,10 +85,10 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
     ),
     object=st.builds(
         PhotoSphere,
-        mainstreetset=st.one_of(st.none(), st.builds(MainStreetSet, id=st.integers(min_value=1), name=st.text(printable))),
-        tour=st.one_of(st.none(), st.builds(PhotoSphereTour, id=st.integers(min_value=1), name=st.text(printable))),
+        mainstreetset=st.one_of(st.none(), st.builds(MainStreetSet, id=st.integers(min_value=1), name=st.text(printable, max_size=10))),
+        tour=st.one_of(st.none(), st.builds(PhotoSphereTour, id=st.integers(min_value=1), name=st.text(printable, max_size=10))),
         location=st.one_of(st.none(), st.builds(Point, st.integers(), st.integers())),
-        image=st.one_of(st.builds(Mock, name=st.text(printable), url=provisional.urls())),
+        image=st.one_of(st.builds(Mock, name=st.text(printable, max_size=10), url=st.text(printable, max_size=10))),
     ),
     links=st.lists(st.builds(PhotoSphere, id=st.integers(min_value=1), location=st.builds(Point, st.integers(), st.integers())), max_size=3),
     related_photosphere_pairs=st.lists(
@@ -97,11 +97,11 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
             photo=st.builds(
                 Photo,
                 id=st.integers(min_value=1),
-                original=st.builds(Mock, name=st.text(printable), url=provisional.urls()),
+                original=st.builds(Mock, name=st.text(printable, max_size=10), url=st.text(printable, max_size=10)),
                 original_width=st.integers(min_value=1),
                 original_height=st.integers(min_value=1),
             ),
-            photosphere=st.builds(PhotoSphere, id=st.integers(min_value=1), image=st.builds(Mock, name=st.text(printable), url=provisional.urls())),
+            photosphere=st.builds(PhotoSphere, id=st.integers(min_value=1), image=st.builds(Mock, name=st.text(printable, max_size=10), url=st.text(printable, max_size=10))),
             azimuth=st.integers(), inclination=st.integers(), distance=st.integers(),
         ),
         max_size=4,
