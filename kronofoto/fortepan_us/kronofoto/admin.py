@@ -12,7 +12,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo, PhotoSphereTour
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo, PhotoSphereTour, TourSetDescription
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
 from fortepan_us.kronofoto.models.photo import Submission
@@ -506,12 +506,20 @@ unpublish_photos.short_description = 'Unpublish photos' # type: ignore
 @admin.register(TermGroup)
 class TermGroupAdmin(base_admin.ModelAdmin):
     pass
+
+class TourInline(admin.StackedInline):
+    model = TourSetDescription
+    extra = 0
+    fields = ['set', 'tour', 'description']
+
+
 @admin.register(PhotoSphereTour)
 class PhotoSphereTourAdmin(base_admin.ModelAdmin):
-    pass
+    inlines = (TourInline,)
+
 @admin.register(MainStreetSet)
 class MainStreetSetAdmin(base_admin.ModelAdmin):
-    pass
+    inlines = (TourInline,)
 
 class PhotoInfoInline(admin.StackedInline):
     model = PhotoSphereInfo
