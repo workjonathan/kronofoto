@@ -1,6 +1,7 @@
 from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict, Tuple, Optional, NamedTuple
 from marshmallow import Schema, fields
 from django.contrib.gis.geos import MultiPolygon, Point
+from dataclasses import dataclass
 
 
 
@@ -55,7 +56,9 @@ class ArchiveDict(ActivitypubObject, total=False):
     followers: Url
 
 
-class ActivitypubContact(ActivitypubObject, total=False):
+@dataclass
+class ActivitypubContact:
+    id: LdIdUrl
     type: Literal["Contact"]
     name: str
     firstName: str
@@ -91,3 +94,9 @@ class ActivitypubLocation(ActivitypubObject, total=False):
 
 
 ActivitypubData = Union[ActivitypubImage, ActivitypubContact]
+
+@dataclass
+class Activity:
+    actor: LdIdUrl
+    type: str
+    object: Union[ActivitypubData, "Activity"]

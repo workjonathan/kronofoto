@@ -24,6 +24,7 @@ from .util import photos, donors, archives, archives, small_gif, a_photo, a_cate
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from fortepan_us.kronofoto.models.activity_dicts import ActivitypubImage, ActivitypubContact, ActivitypubLocation, Url, ActivitypubData
+from fortepan_us.kronofoto.models import activity_dicts
 from django.contrib.gis.geos import Polygon, MultiPolygon, Point
 from fortepan_us.kronofoto.models import activity_schema
 
@@ -868,16 +869,29 @@ from fortepan_us.kronofoto.views.activitypub import JsonError
 
 @given(
     body=st.binary(),
-    actor=st.builds(models.RemoteActor, id=st.integers(min_value=1)),
-    data=st.one_of(
-        st.builds(mock.Mock, return_value=st.dictionaries(st.text(printable), st.text(printable))),
-        st.builds(mock.Mock, side_effect=st.builds(JsonError, message=st.text(), status=st.integers(min_value=100, max_value=599))),
+    actor_is_known=st.booleans(),
+    actor=st.builds(models.RemoteActor, id=st.integers(min_value=1), app_follows_actor=st.booleans()),
+    profile=st.builds(mock.Mock, return_value=st.dictionaries(st.text(printable), st.text(printable))),
+    parsed_data=st.one_of(
+        st.builds(
+            mock.Mock,
+            return_value=st.builds(
+                activity_dicts.Activity,
+                actor=provisional.urls(),
+                type=st.one_of(st.just("Create"), st.just("Update"), st.just("Follow"), st.just("Accept"), st.just("Delete"), st.text(printable)),
+                object=st.one_of(
+                    st.from_type(ActivitypubData),
+                ),
+            )
+        )
     )
 )
-def test_service_inbox_responder(body, actor, data):
+def test_service_inbox_responder(body, actor, profile, parsed_data, actor_is_known):
     from fortepan_us.kronofoto.views.activitypub import ServiceInboxResponder
     responder = ServiceInboxResponder(body=body, actor=actor)
-    responder.data = data
+    responder.actor_is_known = actor_is_known
+    responder.parsed_data = parsed_data
+    responder.profile = profile
     responder.post_response
 
 @pytest.mark.django_db

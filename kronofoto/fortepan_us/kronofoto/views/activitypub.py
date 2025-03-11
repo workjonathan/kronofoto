@@ -157,36 +157,46 @@ class ServiceInboxResponder:
         except UnicodeDecodeError as e:
             raise JsonError("UTF-8 decoding failed!", status=400)
 
+    def parsed_data(self) -> activity_dicts.Activity:
+        try:
+            schema = ActivitySchema()
+            schema.context['actor'] = self.actor
+            return schema.load(self.data())
+        except ValidationError as e:
+            raise JsonError("validation failed: {}".format(e.messages), status=400)
+
+    def profile(self, location: str) -> Dict[str, Any]:
+        return requests.get(
+            location,
+            headers={
+                "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+        ).json()
+
+    @cached_property
+    def actor_is_known(self) -> bool:
+        return Archive.objects.filter(actor=self.actor).exists()
+
     @property
     def post_response(self) -> HttpResponse:
         try:
-            data = self.data()
-            schema = ActivitySchema()
-            schema.context['actor'] = self.actor
-            try:
-                deserialized = schema.load(data)
-            except ValidationError as e:
-                raise JsonError("validation failed: {}".format(e.messages), status=400)
-            if deserialized['type'] == "Accept":
-                remoteactor = RemoteActor.objects.get_or_create(profile=deserialized['object']['actor'])[0]
-                for activity in OutboxActivity.objects.filter(
-                    body__type="Follow",
-                    body__actor=remoteactor.profile,
-                ):
-                    profile = requests.get(
-                        activity.body['object'],
-                        headers={
-                            "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                            'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                        },
-                    ).json()
-                    server_domain = urlparse(activity.body['object']).netloc
-                    Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
-                    return JsonLDResponse({})
-            if not self.actor.app_follows_actor or not Archive.objects.filter(actor=self.actor).exists():
+            deserialized = self.parsed_data()
+            if deserialized.type == "Accept":
+                if isinstance(deserialized.object, activity_dicts.Activity):
+                    remoteactor = RemoteActor.objects.get_or_create(profile=deserialized.object.actor)[0]
+                    for activity in OutboxActivity.objects.filter(
+                        body__type="Follow",
+                        body__actor=remoteactor.profile,
+                    ):
+                        profile = self.profile(activity.body['object'])
+                        server_domain = urlparse(activity.body['object']).netloc
+                        Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
+                        return JsonLDResponse({})
+            if not self.actor.app_follows_actor or not self.actor_is_known:
                 raise JsonError("Not following this actor", status=401)
-            root_type = deserialized.get('type')
-            object = deserialized.get('object', {})
+            root_type = deserialized.type
+            object = deserialized.object
             object_type = object.get('type')
             archive = Archive.objects.get(actor=self.actor)
             if root_type in ("Create", "Update"):
@@ -195,7 +205,7 @@ class ServiceInboxResponder:
             else:
                 handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
                 for handler in handlers:
-                    response = handler.handle(archive=archive, object=object, root_type=root_type)
+                    response = handler.handle(archive=archive, object=object, root_type=root_type) # type: ignore
                     if response:
                         return JsonLDResponse(response.data, status=response.status_code)
             raise JsonError("unrecognized data", status=400)

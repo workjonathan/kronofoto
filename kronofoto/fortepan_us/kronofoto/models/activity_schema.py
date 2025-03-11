@@ -314,11 +314,20 @@ class CollectionPage(Collection):
 
 
 class ActivitySchema(ObjectSchema):
-    actor = fields.Url()
-    object = ObjectOrLinkField()
+    actor = fields.Url(required=True)
+    object = ObjectOrLinkField(require=True)
     to = fields.List(fields.Url())
     type = fields.Str(required=True)
 
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.Activity:
+        return activity_dicts.Activity(
+            actor=data['actor'],
+            type=data['type'],
+            object=data['object'],
+        )
     @pre_dump
     def extract_fields_from_object(
         self, object: Dict[str, Any], **kwargs: Any
