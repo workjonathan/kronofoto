@@ -1,3 +1,4 @@
+from __future__ import annotations
 from django.db import models
 from django.db.models import Count, QuerySet
 from django.contrib.auth import get_user_model
@@ -8,7 +9,7 @@ from .collectible import Collectible
 from .archive import Archive
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict, Literal, TYPE_CHECKING
-from .activity_dicts import ActivitypubContact
+from .activity_dicts import ActivitypubContact, DonorValue
 
 
 class DonorQuerySet(models.QuerySet):
@@ -34,9 +35,13 @@ class Donor(Collectible, models.Model):
         ordering = ("last_name", "first_name")
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
-    def reconcile(self, object: ActivitypubContact) -> None:
-        self.first_name = object["firstName"]
-        self.last_name = object["lastName"]
+    def reconcile(self, object: ActivitypubContact | DonorValue) -> None:
+        if isinstance(object, DonorValue):
+            self.first_name = object.firstName
+            self.last_name = object.lastName
+        else:
+            self.first_name = object["firstName"]
+            self.last_name = object["lastName"]
         self.save()
 
     def display_format(self) -> str:

@@ -1,5 +1,7 @@
+from __future__ import annotations
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load, EXCLUDE
 from marshmallow import validate
+from marshmallow.exceptions import ValidationError
 from typing import Any, Dict, Union, TypeVar, List
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.reverse import reverse
@@ -75,7 +77,8 @@ class MultiPolygonSchema(Schema):
         return MultiPolygon([Polygon(*poly) for poly in data['coordinates']])
 
 
-class PlaceSchema(ObjectSchema):
+class PlaceSchema(Schema):
+    id = fields.Url(required=True)
     name = fields.Str(required=True)
     attributedTo = fields.List(fields.Url(), required=True)
     parent = fields.Url(relative=True)
@@ -125,21 +128,35 @@ class LinkSchema(Schema):
 
 
 class CategorySchema(Schema):
-    slug = fields.Str()
-    name = fields.Str()
+    slug = fields.Str(required=True)
+    name = fields.Str(required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.CategoryValue:
+        return activity_dicts.CategoryValue(**data)
 
 
-class Image(ObjectSchema):
-    id = fields.Url()
-    category = fields.Nested(CategorySchema)
+class Image(Schema):
+    id = fields.Url(required=True)
+    url = fields.Url(relative=True, required=False)
+    content = fields.Str(required=True)
+    category = fields.Nested(CategorySchema, required=True)
     type = fields.Constant("Image", required=True)
     year = fields.Integer()
-    circa = fields.Boolean()
-    is_published = fields.Boolean()
+    circa = fields.Boolean(required=True)
+    is_published = fields.Boolean(required=True)
     contributor = fields.Url(relative=True)
     terms = fields.List(fields.Str)
     tags = fields.List(fields.Str)
     place = fields.Url(relative=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.PhotoValue:
+        return activity_dicts.PhotoValue(**data)
 
     @pre_dump
     def extract_fields_from_object(
@@ -179,13 +196,19 @@ class Image(ObjectSchema):
         return data
 
 
-class Contact(ObjectSchema):
-    id = fields.Url()
-    type = fields.Constant("Contact")
-    attributedTo = fields.List(fields.Url())
+class Contact(Schema):
+    id = fields.Url(required=True)
+    type = fields.Constant("Contact", required=True)
+    attributedTo = fields.List(fields.Url(), required=True)
     name = fields.Str()
-    firstName = fields.Str()
-    lastName = fields.Str()
+    firstName = fields.Str(required=True)
+    lastName = fields.Str(required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.DonorValue:
+        return activity_dicts.DonorValue(**data)
 
     @pre_dump
     def extract_fields_from_object(
@@ -234,6 +257,30 @@ class PageItem(fields.Field):
         return Image().load(value)
 
 
+class KronofotoObjectField(fields.Field):
+    def _serialize(
+        self,
+        value: Union["models.Donor", "models.Photo"],
+        attr: Any,
+        obj: Any,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        if isinstance(value, models.Donor):
+            return Contact().dump(value)
+        elif isinstance(value, models.Photo):
+            return Image().dump(value)
+        else:
+            return value
+
+    def _deserialize(
+        self, value: Dict[str, Any], *args: Any, **kwargs: Any
+    ) -> activity_dicts.PhotoValue | activity_dicts.DonorValue:
+        if value["type"] in ["Image"]:
+            return Image(context=self.context).load(value)
+        if value["type"] in ["Contact"]:
+            return Contact(context=self.context).load(value)
+        raise ValueError(value["type"])
+
 class ObjectOrLinkField(fields.Field):
     def _serialize(
         self,
@@ -252,25 +299,32 @@ class ObjectOrLinkField(fields.Field):
     def _deserialize(
         self, value: Union[str, Dict[str, Any]], *args: Any, **kwargs: Any
     ) -> Any:
-        if isinstance(value, str):
-            return LinkSchema(context=self.context).load({"href": value})
-        if value["type"] in [
-            "Accept",
-            "Follow",
-        ]:
-            return ActivitySchema(context=self.context).load(value)
-        if value["type"] in [
-            "Image",
-        ]:
-            return Image(context=self.context).load(value)
-        if value["type"] in [
-            "Contact",
-        ]:
-            return Contact(context=self.context).load(value)
-        raise ValueError(value["type"])
+        return None
+        #if isinstance(value, str):
+        #    return LinkSchema(context=self.context).load({"href": value})
+        #if value["type"] in [
+        #    "Accept",
+        #    "Follow",
+        #]:
+        #    return ActivitySchema(context=self.context).load(value)
+        #if value["type"] in [
+        #    "Image",
+        #]:
+        #    return Image(context=self.context).load(value)
+        #if value["type"] in [
+        #    "Contact",
+        #]:
+        #    return Contact(context=self.context).load(value)
+        #raise ValueError(value["type"])
 
 
-class Collection(ObjectSchema):
+class Collection(Schema):
+    _context = fields.Raw(data_key="@context")
+    id = fields.Url(required=True)
+    # type = fields.Str()
+    attributedTo = fields.List(fields.Url())
+    url = fields.Url(relative=True, required=False)
+    content = fields.Str()
     summary = fields.Str()
     first = fields.Nested(lambda: CollectionPage())
 
@@ -313,34 +367,121 @@ class CollectionPage(Collection):
         }
 
 
-class ActivitySchema(ObjectSchema):
+class DeleteActivitySchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    type = fields.Constant("Delete", required=True)
+    id = fields.Url(required=True)
     actor = fields.Url(required=True)
-    object = ObjectOrLinkField(require=True)
-    to = fields.List(fields.Url())
-    type = fields.Str(required=True)
+    object = fields.Url(required=True)
 
     @post_load
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
-    ) -> activity_dicts.Activity:
-        return activity_dicts.Activity(
+    ) -> activity_dicts.DeleteValue:
+        return activity_dicts.DeleteValue(
+            id=data['id'],
             actor=data['actor'],
-            type=data['type'],
             object=data['object'],
         )
-    @pre_dump
-    def extract_fields_from_object(
-        self, object: Dict[str, Any], **kwargs: Any
-    ) -> Dict[str, Any]:
-        if isinstance(object["actor"], models.Archive):
-            object["actor"] = reverse(
-                "kronofoto:activitypub_data:archives:actor",
-                kwargs={"short_name": object["actor"].slug},
-            )
-        return object
+
+class CreateActivitySchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    type = fields.Constant("Create", required=True)
+    id = fields.Url(required=True)
+    actor = fields.Url(required=True)
+    object = KronofotoObjectField(required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.CreateValue:
+        return activity_dicts.CreateValue(
+            id=data['id'],
+            actor=data['actor'],
+            object=data['object'],
+        )
+
+class UpdateActivitySchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    type = fields.Constant("Update", required=True)
+    id = fields.Url(required=True)
+    actor = fields.Url(required=True)
+    object = KronofotoObjectField(required=True)
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.UpdateValue:
+        return activity_dicts.UpdateValue(
+            id=data['id'],
+            actor=data['actor'],
+            object=data['object'],
+        )
+
+class FollowActivitySchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    type = fields.Constant("Follow", required=True)
+    id = fields.Url(required=True)
+    actor = fields.Url(required=True)
+    object = fields.Url(required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.FollowValue:
+        return activity_dicts.FollowValue(
+            id=data['id'],
+            actor=data['actor'],
+            object=data['object'],
+        )
+
+class AcceptActivitySchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    type = fields.Constant("Follow", required=True)
+    id = fields.Url(required=True)
+    actor = fields.Url(required=True)
+    object = fields.Nested(FollowActivitySchema, required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.AcceptValue:
+        return activity_dicts.AcceptValue(
+            id=data['id'],
+            actor=data['actor'],
+            object=data['object'],
+        )
+
+class ActivitySchema:
+    schemas = (
+        DeleteActivitySchema(),
+        CreateActivitySchema(),
+        UpdateActivitySchema(),
+        FollowActivitySchema(),
+        AcceptActivitySchema(),
+    )
+    def load(self, data: Dict[str, Any]) -> activity_dicts.ActivitypubValue | None:
+        for schema in self.schemas:
+            try:
+                return schema.load(data)
+            except ValidationError:
+                pass
+        return None
+
+    def dump(self, thing: Any) -> Dict[str, Any] | None:
+        for schema in self.schemas:
+            try:
+                return schema.dump(thing)
+            except ValidationError:
+                pass
+        return None
 
 
-class ActorCollectionSchema(ObjectSchema):
+class ActorCollectionSchema(Schema):
+    _context = fields.Raw(data_key="@context")
+    id = fields.Url(required=True)
+    attributedTo = fields.List(fields.Url())
+    url = fields.Url(relative=True, required=False)
+    content = fields.Str()
     items = fields.List(ObjectOrLinkField)
     totalItems = fields.Integer()
 

@@ -67,7 +67,7 @@ from fortepan_us.kronofoto.imageutil import ImageSigner
 from itertools import chain, cycle, islice
 from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
 from typing_extensions import Self
-from .activity_dicts import ActivitypubImage
+from .activity_dicts import ActivitypubImage, PhotoValue
 
 EMPTY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs) - 1)
@@ -84,11 +84,6 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
 
-    # @icontract.require(
-    def update_or_create_ld_object(
-        self, owner: Archive, object: ActivitypubImage
-    ) -> tuple["Photo" | None, bool]:
-        return (None, False)
 
     def filter_donated(self, donors: DonorQuerySet) -> DonorQuerySet:
         q = self.filter(donor__id=OuterRef("pk"), is_published=True, year__isnull=False)
@@ -584,18 +579,31 @@ class Photo(PhotoBase):
             ),
         )
 
-    def reconcile(self, object: ActivitypubImage, donor: Donor) -> None:
-        self.caption = object["content"]
-        self.donor = donor
-        self.year = object["year"]
-        self.circa = object["circa"]
-        self.is_published = object["is_published"]
-        self.donor = donor
-        self.remote_image = object["url"]
-        self.category, _ = Category.objects.get_or_create(
-            slug=object["category"]["slug"],
-            defaults={"name": object["category"]["name"]},
-        )
+    def reconcile(self, object: ActivitypubImage | PhotoValue, donor: Donor, place: Place | None = None) -> None:
+        if isinstance(object, PhotoValue):
+            self.caption = object.content
+            remote_image = object.url
+            self.category, _ = Category.objects.get_or_create(
+                slug=object.category.slug,
+                defaults={"name": object.category.name},
+            )
+            self.year = object.year
+            self.circa = object.circa
+            self.is_published = object.is_published
+            self.donor = donor
+            self.place = place
+        else:
+            self.caption = object["content"]
+            self.donor = donor
+            self.year = object["year"]
+            self.circa = object["circa"]
+            self.is_published = object["is_published"]
+            self.donor = donor
+            self.remote_image = object["url"]
+            self.category, _ = Category.objects.get_or_create(
+                slug=object["category"]["slug"],
+                defaults={"name": object["category"]["name"]},
+            )
         self.save()
 
     @property

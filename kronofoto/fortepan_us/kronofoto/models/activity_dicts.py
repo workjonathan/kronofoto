@@ -56,9 +56,7 @@ class ArchiveDict(ActivitypubObject, total=False):
     followers: Url
 
 
-@dataclass
-class ActivitypubContact:
-    id: LdIdUrl
+class ActivitypubContact(ActivitypubObject):
     type: Literal["Contact"]
     name: str
     firstName: str
@@ -76,7 +74,35 @@ class ActivitypubImage(ActivitypubObject, total=False):
     tags: List[str]
     place: LdIdUrl
 
-class PlaceValue(NamedTuple):
+@dataclass
+class CategoryValue:
+    slug: str
+    name: str
+
+@dataclass
+class PhotoValue:
+    id: str
+    content: str
+    category: CategoryValue
+    circa: bool
+    is_published: bool
+    terms: List[str]
+    tags: List[str]
+    year: Optional[int]=None
+    contributor: Optional[str] = None
+    url: Optional[str] = None
+    place: Optional[str] = None
+
+@dataclass
+class DonorValue:
+    id: str
+    attributedTo: List[str]
+    name: Optional[str]
+    firstName: str
+    lastName: str
+
+@dataclass
+class PlaceValue:
     id: str
     name: str
     attributedTo: List[str]
@@ -84,6 +110,36 @@ class PlaceValue(NamedTuple):
     placeType: str
     fullName: str
     geom: Optional[Union[Point, MultiPolygon]]
+
+@dataclass
+class DeleteValue:
+    id: str
+    actor: str
+    object: str
+
+@dataclass
+class CreateValue:
+    id: str
+    actor: str
+    object: Union[PhotoValue, DonorValue, PlaceValue]
+
+@dataclass
+class UpdateValue:
+    id: str
+    actor: str
+    object: Union[PhotoValue, DonorValue, PlaceValue]
+
+@dataclass
+class FollowValue:
+    id: str
+    actor: str
+    object: str
+
+@dataclass
+class AcceptValue:
+    id: str
+    actor: str
+    object: FollowValue
 
 class ActivitypubLocation(ActivitypubObject, total=False):
     name: str
@@ -93,10 +149,17 @@ class ActivitypubLocation(ActivitypubObject, total=False):
     place_type: str
 
 
+ActivitypubValue = Union[DeleteValue, CreateValue, UpdateValue, FollowValue, AcceptValue]
 ActivitypubData = Union[ActivitypubImage, ActivitypubContact]
 
-@dataclass
-class Activity:
+class Activity(TypedDict):
     actor: LdIdUrl
-    type: str
-    object: Union[ActivitypubData, "Activity"]
+    object: Union[ActivitypubData, "ActivityTypes"]
+
+class FollowActivity(Activity):
+    type: Literal['Follow']
+
+class AcceptActivity(Activity):
+    type: Literal['Accept']
+
+ActivityTypes = Union[FollowActivity, AcceptActivity]

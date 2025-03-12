@@ -157,13 +157,12 @@ class ServiceInboxResponder:
         except UnicodeDecodeError as e:
             raise JsonError("UTF-8 decoding failed!", status=400)
 
-    def parsed_data(self) -> activity_dicts.Activity:
-        try:
-            schema = ActivitySchema()
-            schema.context['actor'] = self.actor
-            return schema.load(self.data())
-        except ValidationError as e:
-            raise JsonError("validation failed: {}".format(e.messages), status=400)
+    def parsed_data(self) -> activity_dicts.ActivitypubValue:
+        schema = ActivitySchema()
+        data = schema.load(self.data())
+        if data is not None:
+            return data
+        raise JsonError("validation failed", status=400)
 
     def profile(self, location: str) -> Dict[str, Any]:
         return requests.get(
@@ -182,32 +181,33 @@ class ServiceInboxResponder:
     def post_response(self) -> HttpResponse:
         try:
             deserialized = self.parsed_data()
-            if deserialized.type == "Accept":
-                if isinstance(deserialized.object, activity_dicts.Activity):
-                    remoteactor = RemoteActor.objects.get_or_create(profile=deserialized.object.actor)[0]
-                    for activity in OutboxActivity.objects.filter(
-                        body__type="Follow",
-                        body__actor=remoteactor.profile,
-                    ):
-                        profile = self.profile(activity.body['object'])
-                        server_domain = urlparse(activity.body['object']).netloc
-                        Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
-                        return JsonLDResponse({})
-            if not self.actor.app_follows_actor or not self.actor_is_known:
-                raise JsonError("Not following this actor", status=401)
-            root_type = deserialized.type
-            object = deserialized.object
-            object_type = object.get('type')
-            archive = Archive.objects.get(actor=self.actor)
-            if root_type in ("Create", "Update"):
-                models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
-                return JsonLDResponse({"status": "created"})
+            if isinstance(deserialized, activity_dicts.AcceptValue):
+                followobject = deserialized.object
+                remoteactor = RemoteActor.objects.get_or_create(profile=followobject.actor)[0]
+                for activity in OutboxActivity.objects.filter(
+                    body__type="Follow",
+                    body__actor=remoteactor.profile,
+                ):
+                    profile = self.profile(activity.body['object'])
+                    server_domain = urlparse(activity.body['object']).netloc
+                    Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
+                    return JsonLDResponse({})
             else:
-                handlers : List[ArchiveInboxHandler] = [CreateContact(), DeleteObject(), UpdateImage(), CreateImage()]
-                for handler in handlers:
-                    response = handler.handle(archive=archive, object=object, root_type=root_type) # type: ignore
-                    if response:
-                        return JsonLDResponse(response.data, status=response.status_code)
+                if not self.actor.app_follows_actor or not self.actor_is_known:
+                    raise JsonError("Not following this actor", status=401)
+                if isinstance(deserialized, activity_dicts.CreateValue) or isinstance(deserialized, activity_dicts.UpdateValue):
+                    object = deserialized.object
+                    if isinstance(object, activity_dicts.PhotoValue) or isinstance(object, activity_dicts.DonorValue):
+                        archive = Archive.objects.get(actor=self.actor)
+                        obj, created = models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+                        return JsonLDResponse({"status": "created" if created else "updated"})
+                    else:
+                        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=self.actor, object=object)
+                        return JsonLDResponse({"status": "created" if created else "updated"})
+                elif isinstance(deserialized, activity_dicts.DeleteValue):
+                    models.LdId.objects.get(ld_id=deserialized.object).delete_if_can(self.actor)
+                    return JsonLDResponse({"status": "deleted"})
+
             raise JsonError("unrecognized data", status=400)
         except JsonError as e:
             return JsonResponse({"error": e.message}, status=e.status)

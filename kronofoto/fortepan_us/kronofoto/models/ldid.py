@@ -26,13 +26,13 @@ from dataclasses import dataclass
 class LdDonorGetOrCreator:
     queryset: "LdIdQuerySet"
     ld_id: activity_dicts.LdIdUrl
-    data: activity_dicts.ActivitypubContact
+    data: activity_dicts.DonorValue
 
     @cached_property
     def archive(self) -> Archive | None:
-        if len(self.data.get("attributedTo", [])) > 0:
+        if len(self.data.attributedTo) > 0:
             return Archive.objects.get_or_create_by_profile(
-                profile=self.data["attributedTo"][0]
+                profile=self.data.attributedTo[0]
             )[0]
         else:
             return None
@@ -43,7 +43,7 @@ class LdDonorGetOrCreator:
     def ldid(self, db_obj: Donor) -> "LdId":
         ct = ContentType.objects.get_for_model(Donor)
         ldid, _ = self.queryset.get_or_create(
-            ld_id=self.data["id"],
+            ld_id=self.data.id,
             defaults={"content_type": ct, "object_id": db_obj.id},
         )
         return ldid
@@ -53,8 +53,8 @@ class LdDonorGetOrCreator:
     @icontract.ensure(lambda self, result: result[0] is None or result[0].content_object is not None)
     def object(self) -> tuple["LdId" | None, bool]:
         if (
-            len(self.data.get("attributedTo", [])) == 0 or
-            urlparse(self.data["attributedTo"][0]).netloc
+            len(self.data.attributedTo) == 0 or
+            urlparse(self.data.attributedTo[0]).netloc
             != urlparse(self.ld_id).netloc
         ):
             return None, False
@@ -230,7 +230,7 @@ class LdObjectGetOrCreator:
 
     def donorgetorcreate(self, object: dict[str, Any]) -> LdDonorGetOrCreator | None:
         try:
-            data: activity_dicts.ActivitypubContact = (
+            data: activity_dicts.DonorValue = (
                 activity_schema.Contact().load(object)
             )
             return LdDonorGetOrCreator(ld_id=self.ld_id, data=data, queryset=self.queryset)
@@ -242,7 +242,7 @@ class LdObjectGetOrCreator:
 class NewLdIdPlace:
     queryset: "LdIdQuerySet"
     owner: RemoteActor
-    object: activity_dicts.ActivitypubLocation
+    object: activity_dicts.PlaceValue
     place_upserter: "PlaceUpserter"
 
     @property
@@ -250,13 +250,13 @@ class NewLdIdPlace:
         ct = ContentType.objects.get_for_model(Place)
         place = Place.objects.create(
             place_type=self.place_upserter.place_type,
-            name=self.object['name'],
-            geom=self.object['geom'],
+            name=self.object.name,
+            geom=self.object.geom,
             owner=self.owner,
             parent=self.place_upserter.parent,
         )
         result = self.queryset.update_or_create(
-            ld_id=self.object['id'],
+            ld_id=self.object.id,
             defaults={"content_type": ct, "content_object": place},
         )
         return result[0], True
@@ -265,7 +265,7 @@ class NewLdIdPlace:
 class UpdateLdIdPlace:
     ld_id: "LdId"
     owner: RemoteActor
-    object: activity_dicts.ActivitypubLocation
+    object: activity_dicts.PlaceValue
     place_upserter: "PlaceUpserter"
 
     @property
@@ -279,9 +279,9 @@ class UpdateLdIdPlace:
         place = self.ld_id.content_object
         if not isinstance(place, Place) or place.owner is None or place.owner.id != self.owner.id:
             return None, False
-        place.geom = self.object.get('geom')
+        place.geom = self.object.geom
         place.place_type = self.place_upserter.place_type
-        place.name = self.object.get('name')
+        place.name = self.object.name
         place.parent = self.place_upserter.parent
         place.save()
         return self.ld_id, False
@@ -290,15 +290,15 @@ class UpdateLdIdPlace:
 class PlaceUpserter:
     queryset: "LdIdQuerySet"
     owner: RemoteActor
-    object: activity_dicts.ActivitypubLocation
+    object: activity_dicts.PlaceValue
 
     @cached_property
     def place_type(self) -> PlaceType:
-        return PlaceType.objects.get_or_create(name=self.object['place_type'])[0]
+        return PlaceType.objects.get_or_create(name=self.object.placeType)[0]
 
     @cached_property
     def parent(self) -> Place | None:
-        parent = self.object.get("parent")
+        parent = self.object.parent
         if parent:
             ldid, created = self.queryset.get_or_create_ld_object(parent)
             if ldid is not None and isinstance(ldid.content_object, Place):
@@ -308,7 +308,7 @@ class PlaceUpserter:
     @cached_property
     def upserter(self) -> UpdateLdIdPlace | NewLdIdPlace:
         try:
-            placeid = self.object['id']
+            placeid = self.object.id
             return UpdateLdIdPlace(
                 ld_id=self.queryset.get(ld_id=placeid),
                 owner=self.owner,
@@ -340,7 +340,7 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
         or (isinstance(result[0].content_object, Place) and result[0].content_object.owner.id == owner.id)
     )
     def update_or_create_ld_service_object(
-        self, owner: RemoteActor, object: activity_dicts.ActivitypubLocation
+        self, owner: RemoteActor, object: activity_dicts.PlaceValue
     ) -> tuple["LdId" | None, bool]:
         return PlaceUpserter(queryset=self, owner=owner, object=object).result
 
@@ -358,48 +358,51 @@ class LdIdQuerySet(models.QuerySet["LdId"]):
         or object["type"] == "Image"
     )
     def update_or_create_ld_object(
-        self, owner: "Archive", object: activity_dicts.ActivitypubData
+        self, owner: "Archive", object: activity_dicts.PhotoValue | activity_dicts.DonorValue
     ) -> tuple["LdId" | None, bool]:
         "This function is valid for object['id'] that are external domains only."
         "This function is only valid for Contact/Donor and Image/Photo, which should be all that is needed."
         ldid = None
         try:
-            ldid = self.get(ld_id=object["id"])
+            ldid = self.get(ld_id=object.id)
             db_obj = ldid.content_object
             if db_obj and db_obj.archive.id != owner.id:
                 db_obj = None
             else:
                 created = False
         except self.model.DoesNotExist:
-            if object["type"] == "Contact":
+            if isinstance(object, activity_dicts.DonorValue):
                 db_obj = Donor()
                 db_obj.archive = owner
                 created = True
-            elif object["type"] == "Image":
+            else:
                 db_obj = Photo()
                 db_obj.archive = owner
                 created = True
         if not db_obj:
             return (None, False)
-        if isinstance(db_obj, Donor) and object["type"] == "Contact":
+        if isinstance(db_obj, Donor) and isinstance(object, activity_dicts.DonorValue):
             db_obj.reconcile(object)
             ct = ContentType.objects.get_for_model(Donor)
-        elif isinstance(db_obj, Photo) and object["type"] == "Image":
-            donor, _ = self.get_or_create_ld_object(object["contributor"])
+        elif isinstance(db_obj, Photo) and isinstance(object, activity_dicts.PhotoValue):
+            if object.contributor:
+                donor, _ = self.get_or_create_ld_object(activity_dicts.str_to_ldidurl(object.contributor))
+            else:
+                donor = None
             if not donor or not donor.content_object:
                 return None, False
             db_obj.reconcile(object, donor.content_object)
             ct = ContentType.objects.get_for_model(Photo)
             db_obj.save()
-            for tag in object["tags"]:
+            for tag in object.tags:
                 new_tag, _ = Tag.objects.get_or_create(tag=tag)
                 PhotoTag.objects.get_or_create(
                     tag=new_tag, photo=db_obj, accepted=True
                 )
-            for term in object["terms"]:
+            for term in object.terms:
                 db_obj.terms.add(Term.objects.get_or_create(term=term)[0])
         ldid, _ = self.get_or_create(
-            ld_id=object["id"], defaults={"content_type": ct, "object_id": db_obj.id}
+            ld_id=object.id, defaults={"content_type": ct, "object_id": db_obj.id}
         )
         return ldid, created
 
@@ -414,6 +417,21 @@ class LdId(models.Model):
     content_object = GenericForeignKey("content_type", "object_id")
 
     objects = LdIdQuerySet.as_manager()
+
+    def delete_if_can(self, actor: RemoteActor) -> None:
+        content_object = self.content_object
+        if isinstance(content_object, Photo):
+            if actor.archive_set.filter(id=content_object.archive.id).exists():
+                content_object.delete()
+                self.delete()
+        elif isinstance(content_object, Donor):
+            if actor.archive_set.filter(id=content_object.archive.id).exists():
+                content_object.delete()
+                self.delete()
+        elif isinstance(content_object, Place):
+            if actor.id == content_object.owner.id:
+                content_object.delete()
+                self.delete()
 
     class Meta:
         constraints = [
