@@ -53,7 +53,7 @@
         </div>
         </form>
     </nav>
-    <ul>
+    <ul id="related-mainstreets">
         {% for mainstreet in mainstreet_links %}
         <li><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}

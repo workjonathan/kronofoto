@@ -26,7 +26,7 @@ class Bounds:
     north: float
     south: float
 
-@icontract.invariant(lambda self: 0 < self.zoom < 35)
+@icontract.invariant(lambda self: 0 <= self.zoom < 35)
 @dataclass
 class PhotoSphereTile:
     x: int
@@ -94,6 +94,8 @@ class PhotoSphereTile:
 
 
 def photosphere_vector_tile(request: HttpRequest, /, *, tour: Optional[int]=None, mainstreet: int, zoom: int, x: int, y: int) -> HttpResponse:
+    if zoom < 0:
+        return HttpResponse("invalid zoom level", status=400)
     return PhotoSphereTile(
         tour=tour,
         mainstreet=mainstreet,

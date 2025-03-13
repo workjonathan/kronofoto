@@ -12,3 +12,10 @@
 
 <h2>{{ object.title }}</h2>
 <div>{{ object.description | markdown }}</div>
+
+<ul hx-swap-oob="innerHTML:#related-mainstreets">
+        {% for mainstreet in mainstreet_links %}
+        <li><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+        {% endfor %}
+</ul>
+

@@ -113,7 +113,7 @@ class NodeData(TypedDict, total=False):
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
-        return ValidPhotoSphereView(request=request, pk=query.cleaned_data['pk']).json_response
+        return ValidPhotoSphereView(request=request, pk=query.cleaned_data['id']).json_response
     else:
         return JsonResponse({}, status=400)
 
@@ -213,11 +213,10 @@ class ValidPhotoSphereView:
     @cached_property
     def all_nearby(self) -> "QuerySet[WithAnnotations[PhotoSpherePair, DistanceAnnotation]]":
         assert self.object.location is not None
-        kwargs = {} if self.object.tour is None else {'photosphere__tour__id': self.object.tour.id}
+        kwargs : Dict[str, Any] = {'photosphere__location__within': self.object.location.buffer(0.003)} if self.object.tour is None else {'photosphere__tour__id': self.object.tour.id}
         return PhotoSpherePair.objects.filter(
             photosphere__mainstreetset__id=OuterRef("id"),
             photosphere__is_published=True,
-            photosphere__location__within=self.object.location.buffer(0.003),
             photo__year__isnull=False,
             photo__is_published=True,
             **kwargs,
