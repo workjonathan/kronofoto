@@ -1,5 +1,5 @@
 from fortepan_us.kronofoto.views.photosphere import ValidPhotoSphereView
-from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour, Photo, Archive, Category, PhotoSpherePair, Donor, PhotoSphereInfo
+from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour, Photo, Archive, Category, PhotoSpherePair, Donor, PhotoSphereInfo, TourSetDescription
 from hypothesis import given, strategies as st, provisional
 from django.test import RequestFactory
 from string import printable
@@ -123,6 +123,7 @@ def test_photosphere_json_response(view, object, photo, links, related_photosphe
 
 
 @given(
+    tourset=st.one_of(st.none(), st.builds(TourSetDescription, description=st.text(printable, max_size=10))),
     view=st.builds(
         ValidPhotoSphereView,
         pk=st.integers(),
@@ -139,11 +140,12 @@ def test_photosphere_json_response(view, object, photo, links, related_photosphe
     domain=st.text(printable, min_size=1).map(lambda s: s + ".com"),
     nearby_mainstreets=st.lists(st.builds(Mock, closest=st.integers(min_value=1))),
 )
-def test_photosphere_response(view, object, domain, photo, nearby_mainstreets, nearby_photo):
+def test_photosphere_response(view, object, domain, photo, nearby_mainstreets, nearby_photo, tourset):
     view.object = object
     view.domain = domain
     view.nearby_mainstreets = nearby_mainstreets
     view.photo = photo
     view.nearby_photo = nearby_photo
     view.photosphere_pair = lambda id: Mock(**{"photosphere.get_absolute_url()": "https://www.example.com"})
+    view.tourset = tourset
     view.response

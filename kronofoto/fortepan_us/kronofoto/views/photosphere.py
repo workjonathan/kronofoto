@@ -13,7 +13,7 @@ from django.views.generic.list import ListView
 from .basetemplate import BaseTemplateMixin
 from fortepan_us.kronofoto.models.photo import BackwardList, ForwardList, Photo, ImageData, CarouselList
 from typing import Any, Dict, Optional, Union, List, TypedDict, Tuple, Iterable
-from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo
+from fortepan_us.kronofoto.models.photosphere import PhotoSphere, PhotoSpherePair, MainStreetSet, PhotoSphereInfo, TourSetDescription
 from fortepan_us.kronofoto.templatetags.widgets import image_url
 from djgeojson.views import GeoJSONLayerView # type: ignore
 from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
@@ -28,6 +28,7 @@ from django.utils.html import format_html, format_html_join, html_safe
 from django.templatetags.static import static
 import icontract
 import json
+from django.core.exceptions import ObjectDoesNotExist
 
 class DataParams(forms.Form):
     id = forms.IntegerField(required=True)
@@ -338,6 +339,15 @@ class ValidPhotoSphereView:
             node["thumbnail"] = self.image_url(photo=photo, height=500, width=500)
         return JsonResponse(node)
 
+    @cached_property
+    def tourset(self) -> Optional[TourSetDescription]:
+        assert self.object.tour
+        assert self.object.mainstreetset
+        try:
+            return self.object.tour.toursetdescription_set.get(set_id=self.object.mainstreetset.id)
+        except ObjectDoesNotExist:
+            return None
+
     @property
     @icontract.ensure(lambda self, result: getattr(result, "context_data", None) is None or result.context_data['object'].tour is None or str(result.context_data['object'].tour.id) in result.context_data['mainstreet_tiles'])
     def response(self) -> HttpResponse:
@@ -361,6 +371,11 @@ class ValidPhotoSphereView:
         context['object'] = object
         context['hx_request'] = archiverequest.is_hx_request
         context['mainstreet_tiles'] = tile_set
+        context['mainstreet_description'] = object.mainstreetset.description
+        if object.tour is not None:
+            tourset = self.tourset
+            if tourset:
+                context['mainstreet_description'] = tourset.description
 
         context['thumbnails_form'] = MainstreetThumbnails(initial={
             "mainstreet": object.mainstreetset.id,

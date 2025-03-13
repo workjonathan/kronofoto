@@ -34,7 +34,7 @@
         <button class="photosphere__set_description_button" x-on:click="open = !open"></button>
         <div class="photosphere__set_description_text" x-show="open">
             {% if object.mainstreetset.name %}<h3>{{ object.mainstreetset.name }}</h3>{% endif %}
-            {% if object.mainstreetset.description %}<div>{{ object.mainstreetset.description }}</div>{% endif %}
+            {% if mainstreet_description %}<div>{{ mainstreet_description }}</div>{% endif %}
         </div>
 
     </div>
