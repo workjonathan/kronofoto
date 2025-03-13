@@ -115,47 +115,7 @@ class NodeData(TypedDict, total=False):
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
-        info_template = get_template(template_name="kronofoto/components/mainstreet-info.html")
-        object = get_object_or_404(PhotoSphere.objects.all(), pk=query.cleaned_data['id'], is_published=True)
-        links: List[LinksDict] = [
-            {
-                "nodeId": str(link.id),
-                "gps": (link.location.x, link.location.y),
-            }
-            for link in object.links.all() if link.location is not None
-        ]
-        kwargs = {} if object.tour is None else {'photosphere__tour__id': object.tour.id}
-        node: NodeData = {
-            "id": str(object.id),
-            "panorama": object.image.url,
-            "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
-            "gps": [object.location.x, object.location.y], # type: ignore
-            "links": links,
-            'data': {
-                "photos": [dict(
-                    url=image_url(id=position.photo.id, path=position.photo.original.name, height=1400),
-                    height=position.photo.h700.height if position.photo.h700 else 700,
-                    width=position.photo.h700.width if position.photo.h700 else 400,
-                    azimuth=position.azimuth+object.heading-90,
-                    inclination=position.inclination,
-                    distance=position.distance,
-                    id=position.photo.id,
-                    name=position.photo.accession_number,
-                    href=position.photo.get_absolute_url(),
-                ) for position in PhotoSpherePair.objects.filter(photosphere__pk=object.pk, photosphere__is_published=True, **kwargs)],
-                "infoboxes": [{
-                    "id": info.id,
-                    "yaw": info.yaw+(90-object.heading)/180*3.1416,
-                    "pitch": info.pitch,
-                    "image": static("kronofoto/images/info-icon.png"),
-                    "content": info_template.render(context={"info": info}),
-                } for info in object.photosphereinfo_set.all()]
-            },
-        }
-        if object.photos.all().exists():
-            photo = object.photos.all()[0]
-            node["thumbnail"] = image_url(id=photo.id, path=photo.original.name, height=500, width=500)
-        return JsonResponse(node)
+        return ValidPhotoSphereView(request=request, pk=query.cleaned_data['id']).json_response
     else:
         return JsonResponse({}, status=400)
 
@@ -246,7 +206,7 @@ class ValidPhotoSphereView:
 
     @cached_property
     def object(self) -> PhotoSphere:
-        return get_object_or_404(PhotoSphere.objects.all(), pk=self.pk, is_published=True)
+        return get_object_or_404(PhotoSphere.objects.all(), pk=self.pk, is_published=True, image__isnull=False)
 
     @cached_property
     def domain(self) -> str:
@@ -255,11 +215,10 @@ class ValidPhotoSphereView:
     @cached_property
     def all_nearby(self) -> "QuerySet[WithAnnotations[PhotoSpherePair, DistanceAnnotation]]":
         assert self.object.location is not None
-        kwargs = {} if self.object.tour is None else {'photosphere__tour__id': self.object.tour.id}
+        kwargs : Dict[str, Any] = {'photosphere__location__within': self.object.location.buffer(0.003)} if self.object.tour is None else {'photosphere__tour__id': self.object.tour.id}
         return PhotoSpherePair.objects.filter(
             photosphere__mainstreetset__id=OuterRef("id"),
             photosphere__is_published=True,
-            photosphere__location__within=self.object.location.buffer(0.003),
             photo__year__isnull=False,
             photo__is_published=True,
             **kwargs,
@@ -289,11 +248,95 @@ class ValidPhotoSphereView:
     def photo(self) -> Photo | None:
         if self.object.photos.exists():
             photo = self.object.photos.all()[0]
-        elif self.nearby.exists():
-            photo = self.nearby[0].photo
         else:
             photo = None
         return photo
+
+    @cached_property
+    def nearby_photo(self) -> Photo | None:
+        if self.nearby.exists():
+            return self.nearby[0].photo
+        else:
+            return None
+
+    def photosphere_pair(self, id: int) -> PhotoSpherePair:
+        return PhotoSpherePair.objects.get(id=id)
+
+    @cached_property
+    def links(self) -> Iterable[PhotoSphere]:
+        return self.object.links.all()
+
+    @cached_property
+    def related_photosphere_pairs(self) -> Iterable[PhotoSpherePair]:
+        object = self.object
+        kwargs = {} if object.tour is None else {'photosphere__tour__id': object.tour.id}
+        return PhotoSpherePair.objects.filter(photosphere__pk=object.pk, photosphere__is_published=True, **kwargs)
+
+    @cached_property
+    def infoboxes(self) -> Iterable[PhotoSphereInfo]:
+        return self.object.photosphereinfo_set.all()
+
+    def image_url(self, photo: Photo, height: int, width: Optional[int]=None) -> str:
+        return image_url(id=photo.id, path=photo.original.name, height=height, width=width)
+
+    def dimensions(self, photo:Photo) -> Tuple[int, int]:
+        "Returns a (width, height) tuple"
+        imgdata = photo.h700
+        return (imgdata.width, imgdata.height) if imgdata else (700, 400)
+
+
+    def related_photo_data(self, position: PhotoSpherePair, heading: float) -> ImagePlaneDict:
+        width, height = self.dimensions(photo=position.photo)
+        return dict(
+            url=self.image_url(photo=position.photo, height=1400),
+            height=height,
+            width=width,
+            azimuth=position.azimuth+heading-90,
+            inclination=position.inclination,
+            distance=position.distance,
+            id=position.photo.id,
+            name=position.photo.accession_number,
+            href=self.photo_url(position.photo),
+        )
+
+    def photo_url(self, photo: Photo) -> str:
+        return photo.get_absolute_url()
+
+    @property
+    def json_response(self) -> JsonResponse:
+        info_template = get_template(template_name="kronofoto/components/mainstreet-info.html")
+        object = self.object
+        links: List[LinksDict] = [
+            {
+                "nodeId": str(link.id),
+                "gps": (link.location.x, link.location.y),
+            }
+            for link in self.links if link.location is not None
+        ]
+        node: NodeData = {
+            "id": str(object.id),
+            "panorama": object.image.url,
+            "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
+            "gps": (object.location.x, object.location.y) if object.location else (0, 0),
+            "links": links,
+            'data': {
+                "photos": [
+                    self.related_photo_data(position=position, heading=object.heading)
+                    for position in self.related_photosphere_pairs
+                ],
+                "infoboxes": [{
+                    "id": info.id,
+                    "yaw": info.yaw+(90-object.heading)/180*3.1416,
+                    "pitch": info.pitch,
+                    "image": static("kronofoto/images/info-icon.png"),
+                    "content": info_template.render(context={"info": info}),
+                } for info in self.infoboxes]
+            },
+        }
+        if self.photo:
+            photo = self.photo
+            node["thumbnail"] = self.image_url(photo=photo, height=500, width=500)
+        return JsonResponse(node)
 
     @property
     @icontract.ensure(lambda self, result: getattr(result, "context_data", None) is None or result.context_data['object'].tour is None or str(result.context_data['object'].tour.id) in result.context_data['mainstreet_tiles'])
@@ -327,11 +370,11 @@ class ValidPhotoSphereView:
         context['mainstreet_links'] = [
             {
                 "set": set,
-                "photosphere_href": PhotoSpherePair.objects.get(id=set.closest).photosphere.get_absolute_url(),
+                "photosphere_href": self.photosphere_pair(id=set.closest).photosphere.get_absolute_url(),
             }
             for set in self.nearby_mainstreets
         ]
-        photo = self.photo
+        photo = self.photo or self.nearby_photo
         nearby = self.nearby
         if photo:
             setattr(photo, "active", True)

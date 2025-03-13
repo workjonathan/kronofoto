@@ -67,7 +67,7 @@
         </div>
         </form>
     </nav>
-    <ul class="button-list button-list--horizontal">
+    <ul class="button-list button-list--horizontal" id="related-mainstreets">
         {% for mainstreet in mainstreet_links %}
         <li><a class="year-button active" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}
