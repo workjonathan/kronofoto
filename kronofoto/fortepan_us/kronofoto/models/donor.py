@@ -6,10 +6,10 @@ from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
-from .archive import Archive
+from .archive import Archive, RemoteActor
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict, Literal, TYPE_CHECKING
-from .activity_dicts import ActivitypubContact, DonorValue
+#from .activity_dicts import ActivitypubContact, DonorValue
 
 
 class DonorQuerySet(models.QuerySet):
@@ -35,21 +35,15 @@ class Donor(Collectible, models.Model):
         ordering = ("last_name", "first_name")
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
-    def reconcile(self, object: ActivitypubContact | DonorValue) -> None:
-        if isinstance(object, DonorValue):
-            self.first_name = object.firstName
-            self.last_name = object.lastName
-        else:
-            self.first_name = object["firstName"]
-            self.last_name = object["lastName"]
-        self.save()
-
     def display_format(self) -> str:
         return (
             "{first} {last}".format(first=self.first_name, last=self.last_name)
             if self.first_name
             else self.last_name
         )
+
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def __str__(self) -> str:
         if self.first_name or self.last_name:

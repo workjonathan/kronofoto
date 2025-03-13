@@ -100,15 +100,16 @@ def test_update_place(location, actor, place, place_type, parent):
     obj, created = upserter.result
 
 
+from fortepan_us.kronofoto.models.activity_dicts import DonorValue
 
 class TestDonorReconcile(TestCase):
     @hsettings(max_examples=10)
-    @given(st.from_type(ActivitypubContact), archives())
+    @given(st.from_type(DonorValue), archives())
     def test_donor_reconcile(self, data, archive):
         donor = models.Donor()
         donor.archive = archive
-        donor.reconcile(data)
-        assert models.Donor.objects.filter(first_name=data['firstName'], last_name=data['lastName']).exists()
+        data.reconcile(donor)
+        assert models.Donor.objects.filter(first_name=data.firstName, last_name=data.lastName).exists()
 
 
 def test_decode_signature():
@@ -236,27 +237,27 @@ def test_ldid_get_or_create_ld_donor(ldid, remote_data, force_id_match, archive,
 
 class TestGetOrCreateObject(TestCase):
     def test_resolved_donor_can_be_none(self):
-        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
         archive = models.Archive.objects.create(slug="asdf")
         donor = models.Donor.objects.create(archive=archive)
         url = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": "asdf", "pk": donor.id + 1}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_donor is None
 
     def test_resolved_donor_can_be_something(self):
-        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
         archive = models.Archive.objects.create(slug="asdf")
         donor = models.Donor.objects.create(archive=archive)
         url = reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={"short_name": "asdf", "pk": donor.id}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_donor is not None
 
     def test_resolved_place_can_be_none(self):
-        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
         place = models.Place.objects.create(place_type=models.PlaceType.objects.create())
         url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id+1}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is None
 
     def test_resolved_place_can_be_something(self):
-        from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+        from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
         place = models.Place.objects.create(place_type=models.PlaceType.objects.create())
         url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is not None

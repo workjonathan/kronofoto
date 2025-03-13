@@ -17,7 +17,6 @@ from django.contrib.sites.models import Site
 import requests
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load, ValidationError
 import icontract
-from . import activity_dicts, activity_schema
 from django.db import models
 import requests
 from urllib.parse import urlparse
@@ -31,96 +30,12 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from fortepan_us.kronofoto.reverse import reverse, resolve
-from . import activity_dicts
-from . import activity_schema
 from marshmallow.exceptions import ValidationError
 import icontract
 
 class InvalidArchive(Exception):
     pass
 
-class ActorSchema(activity_schema.ObjectSchema):
-    type = fields.Constant("Organization")
-    id = fields.Url(relative=True, required=True)
-    name = fields.Str(required=True)
-    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
-
-    inbox = fields.Url(relative=True)
-    outbox = fields.Url(relative=True)
-    places = fields.Url(relative=True)
-
-class ArchiveSchema(activity_schema.ObjectSchema):
-    type = fields.Constant("Organization")
-    id = fields.Url(relative=True, required=True)
-    name = fields.Str(required=True)
-    slug = fields.Str(required=True)
-    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
-
-    inbox = fields.Url(relative=True)
-    outbox = fields.Url(relative=True)
-    contributors = fields.Url(relative=True)
-    photos = fields.Url(relative=True)
-    following = fields.Url(relative=True)
-    followers = fields.Url(relative=True)
-
-    @pre_dump
-    def extract_fields_from_object(
-        self, object: "Archive", **kwargs: Any
-    ) -> activity_dicts.ArchiveDict:
-        return {
-            "id": activity_dicts.str_to_ldidurl(
-                reverse(
-                    "kronofoto:activitypub_data:archives:actor",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "name": object.name,
-            "slug": object.slug,
-            "inbox": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:inbox",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "outbox": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:outbox",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "contributors": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:contributors:page",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "photos": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:photos:page",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "followers": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:followers",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "following": activity_dicts.str_to_url(
-                reverse(
-                    "kronofoto:activitypub_data:archives:following",
-                    kwargs={"short_name": object.slug},
-                )
-            ),
-            "publicKey": {
-                "id": object.keyId,
-                "owner": reverse(
-                    "kronofoto:activitypub_data:archives:actor",
-                    kwargs={"short_name": object.slug},
-                ),
-                "publicKeyPem": object.guaranteed_public_key(),  # type: ignore
-            },
-        }
 
 
 class ServiceActor(models.Model):
@@ -212,6 +127,7 @@ class RemoteActorGetOrCreate:
 
     def parse_json(self, data: Dict[str, Any]) -> Dict[str, Any] | None:
         try:
+            from fortepan_us.kronofoto.models.activity_schema import ActorSchema
             return ActorSchema().load(data)
         except ValidationError as e:
             print(e, data)
@@ -355,13 +271,15 @@ class ArchiveQuerySet(models.QuerySet):
         or (result[0].actor is not None and result[0].actor.profile == profile)
     )
     def create_remote_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
-        data: activity_dicts.ArchiveDict = requests.get(
+        from fortepan_us.kronofoto.models.activity_dicts import ArchiveDict
+        data: ArchiveDict = requests.get(
             profile,
             headers={
                 "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             },
         ).json()
         try:
+            from fortepan_us.kronofoto.models.activity_schema import ArchiveSchema
             data = ArchiveSchema().load(data)
             if data["id"] != profile:
                 return None, False

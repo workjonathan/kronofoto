@@ -61,6 +61,9 @@ class Place(MPTTModel):
         max_length=128, null=False, default=""
     )
 
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.owner.id == actor.id
+
     def get_absolute_url(
         self,
         kwargs: Optional[Dict[str, Any]] = None,

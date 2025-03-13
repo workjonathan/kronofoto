@@ -41,7 +41,7 @@ from functools import reduce
 from fortepan_us.kronofoto.storage import OverwriteStorage
 from .donor import Donor, DonorQuerySet
 from .tag import Tag, TagQuerySet
-from .archive import Archive
+from .archive import Archive, RemoteActor
 from .category import Category
 from .place import Place
 import requests
@@ -67,7 +67,7 @@ from fortepan_us.kronofoto.imageutil import ImageSigner
 from itertools import chain, cycle, islice
 from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
 from typing_extensions import Self
-from .activity_dicts import ActivitypubImage, PhotoValue
+#from .activity_dicts import ActivitypubImage, PhotoValue
 
 EMPTY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs) - 1)
@@ -579,32 +579,32 @@ class Photo(PhotoBase):
             ),
         )
 
-    def reconcile(self, object: ActivitypubImage | PhotoValue, donor: Donor, place: Place | None = None) -> None:
-        if isinstance(object, PhotoValue):
-            self.caption = object.content
-            remote_image = object.url
-            self.category, _ = Category.objects.get_or_create(
-                slug=object.category.slug,
-                defaults={"name": object.category.name},
-            )
-            self.year = object.year
-            self.circa = object.circa
-            self.is_published = object.is_published
-            self.donor = donor
-            self.place = place
-        else:
-            self.caption = object["content"]
-            self.donor = donor
-            self.year = object["year"]
-            self.circa = object["circa"]
-            self.is_published = object["is_published"]
-            self.donor = donor
-            self.remote_image = object["url"]
-            self.category, _ = Category.objects.get_or_create(
-                slug=object["category"]["slug"],
-                defaults={"name": object["category"]["name"]},
-            )
-        self.save()
+    #def reconcile(self, object: ActivitypubImage | PhotoValue, donor: Donor, place: Place | None = None) -> None:
+    #    if isinstance(object, PhotoValue):
+    #        self.caption = object.content
+    #        remote_image = object.url
+    #        self.category, _ = Category.objects.get_or_create(
+    #            slug=object.category.slug,
+    #            defaults={"name": object.category.name},
+    #        )
+    #        self.year = object.year
+    #        self.circa = object.circa
+    #        self.is_published = object.is_published
+    #        self.donor = donor
+    #        self.place = place
+    #    else:
+    #        self.caption = object["content"]
+    #        self.donor = donor
+    #        self.year = object["year"]
+    #        self.circa = object["circa"]
+    #        self.is_published = object["is_published"]
+    #        self.donor = donor
+    #        self.remote_image = object["url"]
+    #        self.category, _ = Category.objects.get_or_create(
+    #            slug=object["category"]["slug"],
+    #            defaults={"name": object["category"]["name"]},
+    #        )
+    #    self.save()
 
     @property
     def activity_dict(self) -> Dict[str, Any]:
@@ -623,6 +623,9 @@ class Photo(PhotoBase):
             "content": self.caption,
             "url": self.original.url,
         }
+
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def page_number(self) -> Dict[str, Optional[int]]:
         return {"year:gte": self.year, "id:gt": self.id - 1}

@@ -16,7 +16,7 @@ from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteAc
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.models import activity_dicts
 from fortepan_us.kronofoto.models.activity_schema import ObjectSchema, PlaceSchema, Contact, Image, ActivitySchema, Collection, CollectionPage, ActorCollectionSchema
-from fortepan_us.kronofoto.models.archive import ArchiveSchema
+from fortepan_us.kronofoto.models.activity_schema import ArchiveSchema
 import json
 import parsy # type: ignore
 from django.core.cache import cache
@@ -135,11 +135,7 @@ def service_place(request: HttpRequest, pk: int) -> HttpResponse:
     place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)
     return JsonLDResponse(PlaceSchema().dump(place))
 
-class JsonError(Exception):
-    def __init__(self, message: str, status: int):
-        self.message = message
-        self.status = status
-        super().__init__(f'{status}: {message}')
+from fortepan_us.kronofoto.models.activity_dicts import JsonError
 
 @dataclass
 class ServiceInboxResponder:
@@ -181,6 +177,7 @@ class ServiceInboxResponder:
     def post_response(self) -> HttpResponse:
         try:
             deserialized = self.parsed_data()
+            return JsonLDResponse({"status": deserialized.handle(self.actor)})
             if isinstance(deserialized, activity_dicts.AcceptValue):
                 followobject = deserialized.object
                 remoteactor = RemoteActor.objects.get_or_create(profile=followobject.actor)[0]
@@ -199,10 +196,12 @@ class ServiceInboxResponder:
                     object = deserialized.object
                     if isinstance(object, activity_dicts.PhotoValue) or isinstance(object, activity_dicts.DonorValue):
                         archive = Archive.objects.get(actor=self.actor)
-                        obj, created = models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
+                        created = True # hack to fix compilation errors while refactoring
+                        #obj, created = models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
                         return JsonLDResponse({"status": "created" if created else "updated"})
                     else:
-                        obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=self.actor, object=object)
+                        created = True # hack to fix compilation errors while refactoring
+                        #obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=self.actor, object=object)
                         return JsonLDResponse({"status": "created" if created else "updated"})
                 elif isinstance(deserialized, activity_dicts.DeleteValue):
                     models.LdId.objects.get(ld_id=deserialized.object).delete_if_can(self.actor)
