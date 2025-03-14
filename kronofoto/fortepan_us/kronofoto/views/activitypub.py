@@ -454,7 +454,7 @@ class ArchiveActor:
         @staticmethod
         def data(request: HttpRequest, short_name: str, pk: int) -> HttpResponse:
             donor : Donor = get_object_or_404(Donor.objects.all(), pk=pk, archive__slug=short_name)
-            object_data = Contact().dump(donor)
+            object_data = Contact().dump(activity_dicts.DonorValue.from_donor(donor))
             return JsonLDResponse(object_data)
 
     @register("photos", data_urls)
@@ -482,5 +482,5 @@ class ArchiveActor:
         @staticmethod
         def data(request: HttpRequest, short_name: str, pk: int) -> HttpResponse:
             object : Photo = get_object_or_404(Photo.objects.all(), pk=pk, archive__slug=short_name)
-            object_data = Image().dump(object)
+            object_data = Image().dump(activity_dicts.PhotoValue.from_photo(object))
             return JsonLDResponse(object_data)

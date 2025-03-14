@@ -436,6 +436,45 @@ class PhotoValue:
     url: Optional[str] = None
     place: Optional[str] = None
 
+    @staticmethod
+    def from_photo(photo: Photo) -> PhotoValue:
+        donor = None
+        if photo.donor:
+            donor = reverse(
+                "kronofoto:activitypub_data:archives:contributors:detail",
+                kwargs={"short_name": photo.donor.archive.slug, "pk": photo.donor.id},
+            )
+        place = None
+        if photo.place:
+            place = reverse(
+                "kronofoto:activitypub-main-service-places",
+                kwargs={"pk": photo.place.id},
+            )
+        return PhotoValue(
+            id=reverse(
+                "kronofoto:activitypub_data:archives:photos:detail",
+                kwargs={"short_name": photo.archive.slug, "pk": photo.id},
+            ),
+            content=photo.caption,
+            category=CategoryValue(
+                name=photo.category.name,
+                slug=photo.category.slug,
+            ),
+            circa=photo.circa,
+            is_published=photo.is_published,
+            terms=[t.term for t in photo.terms.all()],
+            tags=[t.tag for t in photo.get_accepted_tags()],
+            year=photo.year,
+            contributor=donor,
+            url=photo.original.url,
+            #attributedTo=[
+            #    reverse(
+            #        "kronofoto:activitypub_data:archives:actor",
+            #        kwargs={"short_name": photo.archive.slug},
+            #    )
+            #],
+        )
+
     def upsert(self, actor: Archive) -> str:
         try:
             ldid = LdId.objects.get(ld_id=self.id)
@@ -450,7 +489,7 @@ class PhotoValue:
             else:
                 photo = ldid.content_object
                 if actor.actor is None or not photo.is_owned_by(actor.actor):
-                    raise JsonError("An object with that id is owned by different actor.", status=400)
+                    raise JsonError("An object with that id is owned by different actor.", status=401)
         except LdId.DoesNotExist:
             photo = Photo()
         photo.donor = None
@@ -460,6 +499,7 @@ class PhotoValue:
         photo.is_published = self.is_published
         photo.year = self.year
         photo.remote_image = self.url
+        photo.archive = actor
 
         if self.contributor is not None:
             ldcontributor, created = LdObjectGetOrCreator(ld_id=self.contributor, queryset=LdId.objects.all()).object
@@ -502,6 +542,16 @@ class DonorValue:
     firstName: str
     lastName: str
 
+    @staticmethod
+    def from_donor(donor: Donor) -> DonorValue:
+        return DonorValue(
+            id=donor.ldid(),
+            attributedTo=[donor.archive.ldid()],
+            name=str(donor),
+            firstName=donor.first_name,
+            lastName=donor.last_name,
+        )
+
     def reconcile(self, donor: Donor) -> None:
         donor.first_name = self.firstName
         donor.last_name = self.lastName
@@ -521,9 +571,10 @@ class DonorValue:
             else:
                 obj = ldid.content_object
                 if actor.actor is None or not obj.is_owned_by(actor.actor):
-                    raise JsonError("An object with that id is owned by different actor.", status=400)
+                    raise JsonError("An object with that id is owned by different actor.", status=401)
         except LdId.DoesNotExist:
             obj = Donor()
+        obj.archive = actor
         self.reconcile(obj)
         ct = ContentType.objects.get_for_model(Donor)
         ldid, created = LdId.objects.get_or_create(
@@ -566,34 +617,53 @@ class DeleteValue:
     object: str
 
     def handle(self, actor: RemoteActor) -> str:
-        try:
-            ldid = LdId.objects.get(ld_id=self.id)
-            if not ldid.content_object:
-                ldid.delete()
-                return "deleted"
-            elif hasattr(ldid.content_object, "is_owned_by") and ldid.content_object.is_owned_by(actor):
-                ldid.content_object.delet()
-                ldid.delete()
-                return "deleted"
-        except LdId.DoesNotExist:
-            pass
-        return "not deleted"
+        if actor.app_follows_actor:
+            try:
+                ldid = LdId.objects.get(ld_id=self.object)
+                if not ldid.content_object:
+                    ldid.delete()
+                    return "deleted"
+                elif hasattr(ldid.content_object, "is_owned_by") and ldid.content_object.is_owned_by(actor):
+                    ldid.content_object.delete()
+                    ldid.delete()
+                    return "deleted"
+            except LdId.DoesNotExist:
+                pass
+            return "not deleted"
+        else:
+            raise JsonError("Not following this actor.", status=401)
 
 @dataclass
 class CreateValue:
     id: str
     actor: str
     object: Union[PhotoValue, DonorValue, PlaceValue]
+
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import CreateActivitySchema
+        return CreateActivitySchema().dump(self)
+
     def handle(self, actor: RemoteActor) -> str:
-        return self.object.create(actor)
+        if actor.app_follows_actor:
+            return self.object.create(actor)
+        else:
+            raise JsonError("Not following this actor.", status=401)
 
 @dataclass
 class UpdateValue:
     id: str
     actor: str
     object: Union[PhotoValue, DonorValue, PlaceValue]
+
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import UpdateActivitySchema
+        return UpdateActivitySchema().dump(self)
+
     def handle(self, actor: RemoteActor) -> str:
-        return self.object.update(actor)
+        if actor.app_follows_actor:
+            return self.object.update(actor)
+        else:
+            raise JsonError("Not following this actor.", status=401)
 
 @dataclass
 class FollowValue:
@@ -628,7 +698,7 @@ class AcceptValue:
         for activity in outboxactivities:
             profile = self.profile(activity.body['object'])
             server_domain = urlparse(activity.body['object']).netloc
-            Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
+            Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
             outboxactivities.delete()
             return "created"
         return "not created"

@@ -32,12 +32,28 @@ class PhotoSphereSetData(models.Model):
         return self.name
 
 class PhotoSphereTour(PhotoSphereSetData, models.Model):
-    pass
+    sets = models.ManyToManyField("kronofoto.MainStreetSet", through="kronofoto.TourSetDescription")
 
 
 class MainStreetSet(PhotoSphereSetData, models.Model):
+    tours = models.ManyToManyField("kronofoto.MainStreetSet", through="kronofoto.TourSetDescription")
     def get_absolute_url(self) -> str:
         return reverse("kronofoto:mainstreet-detail", kwargs={"pk": self.pk})
+
+class TourSetDescription(models.Model):
+    tour = models.ForeignKey(PhotoSphereTour, null=False, on_delete=models.CASCADE)
+    set = models.ForeignKey(MainStreetSet, null=False, on_delete=models.CASCADE)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tour", "set"], name="unique_tour_set"
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["tour", "set"]),
+        ]
 
 
 class PhotoSphere(models.Model):

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from marshmallow import Schema, fields, pre_dump, post_load, pre_load, EXCLUDE
+from marshmallow import Schema, fields, pre_dump, post_load, pre_load, EXCLUDE, post_dump
 from marshmallow import validate
 from marshmallow.exceptions import ValidationError
 from typing import Any, Dict, Union, TypeVar, List
@@ -188,7 +188,7 @@ class PlaceSchema(Schema):
             geom=data.get('geom'),
         )
 
-    @pre_dump
+    #@pre_dump
     def extract_fields_from_object(
         self, object: "models.Place", **kwargs: Any
     ) -> Dict[str, Any]:
@@ -240,9 +240,15 @@ class Image(Schema):
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
     ) -> activity_dicts.PhotoValue:
-        return activity_dicts.PhotoValue(**data)
+        return activity_dicts.PhotoValue(**{
+            k: v for (k, v) in data.items() if k not in ['type']
+        })
 
-    @pre_dump
+    @post_dump
+    def remove_nones(self, data: Dict[str, Any], many: bool, **kwargs: Any) -> Dict[str, Any]:
+        return {k: v for (k,v) in data.items() if v is not None}
+
+    #@pre_dump
     def extract_fields_from_object(
         self, object: "models.Photo", **kwargs: Any
     ) -> Dict[str, Any]:
@@ -275,7 +281,7 @@ class Image(Schema):
         if object.donor:
             data["contributor"] = reverse(
                 "kronofoto:activitypub_data:archives:contributors:detail",
-                kwargs={"short_name": object.archive.slug, "pk": object.donor.id},
+                kwargs={"short_name": object.donor.archive.slug, "pk": object.donor.id},
             )
         return data
 
@@ -292,9 +298,11 @@ class Contact(Schema):
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
     ) -> activity_dicts.DonorValue:
-        return activity_dicts.DonorValue(**data)
+        return activity_dicts.DonorValue(**{
+            k: v for (k, v) in data.items() if k not in ["type"]
+        })
 
-    @pre_dump
+    #@pre_dump
     def extract_fields_from_object(
         self, object: "models.Donor", **kwargs: Any
     ) -> activity_dicts.ActivitypubContact:
@@ -344,17 +352,18 @@ class PageItem(fields.Field):
 class KronofotoObjectField(fields.Field):
     def _serialize(
         self,
-        value: Union["models.Donor", "models.Photo"],
+        value: Any,
         attr: Any,
         obj: Any,
         **kwargs: Any
     ) -> Dict[str, Any]:
-        if isinstance(value, models.Donor):
-            return Contact().dump(value)
-        elif isinstance(value, models.Photo):
+        if isinstance(value, activity_dicts.PhotoValue):
             return Image().dump(value)
-        else:
-            return value
+        elif isinstance(value, activity_dicts.DonorValue):
+            return Contact().dump(value)
+        elif isinstance(value, activity_dicts.PlaceValue):
+            return PlaceSchema().dump(value)
+        raise ValueError(value)
 
     def _deserialize(
         self, value: Dict[str, Any], *args: Any, **kwargs: Any
@@ -363,7 +372,7 @@ class KronofotoObjectField(fields.Field):
             return Image(context=self.context).load(value)
         if value["type"] in ["Contact"]:
             return Contact(context=self.context).load(value)
-        raise ValueError(value["type"])
+        raise ValidationError(value["type"])
 
 class ObjectOrLinkField(fields.Field):
     def _serialize(
@@ -552,6 +561,7 @@ class ActivitySchema:
         return None
 
     def dump(self, thing: Any) -> Dict[str, Any] | None:
+        print(thing)
         for schema in self.schemas:
             try:
                 return schema.dump(thing)

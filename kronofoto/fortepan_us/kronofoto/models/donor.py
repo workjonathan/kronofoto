@@ -35,6 +35,12 @@ class Donor(Collectible, models.Model):
         ordering = ("last_name", "first_name")
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
+    def ldid(self) -> str:
+        return reverse(
+            "kronofoto:activitypub_data:archives:contributors:detail",
+            kwargs={"short_name": self.archive.slug, "pk": self.id},
+        )
+
     def display_format(self) -> str:
         return (
             "{first} {last}".format(first=self.first_name, last=self.last_name)

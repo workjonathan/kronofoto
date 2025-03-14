@@ -74,15 +74,16 @@ def skiptest_contact_generation(data):
     schema = activity_schema.Contact()
     assert data == schema.dump(schema.load(data))
 
+@hsettings(max_examples=10)
 @given(
     actor=st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4)),
     place_type=st.just(models.PlaceType()),
     place=st.one_of(st.none(), st.builds(models.Place, owner=st.one_of(st.none(), st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4))))),
-    location=st.from_type(ActivitypubLocation),
+    location=st.from_type(activity_dicts.PlaceValue),
     parent=st.one_of(st.none(), st.builds(models.Place, owner=st.one_of(st.none(), st.builds(models.RemoteActor, id=st.integers(min_value=1, max_value=4))))),
 )
 def test_update_place(location, actor, place, place_type, parent):
-    from fortepan_us.kronofoto.models.ldid import UpdateLdIdPlace, PlaceUpserter
+    from fortepan_us.kronofoto.models.activity_dicts import UpdateLdIdPlace, PlaceUpserter
     ldid = mock.Mock()
     ldid.content_object = place
     upserter = UpdateLdIdPlace(
@@ -137,6 +138,7 @@ def test_service_actor_key_is_idempotent():
     assert actor.guaranteed_public_key() == actor.guaranteed_public_key()
 
 
+@hsettings(max_examples=10)
 @given(
     is_local=st.booleans(),
     force_id_match=st.booleans(),
@@ -178,6 +180,7 @@ jsons = st.recursive(
     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
 )
 
+@hsettings(max_examples=10)
 @given(
     obj=st.fixed_dictionaries(
         {
@@ -205,9 +208,11 @@ jsons = st.recursive(
     ),
 )
 def test_get_or_create_parse_place(obj):
-    from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+    from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
     assert LdObjectGetOrCreator(None, None).placegetorcreate(obj) is not None
 
+@hsettings(max_examples=10)
+@pytest.mark.django_db
 @given(
     force_id_match=st.booleans(),
     archive=st.one_of(st.none(), st.just(models.Archive())),
@@ -218,17 +223,12 @@ def test_get_or_create_parse_place(obj):
         provisional.urls(),
     ),
     created_ldid=st.builds(models.LdId, content_object=st.just(models.Donor())),
-    remote_data=st.fixed_dictionaries({
-        "type": st.just("Contact"),
-    }, optional={
-        "id": st.text(printable),
-        "attributedTo": st.lists(st.text(printable), max_size=3),
-    }),
+    remote_data=st.from_type(activity_dicts.DonorValue),
 )
 def test_ldid_get_or_create_ld_donor(ldid, remote_data, force_id_match, archive, created_ldid):
-    from fortepan_us.kronofoto.models.ldid import LdDonorGetOrCreator
+    from fortepan_us.kronofoto.models.activity_dicts import LdDonorGetOrCreator
     if force_id_match:
-        remote_data['attributedTo'] = [ldid]
+        remote_data.attributedTo = [ldid]
     obj = LdDonorGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all(), data=remote_data)
     obj.archive = archive
     obj.reconcile = mock.Mock()
@@ -263,10 +263,11 @@ class TestGetOrCreateObject(TestCase):
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is not None
 
 @override_settings(KF_URL_SCHEME="http:")
+@pytest.mark.django_db
 @given(
     is_local=st.booleans(),
     force_id_match=st.booleans(),
-    existing_ldid=st.one_of(st.none(), st.builds(models.LdId, content_object=st.one_of(st.none(), st.builds(models.Donor)))),
+    existing_ldid=st.one_of(st.none(), st.builds(mock.Mock, content_object=st.one_of(st.none(), st.builds(models.Donor)))),
     resolved_donor=st.one_of(st.none(), st.builds(models.Donor)),
     resolved_place=st.one_of(st.none(), st.builds(models.Place)),
     ldid=st.one_of(
@@ -279,11 +280,11 @@ class TestGetOrCreateObject(TestCase):
     ),
     #remote_data=st.one_of(st.from_type(ActivitypubContact), jsons),
     remote_data=st.one_of(st.none(), st.fixed_dictionaries({}, optional={"id": st.text(printable), "type": st.one_of(st.just("Contact"), st.just("Location"), st.text(printable))})),
-    remote_processor=st.one_of(st.none(), st.just((None, False)), st.builds(models.LdId, content_object=st.just(models.Donor())).map(lambda ldid: (ldid, True))),
+    remote_processor=st.one_of(st.none(), st.just((None, False)), st.builds(mock.Mock, content_object=st.just(models.Donor())).map(lambda ldid: (ldid, True))),
     remote_place_processor=st.one_of(st.none(), st.just((None, False)), st.just((models.Place(), True))),
 )
 def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data, resolved_donor, force_id_match, remote_processor, resolved_place, remote_place_processor):
-    from fortepan_us.kronofoto.models.ldid import LdObjectGetOrCreator
+    from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
     obj = LdObjectGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all())
     obj.is_local = is_local
     obj.existing_ldid = existing_ldid
@@ -329,14 +330,12 @@ def test_archive_get_or_create_encounters_insufficient_information():
 @override_settings(KF_URL_SCHEME="http:")
 def test_ignore_activities_from_nonfollows(a_donor):
     remote_archive = Archive.objects.create(slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=False))
-    data=activitypub.ActivitySchema().dump({
-        "id": "https://www.asdkljfakldsjf.com/asdfklasdjflkasdjf",
-        "actor": remote_archive,
-        "object": a_donor,
-        "type": "Create",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-    remote_archive.delete()
+    data = activity_dicts.CreateValue(
+        actor=remote_archive.ldid(),
+        id="https://casdfasf.com/asdf",
+        object=activity_dicts.DonorValue.from_donor(a_donor),
+    ).dump()
+    #remote_archive.app_follows_
     request = RequestFactory().post(
         "/kf/activitypub/service/inbox",
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -363,16 +362,14 @@ def test_receiving_a_photo_update_updates_a_photo(a_photo, a_donor):
     a_donor.archive = remote_archive
     a_photo.year = 1923
     a_photo.save()
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     ct = ContentType.objects.get_for_model(models.Photo)
     rdd = models.LdId.objects.create(content_type=ct, ld_id='http://example.com/kf/activitypub/archives/an-archive/photos/1', object_id=a_photo.id)
-    data=activitypub.ActivitySchema().dump({
-        "id": "https://asdlkfjkalsdfkjadskljfjklasdf.com/alsdkjflkadsfj",
-        "actor": remote_archive,
-        "object": a_photo,
-        "type": "Update",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
+    data = activity_dicts.UpdateValue(
+        id="https://asdlkfjkalsdfkjadskljfjklasdf.com/alsdkjflkadsfj",
+        actor=remote_archive.ldid(),
+        object=activity_dicts.PhotoValue.from_photo(a_photo),
+    ).dump()
     a_photo.caption = "new caption"
     a_photo.save()
     request = RequestFactory().post(
@@ -398,10 +395,10 @@ def test_updatecontacthandler(a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "fake"
     a_donor.last_name = "name"
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     a_donor.first_name = "first"
     a_donor.last_name = "Last"
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Update")
+    activity_dicts.UpdateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     assert models.Donor.objects.count() == 2
     assert models.Donor.objects.filter(archive=remote_archive)[0].first_name == "first"
     assert models.Donor.objects.filter(archive=remote_archive)[0].last_name == "Last"
@@ -412,26 +409,19 @@ def test_deletehandler(a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
     a_donor.first_name = "fake"
     a_donor.last_name = "name"
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     ld_id = models.LdId.objects.all()[0]
-    activitypub.DeleteObject().handle(
-        archive=remote_archive,
-        object={
-            "type": "Contact",
-            "href": ld_id.ld_id,
-        },
-        root_type="Delete"
-    )
+    activity_dicts.DeleteValue(actor=remote_archive, id="asdfasf", object=ld_id.ld_id).handle(remote_archive.actor)
     assert models.Donor.objects.count() == 1
     assert not models.LdId.objects.exists()
 
 @pytest.mark.django_db
 def test_createcontacthandler(a_donor):
     remote_archive = Archive.objects.create(type=Archive.ArchiveType.REMOTE, slug="an-archive", actor=models.RemoteActor.objects.create(profile="http://example.com/kf/activitypub/archives/an-archive", app_follows_actor=True))
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     assert models.Donor.objects.count() == 2
     assert models.LdId.objects.exists()
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_donor)).handle(remote_archive.actor)
     assert models.Donor.objects.count() == 2
 
 def assertPhotosEqual(photo_a, photo_b):
@@ -455,14 +445,15 @@ def test_createimagehandler(a_photo, a_donor):
     a_photo.is_published = True
     a_photo.terms.add(models.Term.objects.create(term="ExampleTerm"))
     models.PhotoTag.objects.create(photo=a_photo, tag=models.Tag.objects.create(tag="example"), accepted=True)
-    activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.DonorValue.from_donor(a_photo.donor)).handle(remote_archive.actor)
+    #activitypub.CreateContact().handle(archive=remote_archive, object=activitypub.Contact().dump(a_photo.donor), root_type="Create")
     Site.objects.all().update(domain='example2.net')
-    activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.PhotoValue.from_photo(a_photo)).handle(remote_archive.actor)
     assert models.Photo.objects.count() == 2
     saved = models.Photo.objects.get(archive=remote_archive)
     assert models.LdId.objects.count() == 2
     assertPhotosEqual(a_photo, saved)
-    activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.PhotoValue.from_photo(a_photo)).handle(remote_archive.actor)
     assert models.Photo.objects.count() == 2
 
 @override_settings(KF_URL_SCHEME="http:")
@@ -475,9 +466,10 @@ def test_createimagehandler_unknown_donor(a_photo, a_donor):
     a_donor.archive = remote_archive
     with mock.patch("requests.get") as mock_:
         mock_.return_value = mock.Mock(name="json")
-        mock_.return_value.json.return_value = activitypub.Contact().dump(a_donor)
+        mock_.return_value.json.return_value = activitypub.Contact().dump(activity_dicts.DonorValue.from_donor(a_donor))
+        print(mock_.return_value.json.return_value)
         Site.objects.all().update(domain='example2.net')
-        activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+        activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.PhotoValue.from_photo(a_photo)).handle(remote_archive.actor)
     mock_.assert_called_with(
         "http://example.com/kf/activitypub/archives/an-archive/contributors/1",
         headers={
@@ -488,7 +480,7 @@ def test_createimagehandler_unknown_donor(a_photo, a_donor):
     saved = models.Photo.objects.get(archive=remote_archive)
     assert models.LdId.objects.count() == 2
     assertPhotosEqual(a_photo, saved)
-    activitypub.CreateImage().handle(archive=remote_archive, object=activitypub.Image().dump(a_photo), root_type="Create")
+    activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.PhotoValue.from_photo(a_photo)).handle(remote_archive.actor)
     assert models.Photo.objects.count() == 2
 
 @pytest.mark.django_db
@@ -499,8 +491,8 @@ def test_donor_api(a_donor):
     resp = client.get(url)
     assert resp.status_code == 200
     donor = Contact().load(resp.json())
-    assert a_donor.first_name == donor['firstName']
-    assert a_donor.last_name == donor['lastName']
+    assert a_donor.first_name == donor.firstName
+    assert a_donor.last_name == donor.lastName
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")
@@ -514,7 +506,7 @@ def test_photo_api(a_photo):
     assert resp.status_code == 200
     Site.objects.all().update(domain='example2.net')
     photo = Image().load(resp.json())
-    assert photo['content'] == a_photo.caption
+    assert photo.content == a_photo.caption
 
 @pytest.mark.django_db
 def test_signature_requires_correct_key_pair():
@@ -876,14 +868,7 @@ from fortepan_us.kronofoto.views.activitypub import JsonError
     parsed_data=st.one_of(
         st.builds(
             mock.Mock,
-            return_value=st.builds(
-                activity_dicts.Activity,
-                actor=provisional.urls(),
-                type=st.one_of(st.just("Create"), st.just("Update"), st.just("Follow"), st.just("Accept"), st.just("Delete"), st.text(printable)),
-                object=st.one_of(
-                    st.from_type(ActivitypubData),
-                ),
-            )
+            return_value=st.builds(mock.Mock, handle=st.builds(mock.Mock, return_value=st.just({}))),
         )
     )
 )

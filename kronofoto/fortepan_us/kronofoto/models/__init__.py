@@ -24,6 +24,7 @@ from .photosphere import (
     MainStreetSet,
     PhotoSphereTour,
     PhotoSphereInfo,
+    TourSetDescription,
 )
 from .archive import Archive, ArchiveAgreement, InvalidArchive, FollowArchiveRequest, RemoteActor, OutboxActivity, ServiceActor
 from .category import Category, ValidCategory

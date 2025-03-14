@@ -18,7 +18,8 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
     ]
     PlaceWordCount.objects.bulk_create(wordcounts)
 
-from fortepan_us.kronofoto.views.activitypub import ActivitySchema
+from fortepan_us.kronofoto.models.activity_schema import ActivitySchema
+from fortepan_us.kronofoto.models import activity_dicts
 
 def send_donor_activities(instance: Donor, created: bool, DELETE: bool) -> None:
     if not instance.archive.type == Archive.ArchiveType.LOCAL:
@@ -71,12 +72,16 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
     from . import signed_requests
     import requests
     import json
-    data = ActivitySchema().dump({
-        "object": instance,
-        "actor": instance.archive,
-        "type": "Create",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
+    if created:
+        cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
+    else:
+        cls = activity_dicts.UpdateValue
+
+    data = cls(
+        id=archive.ldid() + "#event",
+        actor=archive.ldid(),
+        object=activity_dicts.PhotoValue.from_photo(instance),
+    ).dump()
     for actor in archive.remoteactor_set.all():
         resp = requests.get(actor.profile)
         profile = resp.json()

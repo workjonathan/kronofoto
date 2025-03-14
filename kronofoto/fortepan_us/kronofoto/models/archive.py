@@ -49,6 +49,9 @@ class ServiceActor(models.Model):
         else:
             return cls.objects.create()
 
+    def ldid(self) -> str:
+        return reverse("kronofoto:activitypub-main-service") + "#mainKey"
+
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:
             self.generate_new_keys()
@@ -377,6 +380,12 @@ class Archive(models.Model):
         if not self.serialized_public_key:
             self.generate_new_keys()
         return self.serialized_public_key or b""
+
+    def ldid(self) -> str:
+        return reverse(
+            "kronofoto:activitypub_data:archives:actor",
+            kwargs={"short_name": self.slug},
+        )
 
     @property
     def keyId(self) -> str:
