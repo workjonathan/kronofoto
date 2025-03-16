@@ -202,7 +202,7 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
 
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
-    request_body = models.JSONField()
+    request_id = models.URLField()
     archive = models.ForeignKey(
         "kronofoto.Archive", on_delete=models.CASCADE, null=False
     )

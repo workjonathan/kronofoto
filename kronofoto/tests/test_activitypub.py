@@ -847,7 +847,7 @@ def test_archive_inbox_follow_request():
     assert resp.status_code == 200
     assert resp.headers['Content-Type'] == 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     assert FollowArchiveRequest.objects.exists()
-    assert FollowArchiveRequest.objects.all()[0].request_body['id'] == 'https://anotherinstance.com/123'
+    assert FollowArchiveRequest.objects.filter(request_id='https://anotherinstance.com/123').exists()
 
 @given(
     body=st.binary(),

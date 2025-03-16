@@ -173,41 +173,18 @@ class ServiceInboxResponder:
     def actor_is_known(self) -> bool:
         return Archive.objects.filter(actor=self.actor).exists()
 
+    def archive_response(self, archive: Archive) -> JsonResponse:
+        try:
+            deserialized = self.parsed_data()
+            return JsonLDResponse({"status": deserialized.handle_archive(self.actor, archive)})
+        except JsonError as e:
+            return JsonResponse({"error": e.message}, status=e.status)
+
     @property
-    def post_response(self) -> HttpResponse:
+    def post_response(self) -> JsonResponse:
         try:
             deserialized = self.parsed_data()
             return JsonLDResponse({"status": deserialized.handle(self.actor)})
-            if isinstance(deserialized, activity_dicts.AcceptValue):
-                followobject = deserialized.object
-                remoteactor = RemoteActor.objects.get_or_create(profile=followobject.actor)[0]
-                for activity in OutboxActivity.objects.filter(
-                    body__type="Follow",
-                    body__actor=remoteactor.profile,
-                ):
-                    profile = self.profile(activity.body['object'])
-                    server_domain = urlparse(activity.body['object']).netloc
-                    Archive.objects.get_or_create(type=Archive.ArchiveType.REMOTE, actor=self.actor, slug=profile['slug'], server_domain=server_domain, name=profile['name'])
-                    return JsonLDResponse({})
-            else:
-                if not self.actor.app_follows_actor or not self.actor_is_known:
-                    raise JsonError("Not following this actor", status=401)
-                if isinstance(deserialized, activity_dicts.CreateValue) or isinstance(deserialized, activity_dicts.UpdateValue):
-                    object = deserialized.object
-                    if isinstance(object, activity_dicts.PhotoValue) or isinstance(object, activity_dicts.DonorValue):
-                        archive = Archive.objects.get(actor=self.actor)
-                        created = True # hack to fix compilation errors while refactoring
-                        #obj, created = models.LdId.objects.update_or_create_ld_object(owner=archive, object=object)
-                        return JsonLDResponse({"status": "created" if created else "updated"})
-                    else:
-                        created = True # hack to fix compilation errors while refactoring
-                        #obj, created = models.LdId.objects.update_or_create_ld_service_object(owner=self.actor, object=object)
-                        return JsonLDResponse({"status": "created" if created else "updated"})
-                elif isinstance(deserialized, activity_dicts.DeleteValue):
-                    models.LdId.objects.get(ld_id=deserialized.object).delete_if_can(self.actor)
-                    return JsonLDResponse({"status": "deleted"})
-
-            raise JsonError("unrecognized data", status=400)
         except JsonError as e:
             return JsonResponse({"error": e.message}, status=e.status)
 
@@ -283,7 +260,7 @@ def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
                     'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 }).json()
                 activity = ActivitySchema().dump({
-                    "object": followrequest.request_body,
+                    "id": followrequest.request_id,
                     "type": "Accept",
                     "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": archive.slug}),
                     "_context": activity_stream_context,
@@ -410,16 +387,7 @@ class ArchiveActor:
             return HttpResponse(status=401)
         archive = get_object_or_404(Archive.objects.all(), slug=short_name)
         if request.method == "POST":
-            data = json.loads(request.body.decode("utf-8"))
-            actor, created = RemoteActor.objects.get_or_create(
-                profile=data['actor'],
-                defaults={
-                    "actor_follows_app": False,
-                    "app_follows_actor": False,
-                }
-            )
-            FollowArchiveRequest.objects.create(remote_actor=actor, request_body=data, archive=archive)
-            return JsonLDResponse({})
+            return ServiceInboxResponder(body=request.body, actor=request.actor).archive_response(archive)
         else:
             return HttpResponse(status=401)
 

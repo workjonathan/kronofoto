@@ -545,26 +545,27 @@ class AcceptActivitySchema(Schema):
         )
 
 class ActivitySchema:
-    schemas = (
-        DeleteActivitySchema(),
-        CreateActivitySchema(),
-        UpdateActivitySchema(),
-        FollowActivitySchema(),
-        AcceptActivitySchema(),
-    )
+    schemas = {
+        "Delete": DeleteActivitySchema(),
+        "Create": CreateActivitySchema(),
+        "Update": UpdateActivitySchema(),
+        "Follow": FollowActivitySchema(),
+        "Accept": AcceptActivitySchema(),
+    }
     def load(self, data: Dict[str, Any]) -> activity_dicts.ActivitypubValue | None:
-        for schema in self.schemas:
+        type_ = data.get("type")
+        if type_ in self.schemas:
             try:
-                return schema.load(data)
+                return self.schemas[type_].load(data)
             except ValidationError:
                 pass
         return None
 
     def dump(self, thing: Any) -> Dict[str, Any] | None:
-        print(thing)
-        for schema in self.schemas:
+        type_ = thing.get("type")
+        if type_ in self.schemas:
             try:
-                return schema.dump(thing)
+                return self.schemas[type_].dump(thing)
             except ValidationError:
                 pass
         return None

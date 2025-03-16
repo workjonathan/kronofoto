@@ -5,7 +5,7 @@ from functools import cached_property
 from marshmallow import Schema, fields
 from django.contrib.gis.geos import MultiPolygon, Point
 from dataclasses import dataclass
-from fortepan_us.kronofoto.models.archive import Archive, RemoteActor, OutboxActivity
+from fortepan_us.kronofoto.models.archive import Archive, RemoteActor, OutboxActivity, FollowArchiveRequest
 from .ldid import LdId, LdIdQuerySet
 from fortepan_us.kronofoto.models.photo import Photo, PhotoTag
 from fortepan_us.kronofoto.models.donor import Donor
@@ -616,6 +616,10 @@ class DeleteValue:
     actor: str
     object: str
 
+    def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
+        raise JsonError("This inbox doesn't do this.", status=400)
+
+
     def handle(self, actor: RemoteActor) -> str:
         if actor.app_follows_actor:
             try:
@@ -649,6 +653,9 @@ class CreateValue:
         else:
             raise JsonError("Not following this actor.", status=401)
 
+    def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
+        raise JsonError("This inbox doesn't do this.", status=400)
+
 @dataclass
 class UpdateValue:
     id: str
@@ -665,6 +672,9 @@ class UpdateValue:
         else:
             raise JsonError("Not following this actor.", status=401)
 
+    def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
+        raise JsonError("This inbox doesn't do this.", status=400)
+
 @dataclass
 class FollowValue:
     id: str
@@ -672,6 +682,10 @@ class FollowValue:
     object: str
     def handle(self, actor: RemoteActor) -> str:
         raise NotImplementedError
+
+    def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
+        FollowArchiveRequest.objects.create(remote_actor=actor, request_id=self.id, archive=archive)
+        return "stored"
 
 @dataclass
 class AcceptValue:
@@ -687,6 +701,9 @@ class AcceptValue:
                 'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             },
         ).json()
+
+    def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
+        raise JsonError("This inbox doesn't do this.", status=400)
 
     def handle(self, actor: RemoteActor) -> str:
         followobject = self.object
