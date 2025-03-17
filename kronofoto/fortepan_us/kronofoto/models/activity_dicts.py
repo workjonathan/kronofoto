@@ -440,21 +440,12 @@ class PhotoValue:
     def from_photo(photo: Photo) -> PhotoValue:
         donor = None
         if photo.donor:
-            donor = reverse(
-                "kronofoto:activitypub_data:archives:contributors:detail",
-                kwargs={"short_name": photo.donor.archive.slug, "pk": photo.donor.id},
-            )
+            donor = photo.donor.ldid()
         place = None
         if photo.place:
-            place = reverse(
-                "kronofoto:activitypub-main-service-places",
-                kwargs={"pk": photo.place.id},
-            )
+            place = photo.place.ldid()
         return PhotoValue(
-            id=reverse(
-                "kronofoto:activitypub_data:archives:photos:detail",
-                kwargs={"short_name": photo.archive.slug, "pk": photo.id},
-            ),
+            id=photo.ldid(),
             content=photo.caption,
             category=CategoryValue(
                 name=photo.category.name,

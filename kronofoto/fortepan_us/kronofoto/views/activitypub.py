@@ -89,47 +89,6 @@ def service(request: HttpRequest) -> HttpResponse:
     })
 
 
-@dataclass
-class InboxResponse:
-    data: Dict[str, Any]
-    status_code: int = 200
-
-class ArchiveInboxHandler(Protocol):
-    def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        ...
-
-class UpdateImage:
-    def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        return None
-
-class CreateImage:
-    def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        if root_type in ('Create', 'Update') and object['type'] == "Image":
-            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object) # type: ignore
-            return InboxResponse(data={"status": "image created"})
-        return None
-
-class DeleteObject:
-    def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        if root_type == 'Delete':
-            ldids = models.LdId.objects.filter(ld_id=object.get('href'))
-            for dldid in ldids:
-                deletedonor = dldid.content_object
-                if deletedonor and deletedonor.archive.id == archive.id:
-                    deletedonor.delete()
-                    dldid.delete()
-            return InboxResponse(data={"status": "object deleted"})
-        return None
-
-class CreateContact:
-    def handle(self, *, archive: Archive, object: Dict[str, Any], root_type: str) -> Optional[InboxResponse]:
-        if root_type in ('Create', 'Update') and object['type'] == "Contact":
-            models.LdId.objects.update_or_create_ld_object(owner=archive, object=object) # type: ignore
-            return InboxResponse(data={"status": "contact created"})
-        return None
-
-
-
 #@require_json_ld
 def service_place(request: HttpRequest, pk: int) -> HttpResponse:
     place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)

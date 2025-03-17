@@ -3,6 +3,7 @@ from django.db.models.functions import Concat, Upper
 from mptt.models import MPTTModel, TreeForeignKey  # type: ignore
 from fortepan_us.kronofoto.reverse import reverse
 from django.http import QueryDict
+from django.contrib.contenttypes.models import ContentType
 from typing import Any, Optional, Dict, TYPE_CHECKING
 from .archive import RemoteActor
 
@@ -60,6 +61,16 @@ class Place(MPTTModel):
     fullname: models.CharField = models.CharField(
         max_length=128, null=False, default=""
     )
+
+    def ldid(self) -> str:
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="place", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub-main-service-places",
+                kwargs={"pk": self.id},
+            )
 
     def is_owned_by(self, actor: RemoteActor) -> bool:
         return self.owner.id == actor.id

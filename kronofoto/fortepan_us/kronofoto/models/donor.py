@@ -10,6 +10,7 @@ from .archive import Archive, RemoteActor
 from typing_extensions import Self
 from typing import final, Any, Type, List, Dict, Literal, TYPE_CHECKING
 #from .activity_dicts import ActivitypubContact, DonorValue
+from django.contrib.contenttypes.models import ContentType
 
 
 class DonorQuerySet(models.QuerySet):
@@ -36,10 +37,14 @@ class Donor(Collectible, models.Model):
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
     def ldid(self) -> str:
-        return reverse(
-            "kronofoto:activitypub_data:archives:contributors:detail",
-            kwargs={"short_name": self.archive.slug, "pk": self.id},
-        )
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="donor", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub_data:archives:contributors:detail",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            )
 
     def display_format(self) -> str:
         return (

@@ -428,6 +428,16 @@ class Photo(PhotoBase):
             path = (0, self.remote_image)
         return ImageSigner(id=self.id, path=path, width=width, height=height).url
 
+    def ldid(self) -> str:
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="photo", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub_data:archives:photos:detail",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            )
+
     def get_image_dimensions(self) -> Tuple[int, int]:
         if self.original_height == 0 or self.original_width == 0:
             Image.MAX_IMAGE_PIXELS = 195670000
