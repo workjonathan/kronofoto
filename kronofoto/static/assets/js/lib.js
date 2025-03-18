@@ -868,9 +868,11 @@ class PhotoSpherePlugin {
                     "move",
                     {
                         content: document.createElement("fortepan-timeline-link"),
+                        className: "photo-timeline-link-navbar-button",
                     },
                     {
                         content: document.createElement("fortepan-opacity-input"),
+                        className: "photo-opacity-input-navbar-button",
                     },
                 ],
                 plugins: [
