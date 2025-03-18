@@ -825,10 +825,10 @@ class PhotoTimelineElement extends HTMLElement {
     }
     connectedCallback() {
         const dom = this 
-        dom.classList.add("photo-timeline-host")
+        dom.classList.add("photo-timeline-link-host")
 
         this.link = document.createElement('a')
-        this.link.innerText = 'FI123'
+        this.link.innerText = ''
         this.link.setAttribute("href", "/")
         dom.appendChild(this.link)
     }
