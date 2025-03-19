@@ -336,6 +336,7 @@ class PhotoSphereChangeForm(forms.ModelForm):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.fields['heading'].widget.attrs['photo'] = kwargs['instance'].image.url
+        self.fields['heading'].widget.attrs["useNewAnglesOrder"] = kwargs['instance'].use_new_angles
 
 
 class PhotoPositionField(forms.MultiValueField):
@@ -376,6 +377,7 @@ class PhotoSpherePairInlineForm(forms.ModelForm):
             position = self.fields['position'].widget
             position.attrs['photosphere'] = instance.photosphere.image.url
             position.attrs['photo'] = instance.photo.h700.url
+            position.attrs["useNewAnglesOrder"] = instance.photosphere.use_new_angles
             position.attrs['photo_w'] = instance.photo.h700.width
             position.attrs['photo_h'] = instance.photo.h700.height
         else:
