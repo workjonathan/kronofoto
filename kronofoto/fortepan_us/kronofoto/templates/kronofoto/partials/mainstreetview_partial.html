@@ -19,3 +19,9 @@
         {% endfor %}
 </ul>
 
+<ul hx-swap-oob="innerHTML:#mobile-related-mainstreets">
+    {% for mainstreet in mainstreet_links %}
+    <li><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+    {% endfor %}
+    <div class="photosphere_mobile-nav-sets-button"></div>
+</ul>

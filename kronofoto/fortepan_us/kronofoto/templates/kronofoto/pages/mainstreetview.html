@@ -22,7 +22,7 @@
         {% block photosphere_metadata %}
         <h2>{{ object.title }}</h2>
         <div>{{ object.description | markdown }}</div>
-        {% if object.mainstreetset.description %}<div>{{ object.mainstreetset.description }}</div>{% endif %}
+        {% if mainstreet_description %}<div>{{ mainstreet_description }}</div>{% endif %}
         {% endblock photosphere_metadata %}
     </div>
     <form class="photosphere__wrapper" hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
@@ -70,7 +70,7 @@
         </div>
         </form>
     </nav>
-    <ul class="photosphere__mainstreet-sets button-list button-list--horizontal">
+    <ul class="photosphere__mainstreet-sets button-list button-list--horizontal" id="related-mainstreets">
         {% for mainstreet in mainstreet_links %}
         <li><a class="year-button active" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}
@@ -117,7 +117,7 @@
                 </svg>
             </li>
         </ul>
-        <ul class="photosphere__mobile-nav-sets">
+        <ul class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets">
             {% for mainstreet in mainstreet_links %}
             <li><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
             {% endfor %}
