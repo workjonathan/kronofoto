@@ -15,6 +15,7 @@ const container = document.querySelector('#{{ id }}_sphere')
 {% for subwidget in widget.subwidgets %}
 const {{ subwidget.attrs.anglename }} = document.querySelector('#{{ subwidget.attrs.id }}')
 {% endfor %}
+Viewer.useNewAnglesOrder = {{ useNewAnglesOrder }}
 const viewer = new Viewer({
     container,
     panorama: "{{ sphere_image }}",
@@ -33,7 +34,6 @@ const viewer = new Viewer({
         ]
     ],
 })
-viewer.useNewAnglesOrder = {{ useNewAnglesOrder }}
 </script>
 <div id="{{ id }}_admin_sphere">
     <div id="{{ id }}_sphere">

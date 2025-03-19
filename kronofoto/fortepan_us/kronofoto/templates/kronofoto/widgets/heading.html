@@ -13,6 +13,7 @@ import { CompassPlugin } from "@photo-sphere-viewer/compass-plugin"
 const container = document.querySelector('#{{ id }}_sphere')
 const input = document.querySelector('#{{ id }}_input')
 let pan = {{ pan }};
+Viewer.useNewAnglesOrder = {{ useNewAnglesOrder }}
 const viewer = new Viewer({
     container,
     panorama: "{{ sphere_image }}",
@@ -37,7 +38,6 @@ const viewer = new Viewer({
         "fullscreen",
     ]
 })
-viewer.useNewAnglesOrder = {{ useNewAnglesOrder }}
 //const sphere = new PhotoSphere({element: container, sphere: "{{ sphere_image }}", input})
 //sphere.addHeadingSphere({azimuth: {{ widget.value }}, container: document.querySelector("#{{ id }}_gui")})
 </script>
