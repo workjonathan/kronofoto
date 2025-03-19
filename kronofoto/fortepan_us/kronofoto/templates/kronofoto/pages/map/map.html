@@ -4,16 +4,16 @@
 {% block content %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-<main class="row expanded">
-    <section class="columns small-12 medium-6" id="fi-map-result" style="height:100%">
+<main class="map-view row expanded">
+    <section class="map-view__left columns small-12 medium-6" id="fi-map-result" style="height:100%">
         <figure id="fi-map-figure">
             {% block map_figure %}
             {% endblock %}
         </figure>
         {% include "kronofoto/partials/map_partial.html" %}
     </section>
-    <section class="columns small-12 medium-6" style="height: 100%;">
-        <form style="height: 100%;" hx-trigger="kronofoto:bounds_changed" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#fi-map-result">
+    <section class="map-view__right columns small-12 medium-6" style="height: 100%;">
+        <form class="form" style="height: 100%;" hx-trigger="kronofoto:bounds_changed" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#fi-map-result">
         {% for field in form %}
         {{ field.as_hidden }}
         {% endfor %}
@@ -23,6 +23,33 @@
              data-east="{{ bounds.east }}"
              data-north="{{ bounds.north }}"
         ></div>
+        <div class="map-view__search"><input type="text"/></div>
+
+        <div class="map-view__filters" x-data="{ open: false }" x-bind:class="{ 'expanded': open }">
+            <div class="map-view__filters-icon icon--gear" x-on:click="open = !open" x-hide="open"></div>
+            <div class="map-view__filters-wrapper" x-show="open">
+                <div class="map-view__filters-close-button icon--close" x-on:click="open = !open"></div>
+                <label>Image-types</label>
+                <div class="switch-group">
+                    <label class="switch-group__left-label" for="id_show_stills">stills</label>
+                    <div class="switch switch--small">
+                        <input type="checkbox" name="show_stills" class="switch-input" id="id_show_stills">
+                        <label class="switch-paddle" for="id_show_stills">
+                            <span class="show-for-sr">Show Stills</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="switch-group">
+                    <label class="switch-group__left-label" for="id_show_fotospheres">fotospheres</label>
+                    <div class="switch switch--small">
+                        <input type="checkbox" name="show_fotospheres" class="switch-input" id="id_show_fotospheres">
+                        <label class="switch-paddle" for="id_show_fotospheres">
+                            <span class="show-for-sr">Show FotoSpheres</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
         </form>
     </section>
 </main>

@@ -227,16 +227,13 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='23.79' height='23.79' viewBox='0 0 23.79 23.79'%3E%3Cdefs%3E%3CclipPath id='clip-path'%3E%3Crect id='Rectangle_205' data-name='Rectangle 205' width='23.79' height='23.79' transform='translate(0 0)' fill='none' stroke='%23707070' stroke-width='2.5'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg id='Group_193' data-name='Group 193' transform='translate(-79.663 24)'%3E%3Cg id='Group_192' data-name='Group 192' transform='translate(79.663 -24)'%3E%3Cg id='Group_191' data-name='Group 191' clip-path='url(%23clip-path)'%3E%3Cpath id='Path_103' data-name='Path 103' d='M1.5,14.546V22.29H9.244' transform='translate(9.744 37.837) rotate(180)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_104' data-name='Path 104' d='M22.291,9.244V1.5H14.547' transform='translate(37.837 9.744) rotate(180)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_105' data-name='Path 105' d='M9.178,14.613l-.686.686L1.5,22.291' transform='translate(9.744 37.837) rotate(180)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cline id='Line_56' data-name='Line 56' x1='6.992' y2='6.992' transform='translate(22.539 8.244) rotate(180)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A");
     left: auto;
     right: 13px;
-    top: 13px;
+    bottom: 13px;
     border-radius: 3px;
     background-color: white;
     background-repeat: no-repeat;
     background-position: center;
     box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
     transition: right ease-in-out 300ms;
-  }
-  .psv-plan--maximized .psv-plan__button[title="Minimize"] {
-    right: calc(100% - 45px);
   }
 
   .photosphere {
@@ -279,13 +276,33 @@
       position: absolute;
       bottom: 186px;
       left: 5px;
+      border-radius: 3px;
       z-index: 11;
       width: 488px;
       &.expanded {
         background-color: rgba(255, 255, 255, 0.8);
+        bottom: 143px;
         .photosphere__set_description_button {
           background-color: transparent;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='32.37' height='33.877' viewBox='0 0 32.37 33.877'%3E%3Cdefs%3E%3CclipPath id='clip-path'%3E%3Crect id='Rectangle_214' data-name='Rectangle 214' width='32.37' height='33.877' fill='none' stroke='%23000000' stroke-width='2.5'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg id='Group_197' data-name='Group 197' transform='translate(1 -1)'%3E%3Cg id='Group_196' data-name='Group 196' transform='translate(-1 1)' clip-path='url(%23clip-path)'%3E%3Cpath id='Path_112' data-name='Path 112' d='M23.231,13.079c.014-.49.049-3.853.049-3.853L15.331,1.25H3.242A1.992,1.992,0,0,0,1.25,3.242V30.91A1.992,1.992,0,0,0,3.242,32.9H14.937' transform='translate(-0.137 -0.138)' fill='none' stroke='%23000000' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_113' data-name='Path 113' d='M15.48,1.21V8.346a2.26,2.26,0,0,0,2.26,2.26h7.154' transform='translate(-1.703 -0.133)' fill='none' stroke='%23000000' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Ccircle id='Ellipse_27' data-name='Ellipse 27' cx='8.403' cy='8.403' r='8.403' transform='translate(14.452 15.883)' fill='none' stroke='%23000000' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_114' data-name='Path 114' d='M23.134,26.894h2.615v4.469' transform='translate(-2.544 -2.958)' fill='none' stroke='%23000000' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cline id='Line_60' data-name='Line 60' x2='5.167' transform='translate(20.59 28.405)' fill='none' stroke='%23000000' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_115' data-name='Path 115' d='M28.207,23.582a1.335,1.335,0,1,0-1.336,1.336A1.338,1.338,0,0,0,28.207,23.582Z' transform='translate(-3.64 -3.279)' fill='%23000000'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A") !important;
+        }
+        .photosphere__set_description_close_button {
+          display: block;
+        }
+      }
+      &_close_button {
+        display: none;
+        border: none;
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        padding: 20px;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-color: transparent;
+        cursor: pointer;
+        &:hover {
+
         }
       }
       &_button {

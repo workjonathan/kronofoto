@@ -1,0 +1,43 @@
+.map-view {
+  position: relative;
+  display: inline-block;
+  z-index: 99999;
+
+  &__left, &__right {
+    background-color: #F0F0F0;
+  }
+
+  &__left {
+    padding: 0px 10px;
+  }
+  &__right {
+    padding: 0px;
+  }
+
+  &__filters {
+    &-wrapper {
+      background-color: #fff;
+      padding: 8px 10px 20px 40px;
+    }
+    &-icon {
+      display: block;
+      width: 30px !important;
+      height: 30px !important;
+      box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+      cursor: pointer;
+    }
+    &-close-button {
+      position: absolute;
+      bottom: 0px;
+      right: 0px;
+      display: block;
+      width: 12px;
+      height: 12px;
+      padding: 10px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: transparent;
+      cursor: pointer;
+    }
+  }
+}

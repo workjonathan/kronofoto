@@ -6,6 +6,10 @@ from django.template import RequestContext
 
 register = template.Library()
 
+@register.simple_tag()
+def debug_object_dump(var):
+    return vars(var)
+
 @register.inclusion_tag('kronofoto/components/header.html', takes_context=True)
 def header(context):
     context.setdefault('url_kwargs', {})
