@@ -16,7 +16,7 @@
     }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<div class="photosphere" x-bind:class="{ 'set-description-open': set_description_open, 'map-open': map_open, 'images-open': images_open }" x-data="{ set_description_open: false, map_open: false, images_open: false, open: false }" @kronofoto-select-photosphere-marker="open = true" @node-changed="open = false">
+<div class="photosphere" x-bind:class="{ 'set-description-open': set_description_open, 'map-open': map_open, 'images-open': images_open }" x-data="{ set_description_open: false, map_open: window.matchMedia('max-width: 64em').matches, images_open: false, open: false }" @kronofoto-select-photosphere-marker="open = true" @node-changed="open = false">
 
     <div id="fi-photosphere-metadata" class="photosphere__metadata hide">
         {% block photosphere_metadata %}
@@ -26,7 +26,7 @@
         {% endblock photosphere_metadata %}
     </div>
     <form class="photosphere__wrapper" hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}">
+        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}" x-init="window.matchMedia('(max-width: 64em)').onchange = (evt) => { if (evt) { map_open = !evt.matches } }; $watch('map_open', (value) => $dispatch('kronofoto-photosphere-map', {'map_open': value}))">
             <input name="id" type="hidden">
         </div>
     </form>

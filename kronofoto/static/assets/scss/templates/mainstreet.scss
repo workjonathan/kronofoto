@@ -80,7 +80,7 @@
     border-radius: 0px;
     bottom: 10px !important;
     // hide on mobile
-    display: none;
+    //display: none;
     @include breakpoint(small only) {
       width: 100% !important;
       height: 50vw !important;
@@ -90,7 +90,7 @@
       bottom: 0px !important;
     }
     @include breakpoint(large up) {
-      display: block;
+      //display: block;
     }
   }
 

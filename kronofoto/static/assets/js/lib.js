@@ -860,6 +860,15 @@ class PhotoSpherePlugin {
                 const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
                 tourPlugin.setCurrentNode(evt.detail)
             })
+            elem2.addEventListener("kronofoto-photosphere-map", (evt) => {
+                const plugin = viewer.getPlugin(PlanPlugin)
+                if (evt.detail.map_open) {
+                    plugin.open()
+                }
+                else {
+                    plugin.close()
+                }
+            })
 
             const viewer = new Viewer({
                 container: elem2,
@@ -908,6 +917,7 @@ class PhotoSpherePlugin {
                         {
                             defaultZoom: 19,
                             position: "bottom right",
+                            visibleOnLoad: !window.matchMedia("(max-width: 64em)").matches,
                             configureLeaflet: (map) => {
                                 const OpenStreetMap_Mapnik = L.tileLayer(
                                     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
