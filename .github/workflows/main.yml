@@ -27,6 +27,9 @@ jobs:
       - name: Install Hatch
         run: pip install hatch
 
+      - name: check types
+        run: cd kronofoto && hatch run check
+
       - name: Run tests
         run: cd kronofoto && hatch run test
 
