@@ -92,7 +92,25 @@ def service(request: HttpRequest) -> HttpResponse:
 #@require_json_ld
 def service_place(request: HttpRequest, pk: int) -> HttpResponse:
     place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)
-    return JsonLDResponse(PlaceSchema().dump(place))
+    return JsonLDResponse(PlaceSchema().dump(activity_dicts.PlaceValue.from_place(place)))
+
+def places_page(request: HttpRequest, short_name: str) -> HttpResponse:
+    form = Page(request.GET)
+    if form.is_valid():
+        queryset = models.Place.objects.filter(pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
+        schema : Union[CollectionPage, Collection] = CollectionPage()
+        object_data = schema.dump(activity_dicts.CollectionPageValue.from_place_queryset(queryset))
+        return JsonLDResponse(object_data)
+    else:
+        queryset = models.Place.objects.all().order_by('id')[:100]
+        schema = Collection()
+        cv = activity_dicts.CollectionValue(
+            id=reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name}),
+            summary="Photo List",
+            first=activity_dicts.CollectionPageValue.from_place_queryset(queryset)
+        )
+        object_data = schema.dump(cv)
+        return JsonLDResponse(object_data)
 
 from fortepan_us.kronofoto.models.activity_dicts import JsonError
 
@@ -369,14 +387,13 @@ class ArchiveActor:
                 object_data = schema.dump(activity_dicts.CollectionPageValue.from_donor_queryset(queryset, short_name=short_name))
                 return JsonLDResponse(object_data)
             else:
-                queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')
+                queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')[:100]
                 schema = Collection()
                 cv = activity_dicts.CollectionValue(
                     id=reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name}),
                     summary="Contributor List",
                     first=activity_dicts.CollectionPageValue.from_donor_queryset(queryset, short_name=short_name),
                 )
-
                 object_data = schema.dump(cv)
                 return JsonLDResponse(object_data)
 
@@ -393,19 +410,19 @@ class ArchiveActor:
         def data_page(request: HttpRequest, short_name: str) -> HttpResponse:
             form = Page(request.GET)
             if form.is_valid():
-                queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
+                queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
                 schema : Union[CollectionPage, Collection] = CollectionPage()
-                schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
-                object_data = schema.dump(queryset[:100])
+                object_data = schema.dump(activity_dicts.CollectionPageValue.from_photo_queryset(queryset, short_name=short_name))
                 return JsonLDResponse(object_data)
             else:
-                queryset = Photo.objects.filter(archive__slug=short_name).order_by('id')
+                queryset = Photo.objects.filter(archive__slug=short_name).order_by('id')[:100]
                 schema = Collection()
-                schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
-                schema.context['summary'] = "Photo List"
-                object_data = schema.dump(queryset[:100])
+                cv = activity_dicts.CollectionValue(
+                    id=reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name}),
+                    summary="Photo List",
+                    first=activity_dicts.CollectionPageValue.from_photo_queryset(queryset, short_name=short_name)
+                )
+                object_data = schema.dump(cv)
                 return JsonLDResponse(object_data)
 
         @staticmethod

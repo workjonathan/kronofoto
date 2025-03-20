@@ -594,6 +594,18 @@ class PlaceValue:
     fullName: str
     geom: Optional[Union[Point, MultiPolygon]]
 
+    @staticmethod
+    def from_place(place: Place) -> PlaceValue:
+        return PlaceValue(
+            id=place.ldid(),
+            attributedTo=[reverse("kronofoto:activitypub-main-service")],
+            name=place.name,
+            parent=place.parent,
+            placeType=place.place_type.name,
+            fullName=place.full_name,
+            geom=place.geom,
+        )
+
     def upsert(self, actor: RemoteActor) -> str:
         val, created = PlaceUpserter(queryset=LdId.objects.all(), owner=actor, object=self).result
         return "created" if created else "updated"
@@ -617,6 +629,24 @@ class CollectionPageValue(Generic[T]):
             id=id,
             next="{}?pk={}".format(id, qs[99].pk) if qs.count() == 100 else None,
             items=[DonorValue.from_donor(donor) for donor in qs]
+        )
+
+    @staticmethod
+    def from_photo_queryset(qs: QuerySet[Photo], short_name: str) -> CollectionPageValue[PhotoValue]:
+        id = reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name})
+        return CollectionPageValue(
+            id=id,
+            next="{}?pk={}".format(id, qs[99].pk) if qs.count() == 100 else None,
+            items=[PhotoValue.from_photo(obj) for obj in qs]
+        )
+
+    @staticmethod
+    def from_place_queryset(qs: QuerySet[Place]) -> CollectionPageValue[PlaceValue]:
+        id = reverse("kronofoto:activitypub_data:places:page")
+        return CollectionPageValue(
+            id=id,
+            next="{}?pk={}".format(id, qs[99].pk) if qs.count() == 100 else None,
+            items=[PlaceValue.from_place(obj) for obj in qs]
         )
 
 
