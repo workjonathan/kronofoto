@@ -22,7 +22,7 @@ jobs:
           python-version: '3.8'  # Adjust the version as needed
 
       - name: Install dependencies
-        run: apt-get install gdal-bin
+        run: sudo apt-get install gdal-bin
 
       - name: Install Hatch
         run: pip install hatch
