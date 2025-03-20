@@ -28,7 +28,13 @@ jobs:
         run: pip install hatch
 
       - name: check types
-        run: SECRET_KEY=fakekey; DJANGO_SETTINGS_MODULE=tests.settings; cd kronofoto && hatch run manage migrate && hatch run manage createcachetable && hatch run check
+        run: |
+          export SECRET_KEY=fakekey
+          export DJANGO_SETTINGS_MODULE=fortepan_us.settings.dev_no_cms
+          cd kronofoto 
+          hatch run manage migrate 
+          hatch run manage createcachetable 
+          hatch run check
 
       - name: Run tests
         run: cd kronofoto && hatch run test
