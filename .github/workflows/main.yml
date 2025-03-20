@@ -28,7 +28,7 @@ jobs:
         run: pip install hatch
 
       - name: check types
-        run: cd kronofoto && SECRET_KEY=Asdlkjf DJANGO_SETTINGS_MODULE=tests.settings hatch run check
+        run: SECRET_KEY=fakekey; cd kronofoto && hatch run migrate && hatch run createcachetable && hatch run check
 
       - name: Run tests
         run: cd kronofoto && hatch run test
