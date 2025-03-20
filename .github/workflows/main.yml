@@ -28,7 +28,7 @@ jobs:
         run: pip install hatch
 
       - name: check types
-        run: cd kronofoto && hatch run check
+        run: cd kronofoto && SECRET_KEY=Asdlkjf hatch run check
 
       - name: Run tests
         run: cd kronofoto && hatch run test
