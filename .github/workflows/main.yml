@@ -22,7 +22,7 @@ jobs:
           python-version: '3.8'  # Adjust the version as needed
 
       - name: Install dependencies
-        run: sudo apt-get install gdal-bin spatialite
+        run: sudo apt-get install gdal-bin spatialite-bin
 
       - name: Install Hatch
         run: pip install hatch
