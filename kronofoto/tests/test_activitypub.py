@@ -647,6 +647,7 @@ def test_signature_requires_correct_url_path():
         content_type='application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
     )
     assert resp.status_code == 401
+
 @pytest.mark.django_db
 def test_signature_requires_recent_date():
     client = Client()
@@ -879,6 +880,40 @@ def test_service_inbox_responder(body, actor, profile, parsed_data, actor_is_kno
     responder.parsed_data = parsed_data
     responder.profile = profile
     responder.post_response
+
+@pytest.mark.django_db
+@override_settings(KF_URL_SCHEME="http:")
+def test_archive_donor_page(an_archive):
+    client = Client()
+    url = "/kf/activitypub/archives/aslug/contributors"
+    models.Donor.objects.create(
+        first_name="a", last_name="b", archive=an_archive
+    )
+    models.Donor.objects.create(
+        first_name="b", last_name="b", archive=an_archive
+    )
+    models.Donor.objects.create(
+        first_name="c", last_name="b", archive=an_archive
+    )
+    models.Donor.objects.create(
+        first_name="d", last_name="b", archive=an_archive
+    )
+    models.Donor.objects.create(
+        first_name="e", last_name="b", archive=an_archive
+    )
+    models.Donor.objects.create(
+        first_name="f", last_name="b", archive=an_archive
+    )
+
+    resp = client.get(url, data={"pk": 0})
+    assert resp.status_code == 200
+    assert len(activity_schema.CollectionPage().load(resp.json()).items) == 6
+
+    resp = client.get(url)
+    assert resp.status_code == 200
+    assert len(activity_schema.Collection().load(resp.json()).first.items) == 6
+
+
 
 @pytest.mark.django_db
 @override_settings(KF_URL_SCHEME="http:")

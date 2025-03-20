@@ -362,20 +362,22 @@ class ArchiveActor:
         @classmethod
         def data_page(cls, request: HttpRequest, short_name: str) -> HttpResponse:
             form = Page(request.GET)
+            print(request.GET)
             if form.is_valid():
-                queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')
+                queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
                 schema : Union[CollectionPage, Collection] = CollectionPage()
-                schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
-                object_data = schema.dump(queryset[:100])
+                object_data = schema.dump(activity_dicts.CollectionPageValue.from_donor_queryset(queryset, short_name=short_name))
                 return JsonLDResponse(object_data)
             else:
                 queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')
                 schema = Collection()
-                schema.context['slug'] = short_name
-                schema.context['url'] = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
-                schema.context['summary'] = "Contributor List"
-                object_data = schema.dump(queryset[:100])
+                cv = activity_dicts.CollectionValue(
+                    id=reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name}),
+                    summary="Contributor List",
+                    first=activity_dicts.CollectionPageValue.from_donor_queryset(queryset, short_name=short_name),
+                )
+
+                object_data = schema.dump(cv)
                 return JsonLDResponse(object_data)
 
         @staticmethod

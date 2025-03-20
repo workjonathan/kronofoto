@@ -414,14 +414,20 @@ class ObjectOrLinkField(fields.Field):
 class Collection(Schema):
     _context = fields.Raw(data_key="@context")
     id = fields.Url(required=True)
-    # type = fields.Str()
-    attributedTo = fields.List(fields.Url())
-    url = fields.Url(relative=True, required=False)
-    content = fields.Str()
-    summary = fields.Str()
-    first = fields.Nested(lambda: CollectionPage())
+    summary = fields.Str(required=True)
+    first = fields.Nested(lambda: CollectionPage(), required=True)
 
-    @pre_dump
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.CollectionValue:
+        return activity_dicts.CollectionValue(
+            id=data['id'],
+            summary=data["summary"],
+            first=data['first'],
+        )
+
+    #@pre_dump
     def extract_fields_from_object(
         self,
         object: "Union[QuerySet[models.Photo], QuerySet[models.Donor]]",
@@ -434,30 +440,44 @@ class Collection(Schema):
         }
 
 
-class CollectionPage(Collection):
-    id = fields.Url()
-    next = fields.Url(required=False, allow_none=True)
-    items = fields.List(PageItem)
+class CollectionPage(Schema):
+    id = fields.Url(required=True)
+    next = fields.Url(required=False)
+    items = fields.List(KronofotoObjectField, required=True)
 
-    @pre_dump
-    def extract_fields_from_object(
-        self,
-        object: "Union[QuerySet[models.Photo], QuerySet[models.Donor]]",
-        **kwargs: Any
-    ) -> Dict[str, Any]:
-        next = (
-            "{}?pk={}".format(
-                self.context["url"],
-                object[99].pk,
-            )
-            if object.count() == 100
-            else None
+    @post_dump
+    def remove_nones(self, data: Dict[str, Any], many: bool, **kwargs: Any) -> Dict[str, Any]:
+        return {k: v for (k,v) in data.items() if v is not None}
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.CollectionPageValue:
+        return activity_dicts.CollectionPageValue(
+            id=data['id'],
+            next=data.get("next"),
+            items=data['items'],
         )
-        return {
-            "id": "{}?pk=0".format(self.context["url"]),
-            "items": object,
-            "next": next,
-        }
+
+    #@pre_dump
+    #def extract_fields_from_object(
+    #    self,
+    #    object: activity_dicts.CollectionPageValue,
+    #    **kwargs: Any
+    #) -> Dict[str, Any]:
+    #    next = (
+    #        "{}?pk={}".format(
+    #            self.context["url"],
+    #            object[99].pk,
+    #        )
+    #        if object.count() == 100
+    #        else None
+    #    )
+    #    return {
+    #        "id": "{}?pk=0".format(self.context["url"]),
+    #        "items": object,
+    #        "next": next,
+    #    }
 
 
 class DeleteActivitySchema(Schema):

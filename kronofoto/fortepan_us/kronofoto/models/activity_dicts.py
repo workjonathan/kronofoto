@@ -1,6 +1,6 @@
 from __future__ import annotations
 from django.contrib.contenttypes.models import ContentType
-from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict, Tuple, Optional, NamedTuple, Callable, Any
+from typing import TypedDict, NewType, Literal, List, Union, Type, cast, Dict, Tuple, Optional, NamedTuple, Callable, Any, TypeVar, Generic
 from functools import cached_property
 from marshmallow import Schema, fields
 from django.contrib.gis.geos import MultiPolygon, Point
@@ -20,6 +20,9 @@ from marshmallow.exceptions import ValidationError
 import icontract
 from django.urls.exceptions import Resolver404
 from django.contrib.sites.models import Site
+from django.db.models import QuerySet
+
+T = TypeVar("T")
 
 @dataclass
 class LdDonorGetOrCreator:
@@ -600,6 +603,28 @@ class PlaceValue:
 
     def update(self, actor: RemoteActor) -> str:
         return self.upsert(actor)
+
+@dataclass
+class CollectionPageValue(Generic[T]):
+    id: str
+    next: Optional[str]
+    items: List[T]
+
+    @staticmethod
+    def from_donor_queryset(qs: QuerySet[Donor], short_name: str) -> CollectionPageValue[DonorValue]:
+        id = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
+        return CollectionPageValue(
+            id=id,
+            next="{}?pk={}".format(id, qs[99].pk) if qs.count() == 100 else None,
+            items=[DonorValue.from_donor(donor) for donor in qs]
+        )
+
+
+@dataclass
+class CollectionValue(Generic[T]):
+    id: str
+    summary: str
+    first: CollectionPageValue[T]
 
 @dataclass
 class DeleteValue:
