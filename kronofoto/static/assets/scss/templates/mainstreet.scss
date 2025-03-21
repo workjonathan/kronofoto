@@ -6,7 +6,26 @@
 [route="mainstreetview"] {
 
   // Custom mainstreet mobile header
-  @include breakpoint(medium down) {
+  @include breakpoint(xlarge only) {
+
+  }
+  @include breakpoint(large down) {
+    .main-nav__left {
+      margin-right: 0px;
+      padding-left: 0px;
+      flex-grow: 1;
+      width: 30%;
+    }
+    .main-nav__right {
+      margin: 0px;
+      width: 30%;
+      .main-nav__title {
+        text-align: right;
+        font-size: 8px;
+      }
+    }
+  }
+  @include breakpoint(large down) {
     header {
       height: 107px;
     }
@@ -21,12 +40,7 @@
       margin: 0px;
     }
     .main-nav__right {
-      margin: 0px;
-      max-width: 30%;
-      .main-nav__title {
-        text-align: right;
-        font-size: 8px;
-      }
+
     }
     .main-nav__center {
       order: 3;
@@ -78,7 +92,7 @@
 
   .psv-plan {
     border-radius: 0px;
-    bottom: 10px !important;
+    bottom: 0px !important;
     // hide on mobile
     //display: none;
     @include breakpoint(small only) {
@@ -436,27 +450,86 @@
       background-color: #F0F0F0;
       padding: 20px;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      &-sets {
+        display: flex;
+        align-items: center;
+        width: auto !important;
+        margin-left: 45px;
+        z-index: 10;
+        position: relative;
+        &.expanded {
+          > .wrapper {
+            background-color: #fff;
+            padding: 16px 8px;
+            position: absolute;
+            bottom: 0px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+          }
+        }
+        &:after {
+          content: '';
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11.768' height='7.652' viewBox='0 0 11.768 7.652'%3E%3Cpath id='arrow' d='M.884.884l5,5,5-5' transform='translate(0 0)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+          display: inline-block;
+          width: 17px;
+          height: 8px;
+          background-repeat: no-repeat;
+        }
+        &:not(.expanded) {
+          > div {
+            display: inline-block;
+          }
+        }
+        height: auto;
+        &-current, label {
+          &:hover, &.active {
+            background: var(--fp-main-blue);
+            color: #fff;
+          }
+          font-size: 18px;
+          font-weight: bold;
+          color: #6A6A6A;
+          line-height: 36px;
+          width: 100%;
+          padding: 0px 20px;
+          cursor: pointer;
+          margin: 0px;
+          display: block;
+          &.active {
+            display: block;
+          }
+          a {
+            color: inherit;
+          }
+        }
+        &-current {
+          padding: 0px;
+        }
+      }
       &-sets-button {
         display: block;
         width: 9px;
         height: 9px;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14.171' height='14.171' viewBox='0 0 14.171 14.171'%3E%3Cpath id='Path_109' data-name='Path 109' d='M0,0V8.771H8.771' transform='translate(0.884 6.202) rotate(-45)' fill='none' stroke='%23707070' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/svg%3E%0A");
+        background-position: center;
+        background-size: contain;
       }
-      ul {
-        display: flex;
-      }
-      li {
+      > div {
         width: 48px;
         height: 48px;
         border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-      li.open {
-        background-color: var(--fp-main-blue);
-        svg * {
-          stroke: #fff;
+        &.open {
+          background-color: var(--fp-main-blue);
+          svg * {
+            stroke: #fff;
+          }
         }
       }
       @include breakpoint(large up) {
@@ -489,27 +562,22 @@
 }
 
 .psv--has-navbar .psv-plan--maximized, .psv-plan--maximized {
-  padding: 0px;
-  margin: 0px;
-  //left: 0;
-  right: 0px !important;
   bottom: 0px !important;
-  //top: 0px;
-  height: 100% !important;
-  width: 100% !important;
-  max-height: 100% !important;
-  max-width: 100% !important;
+  height: calc(100% - 20px) !important;
+  width: 44% !important;
+  max-height: calc(100% - 20px) !important;
+  max-width: 44% !important;
 }
 
 .psv-navbar {
-  width: auto;
+  width: max-content;
   padding: 0px 10px;
   height: 40px;
   border-radius: 3px;
   background-color: rgba(255, 255, 255, 0.9);
   left: 50%;
   transform: translateX(-50%);
-  bottom: 14px;
+  bottom: 10px;
   @include breakpoint(medium down) {
     display: none;
   }
