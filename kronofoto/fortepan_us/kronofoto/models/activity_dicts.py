@@ -25,6 +25,63 @@ from django.db.models import QuerySet
 T = TypeVar("T")
 
 @dataclass
+class RemoteActorGetOrCreate:
+    queryset: QuerySet["RemoteActor"]
+    profile: str
+
+    @cached_property
+    def is_local(self) -> bool:
+        server_domain = urlparse(self.profile).netloc
+        return Site.objects.filter(domain=server_domain).exists()
+
+    @cached_property
+    def local_actor(self) -> RemoteActor | None:
+        try:
+            return self.queryset.get(profile=self.profile)
+        except RemoteActor.DoesNotExist:
+            return None
+
+    def do_request(self) -> requests.Response:
+        return requests.get(
+            self.profile,
+            headers={
+                "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+        )
+
+    def parse_json(self, data: Dict[str, Any]) -> ActorValue | None:
+        try:
+            from fortepan_us.kronofoto.models.activity_schema import ActorSchema
+            return ActorSchema().load(data)
+        except ValidationError as e:
+            print(e, data)
+            return None
+
+
+    def create_remoteactor(self) -> RemoteActor:
+        return RemoteActor.objects.create(profile=self.profile)
+
+    @property
+    def actor(self) -> Tuple[RemoteActor | None, bool]:
+        if self.is_local: # I don't think this should happen. At least, not in the course of processing a valid object.
+            return None, False
+
+        local_actor = self.local_actor
+        if local_actor:
+            return (local_actor, False)
+
+        resp = self.do_request()
+        if resp.status_code == 200:
+            data = resp.json()
+            parsed = self.parse_json(data)
+            if parsed and parsed.id == self.profile:
+                return self.create_remoteactor(), True
+            else:
+                return None, False
+        else:
+            return None, False
+
+@dataclass
 class LdDonorGetOrCreator:
     queryset: "LdIdQuerySet"
     ld_id: str
@@ -375,6 +432,20 @@ ActivitypubObject = TypedDict(
     total=False,
 )
 
+@dataclass
+class ArchiveValue:
+    id: str
+    name: str
+    slug: str
+    publicKey: Dict[str, str]
+
+    inbox: str
+    outbox: str
+    contributors: str
+    photos: str
+    following: str
+    followers: str
+
 
 class ArchiveDict(ActivitypubObject, total=False):
     type: Literal["Organization"]
@@ -657,10 +728,22 @@ class CollectionValue(Generic[T]):
     first: CollectionPageValue[T]
 
 @dataclass
+class ActorValue:
+    id: str
+    name: str
+    publicKey: Dict[str, str]
+    inbox: str
+    outbox: str
+
+@dataclass
 class DeleteValue:
     id: str
     actor: str
     object: str
+
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import DeleteActivitySchema
+        return DeleteActivitySchema().dump(self)
 
     def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
         raise JsonError("This inbox doesn't do this.", status=400)

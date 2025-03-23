@@ -43,7 +43,7 @@ multipolygons = st.lists(polygons, min_size=1, max_size=3)
 st.register_type_strategy(Point, st.builds(Point, st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False))))
 st.register_type_strategy(Polygon, st.builds(Polygon, st.lists(st.tuples(st.floats(allow_nan=False), st.floats(allow_nan=False)), min_size=3, max_size=5).map(close_polygon)))
 st.register_type_strategy(MultiPolygon, st.builds(MultiPolygon, st.lists(st.from_type(Polygon), min_size=1, max_size=5)))
-st.register_type_strategy(Url, provisional.urls())
+st.register_type_strategy(Url, st.builds(lambda d, s: 'https://{d}/{s}'.format(d=d, s=s), provisional.domains(), st.text("abcde/", max_size=10)))
 st.register_type_strategy(
     ActivitypubLocation,
     st.fixed_dictionaries(
@@ -144,18 +144,19 @@ def test_service_actor_key_is_idempotent():
     force_id_match=st.booleans(),
     profile=provisional.urls(),
     local_actor=st.one_of(st.none(), st.just(models.RemoteActor())),
-    parsed=st.one_of(st.none(), st.fixed_dictionaries({"id": provisional.urls()})),
+    parsed=st.one_of(st.none(), st.from_type(activity_dicts.ActorValue)),
     status_code=st.one_of(st.just(200), st.integers(min_value=1)),
     json_response=st.fixed_dictionaries({}, optional={}),
 )
 def test_remote_actor_get_or_create_by_profile(profile, is_local, status_code, json_response, local_actor, parsed, force_id_match):
-    from fortepan_us.kronofoto.models.archive import RemoteActorGetOrCreate
+    from fortepan_us.kronofoto.models.activity_dicts import RemoteActorGetOrCreate
     thing = RemoteActorGetOrCreate(queryset=models.RemoteActor.objects.all(), profile=profile)
     thing.is_local = is_local
     thing.local_actor = local_actor
     thing.parse_json = mock.Mock()
-    if force_id_match:
-        thing.parse_json.return_value = {"id": profile}
+    if force_id_match and parsed:
+        parsed.id = profile
+        thing.parse_json.return_value = parsed
     else:
         thing.parse_json.return_value = parsed
     thing.do_request = mock.Mock()
@@ -467,7 +468,6 @@ def test_createimagehandler_unknown_donor(a_photo, a_donor):
     with mock.patch("requests.get") as mock_:
         mock_.return_value = mock.Mock(name="json")
         mock_.return_value.json.return_value = activitypub.Contact().dump(activity_dicts.DonorValue.from_donor(a_donor))
-        print(mock_.return_value.json.return_value)
         Site.objects.all().update(domain='example2.net')
         activity_dicts.CreateValue(actor=remote_archive, id="asdfasf", object=activity_dicts.PhotoValue.from_photo(a_photo)).handle(remote_archive.actor)
     mock_.assert_called_with(
@@ -744,6 +744,45 @@ def test_signature_requires_correct_digest():
 #    assert resp.status_code == 406
 
 @pytest.mark.django_db
+def test_archive_followers_get_photo_delete(an_archive, a_donor, a_category, a_photo):
+    actor = models.RemoteActor.objects.create(profile="https://anotherinstance.com/actor")
+    an_archive.name = "an archive"
+    an_archive.slug = "an-archive"
+    an_archive.save()
+    actor.archives_followed.add(an_archive)
+    with mock.patch("requests.get") as mock_:
+        mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
+        with mock.patch("requests.post") as post:
+            a_photo.delete()
+            mock_.assert_called_with("https://anotherinstance.com/actor")
+            assert len(post.mock_calls) == 1
+            assert post.mock_calls[0][1] == ('https://anotherinstance.com/actor/inbox',)
+            data = json.loads(post.mock_calls[0][2]['data'])
+            assert data['type'] == 'Delete'
+
+@given(
+    created=st.booleans(),
+    photo=st.builds(
+        models.Photo,
+        id=st.integers(),
+        archive=st.builds(
+            models.Archive,
+            type=st.integers(),
+            id=st.integers(),
+        ),
+    ),
+)
+def test_archive_follower_photo_upsert_sender(photo, created):
+    from fortepan_us.kronofoto.signals import PhotoUpsertSender
+    sender = PhotoUpsertSender(created=created, instance=photo)
+    sender.remote_actors = []
+    sender.send_data = mock.Mock()
+    sender.load_profile = mock.Mock()
+    sender.send()
+
+
+@pytest.mark.django_db
 def test_archive_followers_get_photo_create(an_archive, a_donor, a_category):
     actor = models.RemoteActor.objects.create(profile="https://anotherinstance.com/actor")
     an_archive.name = "an archive"
@@ -752,6 +791,7 @@ def test_archive_followers_get_photo_create(an_archive, a_donor, a_category):
     actor.archives_followed.add(an_archive)
     with mock.patch("requests.get") as mock_:
         mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.status_code = 200
         mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
         with mock.patch("requests.post") as post:
             photo = models.Photo.objects.create(

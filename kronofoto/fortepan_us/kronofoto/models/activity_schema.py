@@ -28,7 +28,27 @@ class ObjectSchema(Schema):
     url = fields.Url(relative=True, required=False)
     content = fields.Str()
 
-class ActorSchema(ObjectSchema):
+class ActorSchema(Schema):
+    type = fields.Str() #("Organization")
+    id = fields.Url(relative=True, required=True)
+    name = fields.Str(required=True)
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+
+    inbox = fields.Url(relative=True)
+    outbox = fields.Url(relative=True)
+
+    class Meta:
+        unknown = EXCLUDE
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.ActorValue:
+        return activity_dicts.ActorValue(
+            **data
+        )
+
+class ServiceActorSchema(Schema):
     type = fields.Constant("Organization")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
@@ -38,19 +58,30 @@ class ActorSchema(ObjectSchema):
     outbox = fields.Url(relative=True)
     places = fields.Url(relative=True)
 
-class ArchiveSchema(ObjectSchema):
+class ArchiveSchema(Schema):
     type = fields.Constant("Organization")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
     slug = fields.Str(required=True)
-    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str(), required=True)
 
-    inbox = fields.Url(relative=True)
-    outbox = fields.Url(relative=True)
-    contributors = fields.Url(relative=True)
-    photos = fields.Url(relative=True)
-    following = fields.Url(relative=True)
-    followers = fields.Url(relative=True)
+    inbox = fields.Url(relative=True, required=True)
+    outbox = fields.Url(relative=True, required=True)
+    contributors = fields.Url(relative=True, required=True)
+    photos = fields.Url(relative=True, required=True)
+    following = fields.Url(relative=True, required=True)
+    followers = fields.Url(relative=True, required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.ArchiveValue:
+        return activity_dicts.ArchiveValue(
+            **{k: v for (k, v) in data.items() if k not in ['type']}
+        )
+
+    class Meta:
+        unknown = EXCLUDE
 
     @pre_dump
     def extract_fields_from_object(

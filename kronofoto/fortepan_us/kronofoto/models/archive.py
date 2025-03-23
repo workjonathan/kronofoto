@@ -103,67 +103,12 @@ class ServiceActor(models.Model):
         self.generate_new_keys()
         return self.public_key
 
-@dataclass
-class RemoteActorGetOrCreate:
-    queryset: models.QuerySet["RemoteActor"]
-    profile: str
-
-    @cached_property
-    def is_local(self) -> bool:
-        server_domain = urlparse(self.profile).netloc
-        return Site.objects.filter(domain=server_domain).exists()
-
-    @cached_property
-    def local_actor(self) -> RemoteActor | None:
-        try:
-            return self.queryset.get(profile=self.profile)
-        except RemoteActor.DoesNotExist:
-            return None
-
-    def do_request(self) -> requests.Response:
-        return requests.get(
-            self.profile,
-            headers={
-                "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-            },
-        )
-
-    def parse_json(self, data: Dict[str, Any]) -> Dict[str, Any] | None:
-        try:
-            from fortepan_us.kronofoto.models.activity_schema import ActorSchema
-            return ActorSchema().load(data)
-        except ValidationError as e:
-            print(e, data)
-            return None
-
-
-    def create_remoteactor(self) -> RemoteActor:
-        return RemoteActor.objects.create(profile=self.profile)
-
-    @property
-    def actor(self) -> Tuple[RemoteActor | None, bool]:
-        if self.is_local: # I don't think this should happen. At least, not in the course of processing a valid object.
-            return None, False
-
-        local_actor = self.local_actor
-        if local_actor:
-            return (local_actor, False)
-
-        resp = self.do_request()
-        if resp.status_code == 200:
-            data = resp.json()
-            parsed = self.parse_json(data)
-            if parsed and parsed['id'] == self.profile:
-                return self.create_remoteactor(), True
-            else:
-                return None, False
-        else:
-            return None, False
 
 
 
 class RemoteActorQuerySet(models.QuerySet["RemoteActor"]):
     def get_or_create_by_profile(self, profile: str) -> Tuple[RemoteActor | None, bool]:
+        from .activity_dicts import RemoteActorGetOrCreate
         return RemoteActorGetOrCreate(queryset=self, profile=profile).actor
 
 # Django-stubs cannot make sense of reverse relationships to MPTTModels. That is the reason for django-manager-missing.
@@ -274,8 +219,8 @@ class ArchiveQuerySet(models.QuerySet):
         or (result[0].actor is not None and result[0].actor.profile == profile)
     )
     def create_remote_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
-        from fortepan_us.kronofoto.models.activity_dicts import ArchiveDict
-        data: ArchiveDict = requests.get(
+        from fortepan_us.kronofoto.models.activity_dicts import ArchiveValue
+        data_dict = requests.get(
             profile,
             headers={
                 "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -283,8 +228,8 @@ class ArchiveQuerySet(models.QuerySet):
         ).json()
         try:
             from fortepan_us.kronofoto.models.activity_schema import ArchiveSchema
-            data = ArchiveSchema().load(data)
-            if data["id"] != profile:
+            data : ArchiveValue = ArchiveSchema().load(data_dict)
+            if data.id != profile:
                 return None, False
             actor = RemoteActor.objects.create(profile=profile)
             server_domain = urlparse(profile).netloc
@@ -293,8 +238,8 @@ class ArchiveQuerySet(models.QuerySet):
                     type=Archive.ArchiveType.REMOTE,
                     actor=actor,
                     server_domain=server_domain,
-                    name=data["name"],
-                    slug=data["slug"],
+                    name=data.name,
+                    slug=data.slug,
                 ),
                 True,
             )

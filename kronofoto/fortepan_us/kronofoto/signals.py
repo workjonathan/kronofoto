@@ -1,11 +1,16 @@
 from django.db.models.signals import post_save, m2m_changed, pre_delete
 from django.dispatch import receiver
+from . import signed_requests
+import json
+import requests
 from django.db.models import Q
 from .reverse import reverse
-from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor, Archive
+from functools import cached_property
+from fortepan_us.kronofoto.models import Photo, WordCount, Tag, Term, PhotoTag, Place, PlaceWordCount, Donor, Archive, RemoteActor
 from collections import Counter
 import re
-from typing import Any, Union, Optional, List, Dict, NoReturn, Type
+from typing import Any, Union, Optional, List, Dict, NoReturn, Type, Iterable
+from dataclasses import dataclass
 
 
 @receiver(post_save, sender=Place)
@@ -61,9 +66,8 @@ def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kw
 def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
     send_donor_activities(instance, created=created, DELETE=False)
 
-
-@receiver(post_save, sender=Photo)
-def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+@receiver(pre_delete, sender=Photo)
+def photo_delete_activity(sender: Type[Photo], instance: Photo, using: Any, **kwargs: Any) -> None:
     if not instance.archive.type == Archive.ArchiveType.LOCAL:
         return
     archive = instance.archive
@@ -72,16 +76,12 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
     from . import signed_requests
     import requests
     import json
-    if created:
-        cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
-    else:
-        cls = activity_dicts.UpdateValue
-
-    data = cls(
+    data = activity_dicts.DeleteValue(
         id=archive.ldid() + "#event",
         actor=archive.ldid(),
-        object=activity_dicts.PhotoValue.from_photo(instance),
+        object=instance.ldid(),
     ).dump()
+
     for actor in archive.remoteactor_set.all():
         resp = requests.get(actor.profile)
         profile = resp.json()
@@ -97,6 +97,59 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
                 private_key=archive.private_key,
                 keyId=archive.keyId,
             )
+
+@dataclass
+class PhotoUpsertSender:
+    instance: Photo
+    created: bool
+
+    @cached_property
+    def remote_actors(self) -> Iterable[RemoteActor]:
+        return self.instance.archive.remoteactor_set.all()
+
+    def load_profile(self, profile: str) -> Optional[Dict[str, Any]]:
+        resp = requests.get(profile)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            return None
+
+    def send_data(self, inbox: str, data: str) -> None:
+        signed_requests.post(
+            inbox,
+            data=data,
+            headers={
+                "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+            },
+            private_key=self.instance.archive.private_key,
+            keyId=self.instance.archive.keyId,
+        )
+
+    def send(self) -> None:
+        if not self.instance.archive.type == Archive.ArchiveType.LOCAL:
+            return
+        archive = self.instance.archive
+        for actor in self.remote_actors:
+            if self.created:
+                cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
+            else:
+                cls = activity_dicts.UpdateValue
+
+            data = cls(
+                id=archive.ldid() + "#event",
+                actor=archive.ldid(),
+                object=activity_dicts.PhotoValue.from_photo(self.instance),
+            ).dump()
+            profile = self.load_profile(profile=actor.profile) or {}
+            inbox = profile.get("inbox")
+            if inbox:
+                self.send_data(inbox=inbox, data=json.dumps(data))
+
+
+@receiver(post_save, sender=Photo)
+def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
+    PhotoUpsertSender(instance=instance, created=created).send()
 
 @receiver(post_save, sender=Photo)
 def photo_save(sender: Any, instance: Photo, created: Any, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:

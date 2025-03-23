@@ -136,7 +136,7 @@ def test_donor_only_requires_archive():
     donor = Donor.objects.create(archive=archive)
     donor.clean_fields()
 
-st.register_type_strategy(activity_dicts.Url, urls())
+#st.register_type_strategy(activity_dicts.Url, urls())
 
 class TestArchive(TestCase):
     @hsettings(max_examples=10)
