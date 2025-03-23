@@ -64,7 +64,7 @@ def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kw
 
 @receiver(post_save, sender=Donor)
 def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
-    send_donor_activities(instance, created=created, DELETE=False)
+    Sender(data_provider=DonorUpsertSender(instance=instance, created=created)).send()
 
 @receiver(pre_delete, sender=Photo)
 def photo_delete_activity(sender: Type[Photo], instance: Photo, using: Any, **kwargs: Any) -> None:
@@ -99,13 +99,8 @@ def photo_delete_activity(sender: Type[Photo], instance: Photo, using: Any, **kw
             )
 
 @dataclass
-class PhotoUpsertSender:
-    instance: Photo
-    created: bool
-
-    @cached_property
-    def remote_actors(self) -> Iterable[RemoteActor]:
-        return self.instance.archive.remoteactor_set.all()
+class Sender:
+    data_provider: Union["PhotoUpsertSender", "DonorUpsertSender"]
 
     def load_profile(self, profile: str) -> Optional[Dict[str, Any]]:
         resp = requests.get(profile)
@@ -113,6 +108,16 @@ class PhotoUpsertSender:
             return resp.json()
         else:
             return None
+
+    def send(self) -> None:
+        archive = self.data_provider.archive
+        if not archive.type == Archive.ArchiveType.LOCAL:
+            return
+        for actor in self.data_provider.remote_actors:
+            profile = self.load_profile(profile=actor.profile) or {}
+            inbox = profile.get("inbox")
+            if inbox:
+                self.send_data(inbox=inbox, data=self.data_provider.data)
 
     def send_data(self, inbox: str, data: str) -> None:
         signed_requests.post(
@@ -122,37 +127,67 @@ class PhotoUpsertSender:
                 "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             },
-            private_key=self.instance.archive.private_key,
-            keyId=self.instance.archive.keyId,
+            private_key=self.data_provider.archive.private_key,
+            keyId=self.data_provider.archive.keyId,
         )
 
+@dataclass
+class DonorUpsertSender:
+    instance: Donor
+    created: bool
+
+    @property
+    def archive(self) -> Archive:
+        return self.instance.archive
+
     @cached_property
-    def data(self) -> Dict[str, Any]:
+    def remote_actors(self) -> Iterable[RemoteActor]:
+        return self.instance.archive.remoteactor_set.all()
+
+    @cached_property
+    def data(self) -> str:
         if self.created:
             cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
         else:
             cls = activity_dicts.UpdateValue
 
-        return cls(
+        return json.dumps(cls(
+            id=self.instance.archive.ldid() + "#event",
+            actor=self.instance.archive.ldid(),
+            object=activity_dicts.DonorValue.from_donor(self.instance),
+        ).dump())
+
+@dataclass
+class PhotoUpsertSender:
+    instance: Photo
+    created: bool
+
+    @property
+    def archive(self) -> Archive:
+        return self.instance.archive
+
+    @cached_property
+    def remote_actors(self) -> Iterable[RemoteActor]:
+        return self.instance.archive.remoteactor_set.all()
+
+    @cached_property
+    def data(self) -> str:
+        if self.created:
+            cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
+        else:
+            cls = activity_dicts.UpdateValue
+
+        return json.dumps(cls(
             id=self.instance.archive.ldid() + "#event",
             actor=self.instance.archive.ldid(),
             object=activity_dicts.PhotoValue.from_photo(self.instance),
-        ).dump()
+        ).dump())
 
-    def send(self) -> None:
-        if not self.instance.archive.type == Archive.ArchiveType.LOCAL:
-            return
-        archive = self.instance.archive
-        for actor in self.remote_actors:
-            profile = self.load_profile(profile=actor.profile) or {}
-            inbox = profile.get("inbox")
-            if inbox:
-                self.send_data(inbox=inbox, data=json.dumps(self.data))
 
 
 @receiver(post_save, sender=Photo)
 def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
-    PhotoUpsertSender(instance=instance, created=created).send()
+    Sender(PhotoUpsertSender(instance=instance, created=created)).send()
 
 @receiver(post_save, sender=Photo)
 def photo_save(sender: Any, instance: Photo, created: Any, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:

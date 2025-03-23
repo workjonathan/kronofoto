@@ -32,7 +32,7 @@ class ActorSchema(Schema):
     type = fields.Str() #("Organization")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
-    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str())
+    publicKey = fields.Dict(keys=fields.Str(), values=fields.Str(), required=True)
 
     inbox = fields.Url(relative=True)
     outbox = fields.Url(relative=True)
