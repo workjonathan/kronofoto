@@ -60,7 +60,7 @@ def send_donor_activities(instance: Donor, created: bool, DELETE: bool) -> None:
 
 @receiver(pre_delete, sender=Donor)
 def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kwargs: Any) -> None:
-    send_donor_activities(instance, created=False, DELETE=True)
+    Sender(data_provider=DonorDeleteSender(instance=instance)).send()
 
 @receiver(post_save, sender=Donor)
 def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
@@ -100,7 +100,7 @@ def photo_delete_activity(sender: Type[Photo], instance: Photo, using: Any, **kw
 
 @dataclass
 class Sender:
-    data_provider: Union["PhotoUpsertSender", "DonorUpsertSender"]
+    data_provider: Union["PhotoDeleteSender", "DonorDeleteSender"]
 
     def load_profile(self, profile: str) -> Optional[Dict[str, Any]]:
         resp = requests.get(profile)
@@ -111,7 +111,7 @@ class Sender:
 
     def send(self) -> None:
         archive = self.data_provider.archive
-        if not archive.type == Archive.ArchiveType.LOCAL:
+        if not self.data_provider.is_local:
             return
         for actor in self.data_provider.remote_actors:
             profile = self.load_profile(profile=actor.profile) or {}
@@ -132,9 +132,12 @@ class Sender:
         )
 
 @dataclass
-class DonorUpsertSender:
+class DonorDeleteSender:
     instance: Donor
-    created: bool
+
+    @property
+    def is_local(self) -> bool:
+        return self.instance.archive.type == Archive.ArchiveType.LOCAL
 
     @property
     def archive(self) -> Archive:
@@ -143,6 +146,43 @@ class DonorUpsertSender:
     @cached_property
     def remote_actors(self) -> Iterable[RemoteActor]:
         return self.instance.archive.remoteactor_set.all()
+
+
+    @cached_property
+    def data(self) -> str:
+        return json.dumps(activity_dicts.DeleteValue(
+            id=self.instance.archive.ldid() + "#event",
+            actor=self.instance.archive.ldid(),
+            object=self.instance.ldid(),
+        ).dump())
+
+@dataclass
+class PhotoDeleteSender:
+    instance: Photo
+
+    @property
+    def is_local(self) -> bool:
+        return self.instance.archive.type == Archive.ArchiveType.LOCAL
+
+    @property
+    def archive(self) -> Archive:
+        return self.instance.archive
+
+    @cached_property
+    def remote_actors(self) -> Iterable[RemoteActor]:
+        return self.instance.archive.remoteactor_set.all()
+
+    @cached_property
+    def data(self) -> str:
+        return json.dumps(activity_dicts.DeleteValue(
+            id=self.instance.archive.ldid() + "#event",
+            actor=self.instance.archive.ldid(),
+            object=self.instance.ldid(),
+        ).dump())
+
+@dataclass
+class DonorUpsertSender(DonorDeleteSender):
+    created: bool
 
     @cached_property
     def data(self) -> str:
@@ -158,17 +198,8 @@ class DonorUpsertSender:
         ).dump())
 
 @dataclass
-class PhotoUpsertSender:
-    instance: Photo
+class PhotoUpsertSender(PhotoDeleteSender):
     created: bool
-
-    @property
-    def archive(self) -> Archive:
-        return self.instance.archive
-
-    @cached_property
-    def remote_actors(self) -> Iterable[RemoteActor]:
-        return self.instance.archive.remoteactor_set.all()
 
     @cached_property
     def data(self) -> str:
@@ -188,6 +219,7 @@ class PhotoUpsertSender:
 @receiver(post_save, sender=Photo)
 def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
     Sender(PhotoUpsertSender(instance=instance, created=created)).send()
+
 
 @receiver(post_save, sender=Photo)
 def photo_save(sender: Any, instance: Photo, created: Any, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
