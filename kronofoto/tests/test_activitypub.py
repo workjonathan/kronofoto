@@ -772,11 +772,14 @@ def test_archive_followers_get_photo_delete(an_archive, a_donor, a_category, a_p
             id=st.integers(),
         ),
     ),
+    remote_actors=st.lists(st.builds(models.RemoteActor, profile=st.text(printable, max_size=10))),
+    data=st.dictionaries(st.text(printable), st.text(printable)),
 )
-def test_archive_follower_photo_upsert_sender(photo, created):
+def test_archive_follower_photo_upsert_sender(photo, created, remote_actors, data):
     from fortepan_us.kronofoto.signals import PhotoUpsertSender
     sender = PhotoUpsertSender(created=created, instance=photo)
-    sender.remote_actors = []
+    sender.remote_actors = remote_actors
+    sender.data = data
     sender.send_data = mock.Mock()
     sender.load_profile = mock.Mock()
     sender.send()

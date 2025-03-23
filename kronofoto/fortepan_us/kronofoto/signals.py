@@ -126,25 +126,28 @@ class PhotoUpsertSender:
             keyId=self.instance.archive.keyId,
         )
 
+    @cached_property
+    def data(self) -> Dict[str, Any]:
+        if self.created:
+            cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
+        else:
+            cls = activity_dicts.UpdateValue
+
+        return cls(
+            id=self.instance.archive.ldid() + "#event",
+            actor=self.instance.archive.ldid(),
+            object=activity_dicts.PhotoValue.from_photo(self.instance),
+        ).dump()
+
     def send(self) -> None:
         if not self.instance.archive.type == Archive.ArchiveType.LOCAL:
             return
         archive = self.instance.archive
         for actor in self.remote_actors:
-            if self.created:
-                cls : Union[Type[activity_dicts.CreateValue], Type[activity_dicts.UpdateValue]] = activity_dicts.CreateValue
-            else:
-                cls = activity_dicts.UpdateValue
-
-            data = cls(
-                id=archive.ldid() + "#event",
-                actor=archive.ldid(),
-                object=activity_dicts.PhotoValue.from_photo(self.instance),
-            ).dump()
             profile = self.load_profile(profile=actor.profile) or {}
             inbox = profile.get("inbox")
             if inbox:
-                self.send_data(inbox=inbox, data=json.dumps(data))
+                self.send_data(inbox=inbox, data=json.dumps(self.data))
 
 
 @receiver(post_save, sender=Photo)
