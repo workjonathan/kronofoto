@@ -50,7 +50,7 @@ class ServiceActor(models.Model):
             return cls.objects.create()
 
     def ldid(self) -> str:
-        return reverse("kronofoto:activitypub-main-service") + "#mainKey"
+        return reverse("kronofoto:activitypub-main-service")
 
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:
