@@ -102,6 +102,7 @@ class PhotoSphereDict(TypedDict):
 
 class NodeData(TypedDict, total=False):
     id: str
+    useNewAnglesOrder: bool
     panorama: str
     sphereCorrection: Dict[str, float]
     gps: Tuple[float, float]
@@ -311,6 +312,7 @@ class ValidPhotoSphereView:
             "sphereCorrection": {"pan": (object.heading-90)/180 * 3.1416},
             "gps": (object.location.x, object.location.y) if object.location else (0, 0),
             "links": links,
+            "useNewAnglesOrder": object.use_new_angles,
             'data': {
                 "photos": [
                     self.related_photo_data(position=position, heading=object.heading)
