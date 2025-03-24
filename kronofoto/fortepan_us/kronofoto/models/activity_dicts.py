@@ -736,6 +736,10 @@ class ActorValue:
     outbox: str
 
 @dataclass
+class ServiceActorValue(ActorValue):
+    places: str
+
+@dataclass
 class DeleteValue:
     id: str
     actor: str
