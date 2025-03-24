@@ -26,38 +26,6 @@ def place_save(sender: Any, instance: Place, created: Any, raw: Any, using: Any,
 from fortepan_us.kronofoto.models.activity_schema import ActivitySchema
 from fortepan_us.kronofoto.models import activity_dicts
 
-def send_donor_activities(instance: Donor, created: bool, DELETE: bool) -> None:
-    if not instance.archive.type == Archive.ArchiveType.LOCAL:
-        return
-    archive = instance.archive
-    from . import signed_requests
-    import requests
-    import json
-    if not archive.remoteactor_set.exists():
-        return
-    data = ActivitySchema().dump({
-        "object": instance if not DELETE else reverse("kronofoto:activitypub_data:archives:contributors:detail", kwargs={'short_name': archive.slug, "pk": instance.pk}),
-        "actor": instance.archive,
-        "type": "Create" if created else "Delete" if DELETE else "Update",
-        "to": ["https://www.w3.org/ns/activitystreams#Public"],
-    })
-
-    for actor in archive.remoteactor_set.all():
-        resp = requests.get(actor.profile)
-        profile = resp.json()
-        inbox = profile.get("inbox")
-        if inbox:
-            signed_requests.post(
-                inbox,
-                data=json.dumps(data),
-                headers={
-                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                },
-                private_key=archive.private_key,
-                keyId=archive.keyId,
-            )
-
 @receiver(pre_delete, sender=Donor)
 def donor_delete_activity(sender: Type[Donor], instance: Donor, using: Any, **kwargs: Any) -> None:
     Sender(data_provider=DonorDeleteSender(instance=instance)).send()
@@ -68,35 +36,7 @@ def donor_activity(sender: Type[Donor], instance: Donor, created: bool, raw: Any
 
 @receiver(pre_delete, sender=Photo)
 def photo_delete_activity(sender: Type[Photo], instance: Photo, using: Any, **kwargs: Any) -> None:
-    if not instance.archive.type == Archive.ArchiveType.LOCAL:
-        return
-    archive = instance.archive
-    if not archive.remoteactor_set.exists():
-        return
-    from . import signed_requests
-    import requests
-    import json
-    data = activity_dicts.DeleteValue(
-        id=archive.ldid() + "#event",
-        actor=archive.ldid(),
-        object=instance.ldid(),
-    ).dump()
-
-    for actor in archive.remoteactor_set.all():
-        resp = requests.get(actor.profile)
-        profile = resp.json()
-        inbox = profile.get("inbox")
-        if inbox:
-            signed_requests.post(
-                inbox,
-                data=json.dumps(data),
-                headers={
-                    "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                },
-                private_key=archive.private_key,
-                keyId=archive.keyId,
-            )
+    Sender(PhotoDeleteSender(instance=instance)).send()
 
 @dataclass
 class Sender:
@@ -174,11 +114,13 @@ class PhotoDeleteSender:
 
     @cached_property
     def data(self) -> str:
-        return json.dumps(activity_dicts.DeleteValue(
-            id=self.instance.archive.ldid() + "#event",
-            actor=self.instance.archive.ldid(),
-            object=self.instance.ldid(),
-        ).dump())
+        return json.dumps(
+            activity_dicts.DeleteValue(
+                id=self.instance.archive.ldid() + "#event",
+                actor=self.instance.archive.ldid(),
+                object=self.instance.ldid(),
+            ).dump()
+        )
 
 @dataclass
 class DonorUpsertSender(DonorDeleteSender):

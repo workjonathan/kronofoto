@@ -752,6 +752,7 @@ def test_archive_followers_get_photo_delete(an_archive, a_donor, a_category, a_p
     actor.archives_followed.add(an_archive)
     with mock.patch("requests.get") as mock_:
         mock_.return_value = mock.Mock(name="json")
+        mock_.return_value.status_code = 200
         mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
         with mock.patch("requests.post") as post:
             a_photo.delete()
