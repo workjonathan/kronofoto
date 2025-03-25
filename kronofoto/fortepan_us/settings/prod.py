@@ -175,11 +175,21 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+		'null': {
+			'level': 'DEBUG',
+			'class': 'logging.NullHandler',
+		},
     },
     'root': {
         'handlers': ['console'],
         'level': 'WARNING',
     },
+    'loggers': {
+		'django.security.DisallowedHost': {
+			'handlers': ['null'],
+			'propagate': False,
+		},
+	},
 }
 
 AUTHENTICATION_BACKENDS = ['fortepan_us.kronofoto.auth.backends.ArchiveBackend']
