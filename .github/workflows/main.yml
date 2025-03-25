@@ -1,0 +1,96 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches:
+      - main  # Adjust this if you want to run on different branches
+  push:
+    branches:
+      - main  # Runs on push to main after PR is merged
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'  # Adjust the version as needed
+
+      - name: Install dependencies
+        run: sudo apt-get install gdal-bin spatialite-bin libsqlite3-mod-spatialite
+
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: check types
+        run: |
+          export SECRET_KEY=fakekey
+          export DJANGO_SETTINGS_MODULE=fortepan_us.settings.dev_no_cms
+          cd kronofoto 
+          hatch run manage migrate 
+          hatch run manage createcachetable 
+          hatch run check
+
+      - name: Run tests
+        run: cd kronofoto && hatch run test
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install formatters
+        run: pip install black
+
+      - name: Check formatting (advisory mode)
+        run: |
+          git fetch origin main --depth=1
+          git diff --name-only origin/main...HEAD -- '*.py' | xargs black --check || echo "⚠️ Formatting issues detected. Please run 'black .' to fix." || true
+
+      - name: Check JavaScript formatting (advisory mode)
+        run: |
+          git fetch origin main --depth=1
+          git diff --name-only origin/main...HEAD -- '*.js' | xargs prettier --check || echo "⚠️ Formatting issues detected. Please run 'prettier --write .' to fix." || true
+
+  build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          pip install hatch
+          npm install
+
+      - name: Run npm release
+        run: npm run release
+
+      - name: Build wheel
+        run: cd kronofoto && hatch build -t wheel
+
+      - name: Upload built wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-wheel
+          path: kronofoto/dist/*.whl

@@ -774,6 +774,14 @@ class MapPlugin {
     }
 }
 
+class MyViewer extends Viewer {
+    setPanorama(panorama, data) {
+        const tourPlugin = this.getPlugin(VirtualTourPlugin)
+        Viewer.useNewAnglesOrder = tourPlugin.getCurrentNode().useNewAnglesOrder
+        return super.setPanorama(panorama, data)
+    }
+}
+
 class PhotoSpherePlugin {
     constructor({context}) {
         this.context = context
@@ -790,7 +798,7 @@ class PhotoSpherePlugin {
                 tourPlugin.setCurrentNode(evt.detail)
             })
 
-            const viewer = new Viewer({
+            const viewer = new MyViewer({
                 container: elem2,
                 plugins: [
                     [ImagePlanePlugin, {photos: []}],
