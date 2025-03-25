@@ -45,7 +45,7 @@ class ActorSchema(Schema):
         self, data: Dict[str, Any], **kwargs: Any
     ) -> activity_dicts.ActorValue:
         return activity_dicts.ActorValue(
-            **data
+            **{k:v for k, v in data.items() if k not in ['type']}
         )
 
 class ServiceActorSchema(Schema):
@@ -185,6 +185,15 @@ class MultiPolygonSchema(Schema):
         required=True,
     )
 
+    @pre_dump
+    def extract_fields_from_object(
+        self, object: "MultiPolygon", **kwargs: Any
+    ) -> Dict[str, Any]:
+        return {
+            "type": "MultiPolygon",
+            "coordinates": object.coords,
+        }
+
     @post_load
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
@@ -205,6 +214,9 @@ class PlaceSchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
+    @post_dump
+    def remove_nones(self, data: Dict[str, Any], many: bool, **kwargs: Any) -> Dict[str, Any]:
+        return {k: v for (k,v) in data.items() if v is not None}
     @post_load
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
@@ -580,7 +592,7 @@ class FollowActivitySchema(Schema):
 
 class AcceptActivitySchema(Schema):
     _context = fields.Raw(data_key="@context")
-    type = fields.Constant("Follow", required=True)
+    type = fields.Constant("Accept", required=True)
     id = fields.Url(required=True)
     actor = fields.Url(required=True)
     object = fields.Nested(FollowActivitySchema, required=True)

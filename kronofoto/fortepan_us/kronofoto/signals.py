@@ -12,6 +12,7 @@ from collections import Counter
 import re
 from typing import Any, Union, Optional, List, Dict, NoReturn, Type, Iterable
 from dataclasses import dataclass
+import logging
 
 
 @receiver(post_save, sender=Place)
@@ -68,16 +69,18 @@ class Sender:
                 self.send_data(inbox=inbox, data=self.data_provider.data)
 
     def send_data(self, inbox: str, data: str) -> None:
-        signed_requests.post(
+        resp = signed_requests.post(
             inbox,
             data=data,
             headers={
-                "content_type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             },
             private_key=self.data_provider.private_key,
             keyId=self.data_provider.keyId,
         )
+        if resp.status_code != 200:
+            logging.info("{code} {body!r} from {inbox} with {data}".format(code=resp.status_code, inbox=inbox, data=data, body=resp.content))
 
 @dataclass
 class DonorDeleteSender:
@@ -98,7 +101,6 @@ class DonorDeleteSender:
     @cached_property
     def remote_actors(self) -> Iterable[RemoteActor]:
         return self.instance.archive.remoteactor_set.all()
-
 
     @cached_property
     def data(self) -> str:

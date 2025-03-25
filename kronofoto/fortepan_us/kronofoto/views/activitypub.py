@@ -34,6 +34,7 @@ from fortepan_us.kronofoto.middleware import SignatureHeaders, decode_signature,
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from marshmallow.exceptions import ValidationError
+import logging
 
 activity_stream_context = "https://www.w3.org/ns/activitystreams"
 
@@ -169,6 +170,7 @@ class ServiceInboxResponder:
 @require_json_ld
 def service_inbox(request: HttpRequest) -> HttpResponse:
     if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
+        logging.info("service inbox unauthorized")
         return HttpResponse(status=401)
     if request.method == "POST":
         return ServiceInboxResponder(body=request.body, actor=request.actor).post_response
@@ -189,15 +191,16 @@ def service_follows(request: HttpRequest) -> HttpResponse:
         form = FollowForm(request.POST)
         if form.is_valid():
             actor_data = requests.get(form.cleaned_data['address']).json()
-            activity = ActivitySchema().dump({
-                "object": form.cleaned_data['address'],
-                "type": "Follow",
-                "actor": reverse("kronofoto:activitypub-main-service"),
-                "_context": activity_stream_context,
-            })
+            activity = activity_dicts.FollowValue(
+                id=reverse("kronofoto:activitypub-main-service")+"#follow",
+                object=form.cleaned_data['address'],
+                actor=reverse("kronofoto:activitypub-main-service"),
+            ).dump()
+
             models.OutboxActivity.objects.create(body=activity)
             service_actor = models.ServiceActor.get_instance()
-            signed_requests.post(
+
+            post_response = signed_requests.post(
                 actor_data['inbox'],
                 data=json.dumps(activity),
                 headers={
@@ -207,6 +210,8 @@ def service_follows(request: HttpRequest) -> HttpResponse:
                 private_key=service_actor.private_key,
                 keyId=service_actor.keyId,
             )
+            if post_response.status_code != 200:
+                logging.info('{code} {body!r} received from {address} for {data}'.format(code=post_response.status_code, address=form.cleaned_data['address'], data=activity, body=post_response.content))
 
             #return HttpResponseRedirect("/")
     else:
@@ -236,12 +241,15 @@ def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
                     "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                     'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 }).json()
-                activity = ActivitySchema().dump({
-                    "id": followrequest.request_id,
-                    "type": "Accept",
-                    "actor": reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": archive.slug}),
-                    "_context": activity_stream_context,
-                })
+                activity = activity_dicts.AcceptValue(
+                    id=followrequest.request_id,
+                    actor=reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": archive.slug}),
+                    object=activity_dicts.FollowValue(
+                        id=followrequest.request_id,
+                        actor=followrequest.remote_actor.profile,
+                        object=followrequest.archive.ldid(),
+                    ),
+                ).dump()
                 resp = signed_requests.post(
                     actor_data['inbox'],
                     data=json.dumps(activity),
@@ -255,6 +263,9 @@ def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
                 if resp.status_code == 200:
                     followrequest.remote_actor.archives_followed.add(archive)
                     followrequest.delete()
+                else:
+                    logging.info('{code} {body!r} received from {address} for {data}'.format(code=resp.status_code, address=actor_data['inbox'], data=activity, body=resp.content))
+
     return TemplateResponse(
         request=request,
         template=template,

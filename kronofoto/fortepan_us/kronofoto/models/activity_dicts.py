@@ -21,6 +21,7 @@ import icontract
 from django.urls.exceptions import Resolver404
 from django.contrib.sites.models import Site
 from django.db.models import QuerySet
+import logging
 
 T = TypeVar("T")
 
@@ -152,7 +153,7 @@ class LdPlaceGetOrCreator:
         db_obj.owner = actor
         if self.data.parent is not None:
             parent, created = LdObjectGetOrCreator(queryset=self.queryset, ld_id=self.data.parent).object
-            db_obj.parent = parent
+            db_obj.parent = parent.content_object
         db_obj.place_type = PlaceType.objects.get_or_create(name=self.data.placeType)[0]
         db_obj.geom = self.data.geom
         db_obj.fullname = self.data.fullName
@@ -531,6 +532,7 @@ class PhotoValue:
             tags=[t.tag for t in photo.get_accepted_tags()],
             year=photo.year,
             contributor=donor,
+            place=place,
             url=photo.original.url,
             #attributedTo=[
             #    reverse(
@@ -671,9 +673,9 @@ class PlaceValue:
             id=place.ldid(),
             attributedTo=[reverse("kronofoto:activitypub-main-service")],
             name=place.name,
-            parent=place.parent,
+            parent=place.parent.ldid() if place.parent else None,
             placeType=place.place_type.name,
-            fullName=place.full_name,
+            fullName=place.fullname,
             geom=place.geom,
         )
 
@@ -803,6 +805,7 @@ class UpdateValue:
         if actor.app_follows_actor:
             return self.object.update(actor)
         else:
+            logging.info("not following {actor} so not upserting {data}".format(actor=actor.profile, data=str(self.object)))
             raise JsonError("Not following this actor.", status=401)
 
     def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
@@ -819,6 +822,10 @@ class FollowValue:
     def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
         FollowArchiveRequest.objects.create(remote_actor=actor, request_id=self.id, archive=archive)
         return "stored"
+
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import FollowActivitySchema
+        return FollowActivitySchema().dump(self)
 
 @dataclass
 class AcceptValue:
@@ -838,9 +845,15 @@ class AcceptValue:
     def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
         raise JsonError("This inbox doesn't do this.", status=400)
 
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import AcceptActivitySchema
+        return AcceptActivitySchema().dump(self)
+
     def handle(self, actor: RemoteActor) -> str:
         followobject = self.object
         remoteactor = RemoteActor.objects.get_or_create(profile=followobject.actor)[0]
+        remoteactor.actor_follows_app = True
+        remoteactor.save()
         outboxactivities = OutboxActivity.objects.filter(
             body__type="Follow",
             body__actor=remoteactor.profile,

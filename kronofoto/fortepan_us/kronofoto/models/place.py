@@ -48,7 +48,7 @@ class Place(MPTTModel):
     place_type: models.ForeignKey[PlaceType, PlaceType] = models.ForeignKey(
         PlaceType, null=False, on_delete=models.PROTECT
     )
-    owner: models.ForeignKey[RemoteActor, RemoteActor] = models.ForeignKey(RemoteActor, null=True, on_delete=models.CASCADE)
+    owner: models.ForeignKey[RemoteActor, RemoteActor] = models.ForeignKey(RemoteActor, null=True, on_delete=models.CASCADE, blank=True)
     name: models.CharField = models.CharField(max_length=64, null=False, blank=False)
     geom: models.GeometryField = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey(
