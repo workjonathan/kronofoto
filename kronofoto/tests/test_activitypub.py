@@ -755,6 +755,7 @@ def test_archive_followers_get_photo_delete(an_archive, a_donor, a_category, a_p
         mock_.return_value.status_code = 200
         mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
         with mock.patch("requests.post") as post:
+            post.return_value.status_code = 200
             a_photo.delete()
             mock_.assert_called_with("https://anotherinstance.com/actor")
             assert len(post.mock_calls) == 1
@@ -775,6 +776,7 @@ def test_archive_followers_get_photo_create(an_archive, a_donor, a_category):
         mock_.return_value.status_code = 200
         mock_.return_value.json.return_value = {"inbox": "https://anotherinstance.com/actor/inbox"}
         with mock.patch("requests.post") as post:
+            post.return_value.status_code = 200
             photo = models.Photo.objects.create(
                 donor=a_donor,
                 archive=an_archive,

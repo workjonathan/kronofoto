@@ -402,16 +402,18 @@ class Photo(PhotoBase):
         null=True,
         editable=True,
     )
-    original = models.ImageField(
-        upload_to=get_original_path,
-        storage=OverwriteStorage(),
-        null=True,
-        editable=True,
-    )
     remote_image = models.URLField(null=True, editable=False)
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
+
+    @property
+    def fullsizeurl(self) -> str:
+        if self.remote_image:
+            return self.remote_image
+        elif self.original:
+            return self.original.url
+        raise ValueError
 
     @overload
     def image_url(self, *, height: int) -> str: ...
@@ -452,24 +454,34 @@ class Photo(PhotoBase):
     def h700(self) -> Optional[ImageData]:
         from fortepan_us.kronofoto.imageutil import ImageSigner
 
-        if not self.original or not self.id:
+        if not (self.original or self.remote_image) or not self.id:
             return None
-        signer = ImageSigner(id=self.id, path=self.original.name, width=0, height=700)
-        width, height = self.get_image_dimensions()
+        if self.remote_image:
+            path = (0, self.remote_image)
+            width, height = 0, 700
+        elif self.original:
+            path = self.original.name
+            width, height = self.get_image_dimensions()
+        else:
+            raise ValueError
+        signer = ImageSigner(id=self.id, path=path, width=0, height=700)
         return ImageData(
-            height=700,
-            width=round(width / height * 700),
+            height=height,
+            width=width,
             url=signer.url,
             name="h700",
         )
 
     @property
     def thumbnail(self) -> Optional[ImageData]:
-        if not self.original or not self.id:
+        if not (self.original or self.remote_image) or not self.id:
             return None
         from fortepan_us.kronofoto.imageutil import ImageSigner
-
-        signer = ImageSigner(id=self.id, path=self.original.name, width=75, height=75)
+        if self.remote_image:
+            path = (0, self.remote_image)
+        elif self.original:
+            path = self.original.name
+        signer = ImageSigner(id=self.id, path=path, width=75, height=75)
         return ImageData(
             height=75,
             width=75,

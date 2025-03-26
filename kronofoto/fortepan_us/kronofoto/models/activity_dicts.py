@@ -153,7 +153,8 @@ class LdPlaceGetOrCreator:
         db_obj.owner = actor
         if self.data.parent is not None:
             parent, created = LdObjectGetOrCreator(queryset=self.queryset, ld_id=self.data.parent).object
-            db_obj.parent = parent.content_object
+            if parent and parent.content_object:
+                db_obj.parent = parent.content_object
         db_obj.place_type = PlaceType.objects.get_or_create(name=self.data.placeType)[0]
         db_obj.geom = self.data.geom
         db_obj.fullname = self.data.fullName
