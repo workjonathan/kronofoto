@@ -536,8 +536,17 @@ class PhotoInline(admin.StackedInline):
     raw_id_fields = ['photo']
     form = PhotoSpherePairInlineForm
 
+class PhotoSphereUsesNewAnglesOrderFilter(StandardSimpleListFilter):
+    title = "uses new angles"
+    parameter_name = "uses_new_angle_order"
+    field = 'use_new_angles'
+
+    filters = (
+        ("Yes", True),
+        ("No", False),
+    )
+
 class PhotoSphereTourIsSetFilter(StandardSimpleListFilter):
-    # should be deleted when db constraint is enabled
     title = "belongs to tour"
     parameter_name = "in_tour"
     field = 'tour__isnull'
@@ -602,7 +611,7 @@ from djgeojson.serializers import Serializer as GeoJSONSerializer # type: ignore
 class PhotoSphereAdmin(admin.GISModelAdmin):
     form = PhotoSphereChangeForm
     add_form = PhotoSphereAddForm
-    list_filter = (MainstreetSetIsSetFilter, 'mainstreetset', PhotoSphereTourIsSetFilter, "tour") # should be deleted when db constraint is enabled
+    list_filter = (MainstreetSetIsSetFilter, 'mainstreetset', PhotoSphereTourIsSetFilter, "tour", PhotoSphereUsesNewAnglesOrderFilter) # should be deleted when db constraint is enabled
     list_display = ('title', 'description')
     search_fields = ('title', 'description')
     inlines = (PhotoInline, PhotoInfoInline)
