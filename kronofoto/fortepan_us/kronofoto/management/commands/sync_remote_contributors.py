@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from ...models import Place, PlaceType
 from ...models import Archive, LdId
-from ...models.activity_schema import ArchiveSchema, Collection
-from ...models.activity_dict import ArchiveValue, DonorValue
+from ...models.activity_schema import ArchiveSchema, Collection, CollectionPage
+from ...models.activity_dicts import ArchiveValue, DonorValue
 import json
 import requests
 
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         actor = Archive.objects.get(slug=slug, server_domain=server_domain)
         servicevalue = ArchiveSchema().load(
             requests.get(
-                profile,
+                actor.actor.profile,
                 headers={
                     "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
@@ -37,4 +37,14 @@ class Command(BaseCommand):
             for donor in page.items:
                 if isinstance(donor, DonorValue):
                     donor.upsert(actor)
-            page = page.next
+            if page.next:
+                page = CollectionPage().load(
+                    requests.get(
+                        page.next,
+                        headers={
+                            "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                        },
+                    ).json()
+                )
+            else:
+                page = None
