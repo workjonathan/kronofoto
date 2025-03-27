@@ -1029,23 +1029,22 @@ class Zoom {
     }
 }
 
-class SwipeEvents {
-    constructor({context}) {
-        this.context = context
+class SwipeHandler {
+    constructor({swipetarget}) {
+        this.swipetarget = swipetarget
+        this.xDown = null
+        this.yDown = null
+        this.threshold = 4
     }
 
-    attachListeners() {
-        this.elem.addEventListener("touchstart", this.handleTouchStart.bind(this), false)
-        this.elem.addEventListener("touchmove", this.handleTouchMove.bind(this), false)
-    }
 
-    handleTouchStart(swipetarget, evt) {
+    handleTouchStart(evt) {
         const firstTouch = evt.touches[0]
         this.xDown = firstTouch.clientX
         this.yDown = firstTouch.clientY
     }
 
-    handleTouchMove(swipetarget, evt) {
+    handleTouchMove(evt) {
         if (!this.xDown || !this.yDown) {
             return
         }
@@ -1061,11 +1060,11 @@ class SwipeEvents {
             if (-xDiff > this.threshold) {
                 // Left swipe
                 console.log("swipe left")
-                swipetarget.dispatchEvent(new CustomEvent("swipe-left"))
+                this.swipetarget.dispatchEvent(new CustomEvent("swipe-left"))
             } else if (xDiff > this.threshold) {
                 // Right swipe
                 console.log("swipe right")
-                swipetarget.dispatchEvent(new CustomEvent("swipe-right"))
+                this.swipetarget.dispatchEvent(new CustomEvent("swipe-right"))
             }
         }
 
@@ -1073,15 +1072,18 @@ class SwipeEvents {
         this.xDown = null
         this.yDown = null
     }
+}
+
+class SwipeEvents {
+    constructor({context}) {
+        this.context = context
+    }
 
     install({elem}) {
-        this.xDown = null
-        this.yDown = null
-        this.threshold = 4
         for (const swipetarget of elem.querySelectorAll('[data-swipe-target]')) {
-            this.elem = swipetarget
-            this.elem.addEventListener("touchstart", this.handleTouchStart.bind(this, swipetarget), false)
-            this.elem.addEventListener("touchmove", this.handleTouchMove.bind(this, swipetarget), false)
+            const handler = new SwipeHandler({swipetarget})
+            swipetarget.addEventListener("touchstart", handler.handleTouchStart.bind(handler), false)
+            swipetarget.addEventListener("touchmove", handler.handleTouchMove.bind(handler), false)
         }
     }
 }
