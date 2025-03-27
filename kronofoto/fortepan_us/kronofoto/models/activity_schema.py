@@ -2,7 +2,7 @@ from __future__ import annotations
 from marshmallow import Schema, fields, pre_dump, post_load, pre_load, EXCLUDE, post_dump
 from marshmallow import validate
 from marshmallow.exceptions import ValidationError
-from typing import Any, Dict, Union, TypeVar, List
+from typing import Any, Dict, Union, TypeVar, List, Optional
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.reverse import reverse
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
@@ -36,6 +36,8 @@ class ActorSchema(Schema):
 
     inbox = fields.Url(relative=True)
     outbox = fields.Url(relative=True)
+    following = fields.List(fields.Url(), required=True)
+    followers = fields.List(fields.Url(), required=True)
 
     class Meta:
         unknown = EXCLUDE
@@ -57,6 +59,16 @@ class ServiceActorSchema(Schema):
     inbox = fields.Url(relative=True, required=True)
     outbox = fields.Url(relative=True, required=True)
     places = fields.Url(relative=True, required=True)
+    following = fields.List(fields.Url(), required=True)
+    followers = fields.List(fields.Url(), required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.ServiceActorValue:
+        return activity_dicts.ServiceActorValue(
+            **{k: v for (k, v) in data.items() if k not in ['type']}
+        )
 
 class ArchiveSchema(Schema):
     type = fields.Constant("Organization")
@@ -146,8 +158,16 @@ class ArchiveSchema(Schema):
 class GeomField(fields.Field):
     def _serialize(
         self, value: Any, attr: Any, obj: Any, **kwargs: Any
-    ) -> Dict[str, Any]:
-        return MultiPolygonSchema().dump(value)
+    ) -> Optional[Dict[str, Any]]:
+        if value is None:
+            return None
+        elif isinstance(value, MultiPolygon):
+            return MultiPolygonSchema().dump(value)
+        elif isinstance(value, Point):
+            return PointSchema().dump(value)
+
+        else:
+            raise ValueError(value)
 
     def _deserialize(self, value: Dict[str, Any], *args: Any, **kwargs: Any) -> Any:
         if value["type"] in [
@@ -167,6 +187,15 @@ class PointSchema(Schema):
         self, data: Dict[str, Any], **kwargs: Any
     ) -> Point:
         return Point(*data['coordinates'])
+
+    @pre_dump
+    def extract_fields_from_object(
+        self, object: "Point", **kwargs: Any
+    ) -> Dict[str, Any]:
+        return {
+            "type": "Point",
+            "coordinates": object.coords,
+        }
 
 class MultiPolygonSchema(Schema):
     type = fields.Constant("MultiPolygon", required=True)
@@ -415,6 +444,8 @@ class KronofotoObjectField(fields.Field):
             return Image(context=self.context).load(value)
         if value["type"] in ["Contact"]:
             return Contact(context=self.context).load(value)
+        if value["type"] in ["Location"]:
+            return PlaceSchema(context=self.context).load(value)
         raise ValidationError(value["type"])
 
 class ObjectOrLinkField(fields.Field):

@@ -74,20 +74,22 @@ def get_data(request:HttpRequest, type: str, pk: int) -> HttpResponse:
 #@require_json_ld
 def service(request: HttpRequest) -> HttpResponse:
     site = get_current_site(request)
-    return JsonLDResponse({
-        "@context": "https://www.w3.org/ns/activitystreams",
-         "type": "Service",
-         "id": reverse("kronofoto:activitypub-main-service"),
-         "name": site.name,
-         "inbox": reverse("kronofoto:activitypub-main-service-inbox"),
-         "outbox": reverse("kronofoto:activitypub-main-service-outbox"),
-         "following": [archive.actor.profile for archive in models.Archive.objects.filter(actor__isnull=False) if archive.actor],
-         "publicKey": {
+    data = activity_dicts.ServiceActorValue(
+        #"@context": "https://www.w3.org/ns/activitystreams",
+        id=reverse("kronofoto:activitypub-main-service"),
+        name=site.name,
+        inbox=reverse("kronofoto:activitypub-main-service-inbox"),
+        outbox=reverse("kronofoto:activitypub-main-service-outbox"),
+        following=[actor.profile for actor in models.RemoteActor.objects.filter(app_follows_actor=True)],
+        followers=[actor.profile for actor in models.RemoteActor.objects.filter(actor_follows_app=True)],
+        places=reverse("kronofoto:activitypub-main-service-places"),
+        publicKey={
             "id": models.ServiceActor.get_instance().keyId,
             "owner": reverse("kronofoto:activitypub-main-service"),
             "publicKeyPem": models.ServiceActor.get_instance().guaranteed_public_key().decode("utf-8"),
-         },
-    })
+        },
+    ).dump()
+    return JsonLDResponse(data)
 
 
 #@require_json_ld
@@ -95,7 +97,7 @@ def service_place(request: HttpRequest, pk: int) -> HttpResponse:
     place = get_object_or_404(models.Place.objects.all().annotate(json=AsGeoJSON("geom")), pk=pk)
     return JsonLDResponse(PlaceSchema().dump(activity_dicts.PlaceValue.from_place(place)))
 
-def places_page(request: HttpRequest, short_name: str) -> HttpResponse:
+def places_page(request: HttpRequest) -> HttpResponse:
     form = Page(request.GET)
     if form.is_valid():
         queryset = models.Place.objects.filter(pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
@@ -106,7 +108,7 @@ def places_page(request: HttpRequest, short_name: str) -> HttpResponse:
         queryset = models.Place.objects.all().order_by('id')[:100]
         schema = Collection()
         cv = activity_dicts.CollectionValue(
-            id=reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name}),
+            id=reverse("kronofoto:activitypub-main-service-places"),
             summary="Photo List",
             first=activity_dicts.CollectionPageValue.from_place_queryset(queryset)
         )

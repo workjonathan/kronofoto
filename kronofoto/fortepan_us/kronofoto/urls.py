@@ -130,6 +130,7 @@ urlpatterns = urlpatterns + [
     path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
     path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),
     path('activitypub/service/outbox', views.activitypub.service_outbox, name="activitypub-main-service-outbox"),
+    path('activitypub/service/places', views.activitypub.places_page, name="activitypub-main-service-places"),
     path('activitypub/service/places/<int:pk>', views.activitypub.service_place, name="activitypub-main-service-places"),
     path("activitypub/", include(views.activitypub.data_urls)),
     path('users/<str:username>', views.profile_view, name='user-page'),

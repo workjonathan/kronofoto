@@ -3,7 +3,7 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 from ...models import Place, PlaceType
 from ...models import RemoteActor, LdId
 from ...models.activity_schema import ServiceActorSchema, Collection
-from ...models.activity_dict import ServiceActorSchema, PlaceUpserter
+from ...models.activity_dicts import PlaceUpserter
 import json
 import requests
 
@@ -35,9 +35,10 @@ class Command(BaseCommand):
         with Place.objects.disable_mptt_updates():
             while page is not None:
                 for place in page.items:
+                    print(place)
                     PlaceUpserter(
                         queryset=LdId.objects.all(),
                         owner=actor,
                         object=place,
                     ).result
-                page = page.next
+                page = page.get_next()

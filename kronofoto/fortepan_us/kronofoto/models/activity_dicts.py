@@ -317,6 +317,7 @@ class NewLdIdPlace:
             geom=self.object.geom,
             owner=self.owner,
             parent=self.place_upserter.parent,
+            fullname=self.object.fullName,
         )
         result = self.queryset.update_or_create(
             ld_id=self.object.id,
@@ -346,6 +347,7 @@ class UpdateLdIdPlace:
         place.place_type = self.place_upserter.place_type
         place.name = self.object.name
         place.parent = self.place_upserter.parent
+        place.fullname = self.object.fullName
         place.save()
         return self.ld_id, False
 
@@ -445,8 +447,8 @@ class ArchiveValue:
     outbox: str
     contributors: str
     photos: str
-    following: str
-    followers: str
+    following: List[str]
+    followers: List[str]
 
 
 class ArchiveDict(ActivitypubObject, total=False):
@@ -696,6 +698,20 @@ class CollectionPageValue(Generic[T]):
     next: Optional[str]
     items: List[T]
 
+    def get_next(self) -> "Optional[CollectionPageValue[T]]":
+        from fortepan_us.kronofoto.models.activity_schema import CollectionPage
+        if self.next:
+            return CollectionPage().load(
+                requests.get(
+                    self.next,
+                    headers={
+                        "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    },
+                ).json()
+            )
+        else:
+            return None
+
     @staticmethod
     def from_donor_queryset(qs: QuerySet[Donor], short_name: str) -> CollectionPageValue[DonorValue]:
         id = reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name})
@@ -716,7 +732,7 @@ class CollectionPageValue(Generic[T]):
 
     @staticmethod
     def from_place_queryset(qs: QuerySet[Place]) -> CollectionPageValue[PlaceValue]:
-        id = reverse("kronofoto:activitypub_data:places:page")
+        id = reverse("kronofoto:activitypub-main-service-places")
         return CollectionPageValue(
             id=id,
             next="{}?pk={}".format(id, qs[99].pk) if qs.count() == 100 else None,
@@ -737,10 +753,16 @@ class ActorValue:
     publicKey: Dict[str, str]
     inbox: str
     outbox: str
+    following: List[str]
+    followers: List[str]
 
 @dataclass
 class ServiceActorValue(ActorValue):
     places: str
+
+    def dump(self) -> Dict[str, Any]:
+        from .activity_schema import ServiceActorSchema
+        return ServiceActorSchema().dump(self)
 
 @dataclass
 class DeleteValue:
