@@ -1030,13 +1030,12 @@ class Zoom {
 }
 
 class SwipeHandler {
-    constructor({swipetarget}) {
+    constructor({swipetarget, threshold = 5}) {
         this.swipetarget = swipetarget
         this.xDown = null
         this.yDown = null
-        this.threshold = 4
+        this.threshold = threshold
     }
-
 
     handleTouchStart(evt) {
         const firstTouch = evt.touches[0]
@@ -1080,10 +1079,18 @@ class SwipeEvents {
     }
 
     install({elem}) {
-        for (const swipetarget of elem.querySelectorAll('[data-swipe-target]')) {
+        for (const swipetarget of elem.querySelectorAll("[data-swipe-target]")) {
             const handler = new SwipeHandler({swipetarget})
-            swipetarget.addEventListener("touchstart", handler.handleTouchStart.bind(handler), false)
-            swipetarget.addEventListener("touchmove", handler.handleTouchMove.bind(handler), false)
+            swipetarget.addEventListener(
+                "touchstart",
+                handler.handleTouchStart.bind(handler),
+                false,
+            )
+            swipetarget.addEventListener(
+                "touchmove",
+                handler.handleTouchMove.bind(handler),
+                false,
+            )
         }
     }
 }
