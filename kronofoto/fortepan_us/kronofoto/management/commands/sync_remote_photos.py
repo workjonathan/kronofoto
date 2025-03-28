@@ -3,7 +3,7 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 from ...models import Place, PlaceType
 from ...models import Archive, LdId
 from ...models.activity_schema import ArchiveSchema, Collection
-from ...models.activity_dict import ArchiveValue, PhotoValue
+from ...models.activity_dicts import ArchiveValue, PhotoValue
 import json
 import requests
 
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         actor = Archive.objects.get(slug=slug, server_domain=server_domain)
         servicevalue = ArchiveSchema().load(
             requests.get(
-                profile,
+                actor.actor.profile,
                 headers={
                     "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
@@ -26,7 +26,7 @@ class Command(BaseCommand):
         )
         photoscollection = Collection().load(
             requests.get(
-                servicevalue.contributors,
+                servicevalue.photos,
                 headers={
                     "Accept": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
                 },
@@ -35,6 +35,7 @@ class Command(BaseCommand):
         page = photoscollection.first
         while page is not None:
             for photo in page.items:
+                print(photo)
                 if isinstance(photo, PhotoValue):
                     photo.upsert(actor)
-            page = page.next
+            page = page.get_next()
