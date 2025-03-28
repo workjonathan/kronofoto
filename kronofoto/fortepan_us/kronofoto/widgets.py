@@ -74,6 +74,7 @@ class HeadingWidget(NumberInput):
         context = super().get_context(name, value, attrs)
         self.template_name = 'kronofoto/widgets/heading.html'
         context['sphere_image'] = self.attrs['photo']
+        context['useNewAnglesOrder'] = "true" if self.attrs.get("useNewAnglesOrder") else "false"
         context['id'] = attrs['id']
         context['sphere_width'] = self.sphere_width
         context['sphere_height'] = self.sphere_height
@@ -130,6 +131,7 @@ class PositioningWidget(MultiWidget):
         if 'photosphere' in self.attrs:
             self.template_name = 'kronofoto/widgets/positioning.html'
             context['sphere_image'] = self.attrs['photosphere']
+            context['useNewAnglesOrder'] = "true" if self.attrs.get("useNewAnglesOrder") else "false"
             context['photo'] = self.attrs['photo']
             context['photo_h'] = self.attrs['photo_h']
             context['photo_w'] = self.attrs['photo_w']

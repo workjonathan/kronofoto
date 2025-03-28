@@ -760,7 +760,9 @@ class Photo(PhotoBase):
             terms
             | tags
             | locations
-            | {str(self.donor), "history of Iowa", "Iowa", "Iowa History"}
+            | {str(self.donor)}
+            # , "history of Iowa", "Iowa", "Iowa History"}
+            # TODO: add these to the archive model as a csv field or something.
         )
 
     def notices(self) -> List["LocalContextNotice"]:

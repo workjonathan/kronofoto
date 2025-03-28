@@ -3,10 +3,11 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.forms import AuthenticationForm
+from django.http import HttpRequest
 from typing import Any, List, Dict, Union, Optional, Protocol
 
 class Verifier(Protocol):
-    def verify(self, user: User) -> None:
+    def verify(self, user: User, request: HttpRequest) -> None:
         ...
 
 class FortepanAuthenticationForm(AuthenticationForm):
@@ -35,8 +36,8 @@ class RegisterUserForm(forms.Form):
                 self.add_error('password1', 'The password fields must be identical')
         return data
 
-    def create_user(self) -> None:
+    def create_user(self, request: HttpRequest) -> None:
         username = self.cleaned_data['email']
         password = self.cleaned_data['password1']
         user = User.objects.create_user(username, password=password, email=username, is_active=False)
-        self.user_checker.verify(user)
+        self.user_checker.verify(user, request=request)

@@ -61,6 +61,7 @@ class PhotoSphere(models.Model):
     title = models.CharField(max_length=512, blank=False)
     description = models.TextField()
     is_published = models.BooleanField(default=True)
+    use_new_angles = models.BooleanField(default=True, help_text="This option could fix photo sphere alignment issues. It should be enabled on all photo spheres. However, changing it may knock existing matches off.")
     image = models.ImageField(
         upload_to=get_photosphere_path,
         storage=OverwriteStorage(),

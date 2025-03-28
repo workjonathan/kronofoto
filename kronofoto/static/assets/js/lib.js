@@ -14,7 +14,7 @@ import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
 
-import vectorTileLayer from 'leaflet-vector-tile-layer';
+import vectorTileLayer from "leaflet-vector-tile-layer"
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -93,7 +93,10 @@ class TimelineScroller {
                     "#fi-thumbnail-carousel-images li[data-active] a",
                 )) {
                     const detail = parseInt(temp.parentNode.getAttribute("data-fi"))
-                    const evt = new CustomEvent("kronofoto-select-node", { bubbles: true, detail })
+                    const evt = new CustomEvent("kronofoto-select-node", {
+                        bubbles: true,
+                        detail,
+                    })
                     carousel.dispatchEvent(evt)
                 }
                 this.dropTimelineCoin(ui.position.left)
@@ -108,7 +111,10 @@ class TimelineScroller {
     }
     getWidthElement() {
         let carousel = this.context.querySelector("#fi-thumbnail-carousel-images")
-        return (carousel ? carousel.getAttribute("data-width-element") : undefined) || "#fi-image"
+        return (
+            (carousel ? carousel.getAttribute("data-width-element") : undefined) ||
+            "#fi-image"
+        )
     }
     moveTimelineCoin(deltaX, drag = true) {
         if (drag) {
@@ -376,7 +382,9 @@ class PageEditor {
             this.context.addEventListener("kronofoto:modal:reveal", (evt) => {
                 $(modal).foundation("open")
             })
-            $(modal).on("closed.zf.reveal", () => modal.dispatchEvent(new Event("kronofoto-close-modal", {bubbles: true})))
+            $(modal).on("closed.zf.reveal", () =>
+                modal.dispatchEvent(new Event("kronofoto-close-modal", {bubbles: true})),
+            )
         }
         for (const img of elem.querySelectorAll("[data-photo-target]")) {
             img.addEventListener("click", (evt) => {
@@ -437,16 +445,16 @@ class PageEditor {
         const betweenCard = card.nextElementSibling
 
         let previous = card
-        while (previous = previous.previousElementSibling) {
+        while ((previous = previous.previousElementSibling)) {
             if (previous.classList.contains("card")) {
                 break
             }
         }
         if (previous !== card && previous && previous.classList.contains("card")) {
             previous.insertAdjacentElement("beforebegin", card)
-            card.insertAdjacentElement("afterend", betweenCard)
-
-            [previous.style["z-index"], card.style["z-index"]] = [card.style['z-index'], previous.style['z-index']]
+            card.insertAdjacentElement("afterend", betweenCard)[
+                (previous.style["z-index"], card.style["z-index"])
+            ] = [card.style["z-index"], previous.style["z-index"]]
             AOS.refreshHard()
         }
     }
@@ -456,15 +464,16 @@ class PageEditor {
         const card = button.closest(".card")
         const betweenCard = card.nextElementSibling
         let next = card
-        while (next = next.nextElementSibling) {
+        while ((next = next.nextElementSibling)) {
             if (next.classList.contains("card")) {
                 break
             }
         }
         if (next !== card && next && next.classList.contains("card")) {
             next.insertAdjacentElement("afterend", card)
-            card.insertAdjacentElement("afterend", betweenCard)
-            [next.style["z-index"], card.style["z-index"]] = [card.style['z-index'], next.style['z-index']]
+            card.insertAdjacentElement("afterend", betweenCard)[
+                (next.style["z-index"], card.style["z-index"])
+            ] = [card.style["z-index"], next.style["z-index"]]
             AOS.refreshHard()
         }
     }
@@ -590,7 +599,8 @@ class ExhibitPlugin {
         this.exhibit_mode = exhibit_mode
     }
     install({elem}) {
-        const scrollEventOptions = this.rootSelector === "#kfroot" ? {capture: true} : undefined
+        const scrollEventOptions =
+            this.rootSelector === "#kfroot" ? {capture: true} : undefined
         for (const btn of elem.querySelectorAll("[data-form-target]")) {
             btn.addEventListener("click", (evt) => {
                 btn.closest("form").setAttribute(
@@ -617,11 +627,17 @@ class ExhibitPlugin {
             const updateScrollOpacity = () => {
                 //console.log('updateScrollOpacity')
                 if (!this.context.contains(siteWrapper)) {
-                    document.removeEventListener("scroll", updateScrollOpacity, scrollEventOptions)
+                    document.removeEventListener(
+                        "scroll",
+                        updateScrollOpacity,
+                        scrollEventOptions,
+                    )
                     return
                 }
 
-                let elements = elem.querySelectorAll(".scroll-opacity, .two-column__content")
+                let elements = elem.querySelectorAll(
+                    ".scroll-opacity, .two-column__content",
+                )
                 elements.forEach((element) => {
                     const viewportHeight = window.innerHeight
                     const elementTop = element.getBoundingClientRect().top
@@ -701,18 +717,23 @@ class MapPlugin2 {
                 },
             ).addTo(map)
             const icon = new L.Icon.Default()
-            icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
-            icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-            const tileLayer = vectorTileLayer(
-                "/tiles/mainstreets/{z}/{x}/{y}.mvt",
-                {style: {
+            icon.options.iconUrl =
+                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+            icon.options.shadowUrl =
+                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+            const tileLayer = vectorTileLayer("/tiles/mainstreets/{z}/{x}/{y}.mvt", {
+                style: {
                     // icon,
-                    interactive: true
-                }},
-            )
-            tileLayer.addEventListener("click", evt => {
-                map_elem.dispatchEvent(new CustomEvent("kronofoto-select-map-marker", {detail: evt.layer.feature, bubbles: true}))
-
+                    interactive: true,
+                },
+            })
+            tileLayer.addEventListener("click", (evt) => {
+                map_elem.dispatchEvent(
+                    new CustomEvent("kronofoto-select-map-marker", {
+                        detail: evt.layer.feature,
+                        bubbles: true,
+                    }),
+                )
             })
             tileLayer.addTo(map)
             const position = [y, x]
@@ -745,12 +766,13 @@ class MapPlugin {
             )
             const map = L.map(document.querySelector("[data-map]"))
             const positron = L.tileLayer(
-                'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', 
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                    subdomains: 'abcd',
+                    attribution:
+                        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: "abcd",
                     maxZoom: 20,
-                }
+                },
             ).addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
@@ -782,68 +804,70 @@ class PhotoOpacityElement extends HTMLElement {
         const dom = this //.attachShadow({mode: "open"})
         dom.classList.add("photo-opacity-host")
 
-        const title = document.createElement('span')
-        title.classList.add('title')
-        title.innerText = 'Opacity'
+        const title = document.createElement("span")
+        title.classList.add("title")
+        title.innerText = "Opacity"
         dom.appendChild(title)
 
-        this.input = document.createElement('input')
-        this.input.type = 'range'
+        this.input = document.createElement("input")
+        this.input.type = "range"
         dom.appendChild(this.input)
         this.input.value = 100
 
-        this.value = document.createElement('span')
-        this.value.classList.add('value')
+        this.value = document.createElement("span")
+        this.value.classList.add("value")
         dom.appendChild(this.value)
         this.value.innerText = 100
 
-        this.input.addEventListener('input', () => {
-            this.viewer.getPlugin(ImagePlanePlugin).material.opacity = this.input.valueAsNumber/100
+        this.input.addEventListener("input", () => {
+            this.viewer.getPlugin(ImagePlanePlugin).material.opacity =
+                this.input.valueAsNumber / 100
             this.value.innerText = this.input.valueAsNumber
             this.viewer.needsUpdate()
         })
     }
 
-
     attachViewer(viewer) {
         this.viewer = viewer
-        viewer
-            .getPlugin(VirtualTourPlugin)
-            .addEventListener("node-changed", () => {
-                this.value.innerText = 100
-                this.input.value = 100
-
-            })
+        viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", () => {
+            this.value.innerText = 100
+            this.input.value = 100
+        })
     }
 }
 
-customElements.define('fortepan-opacity-input', PhotoOpacityElement)
+customElements.define("fortepan-opacity-input", PhotoOpacityElement)
 
 class PhotoTimelineElement extends HTMLElement {
     constructor() {
         super()
     }
     connectedCallback() {
-        const dom = this 
+        const dom = this
         dom.classList.add("photo-timeline-link-host")
 
-        this.link = document.createElement('a')
-        this.link.innerText = ''
+        this.link = document.createElement("a")
+        this.link.innerText = ""
         this.link.setAttribute("href", "/")
         dom.appendChild(this.link)
     }
     attachViewer(viewer) {
         this.viewer = viewer
-        viewer
-            .getPlugin(VirtualTourPlugin)
-            .addEventListener("node-changed", ({node}) => {
-                this.link.innerText = node.data.photos[0].name
-                this.link.setAttribute('href', node.data.photos[0].href)
-            })
+        viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({node}) => {
+            this.link.innerText = node.data.photos[0].name
+            this.link.setAttribute("href", node.data.photos[0].href)
+        })
     }
 }
-customElements.define('fortepan-timeline-link', PhotoTimelineElement)
+customElements.define("fortepan-timeline-link", PhotoTimelineElement)
 
+class MyViewer extends Viewer {
+    setPanorama(panorama, data) {
+        const tourPlugin = this.getPlugin(VirtualTourPlugin)
+        Viewer.useNewAnglesOrder = tourPlugin.getCurrentNode().useNewAnglesOrder
+        return super.setPanorama(panorama, data)
+    }
+}
 
 class PhotoSpherePlugin {
     constructor({context}) {
@@ -864,13 +888,12 @@ class PhotoSpherePlugin {
                 const plugin = viewer.getPlugin(PlanPlugin)
                 if (evt.detail.map_open) {
                     plugin.open()
-                }
-                else {
+                } else {
                     plugin.close()
                 }
             })
 
-            const viewer = new Viewer({
+            const viewer = new MyViewer({
                 container: elem2,
                 navbar: [
                     "zoom",
@@ -905,10 +928,12 @@ class PhotoSpherePlugin {
                                 speed: "10rpm",
                                 fadeIn: true,
                                 rotation: true,
-                                rotateTo: toNode.data.photos.length ? {
-                                    yaw: `${90-toNode.data.photos[0].azimuth}deg`,
-                                    pitch: `${toNode.data.photos[0].inclination}deg`,
-                                } : undefined,
+                                rotateTo: toNode.data.photos.length
+                                    ? {
+                                          yaw: `${90 - toNode.data.photos[0].azimuth}deg`,
+                                          pitch: `${toNode.data.photos[0].inclination}deg`,
+                                      }
+                                    : undefined,
                             }),
                         },
                     ],
@@ -917,7 +942,8 @@ class PhotoSpherePlugin {
                         {
                             defaultZoom: 19,
                             position: "bottom right",
-                            visibleOnLoad: !window.matchMedia("(max-width: 64em)").matches,
+                            visibleOnLoad:
+                                !window.matchMedia("(max-width: 64em)").matches,
                             configureLeaflet: (map) => {
                                 const OpenStreetMap_Mapnik = L.tileLayer(
                                     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -928,30 +954,37 @@ class PhotoSpherePlugin {
                                     },
                                 ).addTo(map)
                                 const icon = new L.Icon.Default()
-                                icon.options.iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
-                                icon.options.shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-                                const tileLayer = vectorTileLayer(
-                                    tileset,
-                                    {style: {
+                                icon.options.iconUrl =
+                                    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+                                icon.options.shadowUrl =
+                                    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+                                const tileLayer = vectorTileLayer(tileset, {
+                                    style: {
                                         // icon,
-                                        interactive: true
-                                    }},
-                                )
-                                tileLayer.addEventListener("click", evt => {
+                                        interactive: true,
+                                    },
+                                })
+                                tileLayer.addEventListener("click", (evt) => {
                                     const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
-                                    tourPlugin.setCurrentNode(evt.layer.feature.properties.id)
-
+                                    tourPlugin.setCurrentNode(
+                                        evt.layer.feature.properties.id,
+                                    )
                                 })
                                 tileLayer.addTo(map)
                             },
-                            buttons: { close: false, reset: false }
+                            buttons: {close: false, reset: false},
                         },
-                    ]
+                    ],
                 ],
             })
             const markersPlugin = viewer.getPlugin(MarkersPlugin)
             markersPlugin.addEventListener("select-marker", ({marker}) => {
-                elem2.dispatchEvent(new CustomEvent("kronofoto-select-photosphere-marker", {detail: marker.data, bubbles: true}))
+                elem2.dispatchEvent(
+                    new CustomEvent("kronofoto-select-photosphere-marker", {
+                        detail: marker.data,
+                        bubbles: true,
+                    }),
+                )
             })
             viewer
                 .getPlugin(VirtualTourPlugin)
@@ -1099,6 +1132,72 @@ class Zoom {
     }
 }
 
+class SwipeHandler {
+    constructor({swipetarget, threshold = 5}) {
+        this.swipetarget = swipetarget
+        this.xDown = null
+        this.yDown = null
+        this.threshold = threshold
+    }
+
+    handleTouchStart(evt) {
+        const firstTouch = evt.touches[0]
+        this.xDown = firstTouch.clientX
+        this.yDown = firstTouch.clientY
+    }
+
+    handleTouchMove(evt) {
+        if (!this.xDown || !this.yDown) {
+            return
+        }
+
+        var xUp = evt.touches[0].clientX
+        var yUp = evt.touches[0].clientY
+
+        var xDiff = this.xDown - xUp
+        var yDiff = this.yDown - yUp
+
+        if (Math.abs(xDiff) > Math.abs(yDiff)) {
+            // Detecting a primarily horizontal movement
+            if (-xDiff > this.threshold) {
+                // Left swipe
+                console.log("swipe left")
+                this.swipetarget.dispatchEvent(new CustomEvent("swipe-left"))
+            } else if (xDiff > this.threshold) {
+                // Right swipe
+                console.log("swipe right")
+                this.swipetarget.dispatchEvent(new CustomEvent("swipe-right"))
+            }
+        }
+
+        // Reset values after handling the swipe
+        this.xDown = null
+        this.yDown = null
+    }
+}
+
+class SwipeEvents {
+    constructor({context}) {
+        this.context = context
+    }
+
+    install({elem}) {
+        for (const swipetarget of elem.querySelectorAll("[data-swipe-target]")) {
+            const handler = new SwipeHandler({swipetarget})
+            swipetarget.addEventListener(
+                "touchstart",
+                handler.handleTouchStart.bind(handler),
+                false,
+            )
+            swipetarget.addEventListener(
+                "touchmove",
+                handler.handleTouchMove.bind(handler),
+                false,
+            )
+        }
+    }
+}
+
 class KronofotoContext {
     constructor({htmx, context, rootSelector, exhibit_mode}) {
         this.htmx = htmx
@@ -1209,6 +1308,7 @@ class KronofotoContext {
                 $("img", $btn).toggleClass("hide")
             })
         const plugins = [
+            SwipeEvents,
             BackwardScroller,
             ForwardScroller,
             timeline,
@@ -1224,7 +1324,11 @@ class KronofotoContext {
             MapPlugin2,
         ]
         for (const cls of plugins) {
-            const plugin = new cls({context: this.context, rootSelector: this.rootSelector, exhibit_mode: this.exhibit_mode})
+            const plugin = new cls({
+                context: this.context,
+                rootSelector: this.rootSelector,
+                exhibit_mode: this.exhibit_mode,
+            })
             plugin.install({elem})
         }
 
@@ -1305,7 +1409,11 @@ class KronofotoContext {
         clearInterval(window.autoplayTimer)
     }
 }
-export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelector = "body", exhibit_mode=""} = {}) => {
+export const initHTMXListeners = (
+    _htmx,
+    context,
+    {lateLoad = false, rootSelector = "body", exhibit_mode = ""} = {},
+) => {
     // context here means our root element
     // necessary?
     $(context).on("click", (e) => {
@@ -1324,7 +1432,12 @@ export const initHTMXListeners = (_htmx, context, {lateLoad = false, rootSelecto
         }
     })
 
-    const instance = new KronofotoContext({htmx: _htmx, context, rootSelector, exhibit_mode})
+    const instance = new KronofotoContext({
+        htmx: _htmx,
+        context,
+        rootSelector,
+        exhibit_mode,
+    })
     if (lateLoad) {
         instance.onLoad(context)
     }
