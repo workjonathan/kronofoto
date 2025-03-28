@@ -49,6 +49,32 @@
     }
   }
 
+  .psv-button {
+    //display: block !important;
+  }
+  .photo-timeline-link-navbar-button {
+    position: static;
+    fortepan-timeline-link {
+      height: 100%;
+      position: absolute;
+      left: -10px;
+      transform: translateX(-100%);
+      background: var(--fp-main-blue);
+      text-align: center;
+      padding: 0px 10px;
+      line-height: 40px;
+      border-radius: 3px;
+      a {
+        font-size: 0px;
+        &:before {
+          content: 'Historical photo';
+          font-weight: bold;
+          color: #fff;
+          font-size: 13px;
+        }
+      }
+    }
+  }
   .psv-virtual-tour-arrow svg {
     transform: scale(0.7);
   }
@@ -525,6 +551,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-right: 25px;
+        &:last-child {
+          margin-right: 0px;
+        }
         &.open {
           background-color: var(--fp-main-blue);
           svg * {
@@ -578,6 +608,9 @@
   left: 50%;
   transform: translateX(-50%);
   bottom: 10px;
+  .navbar-open & {
+    display: block;
+  }
   @include breakpoint(medium down) {
     display: none;
   }
