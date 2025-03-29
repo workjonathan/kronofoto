@@ -874,12 +874,12 @@ class AcceptValue:
 
     def handle(self, actor: RemoteActor) -> str:
         followobject = self.object
-        remoteactor = RemoteActor.objects.get_or_create(profile=followobject.actor)[0]
-        remoteactor.actor_follows_app = True
+        remoteactor = RemoteActor.objects.get_or_create(profile=followobject.object)[0]
+        remoteactor.app_follows_actor = True
         remoteactor.save()
         outboxactivities = OutboxActivity.objects.filter(
             body__type="Follow",
-            body__actor=remoteactor.profile,
+            body__object=remoteactor.profile,
         )
         for activity in outboxactivities:
             profile = self.profile(activity.body['object'])
