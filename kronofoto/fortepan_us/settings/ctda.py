@@ -159,6 +159,7 @@ CACHES = {
 GRID_DISPLAY_COUNT = 48
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 LOGIN_REDIRECT_URL = '/'
+ENCRYPTION_KEY = config("ENCRYPTION_KEY", cast=lambda s: s.encode('utf-8'))
 try:
     os.environ['http_proxy'] = config("HTTP_PROXY")
 except:
