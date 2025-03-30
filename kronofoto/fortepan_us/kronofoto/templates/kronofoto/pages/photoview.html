@@ -20,14 +20,14 @@
 
 <main hx-swap="innerHTML" hx-target="#fi-image" data-photo-details>
 
-    <div class="gallery" id="gallery" data-toggler=".zoom-opened">
+    <div class="gallery" id="gallery" data-toggler=".zoom-opened" data-swipe-target>
 
         {% block left_arrow %}
             <a
                 {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-left]"{% endif %}
                 id="fi-arrow-left"
                 data-fi-arrow-left
-                hx-trigger="click, keydown[code=='ArrowLeft'] from:#app"
+                hx-trigger="click, keydown[code=='ArrowLeft'] from:#app, swipe-left from:closest [data-swipe-target]"
                 class="control previous"
                 href="{% object_url prev_photo url_kwargs get_params %}"
                 hx-get="{% object_url prev_photo url_kwargs get_params %}"
@@ -47,7 +47,7 @@
         <a
             {% if base_template == "kronofoto/partials/photoview_partial.html" %}hx-swap-oob="outerHTML:[data-fi-arrow-right]"{% endif %}
             id="fi-arrow-right"
-            hx-trigger="click, keydown[code=='ArrowRight'] from:#app"
+            hx-trigger="click, keydown[code=='ArrowRight'] from:#app, swipe-right from:closest [data-swipe-target]"
             data-fi-arrow-right
             class="control forward"
             href="{% object_url next_photo url_kwargs get_params %}"

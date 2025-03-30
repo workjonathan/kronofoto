@@ -1,4 +1,5 @@
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.http import HttpRequest
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.contrib.auth.models import User, AbstractBaseUser
@@ -25,19 +26,20 @@ class UserEmailVerifier:
     def __init__(self, token_gen: TokenGen=AccountActivationTokenGenerator()):
         self.token_gen = token_gen
 
-    def verify(self, user: User) -> None:
+    def verify(self, user: User, request: HttpRequest) -> None:
+        assert hasattr(request, 'site')
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = self.token_gen.make_token(user)
 
         url = reverse('activate', kwargs={'uid': uid, 'token': token})
         message = """Hi,
-        Thank you for making an account with Fortepan Iowa.
+        Thank you for making an account with {site_name}.
         Please click on the link below to confirm your email address.
 
         {path}
 
         If you don't know what this is about, please ignore this email.""".format(
-            path=url
+            path=url, site_name=request.site.name,
         )
         subject = 'Account Activation'
 

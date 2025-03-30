@@ -81,7 +81,7 @@ class RegisterAccount(BaseTemplateMixin, FormView):
 
     def form_valid(self, form: RegisterUserForm) -> HttpResponse:
         if self.user_is_human():
-            form.create_user()
+            form.create_user(request=self.request)
             self.success_url = reverse('email-sent')
         else:
             self.success_url = reverse('register-account')

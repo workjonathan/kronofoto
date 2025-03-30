@@ -8,8 +8,8 @@
       <div class="main-nav__left">
         <div id="logo">
           <a href="{% url "kronofoto:random-image" %}">
-            <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="Fortepan Iowa Logo">
-            <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="Fortepan Iowa Logo">
+            <img class="logo-img show-for-large" src="{{ theme.logo }}" alt="{{ request.site.name }} Logo">
+            <img class="logo-img hide-for-large" src="{{ theme.logosmall }}" alt="{{ request.site.name }} Logo">
           </a>
 
           {% if collection_name %}
