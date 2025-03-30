@@ -55,8 +55,15 @@ class ServiceActor(models.Model):
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:
             self.generate_new_keys()
-        assert self.serialized_public_key
-        return self.serialized_public_key
+        if isinstance(self.serialized_public_key, memoryview):
+            return self.serialized_public_key.tobytes()
+        elif isinstance(self.serialized_public_key, bytes):
+            return self.serialized_public_key
+        elif isinstance(self.serialized_public_key, bytearray):
+            return bytes(self.serialized_public_key)
+        else:
+            assert False, "unreachable"
+
 
     @property
     def keyId(self) -> str:
@@ -351,7 +358,14 @@ class Archive(models.Model):
     def guaranteed_public_key(self) -> bytes:
         if not self.serialized_public_key:
             self.generate_new_keys()
-        return self.serialized_public_key or b""
+        if isinstance(self.serialized_public_key, memoryview):
+            return self.serialized_public_key.tobytes()
+        elif isinstance(self.serialized_public_key, bytes):
+            return self.serialized_public_key
+        elif isinstance(self.serialized_public_key, bytearray):
+            return bytes(self.serialized_public_key)
+        else:
+            assert False, "unreachable"
 
     def ldid(self) -> str:
         return reverse(
