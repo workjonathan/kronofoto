@@ -5,7 +5,7 @@ from functools import cached_property
 from marshmallow import Schema, fields
 from django.contrib.gis.geos import MultiPolygon, Point
 from dataclasses import dataclass
-from fortepan_us.kronofoto.models.archive import Archive, RemoteActor, OutboxActivity, FollowArchiveRequest
+from fortepan_us.kronofoto.models.archive import Archive, RemoteActor, OutboxActivity, FollowArchiveRequest, FollowServiceOutbox, FollowServiceRequest
 from .ldid import LdId, LdIdQuerySet
 from fortepan_us.kronofoto.models.photo import Photo, PhotoTag
 from fortepan_us.kronofoto.models.donor import Donor
@@ -840,10 +840,11 @@ class FollowValue:
     actor: str
     object: str
     def handle(self, actor: RemoteActor) -> str:
-        raise NotImplementedError
+        FollowServiceRequest.objects.update_or_create(remote_actor=actor, request_id=self.id)
+        return "stored"
 
     def handle_archive(self, actor: RemoteActor, archive: Archive) -> str:
-        FollowArchiveRequest.objects.create(remote_actor=actor, request_id=self.id, archive=archive)
+        FollowArchiveRequest.objects.update_or_create(remote_actor=actor, archive=archive, defaults={"request_id": self.id})
         return "stored"
 
     def dump(self) -> Dict[str, Any]:
@@ -877,6 +878,9 @@ class AcceptValue:
         remoteactor = RemoteActor.objects.get_or_create(profile=followobject.object)[0]
         remoteactor.app_follows_actor = True
         remoteactor.save()
+        count, _ = FollowServiceOutbox.objects.filter(remote_actor_profile=remoteactor.profile).delete()
+        if count >= 1:
+            return "created"
         outboxactivities = OutboxActivity.objects.filter(
             body__type="Follow",
             body__object=remoteactor.profile,

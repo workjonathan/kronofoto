@@ -26,7 +26,7 @@ from .photosphere import (
     PhotoSphereInfo,
     TourSetDescription,
 )
-from .archive import Archive, ArchiveAgreement, InvalidArchive, FollowArchiveRequest, RemoteActor, OutboxActivity, ServiceActor
+from .archive import Archive, ArchiveAgreement, InvalidArchive, FollowArchiveRequest, RemoteActor, OutboxActivity, ServiceActor, FollowServiceOutbox, FollowServiceRequest
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
 from .exhibit import Exhibit, Card, PhotoCard, Figure

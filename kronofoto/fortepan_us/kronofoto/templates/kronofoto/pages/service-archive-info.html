@@ -1,0 +1,31 @@
+{% load krono_urls %}
+<html>
+<head></head>
+<body>
+    <h1>
+        This is an archive. 
+    </h1>
+    <table>
+        <tr><td>Name</td><td>{{ archivevalue.name }}</td></tr>
+        <tr><td>Slug</td><td>{{ archivevalue.slug }}</td></tr>
+        <tr><td>ID</td><td>{{ archivevalue.id }}</td></tr>
+    </table>
+    {% if archive %}
+        <p>This archive is already being followed: {{ archive }}
+        </p>
+        <a href="{% url "kronofoto:activitypub_data:service-follow-config" %}">Back to config</a>
+    {% else %}
+        <p>Should a follow request be sent?</p>
+        <form method="post" action="{% url "kronofoto:activitypub_data:service-follow-send" %}">
+            {% csrf_token %}
+            {% for field in form %}
+                {{ field.as_hidden }}
+            {% endfor %}
+            <input type="submit" value="Yes">
+        </form>
+        <a href="{% url "kronofoto:activitypub_data:service-follow-config" %}">No</a>
+    {% endif %}
+    </p>
+</body>
+</html>
+

@@ -51,7 +51,7 @@ class ActorSchema(Schema):
         )
 
 class ServiceActorSchema(Schema):
-    type = fields.Constant("Organization")
+    type = fields.Constant("PlaceService")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
     publicKey = fields.Dict(keys=fields.Str(), values=fields.Str(), required=True)
@@ -71,7 +71,7 @@ class ServiceActorSchema(Schema):
         )
 
 class ArchiveSchema(Schema):
-    type = fields.Constant("Organization")
+    type = fields.Constant("ArchiveActor")
     id = fields.Url(relative=True, required=True)
     name = fields.Str(required=True)
     slug = fields.Str(required=True)

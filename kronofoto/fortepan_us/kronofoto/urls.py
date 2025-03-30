@@ -128,6 +128,7 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 
 urlpatterns = urlpatterns + [
     path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
+    path('activitypub/service/show', views.activitypub.service_view, name="activitypub-main-service-view"),
     path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),
     path('activitypub/service/outbox', views.activitypub.service_outbox, name="activitypub-main-service-outbox"),
     path('activitypub/service/places', views.activitypub.places_page, name="activitypub-main-service-places"),

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+    <ul>
+        {% for remote in requests %}
+            <li>{{ remote.remote_actor.profile }}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="follow" value="{{ remote.id }}"></input>
+                <input type="submit" name="accept" value="Accept"></input>
+                <input type="submit" name="reject" value="Reject"></input>
+            </form>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

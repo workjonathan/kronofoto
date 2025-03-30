@@ -126,6 +126,13 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
         related_name="%(app_label)s_%(class)s_request_follows",
     )
 
+    #@icontract.require(lambda self:
+    #    not Site.objects.filter(domain=urlparse(self.profile).netloc).exists()
+    #)
+    #def save(self, *args: Any, **kwargs: Any) -> Any:
+    #    return super().save(*args, **kwargs)
+
+
     objects = RemoteActorQuerySet.as_manager()
 
     def public_key(self) -> bytes | None:
@@ -144,6 +151,26 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
 
         return cache.get_or_set("kronofoto:keyId:" + self.profile, _, timeout=10)
 
+class FollowServiceOutbox(models.Model):
+    remote_actor_profile = models.URLField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["remote_actor_profile"], name="unique_service_follows"
+            ),
+        ]
+
+class FollowServiceRequest(models.Model):
+    remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
+    request_id = models.URLField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["remote_actor"], name="unique_actor_service_follows"
+            ),
+        ]
 
 class FollowArchiveRequest(models.Model):
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)

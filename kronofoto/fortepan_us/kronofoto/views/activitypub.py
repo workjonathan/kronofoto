@@ -15,7 +15,7 @@ from fortepan_us.kronofoto.models.photo import Photo
 from fortepan_us.kronofoto.models import Archive, FollowArchiveRequest, RemoteActor, OutboxActivity, Donor
 from fortepan_us.kronofoto import models
 from fortepan_us.kronofoto.models import activity_dicts
-from fortepan_us.kronofoto.models.activity_schema import ObjectSchema, PlaceSchema, Contact, Image, ActivitySchema, Collection, CollectionPage, ActorCollectionSchema
+from fortepan_us.kronofoto.models.activity_schema import ObjectSchema, PlaceSchema, Contact, Image, ActivitySchema, Collection, CollectionPage, ActorCollectionSchema, ArchiveSchema, ServiceActorSchema
 from fortepan_us.kronofoto.models.activity_schema import ArchiveSchema
 import json
 import parsy # type: ignore
@@ -185,25 +185,25 @@ def service_outbox(request: HttpRequest) -> HttpResponse:
 class FollowForm(forms.Form):
     address = forms.URLField()
 
-@permission_required("kronofoto.archive.create")
-def service_follows(request: HttpRequest) -> HttpResponse:
-    template = "kronofoto/pages/service.html"
-    context : Dict[str, Any] = {}
+class SendFollowRequest(FollowForm):
+    inbox = forms.URLField()
+
+@permission_required("kronofoto.archive.modify")
+def placeservice_follow_send(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
-        form = FollowForm(request.POST)
+        form = SendFollowRequest(request.POST)
         if form.is_valid():
-            actor_data = requests.get(form.cleaned_data['address']).json()
             activity = activity_dicts.FollowValue(
                 id=reverse("kronofoto:activitypub-main-service")+"#follow",
                 object=form.cleaned_data['address'],
                 actor=reverse("kronofoto:activitypub-main-service"),
             ).dump()
 
-            models.OutboxActivity.objects.create(body=activity)
+            _, created = models.FollowServiceOutbox.objects.update_or_create(remote_actor_profile=form.cleaned_data['address'])
             service_actor = models.ServiceActor.get_instance()
 
             post_response = signed_requests.post(
-                actor_data['inbox'],
+                form.cleaned_data['inbox'],
                 data=json.dumps(activity),
                 headers={
                     "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -215,7 +215,75 @@ def service_follows(request: HttpRequest) -> HttpResponse:
             if post_response.status_code != 200:
                 logging.info('{code} {body!r} received from {address} for {data}'.format(code=post_response.status_code, address=form.cleaned_data['address'], data=activity, body=post_response.content))
 
-            #return HttpResponseRedirect("/")
+    return HttpResponseRedirect(reverse("kronofoto:activitypub_data:service-follow-config"))
+
+@permission_required("kronofoto.archive.create")
+def service_follow_send(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = SendFollowRequest(request.POST)
+        if form.is_valid():
+            activity = activity_dicts.FollowValue(
+                id=reverse("kronofoto:activitypub-main-service")+"#follow",
+                object=form.cleaned_data['address'],
+                actor=reverse("kronofoto:activitypub-main-service"),
+            ).dump()
+
+            models.OutboxActivity.objects.create(body=activity)
+            service_actor = models.ServiceActor.get_instance()
+
+            post_response = signed_requests.post(
+                form.cleaned_data['inbox'],
+                data=json.dumps(activity),
+                headers={
+                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                },
+                private_key=service_actor.private_key,
+                keyId=service_actor.keyId,
+            )
+            if post_response.status_code != 200:
+                logging.info('{code} {body!r} received from {address} for {data}'.format(code=post_response.status_code, address=form.cleaned_data['address'], data=activity, body=post_response.content))
+
+    return HttpResponseRedirect(reverse("kronofoto:activitypub_data:service-follow-config"))
+
+@permission_required("kronofoto.archive.create")
+def service_follows(request: HttpRequest) -> HttpResponse:
+    template = "kronofoto/pages/service.html"
+    context : Dict[str, Any] = {}
+    if request.method == "POST":
+        form = FollowForm(request.POST)
+        if form.is_valid():
+            try:
+                actor_data = requests.get(form.cleaned_data['address']).json()
+                actor_type = actor_data.get('type')
+                try:
+                    if actor_type == 'ArchiveActor':
+                        template = "kronofoto/pages/service-archive-info.html"
+                        archivevalue = ArchiveSchema().load(actor_data)
+                        context['archivevalue'] = archivevalue
+                        try:
+                            archive = Archive.objects.get(actor__profile=archivevalue.id)
+                            context['archive'] = archive
+                        except Archive.DoesNotExist:
+                            context['form'] = SendFollowRequest(data={"address": archivevalue.id, "inbox": archivevalue.inbox,})
+                    elif actor_type == 'PlaceService':
+                        template = "kronofoto/pages/service-placeservice-info.html"
+                        servicevalue = ServiceActorSchema().load(actor_data)
+                        context['servicevalue'] = servicevalue
+                        try:
+                            actor = RemoteActor.objects.get(profile=servicevalue.id, app_follows_actor=True)
+                            context['actor'] = actor
+                        except RemoteActor.DoesNotExist:
+                            context['form'] = SendFollowRequest(data={"address": servicevalue.id, "inbox": servicevalue.inbox,})
+                    else:
+                        context['form'] = FollowForm()
+                        context['error'] = "unknown schema: {}".format(actor_type)
+                except ValidationError:
+                    context['error'] = "validation error"
+                    context['form'] = FollowForm()
+            except json.decoder.JSONDecodeError:
+                context['error'] = "json decode error"
+                context['form'] = FollowForm()
     else:
         context['form'] = FollowForm()
 
@@ -227,6 +295,54 @@ def service_follows(request: HttpRequest) -> HttpResponse:
 
 class FollowReactForm(forms.Form):
     follow = forms.IntegerField(required=True)
+
+@permission_required("kronofoto.archive.change")
+def service_view(request: HttpRequest) -> HttpResponse:
+    template = "kronofoto/pages/service_view.html"
+    context : Dict[str, Any] = {}
+    context['requests'] = models.FollowServiceRequest.objects.all()
+    if request.method == "POST":
+        form = FollowReactForm(request.POST)
+        print(form)
+        if form.is_valid():
+            followrequest = get_object_or_404(models.FollowServiceRequest.objects.all(), pk=form.cleaned_data['follow'])
+            if 'accept' in request.POST:
+                actor_data = requests.get(followrequest.remote_actor.profile, headers={
+                    "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                }).json()
+                activity = activity_dicts.AcceptValue(
+                    id=followrequest.request_id,
+                    actor=reverse("kronofoto:activitypub-main-service"),
+                    object=activity_dicts.FollowValue(
+                        id=followrequest.request_id,
+                        actor=followrequest.remote_actor.profile,
+                        object=reverse("kronofoto:activitypub-main-service"),
+                    ),
+                ).dump()
+                service = models.ServiceActor.get_instance()
+                resp = signed_requests.post(
+                    actor_data['inbox'],
+                    data=json.dumps(activity),
+                    headers={
+                        "content-type": 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                        'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    },
+                    private_key=service.private_key,
+                    keyId=service.keyId,
+                )
+                if resp.status_code == 200:
+                    followrequest.remote_actor.actor_follows_app = True
+                    followrequest.remote_actor.save()
+                    followrequest.delete()
+                else:
+                    logging.info('{code} {body!r} received from {address} for {data}'.format(code=resp.status_code, address=actor_data['inbox'], data=activity, body=resp.content))
+
+    return TemplateResponse(
+        request=request,
+        template=template,
+        context=context,
+    )
 
 @permission_required("kronofoto.archive.change")
 def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
@@ -277,7 +393,9 @@ def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
 
 from django.urls import path, include, register_converter, URLPattern, URLResolver
 data_urls: Any = ([
-    path("remotearchives/add", service_follows),
+    path("remotearchives/add", service_follows, name="service-follow-config"),
+    path("remotearchives/send", service_follow_send, name="service-follow-send"),
+    path("remoteservices/send", placeservice_follow_send, name="placeservice-follow-send"),
     path("archives/<slug:short_name>/show", archive_view),
 ], "activitypub_data")
 
