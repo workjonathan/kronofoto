@@ -14,7 +14,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 import json
-from fortepan_us.kronofoto.models import RemoteActor
 from fortepan_us.kronofoto.signed_requests import SignatureHeaders
 
 
@@ -63,6 +62,7 @@ class ActorAuthenticationMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
+        from fortepan_us.kronofoto.models import RemoteActor
         signature_parts = decode_signature(request.headers.get("Signature", ""))
         if request.content_type == 'application/ld+json' and request.content_params and request.content_params.get("profile") == "https://www.w3.org/ns/activitystreams" and 'date' in request.headers:
             body = request.body.decode("utf-8")
