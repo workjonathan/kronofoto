@@ -70,6 +70,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'fortepan_us.kronofoto.middleware.OverrideVaryMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'fortepan_us.kronofoto.middleware.ActorAuthenticationMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
