@@ -22,7 +22,7 @@
         {% block photosphere_metadata %}
         <h2>{{ object.title }}</h2>
         <div>{{ object.description | markdown }}</div>
-        {% if mainstreet_description %}<div>{{ mainstreet_description }}</div>{% endif %}
+        {% if mainstreet_description %}<div>{{ mainstreet_description | linebreaksbr }}</div>{% endif %}
         {% endblock photosphere_metadata %}
     </div>
     <form class="photosphere__wrapper" hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
@@ -36,7 +36,7 @@
         <div class="photosphere__set_description_text" x-show="set_description_open">
             <div class="wrapper">
             {% if object.mainstreetset.name %}<h3>{{ object.mainstreetset.name }}</h3>{% endif %}
-            {% if object.mainstreetset.description %}<div>{{ object.mainstreetset.description }}</div>{% endif %}
+            {% if mainstreet_description %}<div>{{ mainstreet_description | linebreaksbr }}</div>{% endif %}
             </div>
         </div>
 
@@ -116,13 +116,13 @@
                 </g>
             </svg>
         </div>
-        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false, selectedItem: '{{ object.mainstreetset }}' }" @click="dropdownExpanded = !dropdownExpanded" @click.away="dropdownExpanded = !dropdownExpanded" :class="dropdownExpanded ? 'expanded' : ''">
+        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = !dropdownExpanded" @click.away="dropdownExpanded = !dropdownExpanded" :class="dropdownExpanded ? 'expanded' : ''">
             <div class="wrapper" x-show="dropdownExpanded">
                 {% for mainstreet in mainstreet_links %}
-                <label @click="selectedItem = '{{ mainstreet.set.name }}'; dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
+                <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
                 {% endfor %}
             </div>
-            <div class="photosphere__mobile-nav-sets-current noselect" x-text="selectedItem">{{ object.mainstreetset }}</div>
+            <div class="photosphere__mobile-nav-sets-current noselect">{{ object.mainstreetset }}</div>
         </div>
     </nav>
 
