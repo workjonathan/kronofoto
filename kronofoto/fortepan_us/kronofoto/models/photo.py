@@ -466,8 +466,8 @@ class Photo(PhotoBase):
             raise ValueError
         signer = ImageSigner(id=self.id, path=path, width=0, height=700)
         return ImageData(
-            height=height,
-            width=width,
+            height=700,
+            width=round(width*700/height),
             url=signer.url,
             name="h700",
         )
