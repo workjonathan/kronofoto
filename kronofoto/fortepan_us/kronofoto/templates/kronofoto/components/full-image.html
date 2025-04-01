@@ -6,4 +6,4 @@
     <div class="info-button__text">
     {% include "kronofoto/components/attribution.html" with object=photo %}</div>
 </a>
-<img loading="lazy" src="{% image_url id=photo.id path=photo.original.name width=2000 %}">
+<img loading="lazy" src="{% image_url photo=photo width=2000 %}">

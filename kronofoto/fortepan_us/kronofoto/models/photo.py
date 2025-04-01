@@ -1,4 +1,6 @@
+from __future__ import annotations
 from django.contrib.gis.db import models
+import icontract
 from django_stubs_ext import WithAnnotations
 import base64
 import json
@@ -39,7 +41,7 @@ from functools import reduce
 from fortepan_us.kronofoto.storage import OverwriteStorage
 from .donor import Donor, DonorQuerySet
 from .tag import Tag, TagQuerySet
-from .archive import Archive
+from .archive import Archive, RemoteActor
 from .category import Category
 from .place import Place
 import requests
@@ -57,10 +59,15 @@ from typing import (
     TypedDict,
     Callable,
     Iterable,
+    overload,
     Union,
 )
 from typing_extensions import Self
+from fortepan_us.kronofoto.imageutil import ImageSigner
 from itertools import chain, cycle, islice
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
+from typing_extensions import Self
+#from .activity_dicts import ActivitypubImage, PhotoValue
 
 EMPTY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs) - 1)
@@ -76,6 +83,8 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
+
+
     def filter_donated(self, donors: DonorQuerySet) -> DonorQuerySet:
         q = self.filter(donor__id=OuterRef("pk"), is_published=True, year__isnull=False)
         return donors.filter(models.Exists(q))
@@ -186,7 +195,7 @@ class PlaceData:
 
 
 class PhotoBase(models.Model):
-    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
+    archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     donor = models.ForeignKey(Donor, models.PROTECT, null=True)
@@ -393,9 +402,43 @@ class Photo(PhotoBase):
         null=True,
         editable=True,
     )
+    remote_image = models.URLField(null=True, editable=False)
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
+
+    @property
+    def fullsizeurl(self) -> str:
+        if self.remote_image:
+            return self.remote_image
+        elif self.original:
+            return self.original.url
+        raise ValueError
+
+    @overload
+    def image_url(self, *, height: int) -> str: ...
+    @overload
+    def image_url(self, *, height: Optional[int] = None, width: int) -> str: ...
+    def image_url(
+        self, *, height: Optional[int] = None, width: Optional[int] = None
+    ) -> str:
+        assert height is not None or width is not None
+
+        if self.remote_image is None:
+            path = self.original.name
+        else:
+            path = (0, self.remote_image)
+        return ImageSigner(id=self.id, path=path, width=width, height=height).url
+
+    def ldid(self) -> str:
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="photo", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub_data:archives:photos:detail",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            )
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         if self.original_height == 0 or self.original_width == 0:
@@ -411,24 +454,34 @@ class Photo(PhotoBase):
     def h700(self) -> Optional[ImageData]:
         from fortepan_us.kronofoto.imageutil import ImageSigner
 
-        if not self.original or not self.id:
+        if not (self.original or self.remote_image) or not self.id:
             return None
-        signer = ImageSigner(id=self.id, path=self.original.name, width=0, height=700)
-        width, height = self.get_image_dimensions()
+        if self.remote_image:
+            path = (0, self.remote_image)
+            width, height = 0, 700
+        elif self.original:
+            path = self.original.name
+            width, height = self.get_image_dimensions()
+        else:
+            raise ValueError
+        signer = ImageSigner(id=self.id, path=path, width=0, height=700)
         return ImageData(
             height=700,
-            width=round(width / height * 700),
+            width=round(width*700/height),
             url=signer.url,
             name="h700",
         )
 
     @property
     def thumbnail(self) -> Optional[ImageData]:
-        if not self.original or not self.id:
+        if not (self.original or self.remote_image) or not self.id:
             return None
         from fortepan_us.kronofoto.imageutil import ImageSigner
-
-        signer = ImageSigner(id=self.id, path=self.original.name, width=75, height=75)
+        if self.remote_image:
+            path = (0, self.remote_image)
+        elif self.original:
+            path = self.original.name
+        signer = ImageSigner(id=self.id, path=path, width=75, height=75)
         return ImageData(
             height=75,
             width=75,
@@ -439,7 +492,6 @@ class Photo(PhotoBase):
     tags = models.ManyToManyField(
         Tag, db_index=True, blank=True, through="kronofoto.PhotoTag"
     )
-    location_from_google = models.BooleanField(editable=False, default=False)
     is_featured = models.BooleanField(default=False)
     is_published = models.BooleanField(default=False, db_index=True)
     local_context_id = models.CharField(
@@ -548,6 +600,54 @@ class Photo(PhotoBase):
                 name="category_archive_pyear_id_sort",
             ),
         )
+
+    #def reconcile(self, object: ActivitypubImage | PhotoValue, donor: Donor, place: Place | None = None) -> None:
+    #    if isinstance(object, PhotoValue):
+    #        self.caption = object.content
+    #        remote_image = object.url
+    #        self.category, _ = Category.objects.get_or_create(
+    #            slug=object.category.slug,
+    #            defaults={"name": object.category.name},
+    #        )
+    #        self.year = object.year
+    #        self.circa = object.circa
+    #        self.is_published = object.is_published
+    #        self.donor = donor
+    #        self.place = place
+    #    else:
+    #        self.caption = object["content"]
+    #        self.donor = donor
+    #        self.year = object["year"]
+    #        self.circa = object["circa"]
+    #        self.is_published = object["is_published"]
+    #        self.donor = donor
+    #        self.remote_image = object["url"]
+    #        self.category, _ = Category.objects.get_or_create(
+    #            slug=object["category"]["slug"],
+    #            defaults={"name": object["category"]["name"]},
+    #        )
+    #    self.save()
+
+    @property
+    def activity_dict(self) -> Dict[str, Any]:
+        return {
+            "id": reverse(
+                "kronofoto:activitypub-photo",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            ),
+            "type": "Image",
+            "attributedTo": [
+                reverse(
+                    "kronofoto:activitypub-archive",
+                    kwargs={"short_name": self.archive.slug},
+                )
+            ],
+            "content": self.caption,
+            "url": self.original.url,
+        }
+
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def page_number(self) -> Dict[str, Optional[int]]:
         return {"year:gte": self.year, "id:gt": self.id - 1}

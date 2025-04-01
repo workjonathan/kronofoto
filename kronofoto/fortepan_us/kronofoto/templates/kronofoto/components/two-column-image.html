@@ -9,7 +9,7 @@
 <img
     loading="lazy"
     {% if photo %}
-        src="{% image_url id=photo.id path=photo.original.name width=1000 %}"
+        src="{% image_url photo=photo width=1000 %}"
     {% endif %}
 >
 

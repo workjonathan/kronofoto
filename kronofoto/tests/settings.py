@@ -1,4 +1,7 @@
 import os
+from cryptography.fernet import Fernet
+
+ENCRYPTION_KEY = b"secret-encryption-key"
 
 SECRET_KEY = 'fake-key'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -6,10 +9,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GOOGLE_RECAPTCHA_SECRET_KEY = 'fake-recaptcha-secret'
 GOOGLE_RECAPTCHA_SITE_KEY = 'fake-recaptcha-key'
 GOOGLE_TAG_ID = 'GTM-P4BQ99S'
+ALLOWED_HOSTS = ['example.com']
 
 GOOGLE_MAPS_KEY = 'fake-gmaps-key'
 GRID_DISPLAY_COUNT = 3
 
+MEDIA_URL = "http://example.com/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media2', 'media')
 
 CSS_VERSION = 1
@@ -59,11 +64,18 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'fortepan_us.kronofoto.middleware.ActorAuthenticationMiddleware',
 ]
 LOCAL_CONTEXTS = 'https://anth-ja77-lc-dev-42d5.uc.r.appspot.com/api/v1/'
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+		"BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    },
+}
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
     },
 }
 

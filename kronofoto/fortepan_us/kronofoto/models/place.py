@@ -3,10 +3,12 @@ from django.db.models.functions import Concat, Upper
 from mptt.models import MPTTModel, TreeForeignKey  # type: ignore
 from fortepan_us.kronofoto.reverse import reverse
 from django.http import QueryDict
-from typing import Any, Optional, Dict
+from django.contrib.contenttypes.models import ContentType
+from typing import Any, Optional, Dict, TYPE_CHECKING
+from .archive import RemoteActor
 
 
-class PlaceType(models.Model):  # type: ignore
+class PlaceType(models.Model): # type: ignore[django-manager-missing]
     name = models.CharField(max_length=64, null=False, blank=False, unique=True)
 
     def name_places(self) -> None:
@@ -46,6 +48,7 @@ class Place(MPTTModel):
     place_type: models.ForeignKey[PlaceType, PlaceType] = models.ForeignKey(
         PlaceType, null=False, on_delete=models.PROTECT
     )
+    owner: models.ForeignKey[RemoteActor, RemoteActor] = models.ForeignKey(RemoteActor, null=True, on_delete=models.CASCADE, blank=True)
     name: models.CharField = models.CharField(max_length=64, null=False, blank=False)
     geom: models.GeometryField = models.GeometryField(null=True, srid=4326, blank=False)
     parent = TreeForeignKey(
@@ -58,6 +61,19 @@ class Place(MPTTModel):
     fullname: models.CharField = models.CharField(
         max_length=128, null=False, default=""
     )
+
+    def ldid(self) -> str:
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="place", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub-main-service-places",
+                kwargs={"pk": self.id},
+            )
+
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.owner.id == actor.id
 
     def get_absolute_url(
         self,

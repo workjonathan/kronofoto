@@ -1,4 +1,4 @@
-from django.contrib.gis.db import models
+# from django.contrib.gis.db import models
 from .userdata import UserData
 from django.contrib.auth.models import User
 from .donor import Donor, DonorQuerySet
@@ -26,8 +26,9 @@ from .photosphere import (
     PhotoSphereInfo,
     TourSetDescription,
 )
-from .archive import Archive, ArchiveAgreement
+from .archive import Archive, ArchiveAgreement, InvalidArchive, FollowArchiveRequest, RemoteActor, OutboxActivity, ServiceActor, FollowServiceOutbox, FollowServiceRequest
 from .category import Category, ValidCategory
 from .place import Place, PlaceType
 from .exhibit import Exhibit, Card, PhotoCard, Figure
 from .key import Key
+from .ldid import LdId

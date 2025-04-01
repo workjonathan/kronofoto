@@ -1,10 +1,11 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.stateful import RuleBasedStateMachine, rule, invariant, Bundle, initialize, consumes, precondition
 from django.db import transaction
-from fortepan_us.kronofoto.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair, MainStreetSet
+from fortepan_us.kronofoto.models import Photo, Donor, PhotoTag, Category, PhotoSphere, PhotoSpherePair, MainStreetSet, RemoteActor
 from django.utils.text import slugify
 from django.core.files.uploadedfile import SimpleUploadedFile
 from hypothesis.extra.django import from_model, register_field_strategy
+from hypothesis.provisional import urls
 from hypothesis import strategies as st, note
 from fortepan_us.kronofoto.models import Archive
 from fortepan_us.kronofoto.models import Tag, LowerCaseCharField
@@ -70,16 +71,24 @@ searchTerms = st.deferred(lambda:
 
 terms = lambda **kwargs: from_model(Term, id=st.none(), **kwargs)
 tags = lambda **kwargs: from_model(Tag, id=st.none(), **kwargs)
-archives = lambda slug=None, id=st.none(), **kwargs: from_model(Archive)
+archives = lambda slug=None, id=st.none(), **kwargs: from_model(Archive, type=st.integers(min_value=1, max_value=1), actor=st.one_of(st.none(), from_model(RemoteActor, profile=urls())))
 donors = lambda archive=None, id=st.none(), **kwargs: from_model(Donor, archive=archives(), **kwargs)
 
 @pytest.fixture
 def a_category():
-    return Category.objects.create()
+    return Category.objects.create(name="category name", slug="categoryslug")
 
 @pytest.fixture
 def an_archive():
-    return Archive.objects.create()
+    return Archive.objects.create(slug="aslug")
+
+@pytest.fixture
+def a_donor(an_archive):
+    return Donor.objects.create(
+        archive=an_archive,
+        first_name="first",
+        last_name="last",
+    )
 
 @pytest.fixture
 def a_photo(a_category, an_archive):

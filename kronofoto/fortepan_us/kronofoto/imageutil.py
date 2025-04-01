@@ -1,5 +1,4 @@
 from django.core.signing import Signer, BadSignature
-from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
 from PIL import Image, ImageOps
 from io import BytesIO
 from django.core.files.storage import default_storage
@@ -8,20 +7,33 @@ from typing import Optional, Any, Dict, Union, List, Tuple
 from dataclasses import dataclass
 from functools import cached_property
 from fortepan_us.kronofoto.reverse import reverse
+import requests
 
 @dataclass
 class ImageCacher:
     block1: int
     block2: int
-    path: str
+    path: Union[str, Tuple[int, str]]
     sig: str
     width: Optional[int]
     height: Optional[int]
 
+    @property
+    def name(self) -> str:
+        return "images/{}/{}/{}/.jpg".format(self.block1, self.block2, self.sig)
+
     def precache(self) -> Optional[bytes]:
+        from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
         Image.MAX_IMAGE_PIXELS = 195670000
-        with default_storage.open(self.path) as infile:
-            image = ImageOps.exif_transpose(Image.open(infile))
+        if default_storage.exists(self.name):
+            return default_storage.open(self.name).read()
+        if isinstance(self.path, str):
+            with default_storage.open(self.path) as infile:
+                image = ImageOps.exif_transpose(Image.open(infile))
+        else:
+            content = requests.get(self.path[1]).content
+            image = ImageOps.exif_transpose(Image.open(BytesIO(content)))
+
         if not image:
             return None
         w, h = image.size
@@ -35,10 +47,9 @@ class ImageCacher:
         bytes = BytesIO()
         img.save(bytes, format="JPEG", quality=60)
         img_data = bytes.getvalue()
-        name = "images/{}/{}/{}.jpg".format(self.block1, self.block2, self.sig)
-        if not default_storage.exists(name):
+        if not default_storage.exists(self.name):
             default_storage.save(
-                name,
+                self.name,
                 ContentFile(img_data)
             )
         return img_data
@@ -46,7 +57,7 @@ class ImageCacher:
 @dataclass
 class ImageSigner:
     id: int
-    path: str
+    path: Union[str, Tuple[int, str]]
     width: Optional[int]
     height: Optional[int]
 
@@ -75,7 +86,7 @@ class ImageSigner:
         return Signer(salt="{}/{}".format(self.block1, self.block2))
 
     @property
-    def profile_args(self) -> Tuple[str, int, int]:
+    def profile_args(self) -> Tuple[Union[str, Tuple[int, str]], int, int]:
         profile_args = (self.path, self.width or 0, self.height or 0)
         return profile_args
 

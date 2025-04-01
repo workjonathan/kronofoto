@@ -2,7 +2,7 @@ from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
 from typing import Optional, Any
-from .base import ArchiveRequest, PhotoQuerySet
+from .base import ArchiveRequest, PhotoQuerySet, ArchiveReference
 from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds
 from django.contrib.gis.geos import Polygon
 from functools import cached_property
@@ -41,8 +41,11 @@ class MapRequest(ArchiveRequest):
         return qs
 
 
-def map_list(request: HttpRequest, *, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
-    areq = MapRequest(request=request, short_name=short_name, category=category)
+def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
+    archive_ref = None
+    if short_name:
+        archive_ref = ArchiveReference(short_name, domain)
+    areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
     context = areq.common_context
     qs = areq.get_photo_queryset()[:48]
     context['form'] = areq.form
@@ -50,8 +53,11 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, category: 
     context['bounds'] = areq.map_bounds
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map.html")
 
-def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
-    areq = MapRequest(request=request, short_name=short_name, category=category)
+def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
+    archive_ref = None
+    if short_name:
+        archive_ref = ArchiveReference(short_name, domain)
+    areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
     context = areq.common_context
     qs = areq.get_photo_queryset()
 

@@ -20,18 +20,35 @@ def require_valid_archive(func: Callable[..., T]) -> Callable[..., T]:
     def validate_archive(*args: Any, **kwargs: Any) -> T:
         if 'short_name' in kwargs:
             short_name = kwargs.pop('short_name')
-            get_object_or_404(Archive.objects.all(), slug=short_name)
-            return func(*args, short_name=short_name, **kwargs)
+            if 'domain' in kwargs:
+                domain = kwargs.pop('domain')
+            else:
+                domain = None
+            get_object_or_404(Archive.objects.all(), slug=short_name, server_domain=domain or "")
+            return func(*args, short_name=short_name, domain=domain, **kwargs)
         else:
             return func(*args, **kwargs)
     return validate_archive
 
+@dataclass
+class ArchiveReference:
+    short_name: str
+    domain: Optional[str] = None
+
+    def filter_qs(self, qs: PhotoQuerySet) -> PhotoQuerySet:
+        return qs.filter(archive__slug=self.short_name, archive__server_domain=self.domain or "")
+
+    def __str__(self) -> str:
+        if self.domain:
+            return f"{self.short_name}@{self.domain}"
+        else:
+            return self.short_name
 
 @dataclass
 class ArchiveRequest:
     request: HttpRequest
     category: Optional[str] = None
-    short_name: Optional[str] = None
+    archive_ref: Optional[ArchiveReference] = None
 
     @cached_property
     def form(self) -> SearchForm:
@@ -49,8 +66,8 @@ class ArchiveRequest:
             return 'kronofoto/layout/embedded-base.html'
         else:
             templates = []
-            if self.short_name:
-                templates.append('kronofoto/layout/base/{}.html'.format(self.short_name))
+            if self.archive_ref:
+                templates.append('kronofoto/layout/base/{}.html'.format(self.archive_ref))
             templates.append('kronofoto/layout/base.html')
             return select_template(templates)
 
@@ -82,8 +99,10 @@ class ArchiveRequest:
         args = {}
         if self.category:
             args['category'] = self.category
-        if self.short_name:
-            args['short_name'] = self.short_name
+        if self.archive_ref:
+            args['short_name'] = self.archive_ref.short_name
+            if self.archive_ref.domain:
+                args['domain'] = self.archive_ref.domain
         return args
 
     @property
@@ -148,9 +167,9 @@ class ArchiveRequest:
     def get_photo_queryset(self) -> PhotoQuerySet:
         if self.form.is_valid():
             qs = Photo.objects.filter(is_published=True, year__isnull=False)
-            short_name = self.url_kwargs.get('short_name')
-            if short_name:
-                qs = qs.filter(archive__slug=short_name)
+            if self.archive_ref:
+                qs = self.archive_ref.filter_qs(qs)
+
             if 'category' in self.url_kwargs:
                 category = get_object_or_404(Category.objects.all(), slug=self.url_kwargs['category'])
                 qs = qs.filter(category=category)

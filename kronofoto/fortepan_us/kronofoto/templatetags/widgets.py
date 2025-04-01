@@ -11,7 +11,7 @@ from django.core.cache import cache
 from fortepan_us.kronofoto.models import Photo, Card, Collection, PhotoCard, Figure, Exhibit
 from fortepan_us.kronofoto.models.photo import LabelProtocol
 from fortepan_us.kronofoto.imageutil import ImageSigner
-from typing import Union, Dict, Any, Union, Optional, Tuple, List, Set, TypedDict
+from typing import Union, Dict, Any, Union, Optional, Tuple, List, Set, TypedDict, overload
 from django.template.defaultfilters import linebreaksbr, linebreaks_filter
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
@@ -20,6 +20,7 @@ import json
 import uuid
 from django import forms
 from lxml import etree, html
+import icontract
 
 register = template.Library()
 
@@ -61,9 +62,32 @@ def page_links(formatter: Any, page_obj: Any, target: Any=None) -> Dict[str, Any
         page_obj=page_obj
     )
 
+# caller must either photo or photo id (and path which is ignored until other branches are adjusted).
+# caller must provide at least a width or a height (or both).
+@overload
+def image_url(*, width: int, height: Optional[int]=None, photo: Photo) -> str:
+    ...
+@overload
+def image_url(*, width: int, height: Optional[int]=None, id: int, path: Any) -> str:
+    ...
+@overload
+def image_url(*, width: Optional[int]=None, height: int, photo: Photo) -> str:
+    ...
+@overload
+def image_url(*, width: Optional[int]=None, height: int, id: int, path: Any) -> str:
+    ...
+
+@icontract.require(lambda *, width, height, photo, id, path: width is not None or height is not None)
 @register.simple_tag(takes_context=False)
-def image_url(*, id: int, path: str, width: Optional[int]=None, height: Optional[int]=None) -> str:
-    return ImageSigner(id=id, path=path, width=width, height=height).url
+def image_url(*, width: Optional[int]=None, height: Optional[int]=None, photo: Optional[Photo]=None, id: Optional[int]=None, path: Any=None) -> str:
+    if photo is None:
+        assert id is not None
+        photo = Photo.objects.get(id=id)
+    if height and not width:
+        return photo.image_url(height=height)
+    else:
+        assert width is not None
+        return photo.image_url(width=width, height=height)
 
 def count_photos() -> int:
     return Photo.objects.filter(is_published=True).count()

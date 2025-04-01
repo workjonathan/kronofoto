@@ -147,6 +147,7 @@ def photosphere_carousel(request: HttpRequest) -> HttpResponse:
             **kwargs,
         ).select_related("photo", "photosphere")
         offset = form.cleaned_data['offset']
+        assert photo.year
         if form.cleaned_data['forward']:
             objects = PhotoPairForwardList(queryset=nearby, year=photo.year, id=photo.id).carousel_list(item_count=40, func=lambda pair: PhotoWrapper(photo=pair.photo, photosphere=pair.photosphere))
         else:

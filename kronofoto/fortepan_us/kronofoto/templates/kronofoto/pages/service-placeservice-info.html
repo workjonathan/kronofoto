@@ -1,0 +1,30 @@
+{% load krono_urls %}
+<html>
+<head></head>
+<body>
+    <h1>
+        This is a Place Service.
+    </h1>
+    <table>
+        <tr><td>Name</td><td>{{ servicevalue.name }}</td></tr>
+        <tr><td>ID</td><td>{{ servicevalue.id }}</td></tr>
+    </table>
+    {% if actor and actor.app_follows_actor %}
+        <p>This actor is already being followed: {{ archive }}
+        </p>
+        <a href="{% url "kronofoto:activitypub_data:service-follow-config" %}">Back to config</a>
+    {% else %}
+        <p>Should a follow request be sent?</p>
+        <form method="post" action="{% url "kronofoto:activitypub_data:placeservice-follow-send" %}">
+            {% csrf_token %}
+            {% for field in form %}
+                {{ field.as_hidden }}
+            {% endfor %}
+            <input type="submit" value="Yes">
+        </form>
+        <a href="{% url "kronofoto:activitypub_data:service-follow-config" %}">No</a>
+    {% endif %}
+    </p>
+</body>
+</html>
+

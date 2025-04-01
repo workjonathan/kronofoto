@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'fortepan_us.kronofoto.middleware.OverrideVaryMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'fortepan_us.kronofoto.middleware.ActorAuthenticationMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -158,6 +159,7 @@ CACHES = {
 GRID_DISPLAY_COUNT = 48
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 LOGIN_REDIRECT_URL = '/'
+ENCRYPTION_KEY = config("ENCRYPTION_KEY", cast=lambda s: s.encode("utf-8"))
 try:
     os.environ['http_proxy'] = config("HTTP_PROXY")
 except:

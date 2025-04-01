@@ -33,7 +33,7 @@
         hx-select="img"
     >
         {% if exhibit.photo %}
-        <img src="{% image_url id=exhibit.photo.id path=exhibit.photo.original.name width=2000 %}">
+        <img src="{% image_url photo=exhibit.photo width=2000 %}">
         {% endif %}
     </div>
 {% endblock hero_background %}

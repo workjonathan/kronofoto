@@ -100,7 +100,7 @@
                 <div class="thumbnail-collection thumbnail-collection--3">
                     {% for photo in collection.photos.all %}
                         <div class="thumbnail-collection__item">
-                            <img src="{% image_url path=photo.original.name id=photo.id width=275 height=200 %}" width="275" height="auto" />
+                            <img src="{% image_url photo=photo width=275 height=200 %}" width="275" height="auto" />
                             <details>
                                 <summary class="thumbnail-collection__delete"></summary>
                                 <div class="reveal-overlay" style="display: block;">

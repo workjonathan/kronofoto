@@ -27,13 +27,13 @@ class PhotoBaseForm(forms.ModelForm):
         return choices
 
     def get_categories(self, instance: Optional[Photo]=None) -> QuerySet[Category]:
-        if not instance:
+        if not instance or not hasattr(instance, 'archive'):
             return Category.objects.none()
         else:
             return instance.archive.categories.all()
 
     def get_terms(self, instance: Optional[Photo]) -> QuerySet[Term]:
-        if not instance:
+        if not instance or not hasattr(instance, 'archive'):
             return Term.objects.none()
         else:
             try:

@@ -1,12 +1,16 @@
+from __future__ import annotations
 from django.db import models
 from django.db.models import Count, QuerySet
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Exists, OuterRef, F, Subquery, Func
 from django.conf import settings
+from fortepan_us.kronofoto.reverse import reverse
 from .collectible import Collectible
-from .archive import Archive
+from .archive import Archive, RemoteActor
 from typing_extensions import Self
-from typing import final, Any, Type, List, TYPE_CHECKING
+from typing import final, Any, Type, List, Dict, Literal, TYPE_CHECKING
+#from .activity_dicts import ActivitypubContact, DonorValue
+from django.contrib.contenttypes.models import ContentType
 
 
 class DonorQuerySet(models.QuerySet):
@@ -14,7 +18,7 @@ class DonorQuerySet(models.QuerySet):
 
 
 class Donor(Collectible, models.Model):
-    archive = models.ForeignKey(Archive, models.PROTECT, null=False)
+    archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
     email = models.EmailField(blank=True)
@@ -32,12 +36,25 @@ class Donor(Collectible, models.Model):
         ordering = ("last_name", "first_name")
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
+    def ldid(self) -> str:
+        from .ldid import LdId
+        try:
+            return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="donor", object_id=self.id).ld_id
+        except LdId.DoesNotExist:
+            return reverse(
+                "kronofoto:activitypub_data:archives:contributors:detail",
+                kwargs={"short_name": self.archive.slug, "pk": self.id},
+            )
+
     def display_format(self) -> str:
         return (
             "{first} {last}".format(first=self.first_name, last=self.last_name)
             if self.first_name
             else self.last_name
         )
+
+    def is_owned_by(self, actor: RemoteActor) -> bool:
+        return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def __str__(self) -> str:
         if self.first_name or self.last_name:
@@ -51,18 +68,3 @@ class Donor(Collectible, models.Model):
     def encode_params(self, params: Any) -> Any:
         params["donor"] = self.id
         return params.urlencode()
-
-    @staticmethod
-    def index() -> Any:
-        return [
-            {
-                "name": "{last}, {first}".format(
-                    last=donor.last_name, first=donor.first_name
-                ),
-                "count": donor.count,
-                "href": donor.get_absolute_url(),
-            }
-            for donor in Donor.objects.annotate(count=Count("photo__id"))
-            .order_by("last_name", "first_name")
-            .filter(count__gt=0)
-        ]

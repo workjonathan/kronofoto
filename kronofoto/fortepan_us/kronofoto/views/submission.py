@@ -1,4 +1,4 @@
-from .base import ArchiveRequest
+from .base import ArchiveRequest, ArchiveReference
 from django.db.models import QuerySet, Manager
 from django.contrib.auth.models import User, AnonymousUser
 from django.http import HttpResponse, HttpRequest, QueryDict
@@ -314,6 +314,6 @@ def define_terms(request: HttpRequest, **kwargs: Any) -> HttpResponse:
 
 @require_agreement(extra_context={"reason": "You must agree to terms before uploading."})
 def submission(request: HttpRequest, short_name: str) -> HttpResponse:
-    context = ArchiveRequest(request, short_name=short_name).common_context
+    context = ArchiveRequest(request, archive_ref=ArchiveReference(short_name)).common_context
     archive = get_object_or_404(Archive.objects.all(), slug=short_name)
     return SubmissionFactory(request, request.user, archive, context, extra_form_kwargs={"force_archive": archive}).get_response()

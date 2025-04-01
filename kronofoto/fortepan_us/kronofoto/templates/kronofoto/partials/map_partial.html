@@ -6,7 +6,7 @@
 <ul class="photo-tiles photo-tiles--4" id="photo-grid">
     <div class="photo-tiles__tiles">
         {% for photo in photos %}
-            <a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url path=photo.original.name id=photo.id width=500 height=500 %}" height="500" width="500" /></a>
+            <a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a>
         {% endfor %}
     </div>
 </ul>

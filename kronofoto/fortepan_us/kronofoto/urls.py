@@ -10,6 +10,7 @@ from fortepan_us.kronofoto.views.agreement import AgreementView
 from fortepan_us.kronofoto.views.submission import submission, KronofotoTemplateView
 from fortepan_us.kronofoto.views.tagsearch import ContributorSearchView
 from fortepan_us.kronofoto.views.donor import ContributorCreateView
+from fortepan_us.kronofoto.views import activitypub
 from fortepan_us.kronofoto.views import tags_view
 from fortepan_us.kronofoto.views import photosphere
 from fortepan_us.kronofoto.views import exhibit
@@ -126,6 +127,13 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 ]
 
 urlpatterns = urlpatterns + [
+    path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
+    path('activitypub/service/show', views.activitypub.service_view, name="activitypub-main-service-view"),
+    path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),
+    path('activitypub/service/outbox', views.activitypub.service_outbox, name="activitypub-main-service-outbox"),
+    path('activitypub/service/places', views.activitypub.places_page, name="activitypub-main-service-places"),
+    path('activitypub/service/places/<int:pk>', views.activitypub.service_place, name="activitypub-main-service-places"),
+    path("activitypub/", include(views.activitypub.data_urls)),
     path('users/<str:username>', views.profile_view, name='user-page'),
     path('attribution', views.attribution, name="attribution"),
     path("exhibits", views.exhibit_list, name="exhibit-list"),
@@ -152,6 +160,7 @@ urlpatterns = urlpatterns + [
     path("<slug:short_name>/contribute/terms/define", views.define_terms, name="define-terms"),
     path("<slug:short_name>/contribute/thanks", KronofotoTemplateView.as_view(template_name="kronofoto/pages/submission_received.html"), name="submission-done"),
     path('<slug:short_name>/data.json', views.datadump, name="data-dump"),
+    path("<slug:short_name>@<str:domain>/", include(urlpatterns)),
     path("<slug:short_name>/", include(urlpatterns)),
     path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
     path("", include("fortepan_us.kronofoto.views.vector_tiles")),
