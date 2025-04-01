@@ -19,7 +19,7 @@ from fortepan_us.kronofoto.models import Category
 from functools import reduce
 import operator
 from dataclasses import dataclass, replace
-from .base import ArchiveRequest, require_valid_archive
+from .base import ArchiveRequest, require_valid_archive, ArchiveReference
 from django.utils.decorators import method_decorator
 import random
 from typing import Optional, Type, TypeVar, Any, Protocol, Dict
@@ -114,7 +114,10 @@ class BaseTemplateMixin:
         super().setup(request, *args, **kwargs) # type: ignore
         if self.category:
             kwargs['category'] = self.category
-        self.archive_request = self.archive_request_class(request=request, category=kwargs.get("category"), short_name=kwargs.get('short_name'))
+        archive_ref = None
+        if 'short_name' in kwargs:
+            archive_ref = ArchiveReference(short_name=kwargs['short_name'], domain=kwargs.get('domain'))
+        self.archive_request = self.archive_request_class(request=request, category=kwargs.get("category"), archive_ref=archive_ref)
 
     @property
     def params(self) -> QueryDict:
