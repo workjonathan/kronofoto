@@ -133,7 +133,7 @@
                 </g>
             </svg>
         </div>
-        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = !dropdownExpanded" @click.away="dropdownExpanded = !dropdownExpanded" :class="dropdownExpanded ? 'expanded' : ''">
+        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = true" @click.away="dropdownExpanded = false" :class="dropdownExpanded ? 'expanded' : ''">
             <div class="wrapper" x-show="dropdownExpanded">
                 {% for mainstreet in mainstreet_links %}
                 <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
