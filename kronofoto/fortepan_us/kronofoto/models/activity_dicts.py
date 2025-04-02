@@ -501,6 +501,11 @@ def require_archive(func: Callable[[Any, Archive], str]) -> Callable[[Any, Remot
     return _
 
 @dataclass
+class PageValue:
+    name: str
+    url: str
+
+@dataclass
 class PhotoValue:
     id: str
     content: str
@@ -511,6 +516,7 @@ class PhotoValue:
     tags: List[str]
     height: int
     width: int
+    attachment: List[PageValue]
     year: Optional[int]=None
     contributor: Optional[str] = None
     url: Optional[str] = None
@@ -532,6 +538,7 @@ class PhotoValue:
                 name=photo.category.name,
                 slug=photo.category.slug,
             ),
+            attachment=[PageValue(name=photo.accession_number, url=photo.get_archive_url())],
             circa=photo.circa,
             height=height,
             width=width,
@@ -577,6 +584,8 @@ class PhotoValue:
         photo.archive = actor
         photo.original_width = self.width
         photo.original_height = self.height
+        if len(self.attachment) >= 1:
+            photo.remote_page = self.attachment[0].url
 
         if self.contributor is not None:
             ldcontributor, created = LdObjectGetOrCreator(ld_id=self.contributor, queryset=LdId.objects.all()).object

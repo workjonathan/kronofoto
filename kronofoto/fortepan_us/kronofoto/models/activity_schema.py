@@ -282,6 +282,19 @@ class PlaceSchema(Schema):
 class LinkSchema(Schema):
     href = fields.Url()
 
+class AttachmentSchema(Schema):
+    type = fields.Constant("Page", required=True)
+    name = fields.Str(required=True)
+    url = fields.Url(required=True)
+
+    @post_load
+    def extract_fields_from_dict(
+        self, data: Dict[str, Any], **kwargs: Any
+    ) -> activity_dicts.PageValue:
+        return activity_dicts.PageValue(
+            name=data['name'],
+            url=data['url'],
+        )
 
 class CategorySchema(Schema):
     slug = fields.Str(required=True)
@@ -309,6 +322,11 @@ class Image(Schema):
     place = fields.Url(relative=True)
     height = fields.Integer(required=True)
     width = fields.Integer(required=True)
+    attachment = fields.List(
+        fields.Nested(AttachmentSchema),
+        required=True,
+        validate=[validate.Length(min=1),
+    ])
 
     @post_load
     def extract_fields_from_dict(

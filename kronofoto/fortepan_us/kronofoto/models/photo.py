@@ -403,6 +403,7 @@ class Photo(PhotoBase):
         editable=True,
     )
     remote_image = models.URLField(null=True, editable=False)
+    remote_page = models.URLField(null=True, editable=False)
     places = models.ManyToManyField("kronofoto.Place", editable=False)
     original_height = models.IntegerField(default=0, editable=False)
     original_width = models.IntegerField(default=0, editable=False)
@@ -721,6 +722,18 @@ class Photo(PhotoBase):
             params["id:gt"] = str(self.id - 1)
             return self.add_params(url=url, params=params)
         raise ValueError("Photo.year must be set")
+
+    def get_archive_url(
+        self,
+    ) -> str:
+        kwargs = {
+            "short_name": self.archive.slug,
+            "photo": self.id,
+        }
+        if self.archive.server_domain:
+            kwargs['domain'] = self.archive.server_domain
+        url = reverse("kronofoto:photoview", kwargs=kwargs)
+        return url
 
     def get_absolute_url(
         self,
