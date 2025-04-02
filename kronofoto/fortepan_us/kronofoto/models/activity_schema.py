@@ -307,6 +307,8 @@ class Image(Schema):
     terms = fields.List(fields.Str)
     tags = fields.List(fields.Str)
     place = fields.Url(relative=True)
+    height = fields.Integer(required=True)
+    width = fields.Integer(required=True)
 
     @post_load
     def extract_fields_from_dict(
