@@ -15,7 +15,7 @@ def category_list(request: HttpRequest, short_name: Optional[str]=None, domain: 
         archive_ref = ArchiveReference(short_name, domain)
     archive_request = ArchiveRequest(request=request, archive_ref=archive_ref, category=category)
     if short_name:
-        queryset = Category.objects.filter(archive__slug=short_name)
+        queryset = Category.objects.filter(archive__slug=short_name, archive__server_domain=domain or "")
     else:
         queryset = Category.objects.all()
     context = archive_request.common_context
