@@ -875,6 +875,7 @@ class PhotoSpherePlugin {
     }
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
+            const client_width = window.matchMedia('(max-width: 40em)').matches ? elem2.clientWidth : 300
             const api_url = elem2.getAttribute("data-node-href")
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
             const param_name = elem2.getAttribute("data-node-param")
@@ -883,6 +884,12 @@ class PhotoSpherePlugin {
             this.context.addEventListener("kronofoto-select-node", (evt) => {
                 const tourPlugin = viewer.getPlugin(VirtualTourPlugin)
                 tourPlugin.setCurrentNode(evt.detail)
+            })
+            elem2.addEventListener("kronofoto-photosphere-size", (evt) => {
+                const {width, height} = evt.detail
+                const plugin = viewer.getPlugin(PlanPlugin)
+                plugin.config.size = {width: `${width}px`, height: `${height}px`}
+                plugin.component.applyConfig()
             })
             elem2.addEventListener("kronofoto-photosphere-map", (evt) => {
                 const plugin = viewer.getPlugin(PlanPlugin)
@@ -942,6 +949,10 @@ class PhotoSpherePlugin {
                         {
                             defaultZoom: 19,
                             position: "bottom right",
+                            size: {
+                                width: `${client_width}px`,
+                                height: '200px',
+                            },
                             visibleOnLoad:
                                 !window.matchMedia("(max-width: 64em)").matches,
                             configureLeaflet: (map) => {

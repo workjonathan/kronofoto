@@ -23,12 +23,13 @@
         set_description_open: false,
         map_open: !window.matchMedia('(max-width: 64em)').matches,
         mobile_view: window.matchMedia('(max-width: 64em)').matches,
+        small_mobile_view: window.matchMedia('(max-width: 40em)').matches,
         images_open: false,
         open: false
     }"
     @kronofoto-select-photosphere-marker="open = true"
     @node-changed="open = false"
-    x-init="window.matchMedia('(max-width: 64em)').onchange = (evt) => { if (evt) { mobile_view = evt.matches } }; $watch('mobile_view', (mobile) => map_open = !mobile);"
+    x-init="window.matchMedia('(max-width: 40em)').onchange = (evt) => { if (evt) { small_mobile_view = evt.matches } }; window.matchMedia('(max-width: 64em)').onchange = (evt) => { if (evt) { mobile_view = evt.matches } }; $watch('mobile_view', (mobile) => map_open = !mobile);"
     >
 
     <div id="fi-photosphere-metadata" class="photosphere__metadata hide">
@@ -39,7 +40,7 @@
         {% endblock photosphere_metadata %}
     </div>
     <form class="photosphere__wrapper" hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}" x-init="$watch('map_open', (value) => $dispatch('kronofoto-photosphere-map', {'map_open': value}))">
+        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}" x-init="$watch('map_open', (value) => $dispatch('kronofoto-photosphere-map', {'map_open': value}))" x-resize="$dispatch('kronofoto-photosphere-size', { width: small_mobile_view ? $width : 300, height: small_mobile_view ? Math.round($width/2) : 200 })"">
             <input name="id" type="hidden">
         </div>
     </form>

@@ -31,6 +31,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@alpinejs/resize": "^3.14.9",
     "@photo-sphere-viewer/core": "^5.10.1",
     "@photo-sphere-viewer/markers-plugin": "^5.10.1",
     "@photo-sphere-viewer/plan-plugin": "^5.10.1",

@@ -95,14 +95,14 @@
     bottom: 0px !important;
     // hide on mobile
     //display: none;
-    @include breakpoint(small only) {
-      width: 100% !important;
-      height: 50vw !important;
-      left: 0px;
-      margin: 0px;
-      max-width: none;
-      bottom: 0px !important;
-    }
+    //@include breakpoint(small only) {
+    //  width: 100% !important;
+    //  height: 50vw !important;
+    //  left: 0px;
+    //  margin: 0px;
+    //  max-width: none;
+    //  bottom: 0px !important;
+    //}
     @include breakpoint(large up) {
       //display: block;
     }

@@ -12,6 +12,8 @@ import {
     initHTMXListeners,
 } from "./lib.js"
 import AlpineJS from "alpinejs"
+import resize from "@alpinejs/resize"
+AlpineJS.plugin(resize)
 window.AlpineJS = AlpineJS
 window.kfcontext = document
 import HTMX from "./htmx.js"
