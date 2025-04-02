@@ -100,7 +100,7 @@ def service_place(request: HttpRequest, pk: int) -> HttpResponse:
 def places_page(request: HttpRequest) -> HttpResponse:
     form = Page(request.GET)
     if form.is_valid():
-        queryset = models.Place.objects.filter(pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
+        queryset = models.Place.objects.filter(pk__gt=form.cleaned_data['pk'], owner=None).order_by('id')[:100]
         schema : Union[CollectionPage, Collection] = CollectionPage()
         object_data = schema.dump(activity_dicts.CollectionPageValue.from_place_queryset(queryset))
         return JsonLDResponse(object_data)
