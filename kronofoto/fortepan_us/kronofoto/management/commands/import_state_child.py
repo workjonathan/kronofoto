@@ -21,6 +21,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--geojson', required=True)
         parser.add_argument('--placetype', required=True)
+        parser.add_argument("--delete_placetype", required=False, type=bool)
 
     def handle(self, *args, geojson, placetype, **options):
         print(datetime.now())
@@ -38,25 +39,25 @@ class Command(BaseCommand):
 
         with open(geojson, 'r') as inf:
             data = json.load(inf)
-            with Place.objects.disable_mptt_updates():
-                placetype, _ = PlaceType.objects.get_or_create(name=placetype)
+            placetype, _ = PlaceType.objects.get_or_create(name=placetype)
+            if options['delete_placetype']:
                 print('deleting old')
                 for place in Place.objects.filter(place_type=placetype):
                     place.delete()
-                structure = defaultdict(list)
-                for feature in data['features']:
-                    properties = feature['properties']
-                    parent = Place.objects.get(name=properties['state_STUSPS'], place_type__name="US State")
-                    name = properties['NAME']
-                    if feature['geometry']['type'] == 'Point':
-                        geom = Point(*feature['geometry']['coordinates'])
+            structure = defaultdict(list)
+            for feature in data['features']:
+                properties = feature['properties']
+                parent = Place.objects.get(name=properties['state_STUSPS'], place_type__name="US State")
+                name = properties['NAME']
+                if feature['geometry']['type'] == 'Point':
+                    geom = Point(*feature['geometry']['coordinates'])
+                else:
+                    if feature['geometry']['type'] == "Polygon":
+                        polygons = [Polygon(*feature['geometry']['coordinates'])]
                     else:
-                        if feature['geometry']['type'] == "Polygon":
-                            polygons = [Polygon(*feature['geometry']['coordinates'])]
-                        else:
-                            polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
-                        geom = MultiPolygon(*polygons)
-                    Place.objects.create(name=name, geom=geom.wkt, place_type=placetype, parent=parent)
-                    count += 1
-                    if count % 100 == 0:
-                        print(count, datetime.now())
+                        polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
+                    geom = MultiPolygon(*polygons)
+                Place.objects.create(name=name, geom=geom.wkt, place_type=placetype, parent=parent)
+                count += 1
+                if count % 100 == 0:
+                    print(count, datetime.now())
