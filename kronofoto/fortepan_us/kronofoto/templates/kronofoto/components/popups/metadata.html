@@ -62,7 +62,6 @@
                             <input type="text" name="tag" />
                             <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
                         </div>
-{#                        <a class="add-tag" href="{% krono_url "kronofoto:addtag" url_kwargs photo=photo.id %}">＋</a> #}
                     </form>
                 </p>
             </div>
@@ -90,5 +89,15 @@
             </div>
         </div>
         {% endif %}
+        <div class="tags">
+            <h3>Federation links:</h3>
+            <ul>
+                <li><a href="{{ photo.get_absolute_url }}">{{ request.site.name }}</a></li>
+                <li><a href="{{ photo.get_archive_url }}">{{ photo.archive.name }}</a></li>
+                {% if photo.remote_page %}
+                    <li><a href="{{ photo.remote_page }}">Home instance ({{ photo.archive.server_domain }})</a></li>
+                {% endif %}
+            </ul>
+        </div>
     </div>
 </div>
