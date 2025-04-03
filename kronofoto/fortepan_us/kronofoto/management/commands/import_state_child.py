@@ -21,9 +21,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--geojson', required=True)
         parser.add_argument('--placetype', required=True)
+        parser.add_argument('--fullname_format', required=True, help="for example '{NAME} Town, {STATE}'")
         parser.add_argument("--delete_placetype", required=False, type=bool)
 
-    def handle(self, *args, geojson, placetype, **options):
+    def handle(self, *args, geojson, placetype, fullname_format, **options):
         print(datetime.now())
         count = 0
         #ds = DataSource(geojson)
@@ -49,6 +50,8 @@ class Command(BaseCommand):
                 properties = feature['properties']
                 parent = Place.objects.get(name=properties['state_STUSPS'], place_type__name="US State")
                 name = properties['NAME']
+                fullname = fullname_format.format(NAME=name, STATE=parent.name)
+                print(fullname)
                 if feature['geometry']['type'] == 'Point':
                     geom = Point(*feature['geometry']['coordinates'])
                 else:
@@ -57,7 +60,7 @@ class Command(BaseCommand):
                     else:
                         polygons = [Polygon(*coords) for coords in feature['geometry']['coordinates']]
                     geom = MultiPolygon(*polygons)
-                Place.objects.create(name=name, geom=geom.wkt, place_type=placetype, parent=parent)
+                Place.objects.create(name=name, geom=geom.wkt, place_type=placetype, parent=parent, fullname=fullname)
                 count += 1
                 if count % 100 == 0:
                     print(count, datetime.now())
