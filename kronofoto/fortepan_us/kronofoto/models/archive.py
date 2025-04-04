@@ -89,9 +89,16 @@ class ServiceActor(models.Model):
 
     @property
     def private_key(self) -> rsa.RSAPrivateKey:
-        if self.encrypted_private_key and isinstance(self.encrypted_private_key, bytes):
+        if self.encrypted_private_key:
+            if isinstance(self.encrypted_private_key, bytes):
+                byte_key = self.encrypted_private_key
+            elif isinstance(self.encrypted_private_key, memoryview):
+                byte_key = self.encrypted_private_key.tobytes()
+            elif isinstance(self.encrypted_private_key, bytearray):
+                byte_key = bytes(self.encrypted_private_key)
+
             private_key = serialization.load_pem_private_key(
-                self.encrypted_private_key,
+                byte_key,
                 password=settings.ENCRYPTION_KEY,
             )
             if isinstance(private_key, rsa.RSAPrivateKey):
@@ -404,8 +411,14 @@ class Archive(models.Model):
     @property
     def private_key(self) -> rsa.RSAPrivateKey:
         if self.encrypted_private_key and isinstance(self.encrypted_private_key, bytes):
+            if isinstance(self.encrypted_private_key, bytes):
+                byte_key = self.encrypted_private_key
+            elif isinstance(self.encrypted_private_key, memoryview):
+                byte_key = self.encrypted_private_key.tobytes()
+            elif isinstance(self.encrypted_private_key, bytearray):
+                byte_key = bytes(self.encrypted_private_key)
             private_key = serialization.load_pem_private_key(
-                self.encrypted_private_key,
+                byte_key,
                 password=settings.ENCRYPTION_KEY,
             )
             if isinstance(private_key, rsa.RSAPrivateKey):
