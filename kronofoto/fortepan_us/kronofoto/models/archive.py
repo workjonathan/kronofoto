@@ -108,9 +108,15 @@ class ServiceActor(models.Model):
 
     @property
     def public_key(self) -> rsa.RSAPublicKey:
-        if self.serialized_public_key and isinstance(self.serialized_public_key, bytes):
+        if self.serialized_public_key:
+            if isinstance(self.serialized_public_key, bytes):
+                byte_key = self.serialized_public_key
+            elif isinstance(self.serialized_public_key, memoryview):
+                byte_key = self.serialized_public_key.tobytes()
+            elif isinstance(self.serialized_public_key, bytearray):
+                byte_key = bytes(self.serialized_public_key)
             public_key = serialization.load_pem_public_key(
-                self.serialized_public_key,
+                byte_key,
             )
             if isinstance(public_key, rsa.RSAPublicKey):
                 return public_key
@@ -410,7 +416,7 @@ class Archive(models.Model):
 
     @property
     def private_key(self) -> rsa.RSAPrivateKey:
-        if self.encrypted_private_key and isinstance(self.encrypted_private_key, bytes):
+        if self.encrypted_private_key:
             if isinstance(self.encrypted_private_key, bytes):
                 byte_key = self.encrypted_private_key
             elif isinstance(self.encrypted_private_key, memoryview):
@@ -428,9 +434,15 @@ class Archive(models.Model):
 
     @property
     def public_key(self) -> rsa.RSAPublicKey:
-        if self.serialized_public_key and isinstance(self.serialized_public_key, bytes):
+        if self.serialized_public_key:
+            if isinstance(self.serialized_public_key, bytes):
+                byte_key = self.serialized_public_key
+            elif isinstance(self.serialized_public_key, memoryview):
+                byte_key = self.serialized_public_key.tobytes()
+            elif isinstance(self.serialized_public_key, bytearray):
+                byte_key = bytes(self.serialized_public_key)
             public_key = serialization.load_pem_public_key(
-                self.serialized_public_key,
+                byte_key,
             )
             if isinstance(public_key, rsa.RSAPublicKey):
                 return public_key
