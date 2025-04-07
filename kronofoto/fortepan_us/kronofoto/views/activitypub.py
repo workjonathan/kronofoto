@@ -348,7 +348,7 @@ def service_view(request: HttpRequest) -> HttpResponse:
 def archive_view(request: HttpRequest, short_name: str) -> HttpResponse:
     template = "kronofoto/pages/archive_view.html"
     context : Dict[str, Any] = {}
-    archive = get_object_or_404(models.Archive.objects.all(), slug=short_name)
+    archive = get_object_or_404(models.Archive.objects.all(), slug=short_name, server_domain="")
     context['archive'] = archive
     if request.method == "POST":
         form = FollowReactForm(request.POST)
@@ -470,19 +470,19 @@ class ArchiveActor:
     data_urls: Any = []
     @staticmethod
     def profile(request: HttpRequest, short_name: str) -> HttpResponse:
-        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name, server_domain="")
         return JsonLDResponse(ArchiveSchema().dump(archive))
 
     @staticmethod
     def following(request: HttpRequest, short_name: str) -> HttpResponse:
-        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name, server_domain="")
         return JsonLDResponse(ActorCollectionSchema().dump(
             archive.remoteactor_set.none()
         ))
 
     @staticmethod
     def followers(request: HttpRequest, short_name: str) -> HttpResponse:
-        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name, server_domain="")
         return JsonLDResponse(ActorCollectionSchema().dump(
             archive.remoteactor_set.all()
         ))
@@ -493,7 +493,7 @@ class ArchiveActor:
     def inbox(request: HttpRequest, short_name: str) -> HttpResponse:
         if not hasattr(request, 'actor') or not isinstance(request.actor, RemoteActor):
             return HttpResponse(status=401)
-        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name, server_domain="")
         if request.method == "POST":
             return ServiceInboxResponder(body=request.body, actor=request.actor).archive_response(archive)
         else:
@@ -502,7 +502,7 @@ class ArchiveActor:
     #@require_json_ld
     @staticmethod
     def outbox(request: HttpRequest, short_name: str) -> HttpResponse:
-        archive = get_object_or_404(Archive.objects.all(), slug=short_name)
+        archive = get_object_or_404(Archive.objects.all(), slug=short_name, server_domain="")
         return JsonLDResponse({})
 
     @register("contributors", data_urls)
