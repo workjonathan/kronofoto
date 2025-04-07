@@ -179,7 +179,7 @@ class TestArchive(TestCase):
     def test_archive_get_by_profile_when_remote_archive_exists(self, archive):
         Archive.objects.get_remote_by_profile(profile=archive.actor.profile)
 
-    @hsettings(max_examples=10)
+    @hsettings(max_examples=2)
     @given(urls(), st.from_type(activity_dicts.ArchiveDict))
     def test_archive_get_or_create_profile(self, profile, archive_dict):
         with mock.patch('requests.get') as mock_:

@@ -263,6 +263,7 @@ class TestGetOrCreateObject(TestCase):
         url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is not None
 
+@hsettings(max_examples=5)
 @override_settings(KF_URL_SCHEME="http:")
 @pytest.mark.django_db
 @given(

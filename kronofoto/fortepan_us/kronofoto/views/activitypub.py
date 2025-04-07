@@ -513,12 +513,12 @@ class ArchiveActor:
             form = Page(request.GET)
             print(request.GET)
             if form.is_valid():
-                queryset = Donor.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
+                queryset = Donor.objects.filter(archive__slug=short_name, archive__server_domain="", pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
                 schema : Union[CollectionPage, Collection] = CollectionPage()
                 object_data = schema.dump(activity_dicts.CollectionPageValue.from_donor_queryset(queryset, short_name=short_name))
                 return JsonLDResponse(object_data)
             else:
-                queryset = Donor.objects.filter(archive__slug=short_name).order_by('id')[:100]
+                queryset = Donor.objects.filter(archive__slug=short_name, archive__server_domain="").order_by('id')[:100]
                 schema = Collection()
                 cv = activity_dicts.CollectionValue(
                     id=reverse("kronofoto:activitypub_data:archives:contributors:page", kwargs={"short_name": short_name}),
@@ -530,7 +530,7 @@ class ArchiveActor:
 
         @staticmethod
         def data(request: HttpRequest, short_name: str, pk: int) -> HttpResponse:
-            donor : Donor = get_object_or_404(Donor.objects.all(), pk=pk, archive__slug=short_name)
+            donor : Donor = get_object_or_404(Donor.objects.all(), pk=pk, archive__slug=short_name, archive__server_domain="")
             object_data = Contact().dump(activity_dicts.DonorValue.from_donor(donor))
             return JsonLDResponse(object_data)
 
@@ -541,12 +541,12 @@ class ArchiveActor:
         def data_page(request: HttpRequest, short_name: str) -> HttpResponse:
             form = Page(request.GET)
             if form.is_valid():
-                queryset = Photo.objects.filter(archive__slug=short_name, pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
+                queryset = Photo.objects.filter(archive__slug=short_name, archive__server_domain="", pk__gt=form.cleaned_data['pk']).order_by('id')[:100]
                 schema : Union[CollectionPage, Collection] = CollectionPage()
                 object_data = schema.dump(activity_dicts.CollectionPageValue.from_photo_queryset(queryset, short_name=short_name))
                 return JsonLDResponse(object_data)
             else:
-                queryset = Photo.objects.filter(archive__slug=short_name).order_by('id')[:100]
+                queryset = Photo.objects.filter(archive__slug=short_name, archive__server_domain="").order_by('id')[:100]
                 schema = Collection()
                 cv = activity_dicts.CollectionValue(
                     id=reverse("kronofoto:activitypub_data:archives:photos:page", kwargs={"short_name": short_name}),
@@ -558,6 +558,6 @@ class ArchiveActor:
 
         @staticmethod
         def data(request: HttpRequest, short_name: str, pk: int) -> HttpResponse:
-            object : Photo = get_object_or_404(Photo.objects.all(), pk=pk, archive__slug=short_name)
+            object : Photo = get_object_or_404(Photo.objects.all(), pk=pk, archive__slug=short_name, archive__server_domain="")
             object_data = Image().dump(activity_dicts.PhotoValue.from_photo(object))
             return JsonLDResponse(object_data)

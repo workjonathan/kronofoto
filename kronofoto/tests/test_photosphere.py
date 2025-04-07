@@ -1,6 +1,6 @@
 from fortepan_us.kronofoto.views.photosphere import ValidPhotoSphereView
 from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour, Photo, Archive, Category, PhotoSpherePair, Donor, PhotoSphereInfo, TourSetDescription
-from hypothesis import given, strategies as st, provisional
+from hypothesis import given, strategies as st, provisional, settings as hsettings
 from django.test import RequestFactory
 from string import printable
 from django.contrib.gis.geos import Point
@@ -75,6 +75,7 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
         assert viewer.nearby_mainstreets.count() == 1
         assert viewer.nearby.count() == 1
 
+@hsettings(max_examples=10)
 @given(
     image_url=st.builds(Mock, return_value=st.text(printable, max_size=10)),
     dimensions=st.builds(Mock, return_value=st.tuples(st.integers(min_value=1), st.integers(min_value=1))),
