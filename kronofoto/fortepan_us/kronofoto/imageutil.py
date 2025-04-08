@@ -31,8 +31,11 @@ class ImageCacher:
             except:
                 return None
         if isinstance(self.path, str):
-            with default_storage.open(self.path) as infile:
-                image = ImageOps.exif_transpose(Image.open(infile))
+            try:
+                with default_storage.open(self.path) as infile:
+                    image = ImageOps.exif_transpose(Image.open(infile))
+            except:
+                return None
         else:
             content = requests.get(self.path[1]).content
             image = ImageOps.exif_transpose(Image.open(BytesIO(content)))
