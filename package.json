@@ -37,7 +37,7 @@
     "@photo-sphere-viewer/plan-plugin": "^5.10.1",
     "@photo-sphere-viewer/virtual-tour-plugin": "^5.10.1",
     "alpinejs": "^3.14.3",
-    "aos": "^2.3.4",
+    "aos": "github:fortepan-us/aos#180f67c",
     "clipboard": "^2.0.11",
     "jquery": "^3.7.1",
     "jquery-ui": "^1.14.0",
