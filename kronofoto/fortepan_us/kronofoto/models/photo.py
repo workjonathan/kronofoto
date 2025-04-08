@@ -425,10 +425,12 @@ class Photo(PhotoBase):
     ) -> str:
         assert height is not None or width is not None
 
-        if self.remote_image is None:
+        if self.original.name != '':
             path = self.original.name
-        else:
+        elif self.remote_image:
             path = (0, self.remote_image)
+        else:
+            return ""
         return ImageSigner(id=self.id, path=path, width=width, height=height).url
 
     def ldid(self) -> str:

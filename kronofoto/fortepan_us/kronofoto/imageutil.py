@@ -26,7 +26,10 @@ class ImageCacher:
         from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
         Image.MAX_IMAGE_PIXELS = 195670000
         if default_storage.exists(self.name):
-            return default_storage.open(self.name).read()
+            try:
+                return default_storage.open(self.name).read()
+            except:
+                return None
         if isinstance(self.path, str):
             with default_storage.open(self.path) as infile:
                 image = ImageOps.exif_transpose(Image.open(infile))
