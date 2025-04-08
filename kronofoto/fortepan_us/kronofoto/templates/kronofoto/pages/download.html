@@ -15,7 +15,7 @@
 
 
             <span class="back-btn">
-                <a href="{{ object.original.url }}" download="{{ object.accession_number }}.jpg" style="position:absolute; right: 10vw;">
+                <a href="{{ object.fullsizeurl }}" download="{{ object.accession_number }}.jpg" style="position:absolute; right: 10vw;">
                     Continue to download
                     <i class="fas fa-long-arrow-alt-right"></i>
                 </a>
@@ -30,10 +30,9 @@
         </p>
     </div>
 
-   <div style='background: url("{{ object.original.url }}");' id="follow-zoom">
+   <div style='background: url("{{ object.fullsizeurl }}");' id="follow-zoom">
 
     </div>
-<!--        <img src="{{ object.original.url }}" id="download-img"/>-->
 
     <script type="text/javascript">
 
