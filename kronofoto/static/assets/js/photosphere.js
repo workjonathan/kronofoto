@@ -151,7 +151,7 @@ export class ImagePlanePlugin extends AbstractPlugin {
         if (this.distance_el) {
             this.distance_el.setAttribute("value", this.distance)
         }
-        //this.viewer.needsUpdate()
+        this.viewer.needsUpdate()
     }
 }
 /*export default class PhotoSphere {
