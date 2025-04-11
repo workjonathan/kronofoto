@@ -114,6 +114,13 @@ dependencies = [
 [tool.hatch.envs.formatting.scripts]
 black = "python -m black {args}"
 
+[tool.hatch.envs.docs]
+dependencies = [
+  "sphinx>=6.2.1",
+]
+[tool.hatch.envs.docs.scripts]
+build = "make -C docs html"
+
 [tool.hatch.envs.types]
 dependencies = [
   "mypy>=1.0.0",
