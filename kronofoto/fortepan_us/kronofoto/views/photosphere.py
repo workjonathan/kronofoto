@@ -332,7 +332,7 @@ class ValidPhotoSphereView:
                     "id": info.id,
                     "yaw": info.yaw+(90-object.heading)/180*3.1416,
                     "pitch": info.pitch,
-                    "image": static("kronofoto/images/info-icon.png"),
+                    "image": static("kronofoto/images/info-icon.svg"),
                     "content": info_template.render(context={"info": info}),
                 } for info in self.infoboxes]
             },
