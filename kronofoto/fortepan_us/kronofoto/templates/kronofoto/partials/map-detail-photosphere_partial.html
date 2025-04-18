@@ -1,0 +1,10 @@
+{% load static %}
+{% load widgets %}
+{% load permissions %}
+{% load krono_urls %}
+<div style="position:relative">
+        <div id="fi-photosphere" style="height: 80vh" class="photosphere__view" data-photosphere-data data-node-href="{% krono_url "kronofoto:map-detail-photosphere.json" %}" data-node-start="{{ photosphere.id }}" data-node-param="id" style="width: 100vw;">
+            <input name="id" type="hidden">
+        </div>
+</div>
+

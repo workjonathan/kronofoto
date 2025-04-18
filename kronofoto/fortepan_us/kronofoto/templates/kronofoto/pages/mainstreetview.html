@@ -40,7 +40,7 @@
         {% endblock photosphere_metadata %}
     </div>
     <form class="photosphere__wrapper" hx-get="{% krono_url "kronofoto:mainstreetview" %}" hx-trigger="node-changed" hx-target="#fi-photosphere-metadata">
-        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}" x-init="$watch('map_open', (value) => $dispatch('kronofoto-photosphere-map', {'map_open': value}))" x-resize="$dispatch('kronofoto-photosphere-size', { width: small_mobile_view ? $width : 300, height: small_mobile_view ? Math.round($width/2) : 200 })"">
+        <div id="fi-photosphere" class="photosphere__view" data-photosphere-data="#photosphere-data" data-node-href="{% krono_url "kronofoto:mainstreetview.json" %}" data-node-start="{{ object.id }}" data-node-param="id" style="width: 100vw;" data-mainstreet-tiles="{{ mainstreet_tiles }}" x-init="$watch('map_open', (value) => $dispatch('kronofoto-photosphere-map', {'map_open': value}))" x-resize="$dispatch('kronofoto-photosphere-size', { width: small_mobile_view ? $width : 300, height: small_mobile_view ? Math.round($width/2) : 200 })">
             <input name="id" type="hidden">
         </div>
     </form>
