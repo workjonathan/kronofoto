@@ -17,11 +17,13 @@
         {% for field in form %}
         {{ field.as_hidden }}
         {% endfor %}
-        <div style="height: 100%;" data-map
-             data-west="{{ bounds.west }}"
-             data-south="{{ bounds.south }}"
-             data-east="{{ bounds.east }}"
-             data-north="{{ bounds.north }}"
+        <div style="height: 100%;" 
+            data-map
+            data-layer="/categories/all/map/tiles/{z}/{x}/{y}.mvt"
+            data-west="{{ bounds.west }}"
+            data-south="{{ bounds.south }}"
+            data-east="{{ bounds.east }}"
+            data-north="{{ bounds.north }}"
         ></div>
         <div class="map-view__search"><input type="text"/></div>
 

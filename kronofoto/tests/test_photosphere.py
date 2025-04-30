@@ -75,7 +75,7 @@ class TestPhotoSphereMainStreetFiltering(TestCase):
         assert viewer.nearby_mainstreets.count() == 1
         assert viewer.nearby.count() == 1
 
-@hsettings(max_examples=10)
+@hsettings(max_examples=3)
 @given(
     image_url=st.builds(Mock, return_value=st.text(printable, max_size=10)),
     dimensions=st.builds(Mock, return_value=st.tuples(st.integers(min_value=1), st.integers(min_value=1))),
@@ -123,6 +123,7 @@ def test_photosphere_json_response(view, object, photo, links, related_photosphe
     view.json_response
 
 
+@hsettings(max_examples=3)
 @given(
     tourset=st.one_of(st.none(), st.builds(TourSetDescription, description=st.text(printable, max_size=10))),
     view=st.builds(

@@ -15,6 +15,7 @@ from fortepan_us.kronofoto.views import tags_view
 from fortepan_us.kronofoto.views import photosphere
 from fortepan_us.kronofoto.views import exhibit
 from fortepan_us.kronofoto.views import map
+from fortepan_us.kronofoto.views import vector_tiles
 from django.conf import settings
 from django.http.response import HttpResponseBase
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple
@@ -85,6 +86,7 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
         path('year', YearRedirect.as_view(), **get_kwargs("year-redirect")),
         *directory('map', views.map_list, **get_kwargs('map'), children=include([
             path('photosphere', photosphere.map_photosphere_data, **get_kwargs('map-detail-photosphere.json')),
+            path("tiles/<int:zoom>/<int:x>/<int:y>.mvt", vector_tiles.photo_tile, **get_kwargs("photo-tile")),
             path('<accession:photo>', views.map_detail, **get_kwargs('map-detail')),
             path('<int:photosphere>', map.detail_photosphere, **get_kwargs('map-detail-photosphere')),
         ])),

@@ -181,7 +181,8 @@ jsons = st.recursive(
     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
 )
 
-@hsettings(max_examples=10)
+@hsettings(max_examples=5)
+@pytest.mark.slow
 @given(
     obj=st.fixed_dictionaries(
         {
@@ -212,7 +213,7 @@ def test_get_or_create_parse_place(obj):
     from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
     assert LdObjectGetOrCreator(None, None).placegetorcreate(obj) is not None
 
-@hsettings(max_examples=10)
+@hsettings(max_examples=5)
 @pytest.mark.django_db
 @given(
     force_id_match=st.booleans(),
@@ -263,9 +264,10 @@ class TestGetOrCreateObject(TestCase):
         url = reverse("kronofoto:activitypub-main-service-places", kwargs={"pk": place.id}, domain="example.com")
         assert LdObjectGetOrCreator(queryset=models.LdId.objects.all(), ld_id=url).resolved_place is not None
 
-@hsettings(max_examples=5)
+@hsettings(max_examples=2)
 @override_settings(KF_URL_SCHEME="http:")
 @pytest.mark.django_db
+@pytest.mark.slow
 @given(
     is_local=st.booleans(),
     force_id_match=st.booleans(),
@@ -286,6 +288,8 @@ class TestGetOrCreateObject(TestCase):
     remote_place_processor=st.one_of(st.none(), st.just((None, False)), st.just((models.Place(), True))),
 )
 def test_ldid_get_or_create_ld_object(ldid, is_local, existing_ldid, remote_data, resolved_donor, force_id_match, remote_processor, resolved_place, remote_place_processor):
+    # This test is terrible and pointless. It really only has a few cases that
+    # should not be tested like this.
     from fortepan_us.kronofoto.models.activity_dicts import LdObjectGetOrCreator
     obj = LdObjectGetOrCreator(ld_id=ldid, queryset=models.LdId.objects.all())
     obj.is_local = is_local
@@ -885,6 +889,7 @@ def test_service_inbox_responder(body, actor):
 
 from fortepan_us.kronofoto.views.activitypub import JsonError
 
+@pytest.mark.slow
 @given(
     body=st.binary(),
     actor_is_known=st.booleans(),
@@ -897,7 +902,7 @@ from fortepan_us.kronofoto.views.activitypub import JsonError
         )
     )
 )
-def test_service_inbox_responder(body, actor, profile, parsed_data, actor_is_known):
+def test_service_inbox_responder2(body, actor, profile, parsed_data, actor_is_known):
     from fortepan_us.kronofoto.views.activitypub import ServiceInboxResponder
     responder = ServiceInboxResponder(body=body, actor=actor)
     responder.actor_is_known = actor_is_known

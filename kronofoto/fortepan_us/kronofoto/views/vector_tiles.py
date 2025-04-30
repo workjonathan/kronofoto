@@ -3,8 +3,9 @@ import mapbox_vector_tile  # type: ignore
 from functools import cached_property
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple, TypedDict, Iterable
 from django.http import HttpResponse, HttpRequest, JsonResponse
-from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.geos import Point, Polygon, MultiPolygon
 from fortepan_us.kronofoto import models
+from django.contrib.gis.db.models.functions import Transform
 import mercantile # type: ignore
 from dataclasses import dataclass
 import icontract
@@ -26,14 +27,11 @@ class Bounds:
     north: float
     south: float
 
-@icontract.invariant(lambda self: 0 <= self.zoom < 35)
 @dataclass
-class PhotoSphereTile:
+class TileLayerBase:
     x: int
     y: int
     zoom: int
-    mainstreet: int
-    tour: Optional[int]
 
     @cached_property
     def bounds(self) -> Bounds:
@@ -42,7 +40,89 @@ class PhotoSphereTile:
     @property
     def bbox(self) -> Polygon:
         bounds = self.bounds
-        return Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
+        poly = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
+        poly.srid = 4326
+        return poly
+
+    @property
+    def layers(self) -> list[Layer]:
+        bounds = self.bounds
+        bbox = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
+        x_span = bounds.east - bounds.west
+        y_span = bounds.north - bounds.south
+        x0 = bounds.west
+        y0 = bounds.south
+        return self.get_layers(x_span=x_span, y_span=y_span, x0=x0, y0=y0)
+
+    def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
+        raise NotImplementedError
+
+
+    @property
+    def response(self) -> HttpResponse:
+        return HttpResponse(
+            mapbox_vector_tile.encode(self.layers),
+            headers={
+                "Content-Type": "application/vnd.mapbox-vector-tile",
+            },
+        )
+
+@dataclass
+class PlaceMapTile(TileLayerBase):
+    @cached_property
+    def places(self) -> Iterable[models.Place]:
+
+        return models.Place.objects.filter(
+            geom__isnull=False,
+            geom__intersects=self.bbox,
+            place_type__name="US State",
+        ).annotate(geom2=Transform("geom", 4236))
+
+    def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
+        #place = self.places[0]
+        bbox = self.bbox
+        features_ = []
+        for p in self.places:
+            print(p)
+            polys = []
+            for poly in p.geom2.coords:
+                rings = [
+                    [
+                        (
+                            round((c_x - x0) * 4096 / x_span),
+                            round((c_y - y0) * 4096 / y_span),
+                        ) for (c_x, c_y) in ring
+                    ]
+                    for ring in poly
+                ]
+                cleaned = Polygon(*rings).buffer(0)
+                if cleaned.geom_type == "MultiPolygon":
+                    for shp in cleaned:
+                        polys.append(shp)
+                else:
+                    assert cleaned.geom_type == 'Polygon', p
+                    polys.append(cleaned)
+            mp = MultiPolygon(polys).buffer(0)
+            features_.append(
+                {
+                    "geometry": mp.wkt,
+                    "properties": {"id": p.id},
+                }
+            )
+
+        return [
+            {
+                "name": "mainstreets",
+                "features": features_,
+            },
+        ]
+
+@icontract.invariant(lambda self: 0 <= self.zoom < 35)
+@dataclass
+class PhotoSphereTile(TileLayerBase):
+    mainstreet: int
+    tour: Optional[int]
+
 
     @property
     def photospheres(self) -> Iterable[models.PhotoSphere]:
@@ -57,14 +137,7 @@ class PhotoSphereTile:
             **kwargs
         )
 
-    @property
-    def layers(self) -> list[Layer]:
-        bounds = self.bounds
-        bbox = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
-        x_span = bounds.east - bounds.west
-        y_span = bounds.north - bounds.south
-        x0 = bounds.west
-        y0 = bounds.south
+    def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
         features : List[PhotoSphereFeature] = [
             {
                 "geometry": Point(
@@ -82,15 +155,17 @@ class PhotoSphereTile:
             },
         ]
 
-    @property
-    def response(self) -> HttpResponse:
-        return HttpResponse(
-            mapbox_vector_tile.encode(self.layers),
-            headers={
-                "Content-Type": "application/vnd.mapbox-vector-tile",
-            },
-        )
 
+
+
+def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
+    if zoom < 0 or zoom >= 35:
+        return HttpResponse("invalid zoom level", status=400)
+    return PlaceMapTile(
+        zoom=zoom,
+        x=x,
+        y=y,
+    ).response
 
 
 def photosphere_vector_tile(request: HttpRequest, /, *, tour: Optional[int]=None, mainstreet: int, zoom: int, x: int, y: int) -> HttpResponse:

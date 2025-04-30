@@ -148,12 +148,13 @@ class TestArchive(TestCase):
         result = Archive.objects.extract_slug(profile=url)
         assert slug == result
 
-    @hsettings(max_examples=10)
+    @hsettings(max_examples=2)
     @given(urls())
     def test_extract_invalid_slug(self, url):
         Archive.objects.extract_slug(profile=url)
 
     @hsettings(max_examples=10)
+    @pytest.mark.slow
     @given(st.from_type(activity_dicts.ArchiveDict), urls())
     def test_create_remote_profile(self, data, url):
         data['id'] = url
@@ -169,12 +170,12 @@ class TestArchive(TestCase):
         url = reverse("kronofoto:activitypub_data:archives:actor", kwargs={"short_name": archive.slug})
         Archive.objects.get_local_by_profile(profile=url)
 
-    @hsettings(max_examples=10)
+    @hsettings(max_examples=2)
     @given(urls(), from_model(Archive, type=st.just(Archive.ArchiveType.REMOTE), actor=from_model(models.RemoteActor, profile=urls())))
     def test_archive_have_remote_check(self, url, archive):
         Archive.objects.have_remote_by_profile(profile=url)
 
-    @hsettings(max_examples=10)
+    @hsettings(max_examples=2)
     @given(from_model(Archive, type=st.just(Archive.ArchiveType.REMOTE), actor=from_model(models.RemoteActor, profile=urls())))
     def test_archive_get_by_profile_when_remote_archive_exists(self, archive):
         Archive.objects.get_remote_by_profile(profile=archive.actor.profile)

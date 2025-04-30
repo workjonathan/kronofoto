@@ -1,6 +1,6 @@
 from __future__ import annotations
 from django.test import TestCase
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, settings as hsettings
 from fortepan_us.kronofoto.views.vector_tiles import PhotoSphereTile
 from django.contrib.gis.geos import Point, Polygon
 from fortepan_us.kronofoto.models import PhotoSphere, MainStreetSet, PhotoSphereTour
@@ -59,6 +59,7 @@ class TestTile(PhotoSphereTile):
         bbox = self.bbox
         return [sphere for sphere in self._photospheres if sphere.location.within(bbox)]
 
+@hsettings(max_examples=10)
 @given(
     pst=st.builds(
         TestTile,

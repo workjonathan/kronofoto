@@ -774,6 +774,18 @@ class MapPlugin {
                     maxZoom: 20,
                 },
             ).addTo(map)
+            const photoTiles = vectorTileLayer(
+                mapelem.getAttribute("data-layer"),
+                {
+                    attribution: "&copy; fortepan.us",
+                    maxZoom: 20,
+                    style: {
+                        stroke: true,
+                        color: "#3388ff",
+                    },
+                    interactive: true,
+                }
+            ).addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()

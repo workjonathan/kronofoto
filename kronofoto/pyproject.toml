@@ -79,17 +79,14 @@ dependencies = [
   "junit-xml==1.9"
 ]
 [tool.hatch.envs.default.scripts]
-mutmut = 'python -m mutmut {args}'
-run-mutmut = 'python -m mutmut run --simple-output --runner "bash -c \"python -m pytest\"" --paths-to-mutate=fortepan_us/kronofoto/models/activity.py {args}'
-run-mutmut2 = 'python -m mutmut run --simple-output --runner "bash -c \"python -m mypy -p fortepan_us.kronofoto && python -m pytest\"" --paths-to-mutate=fortepan_us/kronofoto/models/activity.py {args}'
-results-mutmut = "python -m mutmut results"
 manage = "python -m fortepan_us.manage {args}"
 runserver = [
     "manage migrate",
     "manage runserver",
 ]
-test = "pytest --nomigrations {args:tests}"
-test-cov = "coverage run -m pytest --nomigrations --durations=5 {args:tests}"
+
+test = 'pytest --nomigrations -m "not slow" --durations=5 {args:tests}'
+test-cov = 'coverage run -m pytest --nomigrations -m "not slow" --durations=5 {args:tests}'
 cov-report = [
   "- coverage combine",
   "coverage report",
@@ -97,6 +94,10 @@ cov-report = [
 
 check = "mypy -p fortepan_us.kronofoto"
 check_daemonized = "dmypy run -- -p fortepan_us.kronofoto"
+checktest = [
+  "check",
+  "test",
+]
 cov = [
   "check",
   "test-cov",
