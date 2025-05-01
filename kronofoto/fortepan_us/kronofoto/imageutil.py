@@ -20,7 +20,7 @@ class ImageCacher:
 
     @property
     def name(self) -> str:
-        return "images/{}/{}/{}/.jpg".format(self.block1, self.block2, self.sig)
+        return "images/{}/{}/{}.jpg".format(self.block1, self.block2, self.sig)
 
     def precache(self) -> Optional[bytes]:
         from fortepan_us.kronofoto.models.photo import Photo, FixedResizer, FixedHeightResizer, ResizerBase, FixedWidthResizer
