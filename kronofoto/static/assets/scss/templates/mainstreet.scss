@@ -93,11 +93,17 @@
     }
     &-content {
       color: #333;
-      font-size: 14px;
-      line-height: 22px;
       padding: 10px 32px;
       @include hover-scrollbar;
       max-height: 30vh;
+      p {
+        font-size: 14px;
+        line-height: 22px;
+      }
+      h1 {
+        font-size: 18px;
+        line-height: 22px;
+      }
     }
     &-close-button, &-close-button:hover {
       width: 11px !important;
@@ -645,7 +651,11 @@
       }
     }
   }
-  .psv-button {
+  .psv-menu-button {
+    display: none !important;
+  }
+  .psv-button:not(.psv-menu-buton) {
+    display: block !important;
     background-position: center;
     background-repeat: no-repeat;
   }
