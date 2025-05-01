@@ -134,14 +134,14 @@ class PhotoSphereTile(TileLayerBase):
             location__intersects=self.bbox,
             mainstreetset__id=self.mainstreet,
             **kwargs
-        )
+        ).annotate(geom=Transform("location", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
         features : List[PhotoSphereFeature] = [
             {
                 "geometry": Point(
-                    int((obj.location.x - x0) * 4096 / x_span),
-                    int((obj.location.y - y0) * 4096 / y_span),
+                    int((obj.geom.x - x0) * 4096 / x_span),
+                    int((obj.geom.y - y0) * 4096 / y_span),
                 ).wkt,
                 "properties": {"id": obj.id},
             }
