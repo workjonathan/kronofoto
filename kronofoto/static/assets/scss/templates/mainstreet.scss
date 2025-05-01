@@ -49,32 +49,80 @@
     }
   }
 
+  .psv-button {
+    //display: block !important;
+  }
+  .photo-timeline-link-navbar-button {
+    position: static;
+    min-width: 0px;
+    fortepan-timeline-link {
+      height: 100%;
+      position: absolute;
+      left: -10px;
+      width: 110px;
+      transform: translateX(-100%);
+      background: var(--fp-main-blue);
+      text-align: center;
+      padding: 0px 10px;
+      line-height: 40px;
+      border-radius: 3px;
+      a {
+        font-size: 0px;
+        &:first-child:before {
+          content: 'Historical photo';
+          font-weight: bold;
+          color: #fff;
+          font-size: 13px;
+        }
+      }
+    }
+  }
   .psv-virtual-tour-arrow svg {
     transform: scale(0.7);
   }
   .psv-panel {
     background-color: #fff;
-    min-width: 620px;
+    width: 300px;
     height: auto;
     right: 50%;
-    top: 12px;
-    transform: translateX(50%);
+    top: 50%;
+    padding: 48px 25px 25px 25px;
+    transform: translateX(50%) translateY(-50%);
     &-resizer {
       display: none;
     }
     &-content {
       color: #333;
-      font-size: 14px;
-      line-height: 22px;
       padding: 10px 32px;
+      @include hover-scrollbar;
+      max-height: 30vh;
+      p {
+        font-size: 14px;
+        line-height: 22px;
+      }
+      h1 {
+        font-size: 18px;
+        line-height: 22px;
+      }
     }
-    &-close-button {
-      display: none;
+    &-close-button, &-close-button:hover {
+      width: 11px !important;
+      height: 11px !important;
+      right: 15px;
+      top: 15px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12.021' height='12.021' viewBox='0 0 12.021 12.021'%3E%3Cg id='X' transform='translate(-466.793 -97.455)'%3E%3Cline id='Line_22' data-name='Line 22' x2='15' transform='translate(467.5 98.162) rotate(45)' fill='none' stroke='%23333' stroke-width='2'/%3E%3Cline id='Line_24' data-name='Line 24' x2='15' transform='translate(478.106 98.162) rotate(135)' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E%0A");
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-color: transparent;
+      svg {
+        display: none;
+      }
     }
   }
 
   .psv-marker {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17.5' height='17.5' viewBox='0 0 17.5 17.5'%3E%3Cg id='info-icon-2' transform='translate(1.25 1.25)'%3E%3Ccircle id='Ellipse_4' data-name='Ellipse 4' cx='7.5' cy='7.5' r='7.5' fill='rgba(110,133,184,0.5)' stroke='%23fff' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+    width: 20px !important;
+    height: 20px !important;
     &:after {
       content: '';
       position: absolute;
@@ -349,17 +397,6 @@
       left: 5px;
       border-radius: 3px;
       z-index: 11;
-      @include breakpoint(medium down) {
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: calc(100% - 68px);
-        border-radius: 0px;
-        h3 {
-          text-align: center;
-        }
-      }
-
 
       width: 488px;
       &.expanded {
@@ -371,6 +408,9 @@
           height: calc(100% - 68px);
           width: 100%;
           border-radius: 0px;
+          h3 {
+            text-align: center;
+          }
         }
         .wrapper {
 
@@ -456,7 +496,7 @@
         display: flex;
         align-items: center;
         width: auto !important;
-        margin-left: 45px;
+        margin-left: 10px;
         z-index: 10;
         position: relative;
         &.expanded {
@@ -485,11 +525,13 @@
           }
         }
         height: auto;
-        &-current, label {
+        label {
           &:hover, &.active {
             background: var(--fp-main-blue);
             color: #fff;
           }
+        }
+        &-current, label {
           font-size: 18px;
           font-weight: bold;
           color: #6A6A6A;
@@ -519,12 +561,16 @@
         background-size: contain;
       }
       > div {
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
         border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-right: 25px;
+        &:last-child {
+          margin-right: 0px;
+        }
         &.open {
           background-color: var(--fp-main-blue);
           svg * {
@@ -569,8 +615,22 @@
   max-width: 44% !important;
 }
 
+.psv-plan__button {
+  @include breakpoint(medium down) {
+    display: none;
+  }
+}
+
+.psv-plan--collapsed {
+  @include breakpoint(medium down) {
+    width: 0px !important;
+    height: 0px !important;
+  }
+}
+
 .psv-navbar {
   width: max-content;
+  //width: 700px;
   padding: 0px 10px;
   height: 40px;
   border-radius: 3px;
@@ -578,10 +638,24 @@
   left: 50%;
   transform: translateX(-50%);
   bottom: 10px;
+  .navbar-open & {
+    display: flex;
+  }
   @include breakpoint(medium down) {
     display: none;
+    left: calc(50% + 65px);
+    .psv-button {
+      display: none;
+      &.photo-opacity-input-navbar-button, &.photo-timeline-link-navbar-button {
+        display: inline-block;
+      }
+    }
   }
-  .psv-button {
+  .psv-menu-button {
+    display: none !important;
+  }
+  .psv-button:not(.psv-menu-buton) {
+    display: block !important;
     background-position: center;
     background-repeat: no-repeat;
   }
