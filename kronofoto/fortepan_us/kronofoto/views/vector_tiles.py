@@ -9,6 +9,7 @@ from django.contrib.gis.db.models.functions import Transform
 import mercantile # type: ignore
 from dataclasses import dataclass
 import icontract
+from django.views.decorators.cache import cache_page
 
 class PhotoSphereProperties(TypedDict):
     id: int
@@ -48,10 +49,11 @@ class TileLayerBase:
     def layers(self) -> list[Layer]:
         bounds = self.bounds
         bbox = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
-        x_span = bounds.east - bounds.west
-        y_span = bounds.north - bounds.south
-        x0 = bounds.west
-        y0 = bounds.south
+        bbox.srid = 4326
+        bbox.transform(3857)
+        (x0, y0, x_max, y_max) = bbox.extent
+        x_span = x_max - x0
+        y_span = y_max - y0
         return self.get_layers(x_span=x_span, y_span=y_span, x0=x0, y0=y0)
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
@@ -76,12 +78,9 @@ class PlaceMapTile(TileLayerBase):
             geom__isnull=False,
             geom__intersects=self.bbox,
             place_type__name="US State",
-        ).annotate(geom2=Transform("geom", 4326))
+        ).annotate(geom2=Transform("geom", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
-        #place = self.places[0]
-        bbox = self.bbox
-        print(bbox)
         features_ = []
         for p in self.places:
             polys = []
@@ -158,6 +157,7 @@ class PhotoSphereTile(TileLayerBase):
 
 
 
+@cache_page(60*10)
 def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
     if zoom < 0 or zoom >= 35:
         return HttpResponse("invalid zoom level", status=400)
