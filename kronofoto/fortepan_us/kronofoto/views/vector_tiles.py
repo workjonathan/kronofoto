@@ -76,14 +76,14 @@ class PlaceMapTile(TileLayerBase):
             geom__isnull=False,
             geom__intersects=self.bbox,
             place_type__name="US State",
-        ).annotate(geom2=Transform("geom", 4236))
+        ).annotate(geom2=Transform("geom", 4326))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
         #place = self.places[0]
         bbox = self.bbox
+        print(bbox)
         features_ = []
         for p in self.places:
-            print(p)
             polys = []
             for poly in p.geom2.coords:
                 rings = [
@@ -95,7 +95,7 @@ class PlaceMapTile(TileLayerBase):
                     ]
                     for ring in poly
                 ]
-                cleaned = Polygon(*rings).buffer(0)
+                cleaned = Polygon(*rings, srid=4326).buffer(0)
                 if cleaned.geom_type == "MultiPolygon":
                     for shp in cleaned:
                         polys.append(shp)
