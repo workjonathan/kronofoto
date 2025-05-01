@@ -88,7 +88,7 @@
     </nav>
     <ul class="photosphere__mainstreet-sets button-list button-list--horizontal" id="related-mainstreets">
         {% for mainstreet in mainstreet_links %}
-        <li><a class="year-button{% if object.mainstreetset.name|stringformat:"s"  == mainstreet.set.name|stringformat:"s"  %} active{% endif %}" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+        <li><a class="year-button{% if object.mainstreetset.id == mainstreet.set.id %} active{% endif %}" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}
     </ul>
     <nav class="photosphere__mobile-nav">
@@ -140,13 +140,13 @@
                 </g>
             </svg>
         </div>
-        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false, selectedItem: '{{ object.mainstreetset }}' }" @click="dropdownExpanded = !dropdownExpanded" @click.away="dropdownExpanded = false" :class="dropdownExpanded ? 'expanded' : ''">
-            <div class="wrapper" x-show="dropdownExpanded">
+        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = true" @click.away="dropdownExpanded = false" :class="{ expanded: dropdownExpanded }">
+            <div class="wrapper" x-cloak x-show="dropdownExpanded">
                 {% for mainstreet in mainstreet_links %}
-                <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
+                <label @click="dropdownExpanded = false" {% if object.mainstreetset.id == mainstreet.set.id %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
                 {% endfor %}
             </div>
-            <div class="photosphere__mobile-nav-sets-current" x-text="selectedItem">{{ object.mainstreetset }}</div>
+            <div class="photosphere__mobile-nav-sets-current">{{ object.mainstreetset }}</div>
         </div>
     </nav>
 

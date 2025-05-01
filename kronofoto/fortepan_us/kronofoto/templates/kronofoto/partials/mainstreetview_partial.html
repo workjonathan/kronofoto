@@ -38,8 +38,8 @@
 <ul hx-swap-oob="innerHTML:#mobile-related-mainstreets">
     <div class="wrapper" x-show="dropdownExpanded">
         {% for mainstreet in mainstreet_links %}
-        <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
+        <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
         {% endfor %}
     </div>
-    <div class="photosphere__mobile-nav-sets-current noselect">{{ object.mainstreetset }}</div>
+    <div class="photosphere__mobile-nav-sets-current">{{ object.mainstreetset }}</div>
 </ul>
