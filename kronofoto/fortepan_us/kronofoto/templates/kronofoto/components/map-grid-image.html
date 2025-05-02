@@ -1,0 +1,13 @@
+{% extends "kronofoto/components/grid-image.html" %}
+{% load krono_urls %}
+
+{% block image_attrs %}
+    href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" 
+    hx-target="#fi-map-figure" 
+    hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
+{% endblock %}
+{% block photosphere_attrs %}
+    href="{% krono_url "kronofoto:map-detail-photosphere" photosphere=photo.photosphere_set.all.0.id %}"
+    hx-get="{% krono_url "kronofoto:map-detail-photosphere" photosphere=photo.photosphere_set.all.0.id %}"
+    hx-target="#fi-map-figure" 
+{% endblock %}

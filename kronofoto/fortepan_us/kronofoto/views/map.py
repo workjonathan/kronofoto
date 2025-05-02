@@ -10,7 +10,9 @@ from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair
 from django.db.models import QuerySet, Q, Exists, Subquery, OuterRef
 from dataclasses import dataclass
 
+@dataclass
 class MapRequest(ArchiveRequest):
+    detail_template: str = "kronofoto/partials/map-detail_partial.html"
     @cached_property
     def form(self) -> BoundsSearchForm:
         return BoundsSearchForm(self.request.GET)
@@ -20,7 +22,7 @@ class MapRequest(ArchiveRequest):
         if self.hx_target == "fi-map-result":
             return "kronofoto/partials/map_partial.html"
         elif self.hx_target == "fi-map-figure":
-            return "kronofoto/partials/map-detail_partial.html"
+            return self.detail_template
         else:
             return super().base_template
 
@@ -56,7 +58,7 @@ def detail_photosphere(request: HttpRequest, *, photosphere: int, short_name: Op
     archive_ref = None
     if short_name:
         archive_ref = ArchiveReference(short_name, domain)
-    areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
+    areq = MapRequest(request=request, archive_ref=archive_ref, category=category, detail_template="kronofoto/partials/map-detail-photosphere_partial.html")
     context = areq.common_context
     qs = areq.get_photo_queryset()
     context['form'] = areq.form
@@ -73,7 +75,6 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
     context = areq.common_context
     qs = areq.get_photo_queryset()
-
     context['form'] = areq.form
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
