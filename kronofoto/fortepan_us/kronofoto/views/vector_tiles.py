@@ -1,7 +1,7 @@
 from __future__ import annotations
 import mapbox_vector_tile  # type: ignore
 from functools import cached_property
-from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple, TypedDict, Iterable
+from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple, TypedDict, Iterable, TypeVar, Generic
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.contrib.gis.geos import Point, Polygon, MultiPolygon
 from fortepan_us.kronofoto import models
@@ -11,16 +11,18 @@ from dataclasses import dataclass
 import icontract
 from django.views.decorators.cache import cache_page
 
-class PhotoSphereProperties(TypedDict):
+T = TypeVar("T")
+
+class FeatureProperties(TypedDict):
     id: int
 
-class PhotoSphereFeature(TypedDict):
-    properties: PhotoSphereProperties
+class Feature(TypedDict):
+    properties: FeatureProperties
     geometry: str
 
 class Layer(TypedDict):
     name: str
-    features: list[PhotoSphereFeature]
+    features: list[Feature]
 
 class Bounds:
     east: float
@@ -81,7 +83,7 @@ class PlaceMapTile(TileLayerBase):
         ).annotate(geom2=Transform("geom", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
-        features_ = []
+        features_ : list[Feature] = []
         for p in self.places:
             polys = []
             for poly in p.geom2.coords:
@@ -95,7 +97,7 @@ class PlaceMapTile(TileLayerBase):
                     for ring in poly
                 ]
                 cleaned = Polygon(*rings, srid=4326).buffer(0)
-                if cleaned.geom_type == "MultiPolygon":
+                if cleaned.geom_type == "MultiPolygon" and isinstance(cleaned, MultiPolygon):
                     for shp in cleaned:
                         polys.append(shp)
                 else:
@@ -137,7 +139,7 @@ class PhotoSphereTile(TileLayerBase):
         ).annotate(geom=Transform("location", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
-        features : List[PhotoSphereFeature] = [
+        features : List[Feature] = [
             {
                 "geometry": Point(
                     int((obj.geom.x - x0) * 4096 / x_span),
@@ -145,7 +147,7 @@ class PhotoSphereTile(TileLayerBase):
                 ).wkt,
                 "properties": {"id": obj.id},
             }
-            for obj in self.photospheres if obj.location
+            for obj in self.photospheres if obj.location and hasattr(obj, 'geom')
         ]
         return [
             {

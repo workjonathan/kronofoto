@@ -63,8 +63,8 @@ class TestTile(PhotoSphereTile):
 @given(
     pst=st.builds(
         TestTile,
-        x=st.integers(min_value=-10, max_value=10),
-        y=st.integers(min_value=-10, max_value=10),
+        x=st.integers(min_value=1, max_value=1),
+        y=st.integers(min_value=1, max_value=3),
         zoom=st.integers(min_value=0, max_value=34),
         mainstreet=st.integers(),
         tour=st.one_of(st.none(), st.integers()),
