@@ -55,7 +55,6 @@
                 {% if mainstreet_description %}<div>{{ mainstreet_description | linebreaksbr }}</div>{% endif %}
                 </div>
             </div>
-
         </div>
     </template>
     <div class="photosphere__info-box hide" x-show="open">
@@ -89,57 +88,65 @@
     </nav>
     <ul class="photosphere__mainstreet-sets button-list button-list--horizontal" id="related-mainstreets">
         {% for mainstreet in mainstreet_links %}
-        <li><a class="year-button active" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+        <li><a class="year-button{% if object.mainstreetset.id == mainstreet.set.id %} active{% endif %}" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}
     </ul>
     <nav class="photosphere__mobile-nav">
-
-        <div x-bind:class="{ 'open': set_description_open }" @click="set_description_open = ! set_description_open">
-            <svg xmlns="http://www.w3.org/2000/svg" width="27.5" height="27.5" viewBox="0 0 27.5 27.5">
-                <g id="info-white" transform="translate(1.25 1.25)">
-                    <circle id="Ellipse_4" data-name="Ellipse 4" cx="12.5" cy="12.5" r="12.5" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2.5"/>
-                    <g id="Group_10" data-name="Group 10" transform="translate(9.001 6.25)">
-                        <path id="Path_21" data-name="Path 21" d="M21.95,24.53h4.4v6.18" transform="translate(-21.95 -18.305)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2.5"/>
-                        <path id="Path_62" data-name="Path 62" d="M0,0H7" transform="translate(0 12.5)" fill="none" stroke="#6a6a6a" stroke-width="2.5"/>
-                        <circle id="Ellipse_5" data-name="Ellipse 5" cx="1.038" cy="1.038" r="1.038" transform="translate(2.2)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2.5"/>
+        <div x-bind:class="{ 'open': current_item == 'navbar' }" @click="current_item = 'navbar'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="21.262" height="22.813" viewBox="0 0 21.262 22.813">
+                <g id="icon" transform="translate(-9.072 -8.128)">
+                    <path id="Path_92" data-name="Path 92" d="M122.749,69.531a9.632,9.632,0,1,0-4.239-7.982" transform="translate(-108.436 -42.791)" fill="none" stroke="#6a6a6a" stroke-width="2"/>
+                    <path id="Path_93" data-name="Path 93" d="M122.75,69.531a9.631,9.631,0,1,0-4.241-7.982" transform="translate(-108.437 -42.791)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <g id="Path_94" data-name="Path 94" transform="translate(-108.076 -36.702)" fill="none">
+                        <path d="M121.244,67.643l-3.833-7.888,8.748.623Z" stroke="none"/>
+                        <path d="M 121.2436065673828 67.64289093017578 L 117.410400390625 59.75510787963867 L 126.1586456298828 60.37809753417969 L 121.2436065673828 67.64289093017578 Z" stroke="none" fill="#6a6a6a"/>
                     </g>
                 </g>
             </svg>
         </div>
-        <div x-bind:class="{ 'open': map_open }" @click="map_open = ! map_open">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24.5" height="30.442" viewBox="0 0 24.5 30.442">
-                <g id="map-icon" transform="translate(1.25 1.25)">
-                    <path id="Path_91" data-name="Path 91" d="M133.614,56.222a11,11,0,0,0-11-11c-6.076,0-11,4.164-11,11s11,16.5,11,16.5,11-10.424,11-16.5" transform="translate(-111.614 -45.222)" fill="none" stroke="#707070" stroke-width="2.5"/>
-                    <path id="Path_92" data-name="Path 92" d="M120.3,59.335a4.056,4.056,0,1,0-1.785-3.361" transform="translate(-111.565 -45.44)" fill="none" stroke="#707070" stroke-width="2.5"/>
-                    <path id="Path_93" data-name="Path 93" d="M120.295,59.335a4.055,4.055,0,1,0-1.786-3.361" transform="translate(-111.565 -45.44)" fill="none" stroke="#707070" stroke-miterlimit="10" stroke-width="2.5"/>
-                    <path id="Path_94" data-name="Path 94" d="M119.3,63.649l-1.892-3.894,4.318.308Z" transform="translate(-112.025 -46.493)" fill="none" stroke="#707070" stroke-width="2.5"/>
-                    <path id="Path_110" data-name="Path 110" d="M9.624,18.979" transform="translate(-1.155 -2.277)" fill="none" stroke="#707070" stroke-width="2.5"/>
+        <div x-bind:class="{ 'open': current_item == 'set_description' }" @click="current_item = 'set_description'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26.27" height="28.272" viewBox="0 0 26.27 28.272">
+                <g id="info-icon" transform="translate(1 0.971)">
+                    <path id="Path_112" data-name="Path 112" d="M18.987,12.056c.011-.395,0-4.384,0-4.384l-6.4-6.422H2.854a1.6,1.6,0,0,0-1.6,1.6V25.13a1.6,1.6,0,0,0,1.6,1.6l9.034-.022" transform="translate(-1.25 -1.221)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <path id="Path_113" data-name="Path 113" d="M15.48,1.21V6.956A1.82,1.82,0,0,0,17.3,8.775h5.76" transform="translate(-5.283 -1.21)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <circle id="Ellipse_27" data-name="Ellipse 27" cx="6.765" cy="6.765" r="6.765" transform="translate(10.74 12.77)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <path id="Path_114" data-name="Path 114" d="M23.134,26.894H25.24v3.6" transform="translate(-7.453 -7.64)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <line id="Line_60" data-name="Line 60" x2="4.16" transform="translate(15.682 22.851)" fill="none" stroke="#6a6a6a" stroke-miterlimit="10" stroke-width="2"/>
+                    <path id="Path_115" data-name="Path 115" d="M27.687,23.322A1.075,1.075,0,1,0,26.611,24.4,1.077,1.077,0,0,0,27.687,23.322Z" transform="translate(-8.803 -6.993)" fill="#6a6a6a"/>
                 </g>
             </svg>
         </div>
-        <div x-bind:class="{ 'open': images_open }" @click="images_open = ! images_open">
-            <svg id="Group_195" data-name="Group 195" xmlns="http://www.w3.org/2000/svg" width="35.175" height="25" viewBox="0 0 35.175 25">
-                <g id="Rectangle_207" data-name="Rectangle 207" fill="none" stroke="#707070" stroke-width="2.5">
-                    <rect width="9.771" height="25" stroke="none"/>
-                    <rect x="1.25" y="1.25" width="7.271" height="22.5" fill="none"/>
-                </g>
-                <g id="Rectangle_208" data-name="Rectangle 208" transform="translate(12.702)" fill="none" stroke="#707070" stroke-width="2.5">
-                    <rect width="9.771" height="25" stroke="none"/>
-                    <rect x="1.25" y="1.25" width="7.271" height="22.5" fill="none"/>
-                </g>
-                <g id="Rectangle_209" data-name="Rectangle 209" transform="translate(24.427)" fill="none" stroke="#707070" stroke-width="2.5">
-                    <rect width="10.748" height="25" stroke="none"/>
-                    <rect x="1.25" y="1.25" width="8.248" height="22.5" fill="none"/>
+        <div x-bind:class="{ 'open': current_item == 'map' }" @click="current_item = 'map'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24.4" height="30.354" viewBox="0 0 24.4 30.354">
+                <g id="icon" transform="translate(1 1)">
+                    <path id="Path_62" data-name="Path 62" d="M22.4,11.2A11.2,11.2,0,0,0,11.2,0C5.014,0,0,4.239,0,11.2S11.2,28,11.2,28,22.4,17.386,22.4,11.2" transform="translate(0 0)" fill="none" stroke="#707070" stroke-width="2"/>
+                    <path id="Path_63" data-name="Path 63" d="M18.985,14.075a4.756,4.756,0,1,0-4.757,4.757,4.757,4.757,0,0,0,4.757-4.757" transform="translate(-3.028 -2.888)" fill="none" stroke="#707070" stroke-width="2"/>
                 </g>
             </svg>
         </div>
-        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = true" @click.away="dropdownExpanded = false" :class="dropdownExpanded ? 'expanded' : ''">
-            <div class="wrapper" x-show="dropdownExpanded">
+        <div x-bind:class="{ 'open': current_item == 'images' }" @click="current_item = 'images'">
+            <svg id="icon" xmlns="http://www.w3.org/2000/svg" width="32.052" height="13.753" viewBox="0 0 32.052 13.753">
+                <g id="Rectangle_207" data-name="Rectangle 207" fill="none" stroke="#6a6a6a" stroke-width="2">
+                    <rect width="8.903" height="13.753" stroke="none"/>
+                    <rect x="1" y="1" width="6.903" height="11.753" fill="none"/>
+                </g>
+                <g id="Rectangle_208" data-name="Rectangle 208" transform="translate(11.574)" fill="none" stroke="#6a6a6a" stroke-width="2">
+                    <rect width="8.903" height="13.753" stroke="none"/>
+                    <rect x="1" y="1" width="6.903" height="11.753" fill="none"/>
+                </g>
+                <g id="Rectangle_209" data-name="Rectangle 209" transform="translate(22.258)" fill="none" stroke="#6a6a6a" stroke-width="2">
+                    <rect width="9.794" height="13.753" stroke="none"/>
+                    <rect x="1" y="1" width="7.794" height="11.753" fill="none"/>
+                </g>
+            </svg>
+        </div>
+        <div class="photosphere__mobile-nav-sets" id="mobile-related-mainstreets" x-data="{ dropdownExpanded: false }" @click="dropdownExpanded = true" @click.away="dropdownExpanded = false" :class="{ expanded: dropdownExpanded }">
+            <div class="wrapper" x-cloak x-show="dropdownExpanded">
                 {% for mainstreet in mainstreet_links %}
-                <label @click="dropdownExpanded = false" {% if object.mainstreetset == mainstreet.set.name %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
+                <label @click="dropdownExpanded = false" {% if object.mainstreetset.id == mainstreet.set.id %}class="active"{% endif %}@click="dropdownExpanded= !dropdownExpanded"><a href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></label>
                 {% endfor %}
             </div>
-            <div class="photosphere__mobile-nav-sets-current noselect">{{ object.mainstreetset }}</div>
+            <div class="photosphere__mobile-nav-sets-current">{{ object.mainstreetset }}</div>
         </div>
     </nav>
 
