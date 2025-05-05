@@ -6,10 +6,8 @@
 
 <main class="map-view row expanded">
     <section class="map-view__left columns small-12 medium-6" id="fi-map-result" style="height:100%">
-        <figure id="fi-map-figure">
-            {% block map_figure %}
-            {% endblock %}
-        </figure>
+        {% block map_figure %}
+        {% endblock %}
         {% include "kronofoto/partials/map_partial.html" %}
     </section>
     <section class="map-view__right columns small-12 medium-6" style="height: 100%;">
