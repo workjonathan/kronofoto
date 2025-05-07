@@ -26,6 +26,7 @@ def kronofoto_context(request: HttpRequest) -> Dict[str, Any]:
         context['hxheaders'] = json.dumps(hxheaders)
         context['KF_DJANGOCMS_NAVIGATION'] = settings.KF_DJANGOCMS_NAVIGATION
         context['KF_DJANGOCMS_ROOT'] = settings.KF_DJANGOCMS_ROOT
+    context['mapview_enabled'] = getattr(settings, "KF_MAPVIEW_ENABLED", False)
     context['theme'] = Theme.select_random_theme(short_name)
     context['CSS_VERSION'] = settings.CSS_VERSION
     context['route_name'] = resolve(request.path_info).url_name

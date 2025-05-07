@@ -1,31 +1,33 @@
 {% load static %}
 {% load krono_urls %}
-{% block timeline_icon %}
-    <div class="timeline-container {{timelineclass}}" id="timeline-container"  data-tooltip title="Timeline view" data-position="bottom" data-alignment="center">
-      {% if photo %}
+
+<div class="timeline-container {{timelineclass}}" id="timeline-container"  data-tooltip title="Timeline view" data-position="bottom" data-alignment="center">
+  {% if photo %}
       <a class="fi-timeline-a" href="{% object_url photo url_kwargs get_params %}" hx-get="{% object_url photo url_kwargs get_params %}" hx-target="#app"><img class="timeline-icon" src="{% static "kronofoto/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
-      {% else %}
+  {% else %}
       <a class="fi-timeline-a" href="{% krono_url "kronofoto:random-image" %}" hx-get="{% krono_url "kronofoto:random-image" %}" hx-target="#app"><img class="timeline-icon" src="{% static "kronofoto/images/timeline.svg" %}" alt="Timeline icon" title="Timeline View"></a>
-      {% endif %}
-    </div>
-{% endblock timeline_icon %}
-{% block grid_icon %}
-    <div class="grid-icon {{gridclass}}" id="grid-icon" data-tooltip title="Grid view" data-position="bottom" data-alignment="center">
-      {% if photo %}
+  {% endif %}
+</div>
+<div class="grid-icon {{gridclass}}" id="grid-icon" data-tooltip title="Grid view" data-position="bottom" data-alignment="center">
+  {% if photo %}
       <a class="grid-a" href="{% grid_url photo url_kwargs get_params %}" hx-get="{% grid_url photo url_kwargs get_params %}" hx-target="#app">
         <img class="grid-icon_reg" src="{% static "kronofoto/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
       </a>
-      {% else %}
+  {% else %}
       <a class="grid-a" href="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}" hx-target="#app">
         <img class="grid-icon_reg" src="{% static "kronofoto/images/04b-grid.svg" %}" alt="Grid icon" title="Grid View">
       </a>
-      {% endif %}
-    </div>
-{% endblock grid_icon %}
-{% block map-icon %}
-{% comment %}
-<button class="show-for-medium">
-    <i class="icon map-icon"></i>
-</button>
-{% endcomment %}
-{% endblock %}
+  {% endif %}
+</div>
+{% if mapview_enabled %}
+<div id="map-icon" class="{{ mapviewclass }}" data-tooltip title="Map view" data-position="bottom" data-alignment="center">
+    <a 
+        class="show-for-medium" 
+        href="{% krono_url "kronofoto:map" url_kwargs %}{% krono_params get_params %}"
+        hx-get="{% krono_url "kronofoto:map" url_kwargs %}{% krono_params get_params %}"
+        hx-target="#app"
+    >
+        <i class="icon map-icon"></i>
+    </a>
+</div>
+{% endif %}

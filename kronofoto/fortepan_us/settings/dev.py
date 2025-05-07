@@ -168,6 +168,7 @@ KF_DJANGOCMS_NAVIGATION = True
 KF_DJANGOCMS_SUPPORT = True
 KF_DJANGOCMS_ROOT = 'iowa'
 KF_URL_SCHEME = "http:"
+KF_MAPVIEW_ENABLED = True
 
 AUTHENTICATION_BACKENDS = ['fortepan_us.kronofoto.auth.backends.ArchiveBackend']
 APPEND_SLASH = False
