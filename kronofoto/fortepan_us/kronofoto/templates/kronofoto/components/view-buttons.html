@@ -22,7 +22,7 @@
 {% if mapview_enabled %}
 <div id="map-icon" class="{{ mapviewclass }}" data-tooltip title="Map view" data-position="bottom" data-alignment="center">
     <a 
-        class="show-for-medium" 
+        class="show-for-medium fi-timeline-a" 
         href="{% krono_url "kronofoto:map" url_kwargs %}{% krono_params get_params %}"
         hx-get="{% krono_url "kronofoto:map" url_kwargs %}{% krono_params get_params %}"
         hx-target="#app"

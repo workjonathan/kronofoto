@@ -110,6 +110,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
         page_obj = context['page_obj']
         object_list = context['object_list']
         context['formatter'] = KeysetViewFormatter(self.url_kwargs, self.params)
+        context['gridclass'] = 'current-view'
         context.update(self.get_no_objects_context(object_list))
         return context
 

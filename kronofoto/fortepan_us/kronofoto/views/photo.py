@@ -54,6 +54,8 @@ class OrderedDetailBase(DetailView):
 
         context['queryset'] = queryset
 
+        context['timelineclass'] = 'current-view'
+
         return context
 
 class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView):

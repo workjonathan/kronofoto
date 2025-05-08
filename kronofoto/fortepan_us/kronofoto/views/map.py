@@ -52,6 +52,7 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     context['form'] = areq.form
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
+    context['mapviewclass'] = 'current-view'
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map.html")
 
 def detail_photosphere(request: HttpRequest, *, photosphere: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
@@ -64,6 +65,7 @@ def detail_photosphere(request: HttpRequest, *, photosphere: int, short_name: Op
     context['form'] = areq.form
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
+    context['mapviewclass'] = 'current-view'
     photospheres = PhotoSphere.objects.filter(Exists(PhotoSpherePair.objects.filter(photosphere_id=OuterRef("id"), photo__id__in=qs)), is_published=True)
     context['photosphere'] = get_object_or_404(photospheres, id=photosphere)
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map-detail-photosphere.html")
@@ -79,4 +81,5 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
     context['photo'] = get_object_or_404(qs, id=photo)
+    context['mapviewclass'] = 'current-view'
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map-detail.html")
