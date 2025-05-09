@@ -19,13 +19,15 @@
 <div
     class="photosphere"
     x-bind:class="{ 'set-description-open': set_description_open, 'map-open': map_open, 'images-open': images_open }"
+    x-bind:current_item="current_item"
     x-data="{
         set_description_open: false,
         map_open: !window.matchMedia('(max-width: 64em)').matches,
         mobile_view: window.matchMedia('(max-width: 64em)').matches,
         small_mobile_view: window.matchMedia('(max-width: 40em)').matches,
         images_open: false,
-        open: false
+        open: false,
+        current_item: 'navbar'
     }"
     @kronofoto-select-photosphere-marker="open = true"
     @node-changed="open = false"
@@ -45,11 +47,11 @@
         </div>
     </form>
     <div id="description-swap-trick"></div>
-    <template id="mainstreet-description" x-if="set_description_open || !mobile_view">
-        <div class="photosphere__set_description" x-bind:class="{ 'expanded': set_description_open }">
+    <template id="mainstreet-description" x-if="set_description_open || mobile_view">
+        <div class="photosphere__set_description" x-bind:class="{ 'expanded': set_description_open || mobile_view }">
             <button class="photosphere__set_description_button" x-on:click="set_description_open = !set_description_open"></button>
             <button class="photosphere__set_description_close_button" x-on:click="set_description_open = !set_description_open"></button>
-            <div class="photosphere__set_description_text" x-show="set_description_open">
+            <div class="photosphere__set_description_text" x-show="set_description_open || mobile_view">
                 <div class="wrapper">
                 {% if object.mainstreetset.name %}<h3>{{ object.mainstreetset.name }}</h3>{% endif %}
                 {% if mainstreet_description %}<div>{{ mainstreet_description | linebreaksbr }}</div>{% endif %}
@@ -69,7 +71,7 @@
             hx-push-url="false">
         </div>
     </div>
-    <nav id="fi-timeline" class="photosphere__timeline fi-timeline">
+    <nav id="fi-timeline" class="photosphere__timeline fi-timeline" x-bind:class="{ 'open': current_item == 'images' }">
         <form
             hx-trigger="kronofoto:loadThumbnails"
             hx-target="#fi-thumbnail-carousel-images"
