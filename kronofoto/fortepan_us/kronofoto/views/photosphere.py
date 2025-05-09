@@ -114,6 +114,13 @@ class NodeData(TypedDict, total=False):
     thumbnail: str
 
 
+def map_photosphere_data(request: HttpRequest) -> JsonResponse:
+    query = DataParams(request.GET)
+    if query.is_valid():
+        return ValidPhotoSphereMapView(request=request, pk=query.cleaned_data['id']).json_response
+    else:
+        return JsonResponse({}, status=400)
+
 def photosphere_data(request: HttpRequest) -> JsonResponse:
     query = DataParams(request.GET)
     if query.is_valid():
@@ -418,6 +425,10 @@ class ValidPhotoSphereView:
         return response
 
 
+class ValidPhotoSphereMapView(ValidPhotoSphereView):
+    @property
+    def links(self) -> Iterable[PhotoSphere]:
+        return []
 
 def photosphere_view(request: HttpRequest) -> HttpResponse:
     query = DataParams(request.GET)

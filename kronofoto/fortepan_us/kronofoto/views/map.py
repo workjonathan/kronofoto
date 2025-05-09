@@ -1,15 +1,14 @@
 from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
-from typing import Optional, Any
+from typing import Optional, Any, overload, Dict
 from .base import ArchiveRequest, PhotoQuerySet, ArchiveReference
 from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds
 from django.contrib.gis.geos import Polygon
 from functools import cached_property
-from fortepan_us.kronofoto.models import Photo
-from django.db.models import QuerySet, Q
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair
+from django.db.models import QuerySet, Q, Exists, Subquery, OuterRef
 from dataclasses import dataclass
-
 
 class MapRequest(ArchiveRequest):
     @cached_property
@@ -52,6 +51,20 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map.html")
+
+def detail_photosphere(request: HttpRequest, *, photosphere: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
+    archive_ref = None
+    if short_name:
+        archive_ref = ArchiveReference(short_name, domain)
+    areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
+    context = areq.common_context
+    qs = areq.get_photo_queryset()
+    context['form'] = areq.form
+    context['photos'] = qs[:48]
+    context['bounds'] = areq.map_bounds
+    photospheres = PhotoSphere.objects.filter(Exists(PhotoSpherePair.objects.filter(photosphere_id=OuterRef("id"), photo__id__in=qs)), is_published=True)
+    context['photosphere'] = get_object_or_404(photospheres, id=photosphere)
+    return TemplateResponse(request, context=context, template="kronofoto/pages/map/map-detail-photosphere.html")
 
 def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
     archive_ref = None
