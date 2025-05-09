@@ -15,7 +15,7 @@
 
 <ul hx-swap-oob="innerHTML:#related-mainstreets">
         {% for mainstreet in mainstreet_links %}
-        <li><a  class="year-button{% if object.mainstreetset.name|stringformat:"s"  == mainstreet.set.name|stringformat:"s"  %} active{% endif %}" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
+        <li><a  class="year-button{% if object.mainstreetset == mainstreet.set %} active{% endif %}" href="{{ mainstreet.photosphere_href }}">{{ mainstreet.set.name }}</a></li>
         {% endfor %}
 </ul>
 
