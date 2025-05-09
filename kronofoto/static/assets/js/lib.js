@@ -981,7 +981,17 @@ class PhotoSpherePlugin {
                                         evt.layer.feature.properties.id,
                                     )
                                 })
-                                tileLayer.addTo(map)
+                              tileLayer.addTo(map)
+
+                              // Invalidate Map tiles when map size is changed
+                              const resizeObserver = new ResizeObserver(entries => {
+                                for (let entry of entries) {
+                                  console.log(`Map size changed to: ${entry.contentRect.width}px x ${entry.contentRect.height}px`);
+                                  map.invalidateSize();
+                                }
+                              });
+                              resizeObserver.observe(document.querySelector(".psv-plan__container"));
+
                             },
                             buttons: {close: false, reset: false},
                         },
