@@ -8,6 +8,7 @@ package-lock.json
 node_modules
 *.swp
 dist
+kronofoto/docs/_build
 
 
 # Byte-compiled / optimized / DLL files

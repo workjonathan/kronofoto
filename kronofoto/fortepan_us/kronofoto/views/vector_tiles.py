@@ -32,16 +32,27 @@ class Bounds:
 
 @dataclass
 class TileLayerBase:
+    """Base for mapbox vector tile rendering"""
     x: int
     y: int
     zoom: int
 
     @cached_property
     def bounds(self) -> Bounds:
+        """Returns bounds for these map tile coordinates.
+
+        Returns:
+            Bounds: The extent of this tile in EPSG:4326.
+        """
         return mercantile.bounds(self.x, self.y, self.zoom)
 
     @property
     def bbox(self) -> Polygon:
+        """The bounds of this tile as a Polygon.
+
+        Returns:
+            Polygon: A polygon for the tile extent in EPSG:4326.
+        """
         bounds = self.bounds
         poly = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
         poly.srid = 4326
@@ -49,6 +60,15 @@ class TileLayerBase:
 
     @property
     def layers(self) -> list[Layer]:
+        """Gets layers associated with this tile.
+
+        The tile bounds must be converted to EPSG:3857, along with the contents
+        of the tile. This delegates to the get_layers function, which must be
+        implemented by subclasses.
+
+        Returns:
+            list[Layer]: Layers consist of a name and features. Features consist of geometry and properties.
+        """
         bounds = self.bounds
         bbox = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
         bbox.srid = 4326
@@ -59,11 +79,37 @@ class TileLayerBase:
         return self.get_layers(x_span=x_span, y_span=y_span, x0=x0, y0=y0)
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
+        """Gets the layers for this mapbox vector tile. Implementors must
+        implement this to define the data source and convert the geometry into
+        the tile space.
+
+        Every mapbox vector tile has a coordinate system that ranges in integer
+        values from (0, 0) to (4096, 4096), allowing much more efficient use of
+        bits. Implementors must take care to convert geometry into this
+        coordinate system according to the boundaries defined by the arguments.
+
+        Args:
+            x_span (float): The width of this tile in EPSG:3857.
+            y_span (float): The height of this tile in EPSG:3857.
+            x0 (float): The x value corresponding to this tile's (0, 0) in EPSG:3857.
+            y0 (float): The y value corresponding to this tile's (0, 0) in EPSG:3857.
+
+        Returns:
+            list[Layer]: A layer consists of a name and geometry represented in only integer values ranging from 0 to 4096, as well as properties.
+
+        Raises:
+            NotImplementedError: If not implemented by base classes.
+        """
         raise NotImplementedError
 
 
     @property
     def response(self) -> HttpResponse:
+        """Get an HttpResponse containing a mapbox vector tile for these x, y, and z.
+
+        Returns:
+            HttpResponse: A HttpResponse with a body consisting of this mapbox vector tile and with the correct mime type.
+        """
         return HttpResponse(
             mapbox_vector_tile.encode(self.layers),
             headers={
@@ -73,13 +119,25 @@ class TileLayerBase:
 
 @dataclass
 class PlaceMapTile(TileLayerBase):
+    "PlaceMapTiles appear on the map view. Places are visible as polygons."
+
+    @property
+    def place_type(self) -> str:
+        if self.zoom < 3:
+            return "Country"
+        else:
+            return "US State"
     @cached_property
     def places(self) -> Iterable[models.Place]:
+        """Returns the Places that should be included in this tile.
 
-        return models.Place.objects.filter(
+        Returns:
+            Iterable[models.Place]: Places that should be visible in this tile, with a geom2 field which is the geometry reprojected in EPSG:3857.
+        """
+        return models.Place.objects.zoom(level=self.zoom).filter(
             geom__isnull=False,
             geom__intersects=self.bbox,
-            place_type__name="US State",
+            place_type__name=self.place_type,
         ).annotate(geom2=Transform("geom", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
@@ -121,12 +179,24 @@ class PlaceMapTile(TileLayerBase):
 @icontract.invariant(lambda self: 0 <= self.zoom < 35)
 @dataclass
 class PhotoSphereTile(TileLayerBase):
+    """Mapbox Vector Tiles for photospheres. In addition to the tile address,
+    photospheres are also filtered by mainstreet id and optionally by tour id.
+    """
     mainstreet: int
     tour: Optional[int]
 
 
     @property
     def photospheres(self) -> Iterable[models.PhotoSphere]:
+        """PhotoSphere visible on this tile.
+
+        PhotoSpheres are visible on this tile if they are in the right location
+        and belong to the correct mainstreet. If tour is set, they must also
+        belong to the same tour.
+
+        Returns:
+            Iterable[models.PhotoSphere]: PhotoSpheres within this tile, with geom in EPSG:3857.
+        """
         kwargs = {}
         if self.tour is not None:
             kwargs['tour__id'] = self.tour
@@ -161,6 +231,19 @@ class PhotoSphereTile(TileLayerBase):
 
 @cache_page(60*10)
 def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
+    """View function for Place map tiles.
+
+    Args:
+        request (HttpRequest): request is used to filter Photos for counts on places.
+        archive (str, optional): None by default. Used to filter Photos for counts on places by Archive.
+        domain (str, optional): None by default. Used in tandem with ardchive to identify remote archives.
+        category (str, optional): None by default. Used to filter Photos for counts on places by Category.
+        zoom (int): tile zoom level
+        x (int): tile x index
+        y (int): tile y index
+    Returns:
+        HttpResponse: The response contains the mapbox vector tile, or will return a 400 response if the zoom level is negative or too high.
+    """
     if zoom < 0 or zoom >= 35:
         return HttpResponse("invalid zoom level", status=400)
     return PlaceMapTile(
@@ -171,6 +254,18 @@ def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: 
 
 
 def photosphere_vector_tile(request: HttpRequest, /, *, tour: Optional[int]=None, mainstreet: int, zoom: int, x: int, y: int) -> HttpResponse:
+    """View function for Photosphere map tiles.
+
+    Args:
+        request (HttpRequest): request is used to filter Photos for counts on places.
+        tour (int, optional): None by default. If given, PhotoSpheres must have this tour id to be included in the tile.
+        mainstreet (int): PhotoSpheres must have this mainstreet id to be included in this tile.
+        zoom (int): tile zoom level
+        x (int): tile x index
+        y (int): tile y index
+    Returns:
+        HttpResponse: The response contains the mapbox vector tile, or will return a 400 response if the zoom level is negative or too high.
+    """
     if zoom < 0 or zoom >= 35:
         return HttpResponse("invalid zoom level", status=400)
     return PhotoSphereTile(

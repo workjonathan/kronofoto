@@ -138,6 +138,19 @@ def test_donor_only_requires_archive():
 
 #st.register_type_strategy(activity_dicts.Url, urls())
 
+class TestPlaceQuerySet(TestCase):
+    @hsettings(max_examples=10)
+    @given(
+        place=from_model(models.Place, place_type=from_model(models.PlaceType)),
+        level=st.integers(min_value=-10, max_value=100),
+    )
+    def test_zoom(self, place, level):
+        assert models.Place.objects.zoom(level=level).exists() == (
+            place.min_level is not None and place.max_level is not None and
+            (place.min_level <= level < place.max_level)
+        )
+
+
 class TestArchive(TestCase):
     @hsettings(max_examples=10)
     @given(st.text(alphabet="asdfghjkl-", min_size=1), domains().map(lambda s: s.lower()))

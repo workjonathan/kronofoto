@@ -118,6 +118,7 @@ black = "python -m black {args}"
 [tool.hatch.envs.docs]
 dependencies = [
   "sphinx>=6.2.1",
+  "sphinxcontrib-django",
 ]
 [tool.hatch.envs.docs.scripts]
 build = "make -C docs html"
