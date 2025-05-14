@@ -10,6 +10,7 @@ import mercantile # type: ignore
 from dataclasses import dataclass
 import icontract
 from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 
 T = TypeVar("T")
 
@@ -137,41 +138,45 @@ class PlaceMapTile(TileLayerBase):
         return models.Place.objects.zoom(level=self.zoom).filter(
             geom__isnull=False,
             geom__intersects=self.bbox,
-            place_type__name=self.place_type,
         ).annotate(geom2=Transform("geom", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
-        features_ : list[Feature] = []
-        for p in self.places:
-            polys = []
-            for poly in p.geom2.coords:
-                rings = [
-                    [
-                        (
-                            round((c_x - x0) * 4096 / x_span),
-                            round((c_y - y0) * 4096 / y_span),
-                        ) for (c_x, c_y) in ring
+        def _() -> list[Feature]:
+            features_ : list[Feature] = []
+            for p in self.places:
+                polys = []
+                for poly in p.geom2.coords:
+                    rings = [
+                        [
+                            (
+                                round((c_x - x0) * 4096 / x_span),
+                                round((c_y - y0) * 4096 / y_span),
+                            ) for (c_x, c_y) in ring
+                        ]
+                        for ring in poly
                     ]
-                    for ring in poly
-                ]
-                cleaned = Polygon(*rings, srid=4326).buffer(0)
-                if cleaned.geom_type == "MultiPolygon" and isinstance(cleaned, MultiPolygon):
-                    for shp in cleaned:
-                        polys.append(shp)
-                else:
-                    assert cleaned.geom_type == 'Polygon', p
-                    polys.append(cleaned)
-            mp = MultiPolygon(polys).buffer(0)
-            features_.append(
-                {
-                    "geometry": mp.wkt,
-                    "properties": {"id": p.id},
-                }
-            )
+                    cleaned = Polygon(*rings, srid=4326).buffer(0)
+                    if cleaned.geom_type == "MultiPolygon" and isinstance(cleaned, MultiPolygon):
+                        for shp in cleaned:
+                            polys.append(shp)
+                    else:
+                        assert cleaned.geom_type == 'Polygon', p
+                        polys.append(cleaned)
+                mp = MultiPolygon(polys).buffer(0)
+                features_.append(
+                    {
+                        "geometry": mp.wkt,
+                        "properties": {"id": p.id},
+                    }
+                )
+            return features_
 
+        features_ = cache.get_or_set(f"kronofoto:PlaceMapTile(x={self.x}, y={self.y}, zoom={self.zoom})", _, 60*10)
+        if features_ is None:
+            return []
         return [
             {
-                "name": "mainstreets",
+                "name": "places",
                 "features": features_,
             },
         ]
@@ -229,7 +234,7 @@ class PhotoSphereTile(TileLayerBase):
 
 
 
-@cache_page(60*10)
+#@cache_page(60*10)
 def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
     """View function for Place map tiles.
 
