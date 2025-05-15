@@ -345,11 +345,11 @@ class Archive(models.Model):
         LOCAL = 0
         REMOTE = 1
 
-    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE, null=True)
-    type = models.IntegerField(choices=ArchiveType.choices, default=ArchiveType.LOCAL)
+    actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE, null=True, editable=False)
+    type = models.IntegerField(choices=ArchiveType.choices, default=ArchiveType.LOCAL, editable=False)
     name = models.CharField(max_length=64, null=False, blank=False)
     slug = models.SlugField(blank=False, null=False)
-    server_domain = models.CharField(max_length=255, null=False, blank=True, default="")
+    server_domain = models.CharField(max_length=255, null=False, blank=True, default="", editable=False)
 
     class Meta:
         unique_together = ("slug", "server_domain")
