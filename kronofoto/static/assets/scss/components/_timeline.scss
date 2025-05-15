@@ -423,7 +423,10 @@ $grey: grey;
   .slide-container {
     overflow-x: clip;
     position: relative;
-    width: gallery.$galleryWidth;
+    width: 40%;
+    @include breakpoint(large up) {
+      width: gallery.$galleryWidth;
+    }
     background-color: #b2b2b2; // TODO: Add to color palette.
   }
 
