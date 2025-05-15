@@ -11,6 +11,17 @@ from django.http import QueryDict
 
 class TermQuerySet(models.QuerySet["Term"]):
     def objects_for(self, archive: "Archive", category: int) -> models.QuerySet["Term"]:
+        """Filter a queryset for a given Archive and Category combination. It's
+        just a filter, but the filter selectors are a bit obtuse, so this
+        handles it.
+
+        Args:
+            archive (Archive): The Archive to filter with.
+            category (int): The category ID.
+
+        Returns:
+            TermQuerySet: A queryset with only Terms that are relevant for the given Archive and Category.
+        """
         return self.filter(
             validcategory__archive=archive, validcategory__category=category
         ).order_by("term")
@@ -20,6 +31,9 @@ class TermQuerySet(models.QuerySet["Term"]):
 
 
 class TermGroup(models.Model):
+    """Optionally, Terms can belong to a group. Groups are like folders for
+    Terms. But this feature is not used and could be removed.
+    """
     name = models.CharField(max_length=64, unique=True)
 
     def __str__(self) -> str:
@@ -27,6 +41,7 @@ class TermGroup(models.Model):
 
 
 class Term(Collectible, models.Model):  # type: ignore
+    """Terms are like tags, but they are curated and more general."""
     term = models.CharField(max_length=64, unique=True)
     slug = models.SlugField(unique=True, blank=True, editable=False)
     description = models.TextField(blank=True)
