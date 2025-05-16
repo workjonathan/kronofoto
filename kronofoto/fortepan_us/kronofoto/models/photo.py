@@ -65,13 +65,14 @@ from typing import (
 from typing_extensions import Self
 from fortepan_us.kronofoto.imageutil import ImageSigner
 from itertools import chain, cycle, islice
-from typing import Dict, Any, List, Optional, Set, Tuple, Protocol
+from typing import Dict, Any, List, Optional, Set, Tuple, Protocol, TypeVar, Generic
 from typing_extensions import Self
 #from .activity_dicts import ActivitypubImage, PhotoValue
 
 EMPTY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 bisect = lambda xs, x: min(bisect_left(xs, x), len(xs) - 1)
 
+DonorQuerySetT = TypeVar("DonorQuerySetT", bound=models.QuerySet[Donor])
 
 class Thumbnail(TypedDict):
     url: str
@@ -83,13 +84,28 @@ EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
 
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
+    def filter_donated(self, donors: DonorQuerySetT) -> DonorQuerySetT:
+        """Filter a Donor queryset to only those that have donated images, as
+        opposed to scanning or photographing images.
 
+        Args:
+            donors (DonorQuerySetT): A donor query set
 
-    def filter_donated(self, donors: DonorQuerySet) -> DonorQuerySet:
+        Returns:
+            DonorQuerySetT: Donors that have not donated a photo are excluded from the donors.
+        """
         q = self.filter(donor__id=OuterRef("pk"), is_published=True, year__isnull=False)
         return donors.filter(models.Exists(q))
 
-    def with_scanned_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+    def with_scanned_annotation(self, donors: DonorQuerySetT) -> DonorQuerySetT:
+        """Annotate a donor query set with counts of photos scanned by the donor.
+
+        Args:
+            donors (DonorQuerySetT): The donors to annotate.
+
+        Returns:
+            DonorQuerySetT: The donors query set with a `scanned_count` which is a count of the images scanned by the donor.
+        """
         q = (
             self.filter(scanner=OuterRef("id"))
             .annotate(scanned_count=models.Func(F("id"), function="COUNT"))
@@ -97,7 +113,15 @@ class PhotoQuerySet(models.QuerySet["Photo"]):
         )
         return donors.annotate(scanned_count=Subquery(q))
 
-    def with_donated_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+    def with_donated_annotation(self, donors: DonorQuerySetT) -> DonorQuerySetT:
+        """Annotate a donor query set with counts of photos donated by the donor.
+
+        Args:
+            donors (DonorQuerySetT): The donors to annotate.
+
+        Returns:
+            DonorQuerySetT: The donors query set with a `donated_count` which is a count of the images donated by the donor.
+        """
         q = (
             self.filter(donor=OuterRef("id"))
             .annotate(donated_count=models.Func(F("id"), function="COUNT"))
@@ -105,7 +129,15 @@ class PhotoQuerySet(models.QuerySet["Photo"]):
         )
         return donors.annotate(donated_count=Subquery(q))
 
-    def with_photographed_annotation(self, donors: DonorQuerySet) -> DonorQuerySet:
+    def with_photographed_annotation(self, donors: DonorQuerySetT) -> DonorQuerySetT:
+        """Annotate a donor query set with counts of photos photographed by the donor.
+
+        Args:
+            donors (DonorQuerySetT): The donors to annotate.
+
+        Returns:
+            DonorQuerySetT: The donors query set with a `photographed_count` which is a count of the images photographed by the donor.
+        """
         q = (
             self.filter(photographer=OuterRef("id"))
             .annotate(count=models.Func(F("id"), function="COUNT"))
@@ -114,34 +146,45 @@ class PhotoQuerySet(models.QuerySet["Photo"]):
         return donors.annotate(photographed_count=Subquery(q))
 
     def year_range(self) -> Dict[str, Any]:
+        """Determine the first year and last year for photos in this query set.
+
+        Returns:
+            dict[str, Any]: The dict has `start` and `end` keys first first and last year.
+        """
         return self.aggregate(end=Max("year"), start=Min("year"))
 
-    def photo_position(self, photo: "Photo") -> int:
-        return self.filter(
-            Q(year__lt=photo.year) | (Q(year=photo.year) & Q(id__lt=photo.id))
-        ).count()
-
     def photos_before(self, *, year: int, id: int) -> Self:
+        """Given a year and an id number, filter this query set to those appearing before that point in the query set, in reverse order.
+
+        Args:
+            year (int): A year.
+            id (int): A photo ID
+
+        Returns:
+            PhotoQuerySet: This queryset in reverse archive order starting at the position given by `year` and `id`.
+        """
         photos = self.filter(Q(year__lt=year) | Q(year=year, id__lt=id)).order_by(
             "-year", "-id"
         )
         return photos
 
     def photos_after(self, *, year: int, id: int) -> Self:
+        """Given a year and an id number, filter this query set to those appearing after that point in the query set, in order.
+
+        Args:
+            year (int): A year.
+            id (int): A photo ID
+
+        Returns:
+            PhotoQuerySet: This queryset in archive order starting at the position given by `year` and `id`.
+        """
         photos = self.filter(Q(year__gt=year) | Q(year=year, id__gt=id)).order_by(
             "year", "id"
         )
         return photos
 
-    def exclude_geocoded(self) -> Self:
-        return (
-            self.filter(location_point__isnull=True)
-            | self.filter(location_bounds__isnull=True)
-            | self.filter(location_from_google=True)
-        )
-
-
 def format_location(force_country: bool = False, **kwargs: str) -> str:
+    """Deprecated"""
     parts = []
     if kwargs.get("address", None):
         parts.append(kwargs["address"])
@@ -158,6 +201,15 @@ def format_location(force_country: bool = False, **kwargs: str) -> str:
 
 
 def get_original_path(instance: "Photo", filename: str) -> str:
+    """Generate a storage path for a Photo.
+
+    Args:
+        instance (Photo): The Photo being stored.
+        filename (str): Ignored
+
+    Returns:
+        str: A storage path, which is incidentally based on the Photo's UUID and its creation time.
+    """
     created = datetime.now() if instance.created is None else instance.created
     return path.join(
         "original",
@@ -169,11 +221,21 @@ def get_original_path(instance: "Photo", filename: str) -> str:
 
 
 def get_submission_path(instance: "Submission", filename: str) -> str:
+    """Generate a storage path for a Submission.
+
+    Args:
+        instance (Submission): The Submission being stored.
+        filename (str): Ignored
+
+    Returns:
+        str: A storage path, which is incidentally based on the Submission's UUID.
+    """
     return path.join("submissions", "{}.jpg".format(instance.uuid))
 
 
 @dataclass
 class PlaceData:
+    "Deprecated."
     address: str
     city: str
     county: str
@@ -195,6 +257,23 @@ class PlaceData:
 
 
 class PhotoBase(models.Model):
+    """Abstract Base for Photo and Submission. It is the core model of this
+    application.
+
+    Photos belong to Archives.
+
+    They have a Category, specifying whether this is a photo or map or something else.
+
+    Photos are donated by Donors, scanned by Donors, and photographed by Donors.
+
+    Photos have Terms, which are curated labels given by the archivists.
+
+    They have a Place and a time (year), which is sometimes vague (circa).
+
+    They also have a location_point is the exact location is known.
+
+    And of course, they also have a description.
+    """
     archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     category = models.ForeignKey(Category, models.PROTECT, null=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -241,6 +320,7 @@ class PhotoBase(models.Model):
     )
 
     def get_place(self, with_address: bool = False) -> PlaceData:
+        "Deprecated."
         return PlaceData(
             address=self.address,
             city=self.city,
@@ -251,9 +331,11 @@ class PhotoBase(models.Model):
 
     @property
     def place_query(self) -> str:
+        "Deprecated."
         return self.get_place().get_query()
 
     def location(self, with_address: bool = False, force_country: bool = False) -> str:
+        "Deprecated."
         kwargs: Dict[str, str] = dict(
             city=self.city,
             state=self.state,
@@ -272,12 +354,20 @@ class PhotoBase(models.Model):
 
 
 class Submission(PhotoBase):
+    """A model for user submitted Photos. They submitted to Archives and
+    expected to be curated or rejected.
+    """
     image = models.ImageField(upload_to=get_submission_path, null=False)
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True
     )
 
     def __str__(self) -> str:
+        """Get a short description of this Submission for the admin.
+
+        Returns:
+            str: A description including the year and place.
+        """
         location = self.place
         stuff = [str(self.donor)]
         if self.year:
@@ -288,13 +378,29 @@ class Submission(PhotoBase):
 
 
 class ResizerBase(Protocol):
+    """Base for resize images functions."""
     @property
-    def output_height(self) -> int: ...
+    def output_height(self) -> int:
+        "Desired height"
+        ...
     @property
-    def output_width(self) -> int: ...
-    def crop_image(self, *, image: Image.Image) -> Image.Image: ...
+    def output_width(self) -> int:
+        "Desired width"
+        ...
+    def crop_image(self, *, image: Image.Image) -> Image.Image:
+        """Abstract method that allows a subclass to crop the image and change its aspect ratio.
+
+        Returns:
+            Image.Image: An image with the desired aspect ratio.
+        """
+        ...
 
     def resize(self, *, image: Image.Image) -> Image.Image:
+        """Resize an image to the target size.
+
+        Returns:
+            Image.Image: The resized Image.
+        """
         image = self.crop_image(image=image)
         return image.resize(
             (self.output_width, self.output_height),
@@ -304,6 +410,9 @@ class ResizerBase(Protocol):
 
 @dataclass
 class FixedHeightResizer(ResizerBase):
+    """A class that resizes Images to a specific height without changing the
+    aspect ratio.
+    """
     height: int
     original_width: int
     original_height: int
@@ -322,6 +431,9 @@ class FixedHeightResizer(ResizerBase):
 
 @dataclass
 class FixedWidthResizer(ResizerBase):
+    """A class that resizes Images to a specific width without changing the
+    aspect ratio.
+    """
     width: int
     original_width: int
     original_height: int
@@ -340,6 +452,8 @@ class FixedWidthResizer(ResizerBase):
 
 @dataclass
 class FixedResizer(ResizerBase):
+    """A class that resizes Images to a height and width and will crop the image if necessary.
+    """
     width: int
     height: int
     original_width: int
@@ -347,6 +461,16 @@ class FixedResizer(ResizerBase):
 
     @property
     def crop_coords(self) -> Tuple[int, int, int, int]:
+        """Calculate the range of pixels to crop the new image out of.
+
+        The new image should touch either both sides or the top and bottom. If
+        reducing the height is necessary, the selected pixels are biased a bit
+        towards the top of the image, because more interesting stuff tends to be
+        in the upper half of the image.
+
+        Returns:
+            tuple[int, int, int, int]: left, top, right, bottom
+        """
         original_origin_x = self.original_width / 2
         original_origin_y = self.original_height / 4
         output_ratio = self.width / self.height
@@ -396,6 +520,9 @@ class LabelProtocol(Protocol):
 
 
 class Photo(PhotoBase):
+    """Extends PhotoBase by adding federation attributes, Place search
+    optimizations and more.
+    """
     original = models.ImageField(
         upload_to=get_original_path,
         storage=OverwriteStorage(),
@@ -410,6 +537,12 @@ class Photo(PhotoBase):
 
     @property
     def fullsizeurl(self) -> str:
+        """Get the URL for the original image. The original image can be on
+        other servers in the federation.
+
+        Returns:
+            str: The image URL.
+        """
         if self.remote_image:
             return self.remote_image
         elif self.original:
@@ -423,6 +556,18 @@ class Photo(PhotoBase):
     def image_url(
         self, *, height: Optional[int] = None, width: Optional[int] = None
     ) -> str:
+        """Get the URL for the image with a certain height and/or width.
+
+        The `height` and `width` arguments are both optional, but at least one
+        must be supplied.
+
+        Args:
+            height (int, optional): Desired height.
+            width (int, optional) Desired width.
+
+        Returns:
+            str: The URL with that image resolution.
+        """
         assert height is not None or width is not None
 
         if self.original.name != '':
@@ -434,6 +579,11 @@ class Photo(PhotoBase):
         return ImageSigner(id=self.id, path=path, width=width, height=height).url
 
     def ldid(self) -> str:
+        """Get the LD-ID for this Photo, which may or may not be on another server.
+
+        Returns:
+            str: A URL that will contain this Photo definition in the response.
+        """
         from .ldid import LdId
         try:
             return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="photo", object_id=self.id).ld_id
@@ -444,6 +594,11 @@ class Photo(PhotoBase):
             )
 
     def get_image_dimensions(self) -> Tuple[int, int]:
+        """Gets the image dimensions, and saves the result in the table if doing so required loading the image file.
+
+        Returns:
+            tuple[int, int]: width, height
+        """
         if self.original_height == 0 or self.original_width == 0:
             Image.MAX_IMAGE_PIXELS = 195670000
             self.original_height = self.original.height
@@ -455,6 +610,11 @@ class Photo(PhotoBase):
 
     @property
     def h700(self) -> Optional[ImageData]:
+        """Get ImageData for a 700 pixel tall version of this Photo.
+
+        Returns:
+            ImageData | None: ImageData containing height and width of the new image and the URL. It will return None when the Photo is not saved (no ID) or there is no original or remote_image set.
+        """
         from fortepan_us.kronofoto.imageutil import ImageSigner
 
         if not (self.original or self.remote_image) or not self.id:
@@ -477,6 +637,11 @@ class Photo(PhotoBase):
 
     @property
     def thumbnail(self) -> Optional[ImageData]:
+        """Get ImageData for a 75 by 75 pixel version of this image.
+
+        Returns:
+            ImageData | None: ImageData containing height and width of the new image and the URL. It will return None when the Photo is not saved (no ID) or there is no original or remote_image set.
+        """
         if not (self.original or self.remote_image) or not self.id:
             return None
         from fortepan_us.kronofoto.imageutil import ImageSigner
@@ -633,6 +798,7 @@ class Photo(PhotoBase):
 
     @property
     def activity_dict(self) -> Dict[str, Any]:
+        "Deprecated."
         return {
             "id": reverse(
                 "kronofoto:activitypub-photo",
@@ -650,13 +816,29 @@ class Photo(PhotoBase):
         }
 
     def is_owned_by(self, actor: RemoteActor) -> bool:
+        """Determine if this Photo is owned by the RemoteActor.
+
+        Args:
+            actor (RemoteActor): An actor
+
+        Returns:
+            bool: True if this Photo is owned by actor.
+        """
         return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def page_number(self) -> Dict[str, Optional[int]]:
+        "Get the page number of this photo for the Paginator."
         return {"year:gte": self.year, "id:gt": self.id - 1}
 
     def get_all_tags(self, user: Optional[User] = None) -> List[LabelProtocol]:
-        "Return a list of tag and term objects, annotated with label and label_lower for label and sorting."
+        """Return a list of tag and term objects, annotated with label and label_lower for label and sorting.
+
+        Args:
+            user (User, optional): Defaults to None. The User will be taken into account when determining the tags.
+
+        Returns:
+            list[LabelProtocol]: A list of tags and terms associated with this Photo. If the user has submitted tags that have not been accepted, they will be included in the list.
+        """
         tags = self.get_accepted_tags(user=user).annotate(
             label_lower=Lower("tag"), label=models.F("tag")
         )
@@ -664,12 +846,25 @@ class Photo(PhotoBase):
         return list(tags) + list(terms)  # type: ignore
 
     def get_accepted_tags(self, user: Optional[User] = None) -> models.QuerySet[Tag]:
+        """Return a queryset of tags associated with this Photo.
+
+        Args:
+            user (User, optional): Defaults to None. The User will be taken into account when determining the tags.
+
+        Returns:
+            models.QuerySet[Tag]: The tags associated with this Photo. If the user has submitted tags that have not been accepted, they will be included in the list.
+        """
         query = Q(phototag__accepted=True)
         if user:
             query |= Q(phototag__creator__pk=user.pk)
         return self.tags.filter(query)
 
     def get_proposed_tags(self) -> models.QuerySet[Tag]:
+        """Get Tags that have been submitted but not accepted.
+
+        Returns:
+            models.QuerySet[Tag]: The unaccepted Tags associated with this Photo.
+        """
         return self.tags.filter(phototag__accepted=False)
 
     def add_params(self, url: str, params: Optional[QueryDict]) -> str:
