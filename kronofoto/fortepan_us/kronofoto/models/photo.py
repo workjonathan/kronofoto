@@ -868,6 +868,19 @@ class Photo(PhotoBase):
         return self.tags.filter(phototag__accepted=False)
 
     def add_params(self, url: str, params: Optional[QueryDict]) -> str:
+        """Add url encoded params if required to a url, else return the
+        unmodified url.
+
+        This conveniently avoids adding a ? to the URL if there are no params.
+        However, this could probably be added to the custom `reverse` function.
+
+        Args:
+            url (str): A URL.
+            params (QueryDict, optional): Query parameters.
+
+        Returns:
+            str: A URL including the query parameters.
+        """
         if params:
             url = "{}?{}".format(url, params.urlencode())
         return url
@@ -878,6 +891,7 @@ class Photo(PhotoBase):
         queryset: Optional[int] = None,
         params: Optional[QueryDict] = None,
     ) -> str:
+        "Deprecated"
         kwargs = {"photo": self.id}
         url = reverse(
             viewname,
@@ -890,6 +904,15 @@ class Photo(PhotoBase):
         kwargs: Optional[Dict[str, Any]] = None,
         params: Optional[QueryDict] = None,
     ) -> str:
+        """A get_absolute_url alternative for the download page.
+
+        Args:
+            kwargs (dict[str, Any], optional): Defaults to None. Allows preserving archive and category in the download page url.
+            params (QueryDict, optional): Defaults to None. Allows preserving query constraints for web components.
+
+        Returns:
+            str: A URL for the download page for this Photo.
+        """
         kwargs = kwargs or {}
         url = reverse("kronofoto:download", kwargs=dict(**kwargs, **{"pk": self.id}))
         if params:
@@ -899,6 +922,7 @@ class Photo(PhotoBase):
         return self.add_params(url=url, params=params)
 
     def get_urls(self, embed: bool = False) -> Dict[str, str]:
+        "Deprecated."
         return {
             "url": self.get_absolute_url(),
         }
@@ -908,6 +932,19 @@ class Photo(PhotoBase):
         kwargs: Optional[Dict[str, Any]] = None,
         params: Optional[QueryDict] = None,
     ) -> str:
+        """A get_absolute_url alternative to the grid page that starts with this
+        image.
+
+        Args:
+            kwargs (dict[str, Any], optional): Defaults to None. Allows preserving archive and category in the grid page url.
+            params (QueryDict, optional): Defaults to None. Allows preserving query constraints for web components.
+
+        Returns:
+            str: A URL for the grid page for this Photo.
+
+        Raises:
+            ValueError: If the year is not set, the grid page cannot exist.
+        """
         if self.year:
             kwargs = kwargs or {}
             url = reverse("kronofoto:gridview", kwargs=kwargs)
@@ -923,6 +960,11 @@ class Photo(PhotoBase):
     def get_archive_url(
         self,
     ) -> str:
+        """Get the timeline url for this photo within its archive.
+
+        Returns:
+            str: The URL for this photo within its archive.
+        """
         kwargs = {
             "short_name": self.archive.slug,
             "photo": self.id,
@@ -937,6 +979,15 @@ class Photo(PhotoBase):
         kwargs: Optional[Dict[str, Any]] = None,
         params: Optional[QueryDict] = None,
     ) -> str:
+        """Get the timeline view version of this image.
+
+        Args:
+            kwargs (dict[str, Any], optional): Defaults to None. Allows preserving archive and category in the timeline page url.
+            params (QueryDict, optional): Defaults to None. Allows preserving query constraints for web components.
+
+        Returns:
+            str: A URL for the timeline page for this Photo.
+        """
         kwargs = kwargs or {}
         kwargs = dict(**kwargs)
         kwargs["photo"] = self.id
@@ -946,28 +997,39 @@ class Photo(PhotoBase):
         return url
 
     def get_edit_url(self) -> str:
+        """Get the admin change url for this photo.
+
+        Returns:
+            str: A URL for the admin change page.
+        """
         return reverse("admin:kronofoto_photo_change", args=(self.id,))
 
     @staticmethod
     def format_url(**kwargs: Any) -> str:
+        "deprecated"
         return "{}?{}".format(reverse("kronofoto:gridview"), urlencode(kwargs))
 
     def get_county_url(self) -> str:
+        "deprecated"
         return Photo.format_url(county=self.county, state=self.state)
 
     def get_city_url(self) -> str:
+        "deprecated"
         return Photo.format_url(city=self.city, state=self.state)
 
     class CityIndexer:
+        "deprecated"
         def index(self) -> List[Dict[str, Any]]:
             return Photo.city_index()
 
     class CountyIndexer:
+        "deprecated"
         def index(self) -> List[Dict[str, Any]]:
             return Photo.county_index()
 
     @staticmethod
     def index_by_fields(*fields: str) -> List[Dict[str, Any]]:
+        "deprecated"
         return [
             {
                 "name": ", ".join(p[field] for field in fields),
@@ -983,10 +1045,12 @@ class Photo(PhotoBase):
 
     @staticmethod
     def county_index() -> List[Dict[str, Any]]:
+        "deprecated"
         return Photo.index_by_fields("county", "state")
 
     @staticmethod
     def city_index() -> List[Dict[str, Any]]:
+        "deprecated"
         return Photo.index_by_fields("city", "state")
 
     def __str__(self) -> str:
@@ -994,12 +1058,29 @@ class Photo(PhotoBase):
 
     @staticmethod
     def accession2id(accession: str) -> int:
+        """Accession Numbers in the fortepan system start with FI and are
+        followed with a 7 digit number. This retrieves the number part.
+
+        Args:
+            accession (str): a FI number, like FI0056752. It does not need to be 7 digits. It can be more or less.
+
+        Returns:
+            int: The number from the string, like 56752.
+
+        Raises:
+            ValueError: The string must start with FI and then be a number.
+        """
         if not accession.startswith("FI"):
             raise ValueError("{} doesn't start with FI", accession)
         return int(accession[2:])
 
     @property
     def accession_number(self) -> str:
+        """Return this Photo's accession number, like `FI0056752`.
+
+        Returns:
+            str: The accession number.
+        """
         return "FI" + str(self.id).zfill(7)
 
     def resizer(
