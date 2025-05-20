@@ -1086,6 +1086,7 @@ class Photo(PhotoBase):
     def resizer(
         self, *, size: int, original_width: int, original_height: int
     ) -> ResizerBase:
+        "Deprecated"
         if size == "thumbnail":
             return FixedResizer(
                 width=75,
@@ -1103,6 +1104,7 @@ class Photo(PhotoBase):
 
     @dataclass
     class Saver:
+        "Deprecated"
         uuid: uuid.UUID
         path: str
 
@@ -1114,35 +1116,24 @@ class Photo(PhotoBase):
         def format_path(self) -> str:
             return self.path.format(self.uuid)
 
-    def saver(self, *, size: int, uuid: uuid.UUID) -> Saver:
+    def saver_(self, *, size: int, uuid: uuid.UUID) -> Saver:
+        "Deprecated"
         if size == "thumbnail":
             return Photo.Saver(uuid=uuid, path="thumb/{}.jpg")
         elif size == "h700":
             return Photo.Saver(uuid=uuid, path="h700/{}.jpg")
         raise NotImplementedError
 
-    # def save(self, *args, **kwargs):
-    #    if not self.thumbnail:
-    #        Image.MAX_IMAGE_PIXELS = 195670000
-    #        filedata = self.original.read()
-    #        # TODO: when inevitably getting "too many files open" errors during
-    #        # imports in the future, closing the file here, as commented out
-    #        # below, is not the correct fix. It must either be closed during the
-    #        # import script or this must be reworked. Closing it here results in
-    #        # runtime errors in tests and in the admin backend.
-    #        # self.original.close()
-    #        with ImageOps.exif_transpose(Image.open(BytesIO(filedata))) as image:
-    #            w, h = image.size
-    #            sizes = ["thumbnail", "h700"]
-    #            for size in sizes:
-    #                resizer = self.resizer(size=size, original_height=h, original_width=w)
-    #                img = resizer.resize(image=image)
-
-    #                saver = self.saver(size=size, uuid=self.uuid)
-    #                getattr(self, size).name = saver.save(image=img)
-    #    super().save(*args, **kwargs)
 
     def describe(self, user: Optional[User] = None) -> Set[str]:
+        """Get a set of strings describing a photo. Useful for alt text.
+
+        Args:
+            user (User, optional): Defaults to None. If a user is given, the set will include tags the user has suggested even if they are not accepted.
+
+        Returns:
+            set[str]: a set of strings describing the Photo.
+        """
         terms = {str(t) for t in self.terms.all()}
         tags = {str(t) for t in self.get_accepted_tags(user)}
         location = self.location()
@@ -1157,6 +1148,11 @@ class Photo(PhotoBase):
         )
 
     def notices(self) -> List["LocalContextNotice"]:
+        """Get the list of Local Context Notices.
+
+        Returns:
+            list[LocalContextNotice]: The `LocalContextNotice` objects for this Photo.
+        """
         if not self.local_context_id:
             return []
 
@@ -1186,6 +1182,7 @@ class Photo(PhotoBase):
 
 
 def get_resized_path(instance: Any, filename: str) -> str:
+    "Deprecated"
     return path.join(
         "resized",
         "{}_{}_{}.jpg".format(instance.width, instance.height, instance.photo.uuid),
@@ -1201,6 +1198,12 @@ class LocalContextNotice:
 
 
 class PhotoTag(models.Model):
+    """M2M through class for Photo-Tag relations.
+
+    Since Tag objects have no attributes or interesting behavior, it would
+    probably be okay to put the Tag TextField in this model as a unique field.
+    That would eliminate the need to find dead tags and delete them.
+    """
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE)
     accepted = models.BooleanField()
@@ -1219,15 +1222,18 @@ class PhotoTag(models.Model):
 
 
 def remove_deadtags(sender: Any, instance: Tag, **kwargs: Any) -> None:
+    """Locate Tags which have no Photos attached and delete them."""
     if instance.tag.phototag_set.count() == 0:
         instance.tag.delete()
 
 
 def disconnect_deadtags(*args: Any, **kwargs: Any) -> None:
+    """Remote signal for removing dead tags"""
     post_delete.disconnect(remove_deadtags, sender=Photo.tags.through)
 
 
 def connect_deadtags(*args: Any, **kwargs: Any) -> None:
+    """Install signal for removing dead tags"""
     post_delete.connect(remove_deadtags, sender=Photo.tags.through)
 
 
