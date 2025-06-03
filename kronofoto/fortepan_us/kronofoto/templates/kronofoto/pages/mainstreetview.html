@@ -46,8 +46,7 @@
             <input name="id" type="hidden">
         </div>
     </form>
-    <div id="description-swap-trick"></div>
-    <template id="mainstreet-description" x-if="set_description_open || mobile_view">
+    <div id="mainstreet-description">
         <div class="photosphere__set_description" x-bind:class="{ 'expanded': set_description_open || mobile_view }">
             <button class="photosphere__set_description_button" x-on:click="set_description_open = !set_description_open"></button>
             <button class="photosphere__set_description_close_button" x-on:click="set_description_open = !set_description_open"></button>
@@ -58,7 +57,7 @@
                 </div>
             </div>
         </div>
-    </template>
+    </div>
     <div class="photosphere__info-box hide" x-show="open">
         <button @click="open = false" class="close-btn">Close</button>
         <div
