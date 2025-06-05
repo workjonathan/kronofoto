@@ -91,12 +91,12 @@ LICENSES = {
     "CC-BY-SA-4.0": License(
         name="Attribution-ShareAlike 4.0 International",
         url="https://creativecommons.org/licenses/by-sa/4.0/",
-        staticfile="images/Creative-Commons-Icons.svg",
+        staticfile="kronofoto/images/Creative-Commons-Icons.svg",
     ),
     "CC-BY-NC-SA-4.0": License(
         name="Attribution-NonCommercial-ShareAlike 4.0 International",
         url="https://creativecommons.org/licenses/by-nc-sa/4.0/",
-        staticfile="images/cc-by-nc-sa.svg",
+        staticfile="kronofoto/images/cc-by-nc-sa.svg",
     ),
 }
 
