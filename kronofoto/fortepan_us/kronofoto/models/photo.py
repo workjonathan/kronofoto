@@ -1244,37 +1244,74 @@ post_delete.connect(connect_deadtags, sender=Tag)
 
 @dataclass
 class PhotoPlaceholder:
+    """Wraps a Photo and provide a hook to provide an alternate thumbnail. Used
+    to make an empty/invisible thumbnail.
+    """
     thumbnail: Thumbnail
     is_spacer: bool
     photo: Photo
 
     def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
+        """Get the Photo's absolute url.
+
+        Args:
+            *args (Any): Arg list that will be passed through to the photo's get_absolute_url unmodified.
+            *kwargs (Any): Arg keywords that will be passed through to the photo's get_absolute_url unmodified.
+
+        Returns:
+            str: The canonical URL for the photo."
+        """
         return self.photo.get_absolute_url(*args, **kwargs)
 
     @property
     def id(self) -> int:
+        """Get the photo instance ID.
+
+        Returns:
+            int: The photo's ID.
+        """
         return self.photo.id
 
     @property
     def year(self) -> Optional[int]:
+        """Get the photo instance year.
+
+        Returns:
+            Optional[int]: The photo's year. It can return None if the photo
+            does not have a year.
+        """
         return self.photo.year
 
 
 @dataclass
 class CarouselList:
+    "Used to get a set of Photos that are near each other in keyset order."
     queryset: QuerySet
 
     @property
     def keyset(self) -> QuerySet:
+        """Subclasses must implement. Allows jumping into the middle of the queryset (eg keyset pagination)"""
         raise NotImplementedError
 
     @property
     def wrapped_queryset(self) -> QuerySet:
+        """Subclasses must implement. Allows reversing the queryset order."""
         raise NotImplementedError
 
     def carousel_list(
         self, *, item_count: int, func: Optional[Callable] = None
     ) -> List[Photo]:
+        """Get a list of photos in queryset order, and can loop back around to
+        the beginning of the queryset, and invisible thumbnails are used after
+        the loop.
+
+        Args:
+            item_count (int): How many photos to put in the list.
+            func (callable): Allow caller to wrap Photo instances so alternate absolute urls and image sizes can be used in templates.
+
+        Returns:
+            list[Photo]: A list of item_count Photos.
+        """
         keyset: Iterable = self.keyset[:item_count]
         if func:
             keyset = [func(item) for item in keyset]
@@ -1293,29 +1330,51 @@ class CarouselList:
 
 @dataclass
 class BackwardList(CarouselList):
+    "Fetch N photos in reverse archive order starting with `year`, `id`."
     queryset: PhotoQuerySet
     year: int
     id: int
 
     @property
     def keyset(self) -> PhotoQuerySet:
+        """Get a queryset that starts with the current photo.
+
+        Returns:
+            PhotoQuerySet: The set of photos before this point in archive order.
+        """
         return self.queryset.photos_before(year=self.year, id=self.id)
 
     @property
     def wrapped_queryset(self) -> PhotoQuerySet:
+        """Order the archive in reverse archive order
+
+        Returns:
+            PhotoQuerySet: A Photo QuerySet that is orderd in reverse archive order.
+        """
         return self.queryset.order_by("-year", "-id")
 
 
 @dataclass
 class ForwardList(CarouselList):
+    "Fetch N photos in reverse archive order starting with `year`, `id`."
     queryset: PhotoQuerySet
     year: int
     id: int
 
     @property
     def keyset(self) -> PhotoQuerySet:
+        """Get a queryset that starts with the current photo.
+
+        Returns:
+            PhotoQuerySet: The set of photos after this point in archive order.
+        """
         return self.queryset.photos_after(year=self.year, id=self.id)
 
     @property
     def wrapped_queryset(self) -> PhotoQuerySet:
+        """Order the archive in archive order
+
+        Returns:
+            PhotoQuerySet: A Photo QuerySet that is orderd in archive order.
+        """
         return self.queryset
