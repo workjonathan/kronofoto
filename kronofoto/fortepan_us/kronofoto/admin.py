@@ -1382,6 +1382,7 @@ class PhotoAdmin(PhotoBaseAdmin):
         'archive',
         'category',
         'donor',
+        'license',
         'original',
         'h700_image',
         'year',

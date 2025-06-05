@@ -81,6 +81,10 @@ class Thumbnail(TypedDict):
 
 
 EMPTY_THUMBNAIL = Thumbnail(url=EMPTY_PNG, height=75, width=75)
+LICENSES = [
+    ("CC-BY-SA-4.0", "Attribution-ShareAlike 4.0 International"),
+    ("CC-BY-NC-SA-4.0", "Attribution-NonCommercial-ShareAlike 4.0 International"),
+]
 
 
 class PhotoQuerySet(models.QuerySet["Photo"]):
@@ -310,6 +314,7 @@ class PhotoBase(models.Model):
     )
     circa = models.BooleanField(default=False)
     caption = models.TextField(blank=True, verbose_name="comment")
+    license = models.CharField(max_length=64, blank=False, default="CC-BY-SA-4.0", null=False, choices=LICENSES)
 
     scanner = models.ForeignKey(
         Donor,
