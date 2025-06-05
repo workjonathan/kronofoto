@@ -516,6 +516,7 @@ class PhotoValue:
     tags: List[str]
     height: int
     width: int
+    license: str
     attachment: List[PageValue]
     year: Optional[int]=None
     contributor: Optional[str] = None
@@ -542,6 +543,7 @@ class PhotoValue:
             circa=photo.circa,
             height=height,
             width=width,
+            license=photo.license,
             is_published=photo.is_published,
             terms=[t.term for t in photo.terms.all()],
             tags=[t.tag for t in photo.get_accepted_tags()],
@@ -582,6 +584,7 @@ class PhotoValue:
         photo.year = self.year
         photo.remote_image = self.url
         photo.archive = actor
+        photo.license = self.license
         photo.original_width = self.width
         photo.original_height = self.height
         if len(self.attachment) >= 1:

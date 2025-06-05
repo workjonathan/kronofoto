@@ -317,6 +317,7 @@ class Image(Schema):
     circa = fields.Boolean(required=True)
     is_published = fields.Boolean(required=True)
     contributor = fields.Url(relative=True)
+    license = fields.Str(required=True)
     terms = fields.List(fields.Str)
     tags = fields.List(fields.Str)
     place = fields.Url(relative=True)
