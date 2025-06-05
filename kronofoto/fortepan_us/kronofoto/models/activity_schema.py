@@ -328,6 +328,9 @@ class Image(Schema):
         validate=[validate.Length(min=1),
     ])
 
+    class Meta:
+        unknown = EXCLUDE
+
     @post_load
     def extract_fields_from_dict(
         self, data: Dict[str, Any], **kwargs: Any
