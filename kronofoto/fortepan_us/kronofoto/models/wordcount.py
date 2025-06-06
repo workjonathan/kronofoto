@@ -4,6 +4,9 @@ from .place import Place
 
 
 class WordCount(models.Model):
+    """To facilitate fast searches of multi word fields like tag, term, and
+    caption.
+    """
     FIELDS = [
         ("CA", "Caption"),
         ("TA", "Tag"),
@@ -19,6 +22,8 @@ class WordCount(models.Model):
 
 
 class PlaceWordCount(models.Model):
+    """To facilitate fast searches of places which can have multi word names.
+    """
     place = models.ForeignKey(Place, models.CASCADE)
     word = models.CharField(max_length=64, blank=True, db_index=True)
 

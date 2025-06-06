@@ -54,9 +54,13 @@ class Term(Collectible, models.Model):  # type: ignore
     objects = TermQuerySet.as_manager()
 
     def natural_key(self) -> str:
+        "Terms are unique so natural keys can be used."
         return self.term
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        """Update the slug field before saving the record. Slugs are not used so
+        this is probably not necessary.
+        """
         if not self.slug:
             self.slug = slugify(self.term)
         super().save(*args, **kwargs)

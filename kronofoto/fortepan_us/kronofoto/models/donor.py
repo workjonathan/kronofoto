@@ -18,6 +18,11 @@ class DonorQuerySet(models.QuerySet):
 
 
 class Donor(Collectible, models.Model):
+    """A Donor represents a person. They may have contributed Photos, scanned
+    Photos, or been the Photographer.  Donors have a home Archive. Though not
+    implemented, Photos that belong to an archive other than their home Archive
+    might be vacation photos, which have a different character.
+    """
     archive = models.ForeignKey(Archive, on_delete=models.PROTECT, null=False)
     last_name = models.CharField(max_length=257, blank=True)
     first_name = models.CharField(max_length=256, blank=True)
@@ -37,6 +42,11 @@ class Donor(Collectible, models.Model):
         indexes = (models.Index(fields=["last_name", "first_name"]),)
 
     def ldid(self) -> str:
+        """Get the LD ID url that has a definition for this Donor
+
+        Returns:
+            str: The LD ID url defining this Donor.
+        """
         from .ldid import LdId
         try:
             return LdId.objects.get(content_type__app_label="kronofoto", content_type__model="donor", object_id=self.id).ld_id
@@ -47,6 +57,11 @@ class Donor(Collectible, models.Model):
             )
 
     def display_format(self) -> str:
+        """Display in firstname lastname format.
+
+        Returns:
+            str: The user's name in display format.
+        """
         return (
             "{first} {last}".format(first=self.first_name, last=self.last_name)
             if self.first_name
@@ -54,6 +69,7 @@ class Donor(Collectible, models.Model):
         )
 
     def is_owned_by(self, actor: RemoteActor) -> bool:
+        """Determines whether this Donor is owned by a Remote Archive."""
         return self.archive.actor is not None and self.archive.actor.id == actor.id
 
     def __str__(self) -> str:

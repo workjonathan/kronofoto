@@ -9,6 +9,7 @@ import icontract
 
 
 class Exhibit(models.Model):
+    """Data storage for user created exhibits."""
     name = models.CharField(max_length=256)
     title = models.CharField(max_length=1024, blank=True)
     description = models.TextField(blank=True)
@@ -20,6 +21,12 @@ class Exhibit(models.Model):
 
     @icontract.require(lambda self: self.id != None)
     def menu_items(self) -> List[Tuple[str, Dict[str, str]]]:
+        """Generate a list of actions with link attributes for User's profile
+        pertaining to this exhibit.
+
+        Returns:
+            list[(str, dict[str, str])]: The str is the action name and the dict represents attributes for the href.
+        """
         return [
             (
                 "Edit",
@@ -66,9 +73,19 @@ class Exhibit(models.Model):
 
     @icontract.require(lambda self: self.pk is not None)
     def get_main_menu_url(self) -> str:
+        """Gets the edit URL for this exhibit.
+
+        Returns:
+            str: The edit URL for this exhibit.
+        """
         return reverse("kronofoto:exhibit-edit", kwargs={"pk": self.pk})
 
     def get_absolute_url(self, *args: Any, **kwargs: Any) -> str:
+        """Gets the canonical URL for this exhibit.
+
+        Returns:
+            str: The URL for this exhibit.
+        """
         return reverse(
             "kronofoto:exhibit-view",
             kwargs={"pk": self.pk, "title": slugify(self.name)},
@@ -82,6 +99,9 @@ class Exhibit(models.Model):
 
 
 class Card(models.Model):
+    """Card model. A card is a combination of a Photo, title, description, and
+    small text and some presentation style information.
+    """
     class CardType(models.IntegerChoices):
         TEXT_ONLY = 0
         FULL = 1
@@ -104,6 +124,14 @@ class Card(models.Model):
     fill_style = models.IntegerField(choices=Fill.choices, default=Fill.CONTAIN)
 
     def photo_choices(self) -> models.Q:
+        """Get a Query for finding Photo objects that belong to the Collection
+        associated with the exhibit. There is an associated Collection because
+        it would be difficult for Users to find the photo they want without some
+        filtering.
+
+        Returns:
+            models.Q: A query for Photos associated with the exhibit's Collection.
+        """
         return (
             models.Q(collection__id=self.exhibit.collection.id)
             if self.exhibit.collection
@@ -119,6 +147,7 @@ class Card(models.Model):
 
 
 class PhotoCard(Card):
+    """A deprecated Proxy class."""
 
     def photo_choices(self) -> models.Q:
         return (
@@ -132,6 +161,7 @@ class PhotoCard(Card):
 
 
 class Figure(models.Model):
+    """Some cards have a set of Photos that they display side by side."""
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     caption = models.TextField(blank=True, default="")
     photo = models.ForeignKey(Photo, null=True, on_delete=models.SET_NULL, blank=True)
