@@ -33,26 +33,46 @@ from fortepan_us.kronofoto.reverse import reverse, resolve
 from marshmallow.exceptions import ValidationError
 import icontract
 
+
 class InvalidArchive(Exception):
     pass
 
-
-
 class ServiceActor(models.Model):
+    """This stores encryption keys for the application itself. It is used to
+    authenticate messages about Places and other data that is complicated and
+    shared by archives and instances.
+    """
     serialized_public_key = models.BinaryField(null=True, blank=True)
     encrypted_private_key = models.BinaryField(null=True, blank=True)
 
     @classmethod
     def get_instance(cls) -> "ServiceActor":
+        """Get the first instance and create one if it does not exist. There
+        should be only one.
+
+        Returns:
+            ServiceActor: The ServiceActor
+        """
         if cls.objects.exists():
             return cls.objects.all()[0]
         else:
             return cls.objects.create()
 
     def ldid(self) -> str:
+        """Get the LD ID url that describes this actor.
+
+        Returns:
+            str: A URL
+        """
         return reverse("kronofoto:activitypub-main-service")
 
     def guaranteed_public_key(self) -> bytes:
+        """Get the ServiceActor's public key. It will create a new one if this
+        fails.
+
+        Returns:
+            bytes: The ServiceActor's public key.
+        """
         if not self.serialized_public_key:
             self.generate_new_keys()
         if isinstance(self.serialized_public_key, memoryview):
@@ -67,9 +87,15 @@ class ServiceActor(models.Model):
 
     @property
     def keyId(self) -> str:
+        """The LD ID for this actor's main key.
+
+        Returns:
+            str: A URL.
+        """
         return reverse("kronofoto:activitypub-main-service") + "#mainKey"
 
     def generate_new_keys(self) -> None:
+        """Create new public/private key pairs and save to database."""
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
@@ -89,6 +115,11 @@ class ServiceActor(models.Model):
 
     @property
     def private_key(self) -> rsa.RSAPrivateKey:
+        """Get this actor's private key. It will create a new one if this fails.
+
+        Returns:
+            rsa.RSAPrivateKey: The private key.
+        """
         if self.encrypted_private_key:
             if isinstance(self.encrypted_private_key, bytes):
                 byte_key = self.encrypted_private_key
@@ -108,6 +139,11 @@ class ServiceActor(models.Model):
 
     @property
     def public_key(self) -> rsa.RSAPublicKey:
+        """Get this actor's public key. It will create a new one if this fails.
+
+        Returns:
+            rsa.RSAPublicKey: The public key.
+        """
         if self.serialized_public_key:
             if isinstance(self.serialized_public_key, bytes):
                 byte_key = self.serialized_public_key
@@ -128,6 +164,13 @@ class ServiceActor(models.Model):
 
 class RemoteActorQuerySet(models.QuerySet["RemoteActor"]):
     def get_or_create_by_profile(self, profile: str) -> Tuple[RemoteActor | None, bool]:
+        """Get or create a remote actor by LD ID. The profile may be for a local
+        URL, in which case it will not do anything. If it is for a remote url,
+        it will load it remotely if necessary.
+
+        Returns:
+            (RemoteActor | None, bool): The first value will be None if the url is local or the remote url is not valid. The second value will be True if the RemoteActor is saved locally as a result of this call.
+        """
         from .activity_dicts import RemoteActorGetOrCreate
         return RemoteActorGetOrCreate(queryset=self, profile=profile).actor
 
@@ -156,6 +199,11 @@ class RemoteActor(models.Model): # type: ignore[django-manager-missing]
     objects = RemoteActorQuerySet.as_manager()
 
     def public_key(self) -> bytes | None:
+        """Get the remote actor's public key.
+
+        Returns:
+            Optional[bytes]: The remote actor's public key, if it can be loaded. If it cannot, it will return None.
+        """
         def _() -> str | None:
             resp = requests.get(
                 self.profile,
@@ -182,6 +230,9 @@ class FollowServiceOutbox(models.Model):
         ]
 
 class FollowServiceRequest(models.Model):
+    """Used to track when a remote actor has requested to follow the application
+    itself (eg for Place data).
+    """
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
     request_id = models.URLField()
 
@@ -193,6 +244,7 @@ class FollowServiceRequest(models.Model):
         ]
 
 class FollowArchiveRequest(models.Model):
+    "Used to track requests to follow an Archive."
     remote_actor = models.ForeignKey(RemoteActor, on_delete=models.CASCADE)
     request_id = models.URLField()
     archive = models.ForeignKey(
@@ -220,6 +272,15 @@ class ArchiveQuerySet(models.QuerySet):
         and result[0].actor.profile == profile
     )
     def get_remote_by_profile(self, profile: str) -> Tuple["Archive", bool]:
+        """Get a remote archive by profile. The Archive must exist for this
+        function to succeed.
+
+        Args:
+            profile (str): The LD ID of the remote Archive.
+
+        Returns:
+            (Archive, bool): The Archive with the requested LD ID, and whether the Archive is created, so False.
+        """
         return (
             Archive.objects.get(
                 actor__profile=profile, type=Archive.ArchiveType.REMOTE
@@ -227,19 +288,29 @@ class ArchiveQuerySet(models.QuerySet):
             False,
         )
 
-    @icontract.ensure(
-        lambda self, profile, result: result
-        == Archive.objects.filter(
-            actor__profile=profile, type=Archive.ArchiveType.REMOTE
-        ).exists()
-    )
     def have_remote_by_profile(self, profile: str) -> bool:
+        """Determine whether the database has the requested remote Archive.
+
+        Args:
+            profile (str): The LD ID of the remote Archive.
+
+        Returns:
+            bool: True if the remote archive is known to our database.
+        """
         return Archive.objects.filter(
             actor__profile=profile, type=Archive.ArchiveType.REMOTE
         ).exists()
 
     @icontract.ensure(lambda self, profile, result: not result or result in profile)
     def extract_slug(self, profile: str) -> Optional[str]:
+        """Attempt to extract the archive's slug from the profile url.
+
+        Args:
+            profile (str): The LD ID of the remote Archive.
+
+        Returns:
+            Optional[str]: If the slug can be extracted, return the slug. Otherwise it will be None.
+        """
         try:
             if not Site.objects.filter(domain=urlparse(profile).netloc).exists():
                 return None
@@ -266,6 +337,16 @@ class ArchiveQuerySet(models.QuerySet):
         or (result[0].actor is not None and result[0].actor.profile == profile)
     )
     def create_remote_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+        """Create an Archive representing a remote actor.
+
+        It is only valid to call this with a non-local url.
+
+        Args:
+            profile (str): The LD ID of the remote Archive.
+
+        Returns:
+            (Optional[Archive], bool): The first in the tuple is the Archive. If the remote definition cannot be loaded, it will return None. The second in the tuple represents whether the Archive has been created as a result of this call. It will be False if the remote data cannot be loaded or parsed.
+        """
         from fortepan_us.kronofoto.models.activity_dicts import ArchiveValue
         data_dict = requests.get(
             profile,
@@ -313,6 +394,16 @@ class ArchiveQuerySet(models.QuerySet):
         )[1]
     )
     def get_local_by_profile(self, profile: str) -> Tuple[Optional["Archive"], bool]:
+        """Get a local Archive by the profile url.
+
+        It is not valid to call this function with a non-local url.
+
+        Args:
+            profile (str): The LD ID of the local archive.
+
+        Returns:
+            (Optional[Archive], bool): The first in the tuple will be None if the archive does not exist. The second represents whether this call resulted in the Archive being created, and it will be False.
+        """
         slug = self.extract_slug(profile)
         if (
             slug is not None
@@ -331,6 +422,14 @@ class ArchiveQuerySet(models.QuerySet):
     def get_or_create_by_profile(
         self, profile: str
     ) -> Tuple[Optional["Archive"], bool]:
+        """Get an Archive by its LD ID profile URL.
+
+        Args:
+            profile (str): The LD ID profile URL.
+
+        Returns:
+            (Optional[Archive], bool): The first value will be the Archive if it exists and can be loaded, otherwise None. The second value conveys whether the Archive was created as a result of the call.
+        """
         server_domain = urlparse(profile).netloc
         if Site.objects.filter(domain=server_domain).exists():
             return self.get_local_by_profile(profile)
@@ -341,6 +440,9 @@ class ArchiveQuerySet(models.QuerySet):
 
 
 class Archive(models.Model):
+    """Archives are basically the work of a moderation team. Photos and Donors
+    both belong to an Archive.
+    """
     class ArchiveType(models.IntegerChoices):
         LOCAL = 0
         REMOTE = 1
@@ -369,6 +471,11 @@ class Archive(models.Model):
     objects = ArchiveQuerySet.as_manager()
 
     def guaranteed_public_key(self) -> bytes:
+        """Get a public key for this archive.
+
+        Returns:
+            bytes: The public key for this Archive.
+        """
         if not self.serialized_public_key:
             self.generate_new_keys()
         if isinstance(self.serialized_public_key, memoryview):
@@ -381,6 +488,12 @@ class Archive(models.Model):
             assert False, "unreachable"
 
     def ldid(self) -> str:
+        """The LD ID url for this archive. It is the `profile` that is
+        frequently referenced. It should only be used for local actors.
+
+        Returns:
+            str: A LD ID url.
+        """
         return reverse(
             "kronofoto:activitypub_data:archives:actor",
             kwargs={"short_name": self.slug},
@@ -388,6 +501,11 @@ class Archive(models.Model):
 
     @property
     def keyId(self) -> str:
+        """The LD ID url for this archive's public key.
+
+        Returns:
+            str: A LD ID for a key.
+        """
         return (
             reverse(
                 "kronofoto:activitypub_data:archives:actor",
@@ -397,6 +515,7 @@ class Archive(models.Model):
         )
 
     def generate_new_keys(self) -> None:
+        """Generate a new public/private key pair."""
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
@@ -416,6 +535,12 @@ class Archive(models.Model):
 
     @property
     def private_key(self) -> rsa.RSAPrivateKey:
+        """Get a private key for this Archive. If it fails, it will create a new
+        key pair.
+
+        Returns:
+            rsa.RSAPrivateKey: The private key for this archive.
+        """
         if self.encrypted_private_key:
             if isinstance(self.encrypted_private_key, bytes):
                 byte_key = self.encrypted_private_key
@@ -434,6 +559,12 @@ class Archive(models.Model):
 
     @property
     def public_key(self) -> rsa.RSAPublicKey:
+        """Get a public key for this Archive. If it fails, it will create a new
+        key pair.
+
+        Returns:
+            rsa.RSAPublicKey: The public key for this archive.
+        """
         if self.serialized_public_key:
             if isinstance(self.serialized_public_key, bytes):
                 byte_key = self.serialized_public_key
@@ -459,6 +590,14 @@ class Archive(models.Model):
 
 class ArchiveAgreementQuerySet(models.QuerySet):
     def object_for(self, slug: str) -> models.QuerySet["ArchiveAgreement"]:
+        """Get the ArchiveAgreements for a given slug.
+
+        Args:
+            slug (str): The slug of the Archive.
+
+        Returns:
+            ArchiveAgreementQuerySet: The Agreements for this archive slug.
+        """
         return self.filter(archive__slug=slug)
 
 
@@ -471,6 +610,16 @@ class ArchiveAgreement(models.Model):
 
     @property
     def session_key(self) -> str:
+        """Get a session key for this agreement.
+
+        Agreements can be agreed to by anonymous users, so these keys are used
+        to save agreement for anonymous users. The Agreements are also
+        versioned, so if the user agrees to an older version, they should be
+        asked again to agree to the new version.
+
+        Returns:
+            str: A session key.
+        """
         return "kf.agreement.{}.{}".format(self.pk, self.version)
 
     def __str__(self) -> str:
@@ -481,6 +630,9 @@ class ArchiveAgreement(models.Model):
 
 
 class UserAgreement(models.Model):
+    """Used to store whether a user has agreed while logged in, so users do not
+    need to be asked to agree multiple times.
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False
     )
@@ -501,6 +653,9 @@ class UserAgreement(models.Model):
 
 
 class ArchiveUserPermission(models.Model):
+    """User permissions can be granted for certain archive associated data on a
+    per-archive basis.
+    """
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
@@ -522,6 +677,8 @@ class ArchiveUserPermission(models.Model):
 
 
 class ArchiveGroupPermission(models.Model):
+    """Groups can also have permissions on a per-archive basis."""
+
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     permission = models.ManyToManyField(Permission)
