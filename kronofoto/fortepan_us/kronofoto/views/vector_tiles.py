@@ -122,12 +122,6 @@ class TileLayerBase:
 class PlaceMapTile(TileLayerBase):
     "PlaceMapTiles appear on the map view. Places are visible as polygons."
 
-    @property
-    def place_type(self) -> str:
-        if self.zoom < 3:
-            return "Country"
-        else:
-            return "US State"
     @cached_property
     def places(self) -> Iterable[models.Place]:
         """Returns the Places that should be included in this tile.
@@ -174,6 +168,9 @@ class PlaceMapTile(TileLayerBase):
         features_ = cache.get_or_set(f"kronofoto:PlaceMapTile(x={self.x}, y={self.y}, zoom={self.zoom})", _, 60*10)
         if features_ is None:
             return []
+        for feature in features_:
+            place = models.Place.objects.get(id=feature['properties']['id'])
+            feature['properties']['id'] = models.Photo.objects.filter(places__id=place.id).count()
         return [
             {
                 "name": "places",
@@ -234,7 +231,7 @@ class PhotoSphereTile(TileLayerBase):
 
 
 
-#@cache_page(60*10)
+@cache_page(60*10)
 def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
     """View function for Place map tiles.
 
