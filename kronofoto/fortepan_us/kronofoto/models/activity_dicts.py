@@ -27,22 +27,38 @@ T = TypeVar("T")
 
 @dataclass
 class RemoteActorGetOrCreate:
+    """Handle Remote Actor get or create."""
     queryset: QuerySet["RemoteActor"]
     profile: str
 
     @cached_property
     def is_local(self) -> bool:
+        """Determine whether the requested LD ID is a local URL or not.
+
+        Returns:
+            bool: True if the URL is a local URL.
+        """
         server_domain = urlparse(self.profile).netloc
         return Site.objects.filter(domain=server_domain).exists()
 
     @cached_property
     def local_actor(self) -> RemoteActor | None:
+        """Get a locally cached RemoteActor, if it is available.
+
+        Returns:
+            RemoteActor | None: The RemoteActor if available. Otherwise None.
+        """
         try:
             return self.queryset.get(profile=self.profile)
         except RemoteActor.DoesNotExist:
             return None
 
     def do_request(self) -> requests.Response:
+        """Request a actor definition from a remote server.
+
+        Returns:
+            requests.Response: The Response corresponding to the profile url.
+        """
         return requests.get(
             self.profile,
             headers={
@@ -51,6 +67,14 @@ class RemoteActorGetOrCreate:
         )
 
     def parse_json(self, data: Dict[str, Any]) -> ActorValue | None:
+        """Parse and validate a dict to a ActorValue.
+
+        Args:
+            data (dict[str, Any]): A data object definition of an Actor.
+
+        Returns:
+            ActorValue | None: None if `data` is not in the right form. All required fields must be in `data` and of the correct type.
+        """
         try:
             from fortepan_us.kronofoto.models.activity_schema import ActorSchema
             return ActorSchema().load(data)
@@ -60,10 +84,25 @@ class RemoteActorGetOrCreate:
 
 
     def create_remoteactor(self) -> RemoteActor:
+        """Creates and saves a remote actor for this profile.
+
+        Returns:
+            RemoteActor: A RemoteActor object for this profile.
+        """
         return RemoteActor.objects.create(profile=self.profile)
 
     @property
     def actor(self) -> Tuple[RemoteActor | None, bool]:
+        """Get the RemoteActor for the requested profile.
+
+        The profile URL must be a remote URL. If the actor is already in the
+        database, the record will be looked up and returned. If the actor is
+        unknown, it will be requested. If the resulting JSON definition is
+        valid, it will be saved for next time.
+
+        Returns:
+            (RemoteActor | None, bool): The first value is None if the profile is not for a valid actor. The second value is True if the RemoteActor was created as a result of this operation.
+        """
         if self.is_local: # I don't think this should happen. At least, not in the course of processing a valid object.
             return None, False
 
