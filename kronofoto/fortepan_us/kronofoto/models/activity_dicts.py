@@ -123,12 +123,19 @@ class RemoteActorGetOrCreate:
 
 @dataclass
 class LdDonorGetOrCreator:
+    """Handle getting or creating Donors by LD-ID. Mostly creating though.
+    """
     queryset: "LdIdQuerySet"
     ld_id: str
     data: DonorValue
 
     @cached_property
     def archive(self) -> Archive | None:
+        """Get the Archive referenced in the data.
+
+        Returns:
+            Archive | None: The Archive object, or None if there is no attributedTo value or the Archive fails to load.
+        """
         if len(self.data.attributedTo) > 0:
             return Archive.objects.get_or_create_by_profile(
                 profile=self.data.attributedTo[0]
@@ -137,9 +144,19 @@ class LdDonorGetOrCreator:
             return None
 
     def reconcile(self, db_obj: Donor) -> None:
+        """Reconcile the data with the database."""
         self.data.reconcile(db_obj)
 
+    @icontract.require(lambda self, db_obj: db_obj.id >= 1)
     def ldid(self, db_obj: Donor) -> "LdId":
+        """Get or Create an LdId object for this Donor.
+
+        Args:
+            db_obj (Donor): The `Donor` object which should already be saved to the database.
+
+        Returns:
+            LdId: The LdId object for this Donor.
+        """
         ct = ContentType.objects.get_for_model(Donor)
         ldid, _ = self.queryset.get_or_create(
             ld_id=self.data.id,
@@ -151,6 +168,12 @@ class LdDonorGetOrCreator:
     @icontract.ensure(lambda self, result: result[1] == (result[0] is not None))
     @icontract.ensure(lambda self, result: result[0] is None or result[0].content_object is not None)
     def object(self) -> tuple["LdId" | None, bool]:
+        """Get the LdId object that references a Donor having the same values as
+        `data` at the requested LD-ID.
+
+        Returns:
+            (LdId | None, bool): The first value is the LdId, or None if the associated Archive cannot be loaded. The second value will be True if the Donor was created as result of this call.
+        """
         if (
             len(self.data.attributedTo) == 0 or
             urlparse(self.data.attributedTo[0]).netloc
@@ -168,21 +191,41 @@ class LdDonorGetOrCreator:
 
 @dataclass
 class LdPlaceGetOrCreator:
+    """Handle getting or creating Places.
+    """
     queryset: "LdIdQuerySet"
     ld_id: str
     data: PlaceValue
 
     @cached_property
     def actor(self) -> RemoteActor | None:
+        """Load an Actor referenced in the attributedTo field.
+
+        Returns:
+            RemoteActor | None: A RemoteActor or None if it cannot be loaded.
+        """
         return RemoteActor.objects.get_or_create_by_profile(
             profile=self.data.attributedTo[0]
         )[0]
 
     def ldid(self, db_obj: Place) -> "LdId":
+        """Create an LdId object for the given Place.
+
+        Args:
+            db_obj (Place): A Place object.
+
+        Returns:
+            LdId: An LdId object with a reference to this Place.
+        """
         return LdId.objects.create(ld_id=self.data.id, content_object=db_obj)
 
     @property
     def object(self) -> tuple["LdId" | None, bool]:
+        """Get an LdId object for this Place.
+
+        Returns:
+            (LdId | None, bool): The first value is the LdId object for this Place. It will be None if the owner's domain does not match the Place's domain, or the owner cannot be loaded or the parent cannot be loaded. The second will be True if the Place was created as a result of this call.
+        """
         if urlparse(self.data.attributedTo[0]).netloc != urlparse(self.ld_id).netloc:
             return None, False
         actor = self.actor
@@ -203,16 +246,29 @@ class LdPlaceGetOrCreator:
 
 @dataclass
 class LdObjectGetOrCreator:
+    """Handle Getting or Creating a variety of objects.
+    """
     queryset: "LdIdQuerySet"
     ld_id: str
 
     @cached_property
     def is_local(self) -> bool:
+        """Determine whether the LD ID is local.
+
+        Returns:
+            bool: True if the LD ID refers to our own urls.
+        """
         server_domain = urlparse(self.ld_id).netloc
         return Site.objects.filter(domain=server_domain).exists()
 
     @property
     def resolved(self) -> ResolveResults | None:
+        """For local urls, attempt to resolve the URL and extract url
+        parameters.
+
+        Returns:
+            ResolveResult | None: If the LD ID URL cannot be parsed, it will be None. Otherwise, the parsed URL data.
+        """
         try:
             return resolve(self.ld_id)
         except Resolver404:
@@ -221,6 +277,11 @@ class LdObjectGetOrCreator:
     @cached_property
     @icontract.ensure(lambda self, result: not result or result.archive.type == Archive.ArchiveType.LOCAL)
     def resolved_donor(self) -> Donor | None:
+        """For a Resolved Donor URL, find the referenced Donor.
+
+        Returns:
+            Donor | None: A Local Donor matching the archive and ID from the LD ID URL. It will be None if there is no such Donor.
+        """
         assert self.resolved
         try:
             return Donor.objects.get(
@@ -233,6 +294,11 @@ class LdObjectGetOrCreator:
 
     @cached_property
     def existing_ldid(self) -> "LdId" | None:
+        """Get the requested LdId if it exists.
+
+        Returns:
+            LdId | None: None if there is no such LD ID saved yet. Otherwise it is the LdId for the LD ID.
+        """
         try:
             return self.queryset.get(ld_id=self.ld_id)
         except self.queryset.model.DoesNotExist:
@@ -241,6 +307,11 @@ class LdObjectGetOrCreator:
     @cached_property
     @icontract.ensure(lambda self, result: not result or result.owner == None)
     def resolved_place(self) -> Place | None:
+        """Get the Place referenced in the resolved local LD ID if it exists.
+
+        Returns:
+            Place | None: The Local Place referenced by in the ID ID url params.
+        """
         assert self.resolved
         try:
             return Place.objects.get(
@@ -252,6 +323,11 @@ class LdObjectGetOrCreator:
 
     @cached_property
     def remote_data(self) -> dict[str, Any]:
+        """Make a GET request to the LD ID URL.
+
+        Returns:
+            dict[str, Any]: The request is made and the JSON is parsed to a dictionary.
+        """
         return requests.get(
             self.ld_id,
             headers={
@@ -262,6 +338,25 @@ class LdObjectGetOrCreator:
     @property
     @icontract.ensure(lambda self, result: (not result[1] or result[0] is not None) and (result[0] is None or result[0].content_object is not None))
     def object(self) -> tuple["LdId" | None, bool]:
+        """Get an object by LD ID URL. It can be either a Donor or a Place.
+
+        If the URL is local, parse the url and extract url parameters. Use them
+        to find the right object and kind of object in the database, if it
+        exists. In this case, the LdId object returned will not be from the
+        database and should not be saved.
+
+        If the URL is not local, attempt to find the object from the database to
+        avoid making a network request in the event that the object is already
+        known to the application.
+
+        If the LdId object is not found, or the LdId object does not point to a
+        valid object, a network request is made. The network request may fail or
+        not load a JSON or not be structured correctly. If so, return None.
+        Otherwise the data is saved to the database and returned.
+
+        Returns:
+            (LdId | None, bool): The first is the LdId that points to the database object. It will be None if the function fails to load the object for various reasons. The second will be True if the object was created as a result of the call.
+        """
         if self.is_local:
             if (
                 self.resolved and
@@ -320,6 +415,14 @@ class LdObjectGetOrCreator:
             return None, False
 
     def placegetorcreate(self, object: dict[str, Any]) -> Any | None:
+        """Attempt to parse `object` as a PlaceValue.
+
+        Args:
+            object (dict[str, Any]): An object, most likely from JSON.
+
+        Returns:
+            LdPlaceGetOrCreator | None: It will be None if `object` could not be parsed as a PlaceValue.
+        """
         try:
             from . import activity_schema
             data: PlaceValue = (
@@ -331,6 +434,14 @@ class LdObjectGetOrCreator:
             return None
 
     def donorgetorcreate(self, object: dict[str, Any]) -> LdDonorGetOrCreator | None:
+        """Attempt to parse `object` as a DonorValue.
+
+        Args:
+            object (dict[str, Any]): An object, most likely from JSON.
+
+        Returns:
+            LdDonorGetOrCreator | None: It will be None if `object` could not be parsed as a DonorValue.
+        """
         try:
             from . import activity_schema
             data: DonorValue = (
@@ -340,6 +451,7 @@ class LdObjectGetOrCreator:
         except ValidationError as e:
             print(e, object)
             return None
+
 @dataclass
 class NewLdIdPlace:
     queryset: "LdIdQuerySet"
