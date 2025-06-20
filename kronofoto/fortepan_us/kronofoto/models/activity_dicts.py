@@ -454,13 +454,19 @@ class LdObjectGetOrCreator:
 
 @dataclass
 class NewLdIdPlace:
+    """Logic to handle adding a new Place from an Actor."""
     queryset: "LdIdQuerySet"
     owner: RemoteActor
     object: PlaceValue
     place_upserter: "PlaceUpserter"
 
     @property
-    def result(self) -> tuple["LdId" | None, bool]:
+    def result(self) -> tuple["LdId", Literal[True]]:
+        """Get the Place's LdId.
+
+        Returns:
+            (LdId, bool): The first value is the LdId referencing a new Place. The second value is True because it will always create a new Place.
+        """
         ct = ContentType.objects.get_for_model(Place)
         place = Place.objects.create(
             place_type=self.place_upserter.place_type,
@@ -484,13 +490,17 @@ class UpdateLdIdPlace:
     place_upserter: "PlaceUpserter"
 
     @property
-    @icontract.ensure(lambda self, result: not result[1])
     @icontract.ensure(lambda self, result: (
         ldid := result[0],
         ldid is None or (isinstance(ldid.content_object, Place) and self.owner.id == ldid.content_object.owner.id)
         )[-1]
     )
-    def result(self) -> tuple["LdId" | None, bool]:
+    def result(self) -> tuple["LdId" | None, Literal[False]]:
+        """Update a Place and return the LdId referencing it.
+
+        Returns:
+            (LdId | None, bool): The first value is the LdId of the updated Place. It will be None if `owner` does not have the right to update the Place. The second value will be False because this object does not create Places.
+        """
         place = self.ld_id.content_object
         if not isinstance(place, Place) or place.owner is None or place.owner.id != self.owner.id:
             return None, False
@@ -504,16 +514,27 @@ class UpdateLdIdPlace:
 
 @dataclass
 class PlaceUpserter:
+    "Update or Create a Place from a PlaceValue."
     queryset: "LdIdQuerySet"
     owner: RemoteActor
     object: PlaceValue
 
     @cached_property
     def place_type(self) -> PlaceType:
+        """Get a PlaceType object matching the type of our `object`.
+
+        Returns:
+            PlaceType: A PlaceType of the same type given in the `object`.
+        """
         return PlaceType.objects.get_or_create(name=self.object.placeType)[0]
 
     @cached_property
     def parent(self) -> Place | None:
+        """If our `object` has a parent, get or create it by the LD ID.
+
+        Returns:
+            Place | None: The parent Place, or None if there is no Parent, or it could not be loaded.
+        """
         parent = self.object.parent
         if parent:
             ldid, created = LdObjectGetOrCreator(queryset=self.queryset, ld_id=parent).object
@@ -523,6 +544,11 @@ class PlaceUpserter:
 
     @cached_property
     def upserter(self) -> UpdateLdIdPlace | NewLdIdPlace:
+        """Get the Place reconciliation strategy.
+
+        Returns
+            UpdateLdIdPlace | NewLdIdPlace: The strategy that will be used to save the `object` to the database.
+        """
         try:
             placeid = self.object.id
             return UpdateLdIdPlace(
@@ -541,10 +567,16 @@ class PlaceUpserter:
 
     @property
     def result(self) -> tuple["LdId" | None, bool]:
+        """Get the LdId that references a Place described in the `object`.
+
+        Returns:
+            (LdId | None, bool): The first value is the LdId referencing the Place. It will be None if the `owner` does not have privileges to update an existing Place. The second value will be True if the Place was created as a result of this call.
+        """
         return self.upserter.result
 
 
 class JsonError(Exception):
+    """Exception class for communicating errors to views."""
     def __init__(self, message: str, status: int):
         self.message = message
         self.status = status
@@ -563,7 +595,6 @@ LdIdUrl = NewType("LdIdUrl", Url)
 
 def str_to_ldidurl(s: str) -> LdIdUrl:
     return cast(LdIdUrl, s)
-
 
 ActivitypubCategory = TypedDict(
     "ActivitypubCategory",
@@ -636,13 +667,22 @@ class ActivitypubImage(ActivitypubObject, total=False):
 
 @dataclass
 class CategoryValue:
+    """A parsed Category."""
     slug: str
     name: str
 
     def get_or_create(self) -> Category:
+        """Get or Create a category with these values.
+
+        Returns:
+            Category: A Category with this name and slug.
+        """
         return Category.objects.get_or_create(slug=self.slug, defaults={"name": self.name})[0]
 
 def require_archive(func: Callable[[Any, Archive], str]) -> Callable[[Any, RemoteActor], str]:
+    """A decorator to turn a function that takes an Archive into a function that
+    takes a Remote actor.
+    """
     def _(self: Any, actor: RemoteActor) -> str:
         try:
             return func(self, Archive.objects.get(actor=actor))
@@ -653,11 +693,13 @@ def require_archive(func: Callable[[Any, Archive], str]) -> Callable[[Any, Remot
 
 @dataclass
 class PageValue:
+    """A parsed Page"""
     name: str
     url: str
 
 @dataclass
 class PhotoValue:
+    """A parsed Photo"""
     id: str
     content: str
     category: CategoryValue
@@ -676,6 +718,14 @@ class PhotoValue:
 
     @staticmethod
     def from_photo(photo: Photo) -> PhotoValue:
+        """Create a PhotoValue from a Photo object.
+
+        Args:
+            photo (Photo): The Photo to convert to a PhotoValue.
+
+        Returns:
+            PhotoValue: A PhotoValue representation of the Photo.
+        """
         donor = None
         if photo.donor:
             donor = photo.donor.ldid()
