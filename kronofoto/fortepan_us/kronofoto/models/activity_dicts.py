@@ -761,6 +761,17 @@ class PhotoValue:
         )
 
     def upsert(self, actor: Archive) -> str:
+        """Either add or update a photo record in the database.
+
+        If the photo is already known and is owned by another actor, this
+        operation will raise an exception.
+
+        Args:
+            actor (Archive): The actor attempting to update the Photo.
+
+        Returns:
+            str: "created" if created, else "updated"
+        """
         try:
             ldid = LdId.objects.get(ld_id=self.id)
             if ldid.content_object is None:
@@ -818,14 +829,29 @@ class PhotoValue:
 
     @require_archive
     def create(self, actor: Archive) -> str:
+        """Wrapper for upsert.
+
+        Args:
+            actor (Archive): The actor attempting to create a photo.
+        Returns:
+            str: "created" if created, else "updated"
+        """
         return self.upsert(actor)
 
     @require_archive
     def update(self, actor: Archive) -> str:
+        """Wrapper for upsert.
+
+        Args:
+            actor (Archive): The actor attempting to update a photo.
+        Returns:
+            str: "created" if created, else "updated"
+        """
         return self.upsert(actor)
 
 @dataclass
 class DonorValue:
+    "A parsed donor"
     id: str
     attributedTo: List[str]
     name: Optional[str]
@@ -834,6 +860,14 @@ class DonorValue:
 
     @staticmethod
     def from_donor(donor: Donor) -> DonorValue:
+        """Extract a DonorValue from a Donor
+
+        Args:
+            donor (Donor): A Donor.
+
+        Returns:
+            DonorValue: The DonorValue having the same values as `donor`.
+        """
         return DonorValue(
             id=donor.ldid(),
             attributedTo=[donor.archive.ldid()],
@@ -843,11 +877,27 @@ class DonorValue:
         )
 
     def reconcile(self, donor: Donor) -> None:
+        """Copy these values to a Donor.
+
+        Args:
+            donor (Donor): The donor that should be updated to have these values.
+        """
         donor.first_name = self.firstName
         donor.last_name = self.lastName
         donor.save()
 
     def upsert(self, actor: Archive) -> str:
+        """Update or create a Donor from this value.
+
+        If the donor already exists and is owned by a different actor, this will
+        raise an exception.
+
+        Args:
+            actor (Archive): The actor attempting to update or create the Donor.
+
+        Returns:
+            str: "created" if created else "updated"
+        """
         try:
             ldid = LdId.objects.get(ld_id=self.id)
             if ldid.content_object is None:
@@ -874,14 +924,17 @@ class DonorValue:
 
     @require_archive
     def create(self, actor: Archive) -> str:
+        """A wrapper for upsert."""
         return self.upsert(actor)
 
     @require_archive
     def update(self, actor: Archive) -> str:
+        """A wrapper for upsert."""
         return self.upsert(actor)
 
 @dataclass
 class PlaceValue:
+    "A parsed Place"
     id: str
     name: str
     attributedTo: List[str]
@@ -892,6 +945,14 @@ class PlaceValue:
 
     @staticmethod
     def from_place(place: Place) -> PlaceValue:
+        """Make a PlaceValue out of a Place.
+
+        Args:
+            place (Place): A Place to make a PlaceValue from.
+
+        Returns:
+            PlaceValue: A PlaceValue describing the given Place.
+        """
         return PlaceValue(
             id=place.ldid(),
             attributedTo=[reverse("kronofoto:activitypub-main-service")],
@@ -903,13 +964,23 @@ class PlaceValue:
         )
 
     def upsert(self, actor: RemoteActor) -> str:
+        """Create or Update a Place.
+
+        Args:
+            actor (RemoteActor): The actor attempting to create or update the Place.
+
+        Returns:
+            (str): "created if created else "updated"
+        """
         val, created = PlaceUpserter(queryset=LdId.objects.all(), owner=actor, object=self).result
         return "created" if created else "updated"
 
     def create(self, actor: RemoteActor) -> str:
+        "A wrapper for upsert."
         return self.upsert(actor)
 
     def update(self, actor: RemoteActor) -> str:
+        "A wrapper for upsert."
         return self.upsert(actor)
 
 @dataclass
