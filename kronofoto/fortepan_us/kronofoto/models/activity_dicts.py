@@ -985,6 +985,7 @@ class PlaceValue:
 
 @dataclass
 class CollectionPageValue(Generic[T]):
+    "Represents a parsed Activity Stream Collection."
     id: str
     next: Optional[str]
     items: List[T]

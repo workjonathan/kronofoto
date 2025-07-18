@@ -239,7 +239,7 @@ def photo_activity(sender: Type[Photo], instance: Photo, created: bool, raw: Any
 def photo_save(sender: Any, instance: Photo, created: Any, raw: Any, using: Any, update_fields: Any, **kwargs: Any) -> None:
     WordCount.objects.filter(photo=instance, field='CA').delete()
     WordCount.objects.filter(photo=instance, field='PL').delete()
-    counts = Counter(w for w in re.split(r"[^\w\']+", instance.caption.lower()) if w.strip())
+    counts = Counter(w for w in re.split(r"[^\w\']+", instance.caption.lower()) if w.strip() and len(w.strip()) <= 64)
     total = sum(counts.values())
     wordcounts = [
         WordCount(photo=instance, word=w, field='CA', count=counts[w]/total) for w in counts
