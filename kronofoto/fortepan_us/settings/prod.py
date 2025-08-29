@@ -153,6 +153,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'kfcache',
+        'OPTIONS': {"MAX_ENTRIES": 50000},
     }
 }
 
