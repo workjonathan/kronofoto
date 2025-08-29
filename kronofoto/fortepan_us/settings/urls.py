@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 
 
 urlpatterns = [
+    path(r'robots.txt', include('robots.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('fortepan_us.kronofoto.auth.urls')),
     path('docs/', include("cms.urls")),
