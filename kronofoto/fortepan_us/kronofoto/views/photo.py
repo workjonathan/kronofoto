@@ -36,7 +36,7 @@ class OrderedDetailBase(DetailView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        queryset = self.get_queryset().only('id', 'year', 'original')
+        queryset = self.get_queryset()
         if not isinstance(queryset, PhotoQuerySet):
             raise ValueError
         object = self.object
@@ -69,7 +69,7 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
         return self.form_class(self.request.GET)
 
     def form_valid(self, form: CarouselForm) -> HttpResponse:
-        queryset = self.object_list = self.get_queryset().only('id', 'year', 'original')
+        queryset = self.object_list = self.get_queryset()
         object = get_object_or_404(self.model, pk=form.cleaned_data['id'])
         offset = form.cleaned_data['offset']
         assert object.year
