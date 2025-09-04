@@ -50,17 +50,20 @@
                 {% endwith %}
                 <p>
                     <form 
-                        class="form form--add-tag" 
-                        id="add-tag-form" 
-                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' 
-                        hx-target="previous ul"
-                        hx-push-url="false"
-                        hx-put="{% krono_url "kronofoto:tags-view" url_kwargs photo=photo.id %}" 
+                      class="form form--add-tag"
+                      x-data="{ open: false }"
+                      :class="open && 'expanded'"
+                      id="add-tag-form"
+                      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                      hx-target="previous ul"
+                      hx-push-url="false"
+                      hx-put="{% krono_url "kronofoto:tags-view" url_kwargs photo=photo.id %}"
+                      @submit="$nextTick(() => $refs.text.value = '')"
                     >
-                        <div class="wrapper">
-                            <a class="link--icon"><i class="plus-icon-circle"></i><span>Add new tag</span></a>
-                            <input type="text" name="tag" />
-                            <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
+                        <div class="wrapper" >
+                          <a class="link--icon" @click="open = true; $refs.text.focus()"><i class="plus-icon-circle"></i><span>Add new tag</span></a>
+                          <input type="text" name="tag" x-ref="text" @blur="open = false"/>
+                          <button id="add-tag-button-in-metadata-popup"><i class="fa fa-plus-circle"></i></button>
                         </div>
                     </form>
                 </p>

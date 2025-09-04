@@ -1270,13 +1270,6 @@ class KronofotoContext {
                 },
             })
         })
-        $(elem)
-            .find(".form--add-tag .link--icon")
-            .on("click", (e) => {
-                let $form = $(e.currentTarget).closest("form")
-                $form.addClass("expanded")
-                $("input[type=text]", $form).get(0).focus()
-            })
         // this logic should not be client side
         $(elem)
             .find("[data-save-list]")
@@ -1451,15 +1444,6 @@ export const initHTMXListeners = (
     context,
     {lateLoad = false, rootSelector = "body", exhibit_mode = ""} = {},
 ) => {
-    // context here means our root element
-    // necessary?
-    $(context).on("click", (e) => {
-        if (!$(".form--add-tag input", context).is(":focus")) {
-            let $form = $(".form--add-tag input", context).closest("form")
-            $form.removeClass("expanded")
-        }
-    })
-
     // context here means our root element and this would probably be simpler with server side templates.
     $(context).on("on.zf.toggler", function (e) {
         if ($(e.target).hasClass("gallery__popup")) {
