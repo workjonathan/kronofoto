@@ -1,0 +1,5 @@
+{% load permissions %}
+
+{% if request.user|has_view_or_change_permission:photo %}
+    <a href="{{ photo.get_edit_url }}" class="photo-menu-popup__edit-btn"></a>
+{% endif %}

@@ -27,8 +27,11 @@ const init = () => {
     AlpineJS.start()
     initFoundation(document)
     initClipboardJS(document)
-    document.addEventListener("htmx:beforeSwap", (evt) => {
-        console.log({evt})
+    document.addEventListener("htmx-process", (evt) => {
+        htmx.process(evt.target)
+    })
+    document.addEventListener("htmx:afterSwap", (evt) => {
+        AlpineJS.initTree(event.detail.target)
     })
 }
 

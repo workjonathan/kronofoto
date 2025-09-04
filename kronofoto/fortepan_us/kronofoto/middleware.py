@@ -1,4 +1,6 @@
 from django.http import HttpRequest, HttpResponse
+from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from typing import Callable, Union, Optional, Dict, Any
 from django.urls import resolve
 from django.utils.cache import patch_vary_headers
@@ -13,8 +15,26 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
+import logging
 import json
 from fortepan_us.kronofoto.signed_requests import SignatureHeaders
+from fortepan_us.kronofoto import models
+
+logger = logging.getLogger(__name__)
+
+class AnonymizerProtectionMiddleware:
+    unsafe_cookies = ['csrftoken', 'sessionid']
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        response = self.get_response(request)
+        for cookie in list(response.cookies):
+            if cookie.lower() in self.unsafe_cookies:
+                response.headers['Cache-Control'] = 'no-store'
+                return response
+        #response.headers['Cache-Control'] = 'public; max-age=3600'
+        return response
 
 
 # could be a decorator
@@ -27,14 +47,15 @@ class CorsMiddleware:
         resolve_match = resolve(request.path_info)
         if 'kronofoto' in resolve_match.app_names:
             response['Access-Control-Allow-Origin'] = '*'
-            response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger, us.fortepan.position'
-            patch_vary_headers(response, ['embedded', 'constraint', 'hx-request', 'hx-trigger']) # type: ignore
+            response['Access-Control-Allow-Headers'] = 'constraint, embedded, hx-current-url, hx-request, hx-target, hx-trigger'
+            #patch_vary_headers(response, ['embedded', 'constraint', 'hx-request', 'hx-target']) # type: ignore
             hxtriggers = response.headers.get('Hx-Trigger', None)
             if hxtriggers:
                 hxtriggersdict = json.loads(hxtriggers)
             else:
                 hxtriggersdict = {}
-            response.headers['Hx-Trigger'] = json.dumps(hxtriggersdict)
+            if hxtriggersdict:
+                response.headers['Hx-Trigger'] = json.dumps(hxtriggersdict)
         return response
 
 class OverrideVaryMiddleware:
@@ -44,7 +65,7 @@ class OverrideVaryMiddleware:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         response = self.get_response(request)
         if hasattr(response, "override_vary"):
-            response.headers['Vary'] = ""
+            del response.headers['Vary']
             response.cookies.clear()
         return response
 

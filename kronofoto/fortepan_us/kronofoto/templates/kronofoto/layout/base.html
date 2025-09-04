@@ -40,7 +40,7 @@
 }
   </style>
 </head>
-<body hx-push-url="true" theme="{{ theme.name }}">
+<body hx-push-url="true" theme="{{ theme.name }}" x-data="{ loggedIn: false }">
   {% gtm_body %}
   {% block header %}
   {% header %}

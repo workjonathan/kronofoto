@@ -68,6 +68,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'fortepan_us.kronofoto.middleware.AnonymizerProtectionMiddleware',
     'fortepan_us.kronofoto.middleware.OverrideVaryMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'fortepan_us.kronofoto.middleware.ActorAuthenticationMiddleware',

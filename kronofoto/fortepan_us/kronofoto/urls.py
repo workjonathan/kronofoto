@@ -73,12 +73,7 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
     return directory(route, views.GridView.as_view(), **get_kwargs("gridview"), children=include([
         *directory('<accession:photo>', views.PhotoView.as_view(), **get_kwargs("photoview"), children=include([
             path('original', views.DownloadPageView.as_view(pk_url_kwarg='photo'), **get_kwargs('download')),
-            *directory('list-members', collection.ListMembers.as_view(), **get_kwargs('popup-add-to-list'), children=include([
-                path('new-list', collection.NewList.as_view(), **get_kwargs('popup-new-list')),
-                path('edit', views.AddToList.as_view(), **get_kwargs('add-to-list')),
-            ])),
             path('web-component', webcomponent.WebComponentPopupView.as_view(), **get_kwargs('popup-web-component')),
-            path('tag-members', tags_view, **get_kwargs('tags-view')),
             path('download', downloadpage.DownloadPopupView.as_view(), **get_kwargs('popup-download')),
         ])),
         path('random', views.RandomRedirect.as_view(), **get_kwargs('random-image')),
@@ -99,10 +94,6 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
     *directory('categories', views.category_list, name="materials-list", children=include([
         *build_content_urls("all", with_names=True, kwargs={}),
         *build_content_urls("<slug:category>", with_names=True, kwargs={}),
-    ])),
-    *directory('materials', views.category_list, name="materials-list", children=include([
-        *build_content_urls("all", with_names=False, kwargs={}),
-        *build_content_urls("<slug:category>", with_names=False, kwargs={}),
     ])),
     path('<str:theme>/logo.svg', views.photo.logo_view, name='logosvg'),
     path('<str:theme>/logo-small.svg', views.photo.logo_small_view, name='logosvgsmall'),
@@ -132,6 +123,12 @@ urlpatterns : List[Union[URLPattern, URLResolver]] = [
 ]
 
 urlpatterns = urlpatterns + [
+    path('auth/forms', include("fortepan_us.kronofoto.views.forms")),
+    path('tag-members/<int:photo>', tags_view, name='tags-view'),
+    *directory('list-members/<int:photo>', collection.ListMembers.as_view(), name='popup-add-to-list', children=include([
+        path('new-list', collection.NewList.as_view(), name='popup-new-list'),
+        path('edit', views.AddToList.as_view(), name='add-to-list'),
+    ])),
     path('activitypub/service', views.activitypub.service, name="activitypub-main-service"),
     path('activitypub/service/show', views.activitypub.service_view, name="activitypub-main-service-view"),
     path('activitypub/service/inbox', views.activitypub.service_inbox, name="activitypub-main-service-inbox"),

@@ -66,8 +66,17 @@
         <li>Auto</li>
         -->
       {% endcomment %}
-        <div class="login-container" data-tooltip title="My Account" data-position="bottom" data-alignment="center">
-          {% make_login %}
+        <div 
+            class="login-container" 
+            data-tooltip 
+            title="My Account" 
+            data-position="bottom" 
+            data-alignment="center" 
+            hx-push-url="false" 
+            hx-trigger="load" 
+            hx-get="{% krono_url "kronofoto:auth-forms:login" %}"
+            hx-vals='{ "next": "{{ request.get_full_path | urlencode | escapejs }}" }'
+        >
         </div>
         <div class="hamburger-container">
 
@@ -82,9 +91,6 @@
             <ul class="navigation-menu">
               {% include "kronofoto/components/navigation-menu.html"%}
             </ul>
-            <!-- <li><a href="https://fortepan.hu">Fortepan (Hungary)</a></li>
-            <li><a href="https://fortepan.us/info">Fortepan Concept</a></li>
-            <li><a href="mailto:fortepaniowa@uni.edu">Contact</a></li> -->
           </div>
 
         </div>

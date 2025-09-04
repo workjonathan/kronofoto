@@ -12,6 +12,10 @@ from django.core.exceptions import MultipleObjectsReturned
 from .basetemplate import BasePhotoTemplateMixin
 from fortepan_us.kronofoto.models import Photo
 from fortepan_us.kronofoto.models.photo import PhotoQuerySet
+from fortepan_us.kronofoto.decorators import strip_cookies
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
+from django.utils.decorators import method_decorator
 import json
 from django import forms
 from typing import Any, Tuple, Union, Dict, TYPE_CHECKING
@@ -37,6 +41,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
     paginate_by = settings.GRID_DISPLAY_COUNT
     template_name = "kronofoto/pages/gridview.html"
 
+    @method_decorator(vary_on_headers('Hx-Request', "Cookie"))
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             return super().dispatch(request, *args, **kwargs)

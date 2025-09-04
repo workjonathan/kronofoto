@@ -3,7 +3,10 @@ from django.core.signing import Signer, BadSignature
 from typing import Optional, Any, Dict, Union, List, Tuple
 from dataclasses import dataclass
 from fortepan_us.kronofoto.imageutil import ImageCacher
+from django.views.decorators.cache import cache_control
+from fortepan_us.kronofoto.decorators import strip_cookies
 
+@cache_control(max_age=60*60, public=True)
 def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) -> HttpResponse:
     signer = Signer(salt=f"{block1}/{block2}")
     spec = request.GET.get('i')
@@ -24,6 +27,8 @@ def resize_image(request: HttpRequest, block1: int, block2: int, profile1: str) 
             width=width,
             height=height,
         )
-        return HttpResponse(cacher.precache(), content_type="image/jpeg")
+        resp = HttpResponse(cacher.precache(), content_type="image/jpeg")
+        setattr(resp, 'override_vary', True)
+        return resp
     except BadSignature:
         return HttpResponse("Not found", status=404)

@@ -1,8 +1,17 @@
 {% load permissions %}
+{% load krono_urls %}
 
-{% if request.user|has_view_or_change_permission:photo %}
-<a href="{{ photo.get_edit_url }}" class="photo-menu-popup__edit-btn"></a>
-{% endif %}
+<template x-if="loggedIn">
+    <div 
+        x-init="$dispatch('htmx-process', $el)"
+        hx-swap="outerHTML" 
+        hx-target="this" 
+        hx-push-url="false"
+        hx-trigger="revealed"
+        hx-get="{% krono_url "kronofoto:auth-forms:edit-perm-check" photo=photo.id %}"
+    >
+    </div>
+</template>
 <a href="#" class="photo-menu-popup__close-btn" data-toggle="metadata-popup" data-toggler=".expanded"></a>
 <div class="photo-menu-popup__wrapper">
     {% include "kronofoto/components/popups/metadata.html" %}

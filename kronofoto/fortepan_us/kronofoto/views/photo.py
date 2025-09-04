@@ -23,9 +23,12 @@ import random
 from itertools import cycle, chain, islice
 from dataclasses import dataclass
 import json
-from django.utils.cache import patch_vary_headers
+from django.utils.cache import patch_vary_headers, patch_cache_control
+from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from typing import Any, Optional, Dict, List
+from fortepan_us.kronofoto.decorators import strip_cookies
+
 
 class OrderedDetailBase(DetailView):
     pk_url_kwarg = 'photo'
@@ -33,6 +36,8 @@ class OrderedDetailBase(DetailView):
     def item_count(self) -> int:
         raise NotImplementedError
 
+    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
+        return super().get(*args, **kwargs)
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -94,6 +99,8 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         super().setup(request, *args, **kwargs)
 
+    @method_decorator(cache_page(timeout=300))
+    @method_decorator(vary_on_headers('Hx-Request', 'Hx-Target'))
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.get_form()
         if form.is_valid():
@@ -110,6 +117,14 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     archive_request_class = PhotoRequest
     template_name = "kronofoto/pages/photoview.html"
 
+    @method_decorator(strip_cookies)
+    @method_decorator(cache_page(timeout=None))
+    @method_decorator(vary_on_headers('Hx-Request', "Hx-Target"))
+    #@vary_on_headers('Hx-Request')
+    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
+        resp = super().get(*args, **kwargs)
+        patch_cache_control(resp, max_age=6*60*60, public=True)
+        return resp
 
     def get_object(self, queryset: Optional[QuerySet]=None) -> Photo:
         if queryset is None:
@@ -135,7 +150,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
     def render(self, context: Dict[str, Any], **kwargs: Any) -> HttpResponse:
         response = super().render_to_response(context, **kwargs)
-        patch_vary_headers(response, ('hx-target',))
+        #patch_vary_headers(response, ('hx-target',))
         return response
 
     def render_to_response(self, context: Dict[str, Any], **kwargs: Any) -> HttpResponse:
