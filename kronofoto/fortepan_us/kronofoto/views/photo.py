@@ -112,9 +112,9 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
 
     def get_object(self, queryset: Optional[QuerySet]=None) -> Photo:
-        if not queryset:
+        if queryset is None:
             queryset = self.get_queryset()
-            assert queryset
+            assert queryset is not None
         try:
             return queryset.get(id=self.kwargs['photo'])
         except queryset.model.DoesNotExist:
