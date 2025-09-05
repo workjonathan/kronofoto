@@ -118,7 +118,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
 
     @method_decorator(cache_page(timeout=None))
     @method_decorator(vary_on_headers('Hx-Request', "Hx-Target"))
-    def get(self, request, *args: Any, **kwargs: Any) -> HttpResponse:
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         response = super().get(request, *args, **kwargs)
         if not getattr(request, "anonymized", False):
             patch_vary_headers(response, ["Cookie"])

@@ -44,6 +44,7 @@ DATABASES = {
 INSTALLED_APPS = [
     'robots',
     'django.contrib.admin',
+    'django.contrib.sitemaps',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
