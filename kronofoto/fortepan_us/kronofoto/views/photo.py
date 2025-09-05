@@ -117,7 +117,7 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     template_name = "kronofoto/pages/photoview.html"
 
     @method_decorator(cache_page(timeout=None))
-    @method_decorator(vary_on_headers('Hx-Request', "Hx-Target"))
+    @method_decorator(vary_on_headers('Hx-Request', "Hx-Target", "Embedded", "Constraint"))
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         response = super().get(request, *args, **kwargs)
         if not getattr(request, "anonymized", False):

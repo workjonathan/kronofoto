@@ -43,7 +43,7 @@ class GridView(BasePhotoTemplateMixin, ListView):
     template_name = "kronofoto/pages/gridview.html"
 
     @method_decorator(cache_page(timeout=None))
-    @method_decorator(vary_on_headers('Hx-Request'))
+    @method_decorator(vary_on_headers('Hx-Request', "Embedded", "Constraint"))
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
             response = super().dispatch(request, *args, **kwargs)
