@@ -30,11 +30,9 @@ jobs:
       - name: check types
         run: |
           export SECRET_KEY=fakekey
-          export DJANGO_SETTINGS_MODULE=fortepan_us.settings.dev_no_cms
+          export DJANGO_SETTINGS_MODULE=fortepan_us.settings.dev
           cd kronofoto 
           hatch run manage migrate 
-          hatch run manage createcachetable 
-          export DJANGO_SETTINGS_MODULE=fortepan_us.settings.dev
           hatch run check
 
       - name: Run tests
