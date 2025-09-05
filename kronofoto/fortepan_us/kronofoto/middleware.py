@@ -24,16 +24,26 @@ logger = logging.getLogger(__name__)
 
 class AnonymizerProtectionMiddleware:
     unsafe_cookies = ['csrftoken', 'sessionid']
+    anonymize_paths = ['gridview', 'photoview']
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
+        resolve_match = resolve(request.path_info)
+        anonymized = False
+        if resolve_match.url_name in self.anonymize_paths and 'kronofoto' in resolve_match.app_names and 'collection:' not in request.GET.get('query', ""):
+            for cookie in list(request.COOKIES):
+                if cookie.lower() != 'django_language':
+                    del request.COOKIES[cookie]
+            anonymized = True
+        setattr(request, "anonymized", anonymized)
         response = self.get_response(request)
-        for cookie in list(response.cookies):
-            if cookie.lower() in self.unsafe_cookies:
-                response.headers['Cache-Control'] = 'no-store'
+        if anonymized:
+            for cookie in list(response.cookies):
+                if cookie.lower() in self.unsafe_cookies:
+                    logger.warning("Removing unsafe cookie %s from %s response", cookie, request.path)
+                    del response.cookies[cookie]
                 return response
-        #response.headers['Cache-Control'] = 'public; max-age=3600'
         return response
 
 

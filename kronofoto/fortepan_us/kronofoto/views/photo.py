@@ -99,7 +99,6 @@ class CarouselListView(BasePhotoTemplateMixin, MultipleObjectMixin, TemplateView
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         super().setup(request, *args, **kwargs)
 
-    @method_decorator(cache_page(timeout=300))
     @method_decorator(vary_on_headers('Hx-Request', 'Hx-Target'))
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         form = self.get_form()
@@ -117,14 +116,18 @@ class PhotoView(BasePhotoTemplateMixin, OrderedDetailBase):
     archive_request_class = PhotoRequest
     template_name = "kronofoto/pages/photoview.html"
 
-    @method_decorator(strip_cookies)
     @method_decorator(cache_page(timeout=None))
     @method_decorator(vary_on_headers('Hx-Request', "Hx-Target"))
-    #@vary_on_headers('Hx-Request')
-    def get(self, *args: Any, **kwargs: Any) -> HttpResponse:
-        resp = super().get(*args, **kwargs)
-        patch_cache_control(resp, max_age=6*60*60, public=True)
-        return resp
+    def get(self, request, *args: Any, **kwargs: Any) -> HttpResponse:
+        response = super().get(request, *args, **kwargs)
+        if not getattr(request, "anonymized", False):
+            patch_vary_headers(response, ["Cookie"])
+            patch_cache_control(response, private=True, no_store=True, max_age=0)
+        elif (len(self.kwargs) <= 1 and len(request.GET) == 0) or (len(self.kwargs) == 0 and len(request.GET) <= 1):
+            patch_cache_control(response, public=True, max_age=6*60*60)
+        else:
+            patch_cache_control(response, public=True, max_age=5*60)
+        return response
 
     def get_object(self, queryset: Optional[QuerySet]=None) -> Photo:
         if queryset is None:

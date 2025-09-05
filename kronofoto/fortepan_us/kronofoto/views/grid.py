@@ -16,6 +16,7 @@ from fortepan_us.kronofoto.decorators import strip_cookies
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
+from django.utils.cache import patch_vary_headers, patch_cache_control
 import json
 from django import forms
 from typing import Any, Tuple, Union, Dict, TYPE_CHECKING
@@ -41,10 +42,19 @@ class GridView(BasePhotoTemplateMixin, ListView):
     paginate_by = settings.GRID_DISPLAY_COUNT
     template_name = "kronofoto/pages/gridview.html"
 
-    @method_decorator(vary_on_headers('Hx-Request', "Cookie"))
+    @method_decorator(cache_page(timeout=None))
+    @method_decorator(vary_on_headers('Hx-Request'))
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
-            return super().dispatch(request, *args, **kwargs)
+            response = super().dispatch(request, *args, **kwargs)
+            if not getattr(request, "anonymized", False):
+                patch_vary_headers(response, ["Cookie"])
+                patch_cache_control(response, private=True, no_store=True, max_age=0)
+            elif (len(self.kwargs) <= 1 and len(request.GET) == 0) or (len(self.kwargs) == 0 and len(request.GET) <= 1):
+                patch_cache_control(response, public=True, max_age=6*60*60)
+            else:
+                patch_cache_control(response, public=True, max_age=5*60)
+            return response
         except Redirect as e:
             return redirect(e.url)
 
