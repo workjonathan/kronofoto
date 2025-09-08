@@ -1160,14 +1160,15 @@ class Photo(PhotoBase):
         terms = {str(t) for t in self.terms.all()}
         tags = {str(t) for t in self.get_accepted_tags(user)}
         location = self.location()
-        locations = {location} if location != "Location: n/a" else set()
+        locations = {place.name for place in self.places.all()}
         return (
             terms
             | tags
             | locations
             | {str(self.donor)}
-            # , "history of Iowa", "Iowa", "Iowa History"}
-            # TODO: add these to the archive model as a csv field or something.
+            | {self.archive.name, self.archive.slug}
+            | {self.category.name}
+            | {"history", "historic"}
         )
 
     def notices(self) -> List["LocalContextNotice"]:
