@@ -2,7 +2,7 @@ from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from typing import Callable, Union, Optional, Dict, Any
-from django.urls import resolve
+from django.urls import resolve, Resolver404
 from django.utils.cache import patch_vary_headers
 import base64
 import hashlib
@@ -29,14 +29,17 @@ class AnonymizerProtectionMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        resolve_match = resolve(request.path_info)
         anonymized = False
-        if resolve_match.url_name in self.anonymize_paths and 'kronofoto' in resolve_match.app_names and 'collection:' not in request.GET.get('query', ""):
-            for cookie in list(request.COOKIES):
-                if cookie.lower() != 'django_language':
-                    del request.COOKIES[cookie]
-            anonymized = True
-        setattr(request, "anonymized", anonymized)
+        try:
+            resolve_match = resolve(request.path_info)
+            if resolve_match.url_name in self.anonymize_paths and 'kronofoto' in resolve_match.app_names and 'collection:' not in request.GET.get('query', ""):
+                for cookie in list(request.COOKIES):
+                    if cookie.lower() != 'django_language':
+                        del request.COOKIES[cookie]
+                anonymized = True
+            setattr(request, "anonymized", anonymized)
+        except Resolver404:
+            pass
         response = self.get_response(request)
         if anonymized:
             for cookie in list(response.cookies):
