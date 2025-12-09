@@ -88,7 +88,7 @@ class Exhibit(models.Model):
         """
         return reverse(
             "kronofoto:exhibit-view",
-            kwargs={"pk": self.pk, "title": slugify(self.name)},
+            kwargs={"pk": self.pk, "title": slugify(self.name) or "untitled"},
         )
 
     def str(self) -> str:
