@@ -749,8 +749,9 @@ class MapPlugin2 {
 }
 
 class MapPlugin {
-    constructor({context}) {
+    constructor({htmx, context}) {
         this.context = context
+        this.htmx = htmx
     }
     install({elem}) {
         for (const mapelem of elem.querySelectorAll("[data-map]")) {
@@ -778,14 +779,16 @@ class MapPlugin {
                 mapelem.getAttribute("data-layer"),
                 {
                     attribution: "&copy; fortepan.us",
-                    maxZoom: 20,
                     style: {
-                        stroke: true,
                         color: "#3388ff",
                     },
                     interactive: true,
                 }
-            ).addTo(map)
+            )
+            photoTiles.on("click", (e, x) => {
+                this.htmx.ajax("GET", e.layer.properties.href, "#fi-map-figure")
+            })
+            photoTiles.addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()
@@ -1355,6 +1358,7 @@ class KronofotoContext {
         ]
         for (const cls of plugins) {
             const plugin = new cls({
+                htmx: this.htmx,
                 context: this.context,
                 rootSelector: this.rootSelector,
                 exhibit_mode: this.exhibit_mode,

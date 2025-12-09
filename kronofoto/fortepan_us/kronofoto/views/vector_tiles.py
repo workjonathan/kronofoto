@@ -3,19 +3,24 @@ import mapbox_vector_tile  # type: ignore
 from functools import cached_property
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple, TypedDict, Iterable, TypeVar, Generic
 from django.http import HttpResponse, HttpRequest, JsonResponse
+from typing_extensions import Annotated
 from django.contrib.gis.geos import Point, Polygon, MultiPolygon
 from fortepan_us.kronofoto import models
 from django.contrib.gis.db.models.functions import Transform
+from django.views.decorators.vary import vary_on_headers
 import mercantile # type: ignore
 from dataclasses import dataclass
 import icontract
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
+from fortepan_us.kronofoto.reverse import reverse
 
 T = TypeVar("T")
 
-class FeatureProperties(TypedDict):
+class FeatureProperties(TypedDict, total=False):
     id: int
+    count: int
+    href: str
 
 class Feature(TypedDict):
     properties: FeatureProperties
@@ -228,10 +233,85 @@ class PhotoSphereTile(TileLayerBase):
             },
         ]
 
+class Geom2Dict(TypedDict):
+    geom2: Point
 
+AnnotatedPhoto = Annotated[models.Photo, Geom2Dict]
 
+@dataclass
+class PhotoMapTile(TileLayerBase):
+    "PhotoMapTiles appear on the map view. Photos are visible as markers."
+
+    @cached_property
+    def photos(self) -> Iterable[AnnotatedPhoto]:
+        """Returns the Photo that should be included in this tile.
+
+        Returns:
+            Iterable[models.AnnotatedPhoto]: Photo that should be visible in this tile, with a geom2 field which is the geometry reprojected in EPSG:3857.
+        """
+        return models.Photo.objects.filter(
+            location_point__intersects=self.bbox,
+        ).annotate(geom2=Transform("location_point", 3857))
+
+    def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
+        features_ : list[Feature] = []
+        photos = self.photos
+        bbox = self.bbox.clone()
+        bbox.transform(3857)
+        exmin, eymin, exmax, eymax = bbox.extent
+        SUBDIVISIONS = 8
+        CLUMP_CUTOFF = 5
+        cell_width = (exmax - exmin)/SUBDIVISIONS
+        cell_height = (eymax - eymin)/SUBDIVISIONS
+        subgrid: list[list[list[models.Photo]]] = [[[] for y in range(SUBDIVISIONS)] for y in range(SUBDIVISIONS)]
+
+        for p in self.photos:
+            c_x, c_y = p.geom2.coords # type: ignore
+            xcell = int((c_x - exmin)//cell_width)
+            ycell = int((c_y - eymin)//cell_height)
+            subgrid[xcell][ycell].append(p)
+
+        for x in range(SUBDIVISIONS):
+            for y in range(SUBDIVISIONS):
+                contents = subgrid[x][y]
+                if len(contents) > CLUMP_CUTOFF:
+                    poly = Polygon.from_bbox((
+                        round(((exmin + x * cell_width) - x0) * 4096 / x_span),
+                        round(((eymin + y * cell_height) - y0) * 4096 / y_span),
+                        round(((exmin + (x+1) * cell_width) - x0) * 4096 / x_span),
+                        round(((eymin + (y+1) * cell_height) - y0) * 4096 / y_span),
+                    ))
+                    features_.append(
+                        {
+                            "geometry": poly.wkt,
+                            "properties": {"id": p.id, "count": len(contents)},
+                        }
+                    )
+                else:
+                    for p in contents:
+                        c_x, c_y = p.geom2.coords # type: ignore
+                        point = Point(round((c_x - x0) * 4096 / x_span), round((c_y - y0) * 4096 / y_span))
+                        features_.append(
+                            {
+                                "geometry": point.wkt,
+                                "properties": {
+                                    "id": p.id,
+                                    "href": reverse("kronofoto:map-detail", kwargs={"photo": p.id}),
+                                },
+                            }
+                        )
+
+        if features_ is None:
+            return []
+        return [
+            {
+                "name": "photos",
+                "features": features_,
+            },
+        ]
 
 @cache_page(60*10)
+@vary_on_headers("")
 def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None, zoom: int, x: int, y: int) -> HttpResponse:
     """View function for Place map tiles.
 
@@ -248,7 +328,7 @@ def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: 
     """
     if zoom < 0 or zoom >= 35:
         return HttpResponse("invalid zoom level", status=400)
-    return PlaceMapTile(
+    return PhotoMapTile(
         zoom=zoom,
         x=x,
         y=y,

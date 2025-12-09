@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label="kronofoto" %}">Kronofoto</a>
+&rsaquo; <a href="{% url 'admin:kronofoto_photo_changelist' %}">Photos</a>
+&rsaquo; Batch Upload
+</div>
+{% endblock %}
+
+
+{% block content %}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<style>
+#drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 500px;
+  max-width: 100%;
+  height: 200px;
+  padding: 1em;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  color: slategray;
+}
+
+
+#preview {
+  list-style: none;
+  padding: 0;
+  > .item {
+    width: 100%;
+    height: 100px;
+    > .image {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+    }
+  }
+}
+  </style>
+  <div id="content-main" x-data="{files: []}" x-init="$watch('files', value => console.log(value))">
+    {% block object-tools %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            <li>
+                <a href="{% url "admin:kronofoto_photo_changelist" %}">Switch to List Edit Mode</a></li>
+            </li>
+          {% endblock %}
+        </ul>
+    {% endblock %}
+    <label 
+        @drop.window.prevent
+        @dragover.window.prevent
+        @drop.prevent="
+            files = files.concat([...$event.dataTransfer.items].filter(item => item.kind === 'file' && item.type.startsWith('image/')).map(item => item.getAsFile()))
+        "
+        id="drop-zone"
+        
+    >
+      Drop images here
+    </label>
+    {{ photo_form }}
+    <ul id="preview">
+        <template x-for="file in files">
+            <li class="item">
+                <img class="image" :src="URL.createObjectURL(file)"</img>
+                <span class="name" x-text="file.name"></span>
+            </li>
+        </template>
+    </ul>
+ </div>
+{% endblock %}

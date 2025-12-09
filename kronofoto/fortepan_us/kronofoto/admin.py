@@ -1430,7 +1430,27 @@ class PhotoAdmin(PhotoBaseAdmin):
         info = self.model._meta.app_label, self.model._meta.model_name
         return [
             path("terms", wrap(self.terms_view), name="{}_{}_terms".format(*info)),
+            path("batch_upload", wrap(self.batch_upload_view), name="{}_{}_batchupload".format(*info)),
         ] + super().get_urls()
+
+    def batch_upload_view(self, request: HttpRequest) -> HttpResponse:
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Batch Photo Upload",
+            "subtitle": None,
+            "actions_on_top": self.actions_on_top,
+            "actions_on_bottom": self.actions_on_bottom,
+            "photo_form": PhotoForm()
+        }
+
+        return TemplateResponse(
+            request=request,
+            template="admin/kronofoto/photo/batch-upload.html",
+            context=context,
+        )
 
     def terms_view(self, request: HttpRequest) -> HttpResponse:
         if request.GET.get('archive', "") and request.GET.get("category", ""):
