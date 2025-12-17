@@ -24,7 +24,7 @@
         {% endfor %}
         <div style="height: 100%;" 
             data-map
-            data-layer="/categories/all/map/tiles/{z}/{x}/{y}.mvt"
+            data-layer="{{ tile_url }}"
             data-west="{{ bounds.west }}"
             data-south="{{ bounds.south }}"
             data-east="{{ bounds.east }}"

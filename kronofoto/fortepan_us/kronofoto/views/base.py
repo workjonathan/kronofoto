@@ -4,8 +4,10 @@ from django.core.exceptions import BadRequest
 from django.template.loader import select_template
 from functools import cached_property, wraps
 from fortepan_us.kronofoto.search.expression import Expression
+from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds
 from fortepan_us.kronofoto.search.parser import Parser
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
+from django.contrib.gis.geos import Polygon
 from django.contrib.auth.models import User, AnonymousUser
 from typing import Union, Optional, Dict, Any, Sequence, Callable, TypeVar
 from dataclasses import dataclass, field
@@ -162,6 +164,9 @@ class ArchiveRequest:
                 get_params.pop(key)
             except KeyError:
                 pass
+        for key, value in list(get_params.items()):
+            if not value:
+                get_params.pop(key)
         return get_params
 
     def get_photo_queryset(self) -> PhotoQuerySet:
@@ -193,3 +198,4 @@ class PhotoRequest(ArchiveRequest):
             return 'kronofoto/partials/photoview_partial.html'
         else:
             return super().base_template
+

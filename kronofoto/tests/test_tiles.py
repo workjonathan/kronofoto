@@ -56,7 +56,7 @@ class TestTile(PhotoSphereTile):
 
     @property
     def photospheres(self) -> list[PhotoSphere]:
-        bbox = self.bbox
+        bbox = self.bbox()
         return [sphere for sphere in self._photospheres if sphere.location.within(bbox)]
 
 @hsettings(max_examples=10)

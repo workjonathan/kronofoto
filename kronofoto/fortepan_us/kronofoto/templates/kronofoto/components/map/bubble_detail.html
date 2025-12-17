@@ -1,0 +1,43 @@
+{% load krono_urls %}
+{% load widgets %}
+<style>
+
+.image-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  align-items: stretch;
+  width: 512px;
+  box-sizing: border-box;
+  height: 400px;
+  overflow-y: scroll;
+}
+
+.image-grid a {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #f7f7f7;
+}
+
+.image-grid img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 3px;
+}
+
+
+</style>
+<div class="image-grid">
+{% for photo in photos %}
+    <a 
+        href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
+        {# krono_params get_params #}
+        hx-target="#fi-map-figure" 
+        hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
+    >
+        <img src="{% image_url photo=photo width=256 height=256 %}" height="128" width="128" />
+    </a>
+{% endfor %}
+</div>

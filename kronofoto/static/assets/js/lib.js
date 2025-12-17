@@ -14,7 +14,7 @@ import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
 
-import vectorTileLayer from "leaflet-vector-tile-layer"
+import vectorTileLayer, { defaultFeatureLayer, featureIconLayer, featurePathLayer, featureCircleLayer } from "leaflet-vector-tile-layer"
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -775,18 +775,53 @@ class MapPlugin {
                     maxZoom: 20,
                 },
             ).addTo(map)
+            const icon = new L.Icon.Default()
+            icon.options.iconUrl =
+                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+            icon.options.shadowUrl =
+                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
             const photoTiles = vectorTileLayer(
                 mapelem.getAttribute("data-layer"),
                 {
                     attribution: "&copy; fortepan.us",
-                    style: {
-                        color: "#3388ff",
+                    //featureToLayer: (feature, layerName, n, s) => {
+                    //    return defaultFeatureLayer(feature, layerName, n, s)
+                    //},
+                    style: (feature, layerName, n) => { 
+                        return {
+                            icon: L.icon({
+                                iconUrl: feature.properties.thumb,
+                                iconSize: [45, 45],
+                                iconAnchor: [22, 22] // for 48 it's [-8, 56]. [(48-64)/2, 64 - (64 - 48)/2]
+                            }),
+                            interactive: true,
+                        }
                     },
                     interactive: true,
                 }
             )
             photoTiles.on("click", (e, x) => {
-                this.htmx.ajax("GET", e.layer.properties.href, "#fi-map-figure")
+                if (e.layer.properties.popup_href) {
+                    fetch(e.layer.properties.popup_href).then(resp => resp.text()).then(text => {
+                        const popup = L.popup({maxWidth:500})
+                        popup.setLatLng(e.latlng).setContent(text).openOn(map)
+                        this.htmx.process(popup.getElement())
+                    })
+                }
+                if (e.layer.properties.href) {
+                    const values = this.htmx.values(this.htmx.closest(mapelem, "form"))
+                    const realValues = []
+                    for (const [k,v] of Object.entries(values)) {
+                        if (k.startsWith('bounds:')) {
+                            realValues.push([k,v])
+                        }
+                    }
+                    this.htmx.ajax("GET", e.layer.properties.href, {
+                        target:"#fi-map-figure",
+                        values: Object.fromEntries(realValues),
+                    })
+
+                }
             })
             photoTiles.addTo(map)
             map.fitBounds(bounds)

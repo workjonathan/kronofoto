@@ -2,7 +2,8 @@ from __future__ import annotations
 import mapbox_vector_tile  # type: ignore
 from functools import cached_property
 from typing import Sequence, Union, List, Callable, Dict, Any, Optional, Tuple, TypedDict, Iterable, TypeVar, Generic
-from django.http import HttpResponse, HttpRequest, JsonResponse
+from django.http import HttpResponse, HttpRequest, JsonResponse, QueryDict
+from django.conf import settings
 from typing_extensions import Annotated
 from django.contrib.gis.geos import Point, Polygon, MultiPolygon
 from fortepan_us.kronofoto import models
@@ -14,6 +15,7 @@ import icontract
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 from fortepan_us.kronofoto.reverse import reverse
+from .base import ArchiveRequest, ArchiveReference
 
 T = TypeVar("T")
 
@@ -21,6 +23,8 @@ class FeatureProperties(TypedDict, total=False):
     id: int
     count: int
     href: str
+    popup_href: str
+    thumb: str
 
 class Feature(TypedDict):
     properties: FeatureProperties
@@ -52,8 +56,7 @@ class TileLayerBase:
         """
         return mercantile.bounds(self.x, self.y, self.zoom)
 
-    @property
-    def bbox(self) -> Polygon:
+    def bbox(self, srid: int=4326) -> Polygon:
         """The bounds of this tile as a Polygon.
 
         Returns:
@@ -62,6 +65,8 @@ class TileLayerBase:
         bounds = self.bounds
         poly = Polygon.from_bbox((bounds.west, bounds.south, bounds.east, bounds.north))
         poly.srid = 4326
+        if srid != 4326:
+            poly.transform(srid)
         return poly
 
     @property
@@ -136,7 +141,7 @@ class PlaceMapTile(TileLayerBase):
         """
         return models.Place.objects.zoom(level=self.zoom).filter(
             geom__isnull=False,
-            geom__intersects=self.bbox,
+            geom__intersects=self.bbox(),
         ).annotate(geom2=Transform("geom", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
@@ -210,7 +215,7 @@ class PhotoSphereTile(TileLayerBase):
 
         return models.PhotoSphere.objects.filter(
             location__isnull=False,
-            location__intersects=self.bbox,
+            location__intersects=self.bbox(),
             mainstreetset__id=self.mainstreet,
             **kwargs
         ).annotate(geom=Transform("location", 3857))
@@ -239,8 +244,47 @@ class Geom2Dict(TypedDict):
 AnnotatedPhoto = Annotated[models.Photo, Geom2Dict]
 
 @dataclass
+class TileBounds:
+    xmin: float
+    ymin: float
+    xmax: float
+    ymax: float
+
+    def __post_init__(self) -> None:
+        self.subdivisions = getattr(settings, "SUBDIVISIONS", 4)
+        self.cell_width = (self.xmax - self.xmin)/self.subdivisions
+        self.cell_height = (self.ymax - self.ymin)/self.subdivisions
+
+    def subgrid(self) -> list[list[list[T]]]:
+        return [[[] for y in range(self.subdivisions)] for y in range(self.subdivisions)]
+
+    def get_cell(self, x: float, y: float) -> tuple[int, int]:
+        xcell = int((x - self.xmin)//self.cell_width)
+        ycell = int((y - self.ymin)//self.cell_height)
+        return xcell, ycell
+
+    def get_center(self, x: int, y: int) -> tuple[float, float]:
+        return (
+            round(self.xmin + (x + 0.5) * self.cell_width),
+            round(self.ymin + (y + 0.5) * self.cell_height),
+        )
+
+    def get_polygon(self, x: int, y: int) -> Polygon:
+        poly = Polygon.from_bbox((
+            round(((self.xmin + x * self.cell_width))),
+            round(((self.ymin + y * self.cell_height))),
+            round(((self.xmin + (x+1) * self.cell_width))),
+            round(((self.ymin + (y+1) * self.cell_height))),
+        ))
+        poly.srid = 3857
+        return poly
+
+@dataclass
 class PhotoMapTile(TileLayerBase):
     "PhotoMapTiles appear on the map view. Photos are visible as markers."
+    queryset: models.PhotoQuerySet
+    url_kwargs: Dict[str, Any]
+    get_params: QueryDict
 
     @cached_property
     def photos(self) -> Iterable[AnnotatedPhoto]:
@@ -249,57 +293,72 @@ class PhotoMapTile(TileLayerBase):
         Returns:
             Iterable[models.AnnotatedPhoto]: Photo that should be visible in this tile, with a geom2 field which is the geometry reprojected in EPSG:3857.
         """
-        return models.Photo.objects.filter(
-            location_point__intersects=self.bbox,
+        return self.queryset.filter(
+            location_point__intersects=self.bbox(),
         ).annotate(geom2=Transform("location_point", 3857))
 
     def get_layers(self, *, x_span: float, y_span: float, x0: float, y0: float) -> list[Layer]:
         features_ : list[Feature] = []
         photos = self.photos
-        bbox = self.bbox.clone()
-        bbox.transform(3857)
+        bbox = self.bbox(3857)
         exmin, eymin, exmax, eymax = bbox.extent
-        SUBDIVISIONS = 8
-        CLUMP_CUTOFF = 5
+        tb = TileBounds(*bbox.extent)
+
+        SUBDIVISIONS = getattr(settings, "SUBDIVISIONS", 4)
+        CLUMP_CUTOFF = 1
         cell_width = (exmax - exmin)/SUBDIVISIONS
         cell_height = (eymax - eymin)/SUBDIVISIONS
-        subgrid: list[list[list[models.Photo]]] = [[[] for y in range(SUBDIVISIONS)] for y in range(SUBDIVISIONS)]
+        subgrid: list[list[list[models.Photo]]] = tb.subgrid()
+
+        if self.get_params:
+            params = "?" + self.get_params.urlencode()
+        else:
+            params = ""
 
         for p in self.photos:
             c_x, c_y = p.geom2.coords # type: ignore
-            xcell = int((c_x - exmin)//cell_width)
-            ycell = int((c_y - eymin)//cell_height)
+            xcell, ycell = tb.get_cell(c_x, c_y)
             subgrid[xcell][ycell].append(p)
 
         for x in range(SUBDIVISIONS):
             for y in range(SUBDIVISIONS):
                 contents = subgrid[x][y]
                 if len(contents) > CLUMP_CUTOFF:
-                    poly = Polygon.from_bbox((
-                        round(((exmin + x * cell_width) - x0) * 4096 / x_span),
-                        round(((eymin + y * cell_height) - y0) * 4096 / y_span),
-                        round(((exmin + (x+1) * cell_width) - x0) * 4096 / x_span),
-                        round(((eymin + (y+1) * cell_height) - y0) * 4096 / y_span),
-                    ))
+                    poly = Polygon(
+                        [
+                            (round((x - x0) * 4096 / x_span), round((y - y0) * 4096 / y_span))
+                            for (x, y) in tb.get_polygon(x, y).coords[0]
+                        ]
+                    )
                     features_.append(
                         {
                             "geometry": poly.wkt,
-                            "properties": {"id": p.id, "count": len(contents)},
+                            "properties": {
+                                "id": p.id,
+                                "count": len(contents),
+                                "popup_href": reverse("kronofoto:map-subtile-detail", kwargs={**self.url_kwargs, **{"x": self.x, "y": self.y, "zoom": self.zoom, "subx": x, "suby": y}}) + params
+                            },
                         }
                     )
-                else:
-                    for p in contents:
-                        c_x, c_y = p.geom2.coords # type: ignore
-                        point = Point(round((c_x - x0) * 4096 / x_span), round((c_y - y0) * 4096 / y_span))
-                        features_.append(
-                            {
-                                "geometry": point.wkt,
-                                "properties": {
-                                    "id": p.id,
-                                    "href": reverse("kronofoto:map-detail", kwargs={"photo": p.id}),
-                                },
-                            }
-                        )
+                for p in contents:
+                    c_x, c_y = p.geom2.coords # type: ignore
+                    xcell, ycell = tb.get_cell(c_x, c_y)
+                    px, py = tb.get_center(xcell, ycell)
+                    point = Point(
+                        round((px - x0) * 4096 / x_span),
+                        round((py - y0) * 4096 / y_span),
+                    )
+                    features_.append(
+                        {
+                            "geometry": point.wkt,
+                            "properties": {
+                                "id": p.id,
+                                "href": reverse("kronofoto:map-detail", kwargs={"photo": p.id, **self.url_kwargs}) + params,
+                                "thumb": p.image_url(width=256, height=256),
+                            },
+                        }
+                    )
+                    break
 
         if features_ is None:
             return []
@@ -326,9 +385,16 @@ def photo_tile(request: HttpRequest, /, *, archive: Optional[str]=None, domain: 
     Returns:
         HttpResponse: The response contains the mapbox vector tile, or will return a 400 response if the zoom level is negative or too high.
     """
+    archive_ref = None
+    if archive:
+        archive_ref = ArchiveReference(archive, domain)
+    areq = ArchiveRequest(request=request, archive_ref=archive_ref, category=category)
     if zoom < 0 or zoom >= 35:
         return HttpResponse("invalid zoom level", status=400)
     return PhotoMapTile(
+        queryset=areq.get_photo_queryset(),
+        url_kwargs=areq.url_kwargs,
+        get_params=areq.get_params,
         zoom=zoom,
         x=x,
         y=y,

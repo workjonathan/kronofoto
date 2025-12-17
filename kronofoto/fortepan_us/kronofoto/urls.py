@@ -82,6 +82,7 @@ def build_content_urls(route: str, with_names: bool=False, kwargs: Optional[Dict
         *directory('map', views.map_list, **get_kwargs('map'), children=include([
             path('photosphere', photosphere.map_photosphere_data, **get_kwargs('map-detail-photosphere.json')),
             path("tiles/<int:zoom>/<int:x>/<int:y>.mvt", vector_tiles.photo_tile, **get_kwargs("photo-tile")),
+            path("detail/<int:zoom>/<int:x>/<int:y>/<int:subx>/<int:suby>", map.subtile_detail, **get_kwargs("map-subtile-detail")),
             path('<accession:photo>', views.map_detail, **get_kwargs('map-detail')),
             path('<int:photosphere>', map.detail_photosphere, **get_kwargs('map-detail-photosphere')),
         ])),
