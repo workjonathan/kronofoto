@@ -9,9 +9,115 @@
     svg.leaflet-tile {
         overflow: visible;
     }
+    #photo-grid {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      overflow-x: auto;      /* scroll if thumbnails exceed width */
+      padding: 4px 0;
+      margin: 0;
+      list-style: none;
+    }
+    #photo-grid li img {
+      height: 80px;        /* or whatever max height you want */
+      width: auto;         /* maintain aspect ratio */
+      object-fit: cover;   /* optional: fills height nicely, crops if needed */
+    }
+
+    #photo-grid li {
+      flex: 0 0 auto;        /* keep thumbnail size fixed */
+    }
+    #image-browser {
+	  height: 100%;
+width: 100%;
+	  display: grid;
+	  grid-template-rows: 1fr auto;
+	}
+	#workspace {
+	  grid-row: 1;
+      width: 100%;
+	  overflow: hidden;
+	  display: grid;
+	  grid-template-columns: 1fr 1fr;
+      transition: grid-template-columns 0.1s ease; /* optional */
+	}
+
+	#thumbnail-strip {
+	  grid-row: 2;
+	  overflow-x: auto;
+	  overflow-y: hidden;
+	}
+    @media (max-width: 768px) {
+      #workspace {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr; /* figure on top, map below */
+      }
+    }
+	#image-container {
+	  overflow: hidden;
+	}
+
+	#map-view {
+	  overflow: hidden;
+	}
+	#workspace.no-image {
+	  grid-template-columns: 0fr 1fr;
+	}
+
+	#image-container,
+	#map-view {
+	  min-width: 0;
+	}
+    #image-viewer {
+      width: 100%;       /* fill wrapper horizontally */
+      height: 100%;      /* fill wrapper vertically */
+      margin: 0;         /* reset default figure margins */
+      display: flex;     /* optional, if you want to center content */
+      flex-direction: column;
+    }
+	
+
 </style>
 
 <main class="map-view row expanded">
+  <section id="image-browser">
+    <div id="workspace">
+      <div id="image-container">
+        <figure id="image-viewer">
+            {% block map_figure %}
+            {% endblock %}
+        </figure>
+      </div>
+
+      <div id="map-view">
+        <form class="form" style="height: 100%;" hx-trigger="kronofoto:bounds_changed" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#fi-map-result">
+        {% for field in form %}
+        {{ field.as_hidden }}
+        {% endfor %}
+        <div style="height: 100%;" 
+            data-map
+            data-layer="{{ tile_url }}"
+            data-west="{{ bounds.west }}"
+            data-south="{{ bounds.south }}"
+            data-east="{{ bounds.east }}"
+            data-north="{{ bounds.north }}"
+        ></div>
+      </div>
+    </div>
+
+    <div id="thumbnail-strip">
+        <ul id="photo-grid">
+            <li>
+                {% for photo in photos %}
+                {% include "kronofoto/components/map-grid-image.html" %}
+                    {# <a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a> #}
+                {% endfor %}
+        </ul>
+    </div>
+  </section>
+</main>
+{% endblock content %}
+    {% comment %}
     <section class="map-view__left columns small-12 medium-6" id="fi-map-result" style="height:100%">
         {% block map_figure %}
         {% endblock %}
@@ -59,5 +165,4 @@
         </div>
         </form>
     </section>
-</main>
-{% endblock content %}
+    {% endcomment %}

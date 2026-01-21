@@ -43,6 +43,8 @@ class MapRequest(ArchiveRequest):
             # use db functions area and intersection to calculate percentage of the intersection and include places that
             # have more than some threshold intersection with our bounds.
             # also exclude places with no intersection to potentially speed it up.
+            # Reasonable alternative: is the centroid in view? Most of the time, the centroid will not be in view if we
+            # are looking at a city and the polygon is large (like the USA). Will fail for some locations.
             q = Q(place__geom__within=bounds)
             if include_geocoded is not None:
                 q &= Q(location_point__isnull=not include_geocoded)
