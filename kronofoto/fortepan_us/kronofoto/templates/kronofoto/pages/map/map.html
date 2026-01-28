@@ -74,19 +74,22 @@ width: 100%;
       margin: 0;         /* reset default figure margins */
       display: flex;     /* optional, if you want to center content */
       flex-direction: column;
+      position: relative;
+      background: #e5e5e5;
+      --bottom-controls-height: 4.5rem;
     }
 	
 
 </style>
 
 <main class="map-view row expanded">
-  <section id="image-browser">
-    <div id="workspace">
+  <section id="image-browser" x-data="{no_image: false}">
+    <div id="workspace" :class="{ 'no-image': no_image }">
       <div id="image-container">
-        <figure id="image-viewer">
+        <div id="image-viewer" x-data="{ activePanel: undefined }">
             {% block map_figure %}
             {% endblock %}
-        </figure>
+        </div>
       </div>
 
       <div id="map-view">
