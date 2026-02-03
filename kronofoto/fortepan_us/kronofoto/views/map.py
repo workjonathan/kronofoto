@@ -5,6 +5,7 @@ from typing import Optional, Any, overload, Dict
 from .base import ArchiveRequest, PhotoQuerySet, ArchiveReference
 from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds
 from django.contrib.gis.geos import Polygon
+from django.contrib.gis.db.models.functions import Centroid
 from functools import cached_property
 from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair
 from fortepan_us.kronofoto.views.vector_tiles import PhotoMapTile, TileBounds
@@ -32,8 +33,10 @@ class MapRequest(ArchiveRequest):
     def map_bounds(self) -> Bounds:
         return self.form.cleaned_data['map_bounds']
 
-    def get_photo_queryset(self, include_geocoded: Optional[bool]=None) -> PhotoQuerySet:
-        qs = super().get_photo_queryset().order_by()
+    def get_photo_queryset(self, *, use_spatial=True, include_geocoded: Optional[bool]=None) -> PhotoQuerySet:
+        if not use_spatial:
+            return super().get_photo_queryset()
+        qs = super().get_photo_queryset().filter(place__isnull=False).filter(place__geom__isnull=False).order_by().annotate(centroid=Centroid("place__geom"))
         if (self.form.is_valid() and
             self.form.cleaned_data['search_bounds'] is not None
         ):
@@ -45,11 +48,11 @@ class MapRequest(ArchiveRequest):
             # also exclude places with no intersection to potentially speed it up.
             # Reasonable alternative: is the centroid in view? Most of the time, the centroid will not be in view if we
             # are looking at a city and the polygon is large (like the USA). Will fail for some locations.
-            q = Q(place__geom__within=bounds)
+            q = Q(centroid__within=bounds)
+            #q = Q(place__geom__within=bounds)
             if include_geocoded is not None:
                 q &= Q(location_point__isnull=not include_geocoded)
-            qs.filter(q)
-
+            qs = qs.filter(q)
         return qs
 
 
@@ -58,6 +61,9 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     if short_name:
         archive_ref = ArchiveReference(short_name, domain)
     areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
+    if areq.is_hx_request and areq.hx_target == "#image-viewer":
+        return HttpResponse("")
+
     context = areq.common_context
     url_kwargs = areq.url_kwargs
     tile_url = reverse(
@@ -75,6 +81,7 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     qs = areq.get_photo_queryset()[:48]
     context["tile_url"] = tile_url
     context['form'] = areq.form
+    context['no_image'] = True
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
     context['mapviewclass'] = 'current-view'
@@ -149,11 +156,13 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
             pass
     if tile_query_params:
         tile_url += "?" + tile_query_params.urlencode()
+    context["list_url"] = "{}?{}".format(reverse("kronofoto:map", kwargs={k: v for (k,v) in url_kwargs.items() if k != "photo"}), areq.get_params.urlencode())
+    context['no_image'] = False
     context['tile_url'] = tile_url
     qs = areq.get_photo_queryset(include_geocoded=False)
     context['form'] = areq.form
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
-    context['photo'] = get_object_or_404(areq.get_photo_queryset(), id=photo)
+    context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False), id=photo)
     context['mapviewclass'] = 'current-view'
     return TemplateResponse(request, context=context, template="kronofoto/pages/map/map-detail.html")

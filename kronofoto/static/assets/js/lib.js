@@ -831,14 +831,15 @@ class MapPlugin {
                 const e = bounds.getEast()
                 const n = bounds.getNorth()
                 const s = bounds.getSouth()
-                const form = mapelem.closest("form")
-                form.querySelector("[name='bounds:west']").value = w
-                form.querySelector("[name='bounds:east']").value = e
-                form.querySelector("[name='bounds:north']").value = n
-                form.querySelector("[name='bounds:south']").value = s
                 mapelem.dispatchEvent(
-                    new Event("kronofoto:bounds_changed", {
+                    new CustomEvent("kronofoto:bounds_changed", {
                         bubbles: true,
+                        detail: {
+                            n, 
+                            s, 
+                            e, 
+                            w,
+                        },
                     }),
                 )
             })

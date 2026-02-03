@@ -93,7 +93,7 @@
 
   <div class="button-row top-row">
     <div class="left-buttons">
-    <button class="" @click="no_image = true">X</button>
+    <button class="" @click="no_image = true" hx-get="{{ list_url }}" hx-target="#image-viewer">X</button>
     </div>
     <div class="right-buttons">
     <button class="">Zoom</button>

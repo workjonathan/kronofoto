@@ -83,28 +83,34 @@ width: 100%;
 </style>
 
 <main class="map-view row expanded">
-  <section id="image-browser" x-data="{no_image: false}">
-    <div id="workspace" :class="{ 'no-image': no_image }">
+  <section id="image-browser" x-data="{ no_image: {{ no_image|yesno:"true,false" }}, west: 0, east: 0, north: 0, south: 0 }">
+    <div id="workspace" :class="{ 'no-image': no_image }" @kronofoto:bounds_changed="
+        $el.querySelector('[name=&quot;bounds:west&quot;]').value = $event.detail.w;
+        $el.querySelector('[name=&quot;bounds:east&quot;]').value = $event.detail.e;
+        $el.querySelector('[name=&quot;bounds:south&quot;]').value = $event.detail.s;
+        $el.querySelector('[name=&quot;bounds:north&quot;]').value = $event.detail.n;
+        ">
       <div id="image-container">
         <div id="image-viewer" x-data="{ activePanel: undefined }">
+            <form style="height: 100%;" hx-trigger="kronofoto:bounds_changed from:#workspace" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#photo-grid" hx-select="#photo-grid" hx-swap="outerHTML">
+            {% for field in form %}
+            {{ field.as_hidden }}
+            {% endfor %}
+            </form>
             {% block map_figure %}
             {% endblock %}
         </div>
       </div>
 
       <div id="map-view">
-        <form class="form" style="height: 100%;" hx-trigger="kronofoto:bounds_changed" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#fi-map-result">
-        {% for field in form %}
-        {{ field.as_hidden }}
-        {% endfor %}
-        <div style="height: 100%;" 
-            data-map
-            data-layer="{{ tile_url }}"
-            data-west="{{ bounds.west }}"
-            data-south="{{ bounds.south }}"
-            data-east="{{ bounds.east }}"
-            data-north="{{ bounds.north }}"
-        ></div>
+          <div style="height: 100%;" 
+              data-map
+              data-layer="{{ tile_url }}"
+              data-west="{{ bounds.west }}"
+              data-south="{{ bounds.south }}"
+              data-east="{{ bounds.east }}"
+              data-north="{{ bounds.north }}"
+          ></div>
       </div>
     </div>
 
@@ -113,7 +119,6 @@ width: 100%;
             <li>
                 {% for photo in photos %}
                 {% include "kronofoto/components/map-grid-image.html" %}
-                    {# <a href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" hx-target="#fi-map-figure" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"><img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" /></a> #}
                 {% endfor %}
         </ul>
     </div>
