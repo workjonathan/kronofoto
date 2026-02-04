@@ -83,26 +83,25 @@ width: 100%;
 </style>
 
 <main class="map-view row expanded">
-  <section id="image-browser" x-data="{ no_image: {{ no_image|yesno:"true,false" }}, west: 0, east: 0, north: 0, south: 0 }">
+  <section id="image-browser" x-data="{ no_image: {{ no_image|yesno:"true,false" }} }">
     <div id="workspace" :class="{ 'no-image': no_image }" @kronofoto:bounds_changed="
         $el.querySelector('[name=&quot;bounds:west&quot;]').value = $event.detail.w;
         $el.querySelector('[name=&quot;bounds:east&quot;]').value = $event.detail.e;
         $el.querySelector('[name=&quot;bounds:south&quot;]').value = $event.detail.s;
         $el.querySelector('[name=&quot;bounds:north&quot;]').value = $event.detail.n;
+        $dispatch('kronofoto:bounds_form_changed');
         ">
       <div id="image-container">
         <div id="image-viewer" x-data="{ activePanel: undefined }">
-            <form style="height: 100%;" hx-trigger="kronofoto:bounds_changed from:#workspace" hx-get="{% krono_url "kronofoto:map" url_kwargs %}" hx-target="#photo-grid" hx-select="#photo-grid" hx-swap="outerHTML">
-            {% for field in form %}
-            {{ field.as_hidden }}
-            {% endfor %}
-            </form>
-            {% block map_figure %}
-            {% endblock %}
+            {% if photo %}
+                {% include "kronofoto/partials/map-detail_partial.html" %}
+            {% else %}
+                {% include "kronofoto/partials/map_partial.html" %}
+            {% endif %}
         </div>
       </div>
 
-      <div id="map-view">
+      <div id="map-view" @kronofoto:open-viewer="no_image = false">
           <div style="height: 100%;" 
               data-map
               data-layer="{{ tile_url }}"
@@ -110,6 +109,7 @@ width: 100%;
               data-south="{{ bounds.south }}"
               data-east="{{ bounds.east }}"
               data-north="{{ bounds.north }}"
+              x-init="$watch('no_image', value => $dispatch('viewer-changed'))"
           ></div>
       </div>
     </div>

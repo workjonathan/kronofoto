@@ -4,6 +4,7 @@
 {% block image_attrs %}
     href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}" 
     hx-target="#image-viewer"
+    @click="no_image = false"
     hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
 {% endblock %}
 {% block photosphere_attrs %}

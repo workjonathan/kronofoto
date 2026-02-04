@@ -30,9 +30,10 @@ const init = () => {
     document.addEventListener("htmx-process", (evt) => {
         htmx.process(evt.target)
     })
-    document.addEventListener("htmx:afterSwap", (evt) => {
-        AlpineJS.initTree(event.detail.target)
-    })
+    // now it is not necessary again?
+    //document.addEventListener("htmx:afterSwap", (evt) => {
+    //    AlpineJS.initTree(event.detail.target)
+    //})
 }
 
 const ready = (fn) => {

@@ -34,7 +34,8 @@
     <a 
         href="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
         {# krono_params get_params #}
-        hx-target="#fi-map-figure" 
+        hx-target="#image-viewer" 
+        @click="no_image = false"
         hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
     >
         <img src="{% image_url photo=photo width=256 height=256 %}" height="128" width="128" />

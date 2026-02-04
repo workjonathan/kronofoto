@@ -33,7 +33,7 @@ class MapRequest(ArchiveRequest):
     def map_bounds(self) -> Bounds:
         return self.form.cleaned_data['map_bounds']
 
-    def get_photo_queryset(self, *, use_spatial=True, include_geocoded: Optional[bool]=None) -> PhotoQuerySet:
+    def get_photo_queryset(self, *, use_spatial: bool=True, include_geocoded: Optional[bool]=None) -> PhotoQuerySet:
         if not use_spatial:
             return super().get_photo_queryset()
         qs = super().get_photo_queryset().filter(place__isnull=False).filter(place__geom__isnull=False).order_by().annotate(centroid=Centroid("place__geom"))
@@ -61,8 +61,6 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     if short_name:
         archive_ref = ArchiveReference(short_name, domain)
     areq = MapRequest(request=request, archive_ref=archive_ref, category=category)
-    if areq.is_hx_request and areq.hx_target == "#image-viewer":
-        return HttpResponse("")
 
     context = areq.common_context
     url_kwargs = areq.url_kwargs
@@ -85,7 +83,13 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
     context['photos'] = qs
     context['bounds'] = areq.map_bounds
     context['mapviewclass'] = 'current-view'
-    return TemplateResponse(request, context=context, template="kronofoto/pages/map/map.html")
+    if areq.is_hx_request and areq.hx_target == "image-viewer":
+        return TemplateResponse(request, context=context, template="kronofoto/partials/map_partial.html")
+    if areq.is_hx_request and areq.hx_target == "photo-grid":
+        template = "kronofoto/pages/map/map.html"
+    else:
+        template = "kronofoto/pages/map/map.html"
+    return TemplateResponse(request, context=context, template=template)
 
 def detail_photosphere(request: HttpRequest, *, photosphere: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
     archive_ref = None
@@ -165,4 +169,9 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context['bounds'] = areq.map_bounds
     context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False), id=photo)
     context['mapviewclass'] = 'current-view'
-    return TemplateResponse(request, context=context, template="kronofoto/pages/map/map-detail.html")
+    print(request.headers)
+    if areq.is_hx_request and areq.hx_target == "image-viewer":
+        template = "kronofoto/partials/map-detail_partial.html"
+    else:
+        template = "kronofoto/pages/map/map-detail.html"
+    return TemplateResponse(request, context=context, template=template)

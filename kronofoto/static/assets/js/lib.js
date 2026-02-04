@@ -809,7 +809,8 @@ class MapPlugin {
                     })
                 }
                 if (e.layer.properties.href) {
-                    const values = this.htmx.values(this.htmx.closest(mapelem, "form"))
+                    const selector = mapelem.getAttribute("data-form-selector") || "#image-viewer form"
+                    const values = this.htmx.values(document.querySelector(selector))
                     const realValues = []
                     for (const [k,v] of Object.entries(values)) {
                         if (k.startsWith('bounds:')) {
@@ -817,12 +818,15 @@ class MapPlugin {
                         }
                     }
                     this.htmx.ajax("GET", e.layer.properties.href, {
-                        target:"#fi-map-figure",
+                        target:"#image-viewer",
                         values: Object.fromEntries(realValues),
                     })
-
+                    mapelem.dispatchEvent(new Event("kronofoto:open-viewer", {
+                        bubbles: true,
+                    }))
                 }
             })
+            mapelem.addEventListener("viewer-changed", evt => setTimeout(() => map.invalidateSize(), 250))
             photoTiles.addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
