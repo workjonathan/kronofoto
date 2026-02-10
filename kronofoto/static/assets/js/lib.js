@@ -35,27 +35,26 @@ function thumbnailFeatureLayer(feature, layerName, pxPerExtent, options) {
 
     const g = SVG.create("g")
 
+    // Thumbnail
+    const img = SVG.create("image")
+    img.setAttribute("x", -24)
+    img.setAttribute("y", -24)
+    img.setAttribute("width", 48)
+    img.setAttribute("height", 48)
+    img.setAttributeNS(
+      "http://www.w3.org/1999/xlink",
+      "href",
+      feature.properties.thumb,
+    )
+
     // Frame
     const frame = SVG.create("rect")
     frame.setAttribute("x", -24)
     frame.setAttribute("y", -24)
     frame.setAttribute("width", 48)
     frame.setAttribute("height", 48)
-    frame.setAttribute("rx", 3)
-    frame.setAttribute("fill", "#f5f5f5")
-    frame.setAttribute("stroke", "rgba(0,0,0,0.4)")
-
-    // Thumbnail
-    const img = SVG.create("image")
-    img.setAttribute("x", -22)
-    img.setAttribute("y", -22)
-    img.setAttribute("width", 44)
-    img.setAttribute("height", 44)
-    img.setAttributeNS(
-      "http://www.w3.org/1999/xlink",
-      "href",
-      feature.properties.thumb,
-    )
+    frame.setAttribute("fill", "rgba(0,0,0,0)")
+    frame.setAttribute("stroke", "rgba(0,0,0,0.6)")
 
     let labelBg = undefined
     let label = undefined
@@ -93,7 +92,7 @@ function thumbnailFeatureLayer(feature, layerName, pxPerExtent, options) {
         label.textContent = feature.properties.count
     }
 
-    g.append(frame, img, labelBg, label)
+    g.append(img, frame, labelBg, label)
     const pos = self.scalePoint(feature.loadGeometry()[0][0])
     const anchor = options.icon.options.iconAnchor || [0, 0]
     g.setAttribute("transform", `translate(${pos.x},${pos.y})`)
