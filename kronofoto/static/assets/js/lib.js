@@ -14,7 +14,7 @@ import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
 import {ImagePlanePlugin, toRadians} from "./photosphere.js"
 import AOS from "aos"
 
-import vectorTileLayer, { defaultFeatureLayer, featureIconLayer, featurePathLayer, featureCircleLayer } from "leaflet-vector-tile-layer"
+import vectorTileLayer, { defaultFeatureLayer, featureLayerBase, featureIconLayer, featurePathLayer, featureCircleLayer } from "leaflet-vector-tile-layer"
 
 // Foundation
 import {Foundation} from "./foundation-sites/js/foundation.core"
@@ -27,6 +27,83 @@ import {Box} from "./foundation-sites/js/foundation.util.box"
 import {MediaQuery} from "./foundation-sites/js/foundation.util.mediaQuery"
 import {Reveal} from "./foundation-sites/js/foundation.reveal"
 import {Triggers} from "./foundation-sites/js/foundation.util.triggers"
+import { SVG } from "leaflet";
+
+function thumbnailFeatureLayer(feature, layerName, pxPerExtent, options) {
+    const self = featureLayerBase(feature, layerName, pxPerExtent, options)
+    self.setStyle = function() {}
+
+    const g = SVG.create("g")
+
+    // Frame
+    const frame = SVG.create("rect")
+    frame.setAttribute("x", -24)
+    frame.setAttribute("y", -24)
+    frame.setAttribute("width", 48)
+    frame.setAttribute("height", 48)
+    frame.setAttribute("rx", 3)
+    frame.setAttribute("fill", "#f5f5f5")
+    frame.setAttribute("stroke", "rgba(0,0,0,0.4)")
+
+    // Thumbnail
+    const img = SVG.create("image")
+    img.setAttribute("x", -22)
+    img.setAttribute("y", -22)
+    img.setAttribute("width", 44)
+    img.setAttribute("height", 44)
+    img.setAttributeNS(
+      "http://www.w3.org/1999/xlink",
+      "href",
+      feature.properties.thumb,
+    )
+
+    let labelBg = undefined
+    let label = undefined
+    if (feature.properties.count > 1) {
+        let width
+        let x
+        if (feature.properties.count >= 100) {
+            width = 24
+            x = -12
+        }
+        else if (feature.properties.count >= 10) {
+            width = 20
+            x = -10
+        }
+        else {
+            width = 14
+            x = -7
+        }
+        // Label background
+        labelBg = SVG.create("rect")
+        labelBg.setAttribute("x", x)
+        labelBg.setAttribute("y", 25)
+        labelBg.setAttribute("width", width)
+        labelBg.setAttribute("height", 12)
+        labelBg.setAttribute("rx", 7)
+        labelBg.setAttribute("fill", "#555")
+
+        // Label text
+        label = SVG.create("text")
+        label.setAttribute("x", 0)
+        label.setAttribute("y", 35)
+        label.setAttribute("text-anchor", "middle")
+        label.setAttribute("font-size", "10")
+        label.setAttribute("fill", "#fff")
+        label.textContent = feature.properties.count
+    }
+
+    g.append(frame, img, labelBg, label)
+    const pos = self.scalePoint(feature.loadGeometry()[0][0])
+    const anchor = options.icon.options.iconAnchor || [0, 0]
+    g.setAttribute("transform", `translate(${pos.x},${pos.y})`)
+    g.setAttribute("pointer-events", "all")
+    g.setAttribute("cursor", "pointer")
+    self.graphics = g
+
+    self.applyOptions(options)
+    return self
+}
 
 class TimelineScroller {
     constructor({context}) {
@@ -780,7 +857,7 @@ class MapPlugin {
                 "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
             icon.options.shadowUrl =
                 "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-            const photoTiles = vectorTileLayer(
+            const photoTiles2 = vectorTileLayer(
                 mapelem.getAttribute("data-layer"),
                 {
                     attribution: "&copy; fortepan.us",
@@ -800,6 +877,25 @@ class MapPlugin {
                     interactive: true,
                 }
             )
+            const photoTiles = vectorTileLayer(
+                mapelem.getAttribute("data-layer"),
+                {
+                    attribution: "&copy; fortepan.us",
+                    featureToLayer: thumbnailFeatureLayer,
+                    style: (feature, layerName, n) => { 
+                        return {
+                            icon: L.icon({
+                                iconUrl: feature.properties.thumb,
+                                iconSize: [45, 45],
+                                iconAnchor: [22, 22] // for 48 it's [-8, 56]. [(48-64)/2, 64 - (64 - 48)/2]
+                            }),
+                            interactive: true,
+                        }
+                    },
+                    interactive: true,
+                    //interactive: true,
+                }
+            )
             photoTiles.on("click", (e, x) => {
                 if (e.layer.properties.popup_href) {
                     fetch(e.layer.properties.popup_href).then(resp => resp.text()).then(text => {
@@ -808,7 +904,7 @@ class MapPlugin {
                         this.htmx.process(popup.getElement())
                     })
                 }
-                if (e.layer.properties.href) {
+                else if (e.layer.properties.href) {
                     const selector = mapelem.getAttribute("data-form-selector") || "#image-viewer form"
                     const values = this.htmx.values(document.querySelector(selector))
                     const realValues = []
@@ -828,6 +924,7 @@ class MapPlugin {
             })
             mapelem.addEventListener("viewer-changed", evt => setTimeout(() => map.invalidateSize(), 250))
             photoTiles.addTo(map)
+            //photoTiles2.addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()

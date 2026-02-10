@@ -323,23 +323,24 @@ class PhotoMapTile(TileLayerBase):
         for x in range(SUBDIVISIONS):
             for y in range(SUBDIVISIONS):
                 contents = subgrid[x][y]
-                if len(contents) > CLUMP_CUTOFF:
-                    poly = Polygon(
-                        [
-                            (round((x - x0) * 4096 / x_span), round((y - y0) * 4096 / y_span))
-                            for (x, y) in tb.get_polygon(x, y).coords[0]
-                        ]
-                    )
-                    features_.append(
-                        {
-                            "geometry": poly.wkt,
-                            "properties": {
-                                "id": p.id,
-                                "count": len(contents),
-                                "popup_href": reverse("kronofoto:map-subtile-detail", kwargs={**self.url_kwargs, **{"x": self.x, "y": self.y, "zoom": self.zoom, "subx": x, "suby": y}}) + params
-                            },
-                        }
-                    )
+
+                #if len(contents) > CLUMP_CUTOFF:
+                #    poly = Polygon(
+                #        [
+                #            (round((x - x0) * 4096 / x_span), round((y - y0) * 4096 / y_span))
+                #            for (x, y) in tb.get_polygon(x, y).coords[0]
+                #        ]
+                #    )
+                #    features_.append(
+                #        {
+                #            "geometry": poly.wkt,
+                #            "properties": {
+                #                "id": p.id,
+                #                "count": len(contents),
+                #                "popup_href": reverse("kronofoto:map-subtile-detail", kwargs={**self.url_kwargs, **{"x": self.x, "y": self.y, "zoom": self.zoom, "subx": x, "suby": y}}) + params
+                #            },
+                #        }
+                #    )
                 for p in contents:
                     c_x, c_y = p.geom2.coords # type: ignore
                     xcell, ycell = tb.get_cell(c_x, c_y)
@@ -355,6 +356,8 @@ class PhotoMapTile(TileLayerBase):
                                 "id": p.id,
                                 "href": reverse("kronofoto:map-detail", kwargs={"photo": p.id, **self.url_kwargs}) + params,
                                 "thumb": p.image_url(width=256, height=256),
+                                "count": len(contents),
+                                "popup_href": reverse("kronofoto:map-subtile-detail", kwargs={**self.url_kwargs, **{"x": self.x, "y": self.y, "zoom": self.zoom, "subx": x, "suby": y}}) + params if len(contents) > CLUMP_CUTOFF else "",
                             },
                         }
                     )
