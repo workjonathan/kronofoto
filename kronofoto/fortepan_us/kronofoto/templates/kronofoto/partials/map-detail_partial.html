@@ -20,6 +20,11 @@
       box-sizing: border-box;
       height: var(--bottom-controls-height);
   }
+  .metadata-left, .metadata-right {
+      letter-spacing: 0.1em;
+      font-size: 12px;
+      line-height: 18px;
+  }
   .top-row {
       top: 0;
       & > .left-buttons > .close {
@@ -126,44 +131,8 @@
   </div>
 </div>
 <div class="bottom-panel" :class="{ active: activePanel === 'myLists' }">
-  <div class="panel-my-lists panel-scroll">
-    <section>
-      <h1 class="h1">My FotoAlbums</h1>
-
-      <form method="post" action="{% url "kronofoto:popup-new-list" photo=photo.id %}" hx-post="{% url "kronofoto:popup-new-list" photo=photo.id %}">
-          {% csrf_token %}
-          {{ new_list_form.non_field_errors }}
-          {% for field in new_list_form.visible_fields %}
-            {% if field != new_list_form.is_private %}
-              <p>{{ field.label_tag }}
-              {{ field.errors }}
-              {{ field }}
-              {{ field.help_text }}
-            {% endif %}
-          {% endfor %}
-          <div class="switch-group">
-              <div class="switch">
-                  {{ new_list_form.is_private }}
-                  <label class="switch-paddle" for="{{ new_list_form.is_private.id_for_label }}">
-                      <span class="show-for-sr">Private List</span>
-                  </label>
-              </div>
-              <label class="switch-group__right-label" for="{{ new_list_form.is_private.id_for_label }}">{{ new_list_form.is_private.label }}</label>
-          </div>
-          <input type="submit" value="add" class="sticky-parent">
-      </form>
-    </section>
-    <section>
-      <div class="h4">Save to an existing FotoAlbum</div>
-      <form method="post" data-save-list hx-post="{% url "kronofoto:popup-add-to-list" photo=photo.id %}">
-          {% csrf_token %}
-          <label class="text-tiny">*private FotoAlbum</label>
-          <ul class="checkboxes">
-              {{ form.as_ul }}
-          </ul>
-          <input type="submit" value="save" class="sticky-parent">
-      </form>
-    </section>
+  <div class="panel-my-lists panel-scroll" hx-target="this" hx-push-url="false">
+    {% include "kronofoto/components/popups/collections2.html" %}
   </div>
 </div>
 <div class="bottom-panel" :class="{active: activePanel === 'download'}">
@@ -185,7 +154,16 @@
   <section>
       <div>
           <h4 class="h4">Attribution</h4>
-          <textarea rows="4" id="attribution-input">{% include "kronofoto/components/attribution.html" with object=photo %}</textarea>
+          <textarea rows="4" style="
+                font-size: 10px;
+                line-height: 20px;
+                padding: 20px;
+                font-weight: 400;
+                border-radius: 3px;
+                height: auto;
+                letter-spacing: 0.1em;
+                margin-bottom: 16px;"
+                                id="attribution-input">{% include "kronofoto/components/attribution.html" with object=photo %}</textarea>
           <a class="button float-right copy-button" data-clipboard-target="#attribution-input">copy</a>
       </div>
   </section>
@@ -194,11 +172,21 @@
 <div class="bottom-panel" :class="{ active: activePanel === 'metadata' }">
   <div class="panel-metadata panel-scroll">
       <aside class="metadata-left">
-          <h1><a 
+          <h1 style="font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            "><a 
+              style="color: #fefefe;
+                border-bottom: 2px solid var(--fp-main-color);"
               href="{% krono_url "kronofoto:gridview" url_kwargs %}{% krono_params place=photo.place.id %}"
               hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}{% krono_params place=photo.place.id %}"
           >{{ photo.place }}</a></h1>
-          <h2><a 
+          <h2 style="font-size: 18px;
+            margin-bottom: 10px;
+          font-weight: 600;
+          letter-spacing: 0.05em;"
+            ><a 
               href="{% krono_url "kronofoto:gridview" url_kwargs %}?query=year:{{ photo.year }}"
               hx-get="{% krono_url "kronofoto:gridview" url_kwargs %}?query=year:{{ photo.year }}"
           >{{ photo.year }}{% if photo.circa %}c{% endif %}</a></h2>

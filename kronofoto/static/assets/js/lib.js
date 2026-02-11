@@ -921,7 +921,7 @@ class MapPlugin {
                     }))
                 }
             })
-            mapelem.addEventListener("viewer-changed", evt => setTimeout(() => map.invalidateSize(), 250))
+            document.querySelector('#workspace').addEventListener('transitionend', () => map.invalidateSize())
             photoTiles.addTo(map)
             //photoTiles2.addTo(map)
             map.fitBounds(bounds)

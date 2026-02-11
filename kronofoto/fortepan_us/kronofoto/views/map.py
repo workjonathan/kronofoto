@@ -3,11 +3,12 @@ from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
 from typing import Optional, Any, overload, Dict
 from .base import ArchiveRequest, PhotoQuerySet, ArchiveReference
-from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds
+from fortepan_us.kronofoto.forms import BoundsSearchForm, Bounds, ListForm, ListMemberForm
+from django.forms import formset_factory
 from django.contrib.gis.geos import Polygon
 from django.contrib.gis.db.models.functions import Centroid
 from functools import cached_property
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Collection
 from fortepan_us.kronofoto.views.vector_tiles import PhotoMapTile, TileBounds
 from django.db.models import QuerySet, Q, Exists, Subquery, OuterRef
 from dataclasses import dataclass
@@ -165,6 +166,16 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context['tile_url'] = tile_url
     qs = areq.get_photo_queryset(include_geocoded=False).prefetch_related("photosphere_set")
     context['form'] = areq.form
+    context['new_list_form'] = ListForm()
+    context['old_list_form'] = formset_factory(ListMemberForm, extra=0)(initial=[
+        {
+            'membership': bool(o.membership), # type: ignore
+            'collection': o.id, # type: ignore
+            'name': o.name, # type: ignore
+            'photo': photo,
+        }
+        for o in (Collection.objects.filter(owner=request.user).count_photo_instances(photo=photo) if not request.user.is_anonymous else Collection.objects.filter(id__in=[]))
+    ])
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
     context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False).select_related("donor", "archive", "category", "place", "scanner", "photographer").prefetch_related("terms", "phototag_set"), id=photo)

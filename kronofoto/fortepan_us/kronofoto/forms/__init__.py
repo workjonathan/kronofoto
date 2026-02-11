@@ -219,7 +219,7 @@ class Bounds:
 
     @classmethod
     def full_bounds(cls: Type[T]) -> T:
-        return cls(west=-180, east=180, south=-90, north=90)
+        return cls(west=-98.063, east=-87.51, south=40.4, north=43.25)
 
     def as_tuple(self) -> Tuple[float, float, float, float]:
         return (self.west, self.south, self.east, self.north)

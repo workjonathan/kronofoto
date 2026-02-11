@@ -1,0 +1,37 @@
+<section>
+  <h1 class="h1">My FotoAlbums</h1>
+
+  <form method="post" action="{% url "kronofoto:popup-new-list" photo=photo.id %}" hx-post="{% url "kronofoto:popup-new-list" photo=photo.id %}?v2">
+      {% csrf_token %}
+      {{ new_list_form.non_field_errors }}
+      {% for field in new_list_form.visible_fields %}
+        {% if field != new_list_form.is_private %}
+          <p>{{ field.label_tag }}
+          {{ field.errors }}
+          {{ field }}
+          {{ field.help_text }}
+        {% endif %}
+      {% endfor %}
+      <div class="switch-group">
+          <div class="switch">
+              {{ new_list_form.is_private }}
+              <label class="switch-paddle" for="{{ new_list_form.is_private.id_for_label }}">
+                  <span class="show-for-sr">Private List</span>
+              </label>
+          </div>
+          <label class="switch-group__right-label" for="{{ new_list_form.is_private.id_for_label }}">{{ new_list_form.is_private.label }}</label>
+      </div>
+      <input type="submit" value="add" class="sticky-parent">
+  </form>
+</section>
+<section>
+  <div class="h4">Save to an existing FotoAlbum</div>
+  <form method="post" data-save-list hx-post="{% url "kronofoto:popup-add-to-list" photo=photo.id %}?v2">
+      {% csrf_token %}
+      <label class="text-tiny">*private FotoAlbum</label>
+      <ul class="checkboxes">
+          {{ old_list_form.as_ul }}
+      </ul>
+      <input type="submit" value="save" class="sticky-parent">
+  </form>
+</section>

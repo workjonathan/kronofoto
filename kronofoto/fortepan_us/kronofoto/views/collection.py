@@ -234,7 +234,10 @@ class NewList(LoginRequiredMixin, FormView):
     template_name = 'kronofoto/components/popups/collections.html' # any template is needed to prevent a 500 error
 
     def get_success_url(self) -> str:
-        return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+        url = reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+        if 'v2'in self.request.GET:
+            url += "?v2"
+        return url
 
     def form_valid(self, form: Form) -> HttpResponse:
         if self.request.user.is_anonymous:
@@ -248,11 +251,19 @@ class NewList(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, FormView):
-    template_name = 'kronofoto/components/popups/collections.html'
     form_class = formset_factory(ListMemberForm, extra=0)
 
+    def get_template_names(self):
+        template_name = 'kronofoto/components/popups/collections.html'
+        if 'v2' in self.request.GET:
+            template_name = 'kronofoto/components/popups/collections2.html'
+        return template_name
+
     def get_success_url(self) -> str:
-        return reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+        url = reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
+        if 'v2'in self.request.GET:
+            url += "?v2"
+        return url
 
     def post(self, *args: Any, **kwargs: Any) -> HttpResponse:
         try:
@@ -295,6 +306,9 @@ class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, Form
     def get_context_data(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(*args, **kwargs)
         context['new_list_form'] = ListForm()
+        if 'v2' in self.request.GET:
+            context['old_list_form'] = context['form']
+            context['photo'] = Photo.objects.get(id=self.kwargs['photo'])
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
