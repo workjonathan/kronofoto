@@ -76,7 +76,7 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
             pass
     if tile_query_params:
         tile_url += "?" + tile_query_params.urlencode()
-    qs = areq.get_photo_queryset()[:48]
+    qs = areq.get_photo_queryset().prefetch_related('photosphere_set')[:48]
     context["tile_url"] = tile_url
     context['form'] = areq.form
     context['no_image'] = True
@@ -163,11 +163,11 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context["list_url"] = "{}?{}".format(reverse("kronofoto:map", kwargs={k: v for (k,v) in url_kwargs.items() if k != "photo"}), areq.get_params.urlencode())
     context['no_image'] = False
     context['tile_url'] = tile_url
-    qs = areq.get_photo_queryset(include_geocoded=False)
+    qs = areq.get_photo_queryset(include_geocoded=False).prefetch_related("photosphere_set")
     context['form'] = areq.form
     context['photos'] = qs[:48]
     context['bounds'] = areq.map_bounds
-    context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False), id=photo)
+    context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False).select_related("donor", "archive", "category", "place", "scanner", "photographer").prefetch_related("terms", "phototag_set"), id=photo)
     context['mapviewclass'] = 'current-view'
     print(request.headers)
     if areq.is_hx_request and areq.hx_target == "image-viewer":
