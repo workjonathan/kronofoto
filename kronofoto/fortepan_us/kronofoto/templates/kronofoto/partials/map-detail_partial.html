@@ -3,7 +3,7 @@
 {% load permissions %}
 {% load krono_urls %}
 
-<form style="height: 100%;" hx-trigger="kronofoto:bounds_form_changed from:#workspace" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}" hx-target="#photo-grid" hx-select="#photo-grid" hx-swap="outerHTML">
+<form style="display:none;" hx-trigger="kronofoto:bounds_form_changed from:#workspace" hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}" hx-target="#photo-grid" hx-select="#photo-grid" hx-swap="outerHTML">
 {% for field in form %}
 {{ field.as_hidden }}
 {% endfor %}
@@ -22,10 +22,33 @@
   }
   .top-row {
       top: 0;
+      & > .left-buttons > .close {
+        border: none;
+        background: none;
+        transform: rotate(0deg);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transform-origin: center;
+        transition: transform ease-in-out 0.15s;
+        &:hover {
+            transform: rotate(90deg);
+        }
+      }
   }
   .bottom-row {
       bottom: 0;
       height: var(--bottom-controls-height);
+      & > .right-buttons > .popup-button {
+        border: none;
+        background: none;
+        transition: transform ease-in-out 100ms;
+        transform: translateY(0);
+        cursor: pointer;
+        &:hover {
+            transform: translateY(-5px);
+        }
+      }
   }
   .bottom-row.hidden {
       transform: translateY(100%);
@@ -97,10 +120,9 @@
 
 <div class="button-row top-row">
   <div class="left-buttons">
-  <button class="" @click="no_image = true" hx-get="{{ list_url }}" hx-target="#image-viewer">X</button>
+    <a class="close" @click="no_image = true" hx-get="{{ list_url }}" href={{ list_url }} hx-target="#image-viewer"><img src="{% static "kronofoto/components/image-viewer/images/close.svg"%}" alt="close button"></a>
   </div>
   <div class="right-buttons">
-  <button class="">Zoom</button>
   </div>
 </div>
 <div class="bottom-panel" :class="{ active: activePanel === 'myLists' }">
@@ -108,7 +130,7 @@
     <section>
       <h1 class="h1">My FotoAlbums</h1>
 
-      <form method="post" class="form" action="{% url "kronofoto:popup-new-list" photo=photo.id %}" hx-post="{% url "kronofoto:popup-new-list" photo=photo.id %}">
+      <form method="post" action="{% url "kronofoto:popup-new-list" photo=photo.id %}" hx-post="{% url "kronofoto:popup-new-list" photo=photo.id %}">
           {% csrf_token %}
           {{ new_list_form.non_field_errors }}
           {% for field in new_list_form.visible_fields %}
@@ -133,7 +155,7 @@
     </section>
     <section>
       <div class="h4">Save to an existing FotoAlbum</div>
-      <form class="form" method="post" data-save-list hx-post="{% url "kronofoto:popup-add-to-list" photo=photo.id %}">
+      <form method="post" data-save-list hx-post="{% url "kronofoto:popup-add-to-list" photo=photo.id %}">
           {% csrf_token %}
           <label class="text-tiny">*private FotoAlbum</label>
           <ul class="checkboxes">
@@ -161,7 +183,7 @@
       {% endwith %}
   </section>
   <section>
-      <div class="form">
+      <div>
           <h4 class="h4">Attribution</h4>
           <textarea rows="4" id="attribution-input">{% include "kronofoto/components/attribution.html" with object=photo %}</textarea>
           <a class="button float-right copy-button" data-clipboard-target="#attribution-input">copy</a>
@@ -262,19 +284,19 @@
 
 <div class="button-row bottom-row">
   <div class="left-buttons">
-  <button class="">Photosphere</button>
+    {% include "kronofoto/components/a/mainstreet.html" with object=photo %}
   </div>
   <div class="right-buttons">
-  <button class="" @click="activePanel !== 'myLists' ? activePanel = 'myLists' : activePanel = undefined">
-      <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}">
-  </button>
-  <!--Download Button-->
-  <button class="" @click="activePanel !== 'download' ? activePanel = 'download' : activePanel = undefined">
-      <img class="meta-dl-icon" src="{% static "kronofoto/images/skyblue/download.svg" %}">
-  </button>
-  <!--Info Button-->
-  <button class="" @click="activePanel !== 'metadata' ? activePanel = 'metadata' : activePanel = undefined">
-      <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/info.svg" %}">
-  </button>
+    <button class="popup-button" @click="activePanel !== 'myLists' ? activePanel = 'myLists' : activePanel = undefined">
+        <img class="add-to-list-icon" src="{% static "kronofoto/images/skyblue/add-to-list.svg" %}">
+    </button>
+    <!--Download Button-->
+    <button class="popup-button" @click="activePanel !== 'download' ? activePanel = 'download' : activePanel = undefined">
+        <img class="meta-dl-icon" src="{% static "kronofoto/images/skyblue/download.svg" %}">
+    </button>
+    <!--Info Button-->
+    <button class="popup-button" @click="activePanel !== 'metadata' ? activePanel = 'metadata' : activePanel = undefined">
+        <img class="meta-info-icon" src="{% static "kronofoto/images/skyblue/info.svg" %}">
+    </button>
   </div>
 </div>

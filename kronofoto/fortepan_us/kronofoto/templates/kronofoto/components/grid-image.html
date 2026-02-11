@@ -12,11 +12,11 @@
     <img src="{% image_url photo=photo width=500 height=500 %}" height="500" width="500" />
 </a>
 {% if photo.photosphere_set.all.exists and photo.photosphere_set.all.0.is_published %}
-<a 
+<a class="fotosphere-link" 
     {% block photosphere_attrs %}
         href="{{ photo.photosphere_set.all.0.get_absolute_url }}"
     {% endblock %}
 >
-    <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center" style="cursor: pointer">
+    <img class="view-fotosphere" src="{% static "kronofoto/images/skyblue/view-fotosphere.svg" %}" data-tooltip title="View FotoSphere" data-position="top" data-alignment="center">
 </a>
 {% endif %}

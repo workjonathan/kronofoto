@@ -26,6 +26,16 @@
 
     #photo-grid li {
       flex: 0 0 auto;        /* keep thumbnail size fixed */
+      position: relative;
+      > .fotosphere-link {
+        position: absolute;
+        left: 5px;
+        bottom: 5px;
+        & > .view-fotosphere {
+            height: 20px;
+            width: 20px;
+        }
+      }
     }
     #image-browser {
 	  height: 100%;
@@ -72,10 +82,10 @@ width: 100%;
       width: 100%;       /* fill wrapper horizontally */
       height: 100%;      /* fill wrapper vertically */
       margin: 0;         /* reset default figure margins */
-      display: flex;     /* optional, if you want to center content */
+      display: flex;
       flex-direction: column;
       position: relative;
-      background: #e5e5e5;
+      background: #444;
       --bottom-controls-height: 4.5rem;
     }
 	
@@ -116,10 +126,10 @@ width: 100%;
 
     <div id="thumbnail-strip">
         <ul id="photo-grid">
+            {% for photo in photos %}
             <li>
-                {% for photo in photos %}
                 {% include "kronofoto/components/map-grid-image.html" %}
-                {% endfor %}
+            {% endfor %}
         </ul>
     </div>
   </section>
