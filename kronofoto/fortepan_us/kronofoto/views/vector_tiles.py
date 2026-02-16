@@ -318,7 +318,15 @@ class PhotoMapTile(TileLayerBase):
         for p in self.photos:
             c_x, c_y = p.geom2.coords # type: ignore
             xcell, ycell = tb.get_cell(c_x, c_y)
-            subgrid[xcell][ycell].append(p)
+            # Getting exceptions on this append due to outside bounds.
+            # I think that it is possible for a location to intersect the boundary on the large X or Y coordinate side.
+            # On the low end, this is just in the 0 index of the subgrid. On the high end, it is index SUBDIVISIONS:
+            # With width=2 and subdivisions=2, 2/(width/subdivisions) == 2 / (2/1) == subdivisions.
+            # These photos should be included on the tiles on the other side of the boundary, because they are
+            # apparently right on the line.
+
+            if xcell < SUBDIVISIONS and ycell < SUBDIVISIONS:
+                subgrid[xcell][ycell].append(p)
 
         for x in range(SUBDIVISIONS):
             for y in range(SUBDIVISIONS):
