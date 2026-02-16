@@ -253,11 +253,11 @@ class NewList(LoginRequiredMixin, FormView):
 class ListMembers(MultipleObjectTemplateResponseMixin, MultipleObjectMixin, FormView):
     form_class = formset_factory(ListMemberForm, extra=0)
 
-    def get_template_names(self):
+    def get_template_names(self) -> List[str]:
         template_name = 'kronofoto/components/popups/collections.html'
         if 'v2' in self.request.GET:
             template_name = 'kronofoto/components/popups/collections2.html'
-        return template_name
+        return [template_name]
 
     def get_success_url(self) -> str:
         url = reverse('kronofoto:popup-add-to-list', kwargs={'photo': self.kwargs['photo']})
