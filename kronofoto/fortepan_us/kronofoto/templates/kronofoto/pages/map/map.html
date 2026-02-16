@@ -39,7 +39,7 @@
     }
     #image-browser {
 	  height: 100%;
-width: 100%;
+      width: 100%;
 	  display: grid;
 	  grid-template-rows: 1fr auto;
 	}
@@ -59,8 +59,26 @@ width: 100%;
 	}
     @media (max-width: 768px) {
       #workspace {
-          grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr; /* figure on top, map below */
+          display: block;
+          position: relative;
+      }
+      #workspace.no-image {
+          grid-template-rows: 1fr 0fr;
+          & > #image-container {
+            transform: translateY(100%);
+          }
+      }
+      #image-container {
+        transition: transform 0.1s ease; /* optional */
+        position: absolute;
+        z-index: 2000;
+        top: 10vh;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      #map-view {
+        height: 100%;
       }
     }
 	#image-container {
