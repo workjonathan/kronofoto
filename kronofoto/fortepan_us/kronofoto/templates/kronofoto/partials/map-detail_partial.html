@@ -136,7 +136,7 @@
   </div>
 </div>
 <div class="bottom-panel" :class="{active: activePanel === 'download'}">
-  <div class="panel-download panel-scroll">
+  <div class="panel-download panel-scroll" hx-target="#app">
   <section>
     <h1 class="h1">ID#: {{ photo.accession_number }}</h1>
     <a class="button" href="{{ photo.fullsizeurl }}" download="{{ photo.accession_number }}.jpg">Download</a>
@@ -170,7 +170,7 @@
   </div>
 </div>
 <div class="bottom-panel" :class="{ active: activePanel === 'metadata' }">
-  <div class="panel-metadata panel-scroll">
+  <div class="panel-metadata panel-scroll" hx-target="#app">
       <aside class="metadata-left">
           <h1 style="font-size: 20px;
             margin-bottom: 20px;
