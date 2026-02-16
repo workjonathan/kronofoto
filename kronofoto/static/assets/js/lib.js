@@ -856,26 +856,6 @@ class MapPlugin {
                 "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
             icon.options.shadowUrl =
                 "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-            const photoTiles2 = vectorTileLayer(
-                mapelem.getAttribute("data-layer"),
-                {
-                    attribution: "&copy; fortepan.us",
-                    //featureToLayer: (feature, layerName, n, s) => {
-                    //    return defaultFeatureLayer(feature, layerName, n, s)
-                    //},
-                    style: (feature, layerName, n) => { 
-                        return {
-                            icon: L.icon({
-                                iconUrl: feature.properties.thumb,
-                                iconSize: [45, 45],
-                                iconAnchor: [22, 22] // for 48 it's [-8, 56]. [(48-64)/2, 64 - (64 - 48)/2]
-                            }),
-                            interactive: true,
-                        }
-                    },
-                    interactive: true,
-                }
-            )
             const photoTiles = vectorTileLayer(
                 mapelem.getAttribute("data-layer"),
                 {
@@ -895,6 +875,9 @@ class MapPlugin {
                     //interactive: true,
                 }
             )
+            const baseLayers = {"Positron": positron}
+            const overlays = {"ThumbGrid": photoTiles}
+            L.control.layers(baseLayers, overlays).addTo(map)
             photoTiles.on("click", (e, x) => {
                 if (e.layer.properties.popup_href) {
                     fetch(e.layer.properties.popup_href).then(resp => resp.text()).then(text => {
@@ -923,7 +906,6 @@ class MapPlugin {
             })
             document.querySelector('#workspace').addEventListener('transitionend', () => map.invalidateSize())
             photoTiles.addTo(map)
-            //photoTiles2.addTo(map)
             map.fitBounds(bounds)
             map.on("moveend", (evt) => {
                 const bounds = evt.target.getBounds()
