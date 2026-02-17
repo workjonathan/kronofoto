@@ -54,7 +54,7 @@
     height: 50px;
     border: none;
     background-color: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg id='X' transform='translate(-1102 -100)'%3E%3Cpath id='Path_48' data-name='Path 48' d='M0,0V20' transform='translate(1124.071 107.929) rotate(45)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_49' data-name='Path 49' d='M0,0V20' transform='translate(1124.071 122.071) rotate(135)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Crect id='Rectangle_65' data-name='Rectangle 65' width='30' height='30' transform='translate(1102 100)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+    background-image: url("../images/extracted_svgs/exhibit_1.svg");
     background-repeat: no-repeat;
     background-position: center;
     position: absolute;
@@ -120,20 +120,20 @@ body {
   &__button {
     @include off-canvas-button;
     &.up {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='move-up_arrow' data-name='move-up arrow' transform='translate(127 420) rotate(180)'%3E%3Cpath id='arrow' d='M.884.884l9,9,9-9' transform='translate(96.616 391.615)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(87 380)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+      background-image: url("../images/extracted_svgs/exhibit_2.svg");
     }
     &.down {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='move-down-arrow' transform='translate(-87 -380)'%3E%3Cpath id='arrow' d='M.884.884l9,9,9-9' transform='translate(97.616 391.616)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(87 380)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+      background-image: url("../images/extracted_svgs/exhibit_3.svg");
     }
     &.delete {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg id='trash' transform='translate(-11.918 -138.901)'%3E%3Cpath id='Path_484' data-name='Path 484' d='M36.838,150.884l-1.576,16.78a.663.663,0,0,1-.617.7H23.818a.663.663,0,0,1-.616-.7l-1.576-16.78' transform='translate(2.859 1.239)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_485' data-name='Path 485' d='M34.981,150.212s-.024-.679-.024-2.05-1.2-3.011-2.524-3.011H28.266c-1.326,0-2.524,1.64-2.524,3.011s-.025,2.05-.025,2.05' transform='translate(1.741 1.586)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cline id='Line_70' data-name='Line 70' x2='23.509' transform='translate(20.336 151.798)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Crect id='icon-div' width='40' height='40' transform='translate(11.918 138.901)' fill='none'/%3E%3C/g%3E%3C/svg%3E%0A");
+      background-image: url("../images/extracted_svgs/exhibit_4.svg");
     }
     &.close {
-      background-image: url("data:image/svg+xml,%3Csvg id='X' xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cpath id='Path_48' data-name='Path 48' d='M0,0V25.456' transform='translate(24 6) rotate(45)' fill='none' stroke='%237F7F7F' stroke-width='3'/%3E%3Cpath id='Path_49' data-name='Path 49' d='M0,0V25.455' transform='translate(24 24) rotate(135)' fill='none' stroke='%237F7F7F' stroke-width='3'/%3E%3Crect id='Rectangle_65' data-name='Rectangle 65' width='30' height='30' fill='none'/%3E%3C/svg%3E%0A");
+      background-image: url("../images/extracted_svgs/exhibit_5.svg");
     }
     &.swap {
       border-radius: 2.5px;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='20.649' height='24.706' viewBox='0 0 20.649 24.706'%3E%3Cdefs%3E%3CclipPath id='clip-path'%3E%3Crect id='Rectangle_173' data-name='Rectangle 173' width='20.649' height='24.706' transform='translate(0 0.001)' fill='none' stroke='%23707070' stroke-width='2.5'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg id='Group_232' data-name='Group 232' transform='translate(-1.998 -2.391)'%3E%3Cg id='Group_231' data-name='Group 231' transform='translate(1.998 2.391)' clip-path='url(%23clip-path)'%3E%3Cpath id='Path_527' data-name='Path 527' d='M7.3,16.061l-5.18,5.18,5.18,5.18' transform='translate(-0.344 -2.604)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_528' data-name='Path 528' d='M16.34,11.422l5.18-5.18-5.18-5.18' transform='translate(-2.65 -0.172)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cpath id='Path_529' data-name='Path 529' d='M19.6,22.244H2.122' transform='translate(-0.344 -3.607)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3Cline id='Line_80' data-name='Line 80' x1='16.663' transform='translate(2.208 6.069)' fill='none' stroke='%237f7f7f' stroke-miterlimit='10' stroke-width='2.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A");
+      background-image: url("../images/extracted_svgs/exhibit_6.svg");
     }
   }
 }
@@ -141,7 +141,7 @@ body {
 .add-image-button {
   width: 40px;
   height: 40px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cg id='Group_104' data-name='Group 104' transform='translate(-305.5 -907.5)'%3E%3Cpath id='Path_481' data-name='Path 481' d='M318,907.5v15' transform='translate(-5 0)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3Cpath id='Path_482' data-name='Path 482' d='M0,0V15' transform='translate(320.5 915) rotate(90)' fill='none' stroke='%237f7f7f' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E%0A");
+  background-image: url("../images/extracted_svgs/exhibit_7.svg");
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
   background-repeat: no-repeat;
   background-color: #ffffff;
