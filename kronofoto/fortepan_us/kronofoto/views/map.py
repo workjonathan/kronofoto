@@ -139,7 +139,7 @@ def subtile_detail(request: HttpRequest, *, zoom: int, x: int, y: int, subx: int
     poly = tb.get_polygon(subx, suby)
     photos = areq.get_photo_queryset().filter(location_point__within=poly)
     context = areq.common_context
-    context['photos'] = photos
+    context['photos'] = photos[:60]
     return TemplateResponse(request=request, template="kronofoto/components/map/bubble_detail.html", context=context)
 
 def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
