@@ -38,6 +38,7 @@ class MapRequest(ArchiveRequest):
         if not use_spatial:
             return super().get_photo_queryset()
         qs = super().get_photo_queryset().filter(place__isnull=False).filter(place__geom__isnull=False).order_by().annotate(centroid=Centroid("place__geom"))
+        q = Q()
         if (self.form.is_valid() and
             self.form.cleaned_data['search_bounds'] is not None
         ):
@@ -49,12 +50,11 @@ class MapRequest(ArchiveRequest):
             # also exclude places with no intersection to potentially speed it up.
             # Reasonable alternative: is the centroid in view? Most of the time, the centroid will not be in view if we
             # are looking at a city and the polygon is large (like the USA). Will fail for some locations.
-            q = Q(centroid__within=bounds)
+            q &= Q(centroid__within=bounds)
             #q = Q(place__geom__within=bounds)
-            if include_geocoded is not None:
-                q &= Q(location_point__isnull=not include_geocoded)
-            qs = qs.filter(q)
-        return qs
+        if include_geocoded is not None:
+            q &= Q(location_point__isnull=not include_geocoded)
+        return qs.filter(q)
 
 
 def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Optional[str]=None, category: Optional[str]=None) -> HttpResponse:
@@ -77,7 +77,7 @@ def map_list(request: HttpRequest, *, short_name: Optional[str]=None, domain: Op
             pass
     if tile_query_params:
         tile_url += "?" + tile_query_params.urlencode()
-    qs = areq.get_photo_queryset().prefetch_related('photosphere_set')[:48]
+    qs = areq.get_photo_queryset(include_geocoded=False).prefetch_related('photosphere_set')[:48]
     context["tile_url"] = tile_url
     context['form'] = areq.form
     context['no_image'] = True
@@ -180,7 +180,6 @@ def map_detail(request: HttpRequest, *, photo: int, short_name: Optional[str]=No
     context['bounds'] = areq.map_bounds
     context['photo'] = get_object_or_404(areq.get_photo_queryset(use_spatial=False).select_related("donor", "archive", "category", "place", "scanner", "photographer").prefetch_related("terms", "phototag_set"), id=photo)
     context['mapviewclass'] = 'current-view'
-    print(request.headers)
     if areq.is_hx_request and areq.hx_target == "image-viewer":
         template = "kronofoto/partials/map-detail_partial.html"
     else:

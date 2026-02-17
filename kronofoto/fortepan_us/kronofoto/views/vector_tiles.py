@@ -363,7 +363,7 @@ class PhotoMapTile(TileLayerBase):
                             "properties": {
                                 "id": p.id,
                                 "href": reverse("kronofoto:map-detail", kwargs={"photo": p.id, **self.url_kwargs}) + params,
-                                "thumb": p.image_url(width=256, height=256),
+                                "thumb": p.image_url(width=75, height=75),
                                 "count": len(contents),
                                 "popup_href": reverse("kronofoto:map-subtile-detail", kwargs={**self.url_kwargs, **{"x": self.x, "y": self.y, "zoom": self.zoom, "subx": x, "suby": y}}) + params if len(contents) > CLUMP_CUTOFF else "",
                             },

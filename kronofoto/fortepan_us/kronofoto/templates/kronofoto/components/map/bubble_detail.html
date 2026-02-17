@@ -38,7 +38,7 @@
         @click="no_image = false"
         hx-get="{% krono_url "kronofoto:map-detail" url_kwargs photo=photo.id %}{% krono_params get_params %}"
     >
-        <img src="{% image_url photo=photo width=256 height=256 %}" height="128" width="128" />
+        <img src="{% image_url photo=photo width=500 height=500 %}" height="128" width="128" />
     </a>
 {% endfor %}
 </div>
