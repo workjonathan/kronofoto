@@ -1,16 +1,8 @@
 import {
     installButtons,
-    markerDnD,
     initHTMXListeners,
-    initEventHandlers,
-    initGalleryNav,
     initFoundation,
     initNavSearch,
-    initClipboardJS,
-    initAutocomplete,
-    initPopups,
-    initDraggableThumbnails,
-    initTimeline,
 } from "./lib.js"
 
 import HTMX from "./htmx.js"

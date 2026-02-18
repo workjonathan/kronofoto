@@ -3,15 +3,14 @@
 import {trigger} from "./utils"
 import timeline from "./timeline"
 import $ from "jquery"
-import ClipboardActionCopy from "clipboard/src/actions/copy"
+window.$ = $
+window.jQuery = $
 import "jquery-ui-pack"
-import Select2 from "select2"
-//Select2.default(window, $)
-import {Viewer} from "@photo-sphere-viewer/core"
-import {MarkersPlugin} from "@photo-sphere-viewer/markers-plugin"
-import {PlanPlugin} from "@photo-sphere-viewer/plan-plugin"
-import {VirtualTourPlugin} from "@photo-sphere-viewer/virtual-tour-plugin"
-import {ImagePlanePlugin, toRadians} from "./photosphere.js"
+import select2Module from "select2/dist/js/select2.full.js"
+const select2Factory = select2Module.default ?? select2Module
+select2Factory(window, $)
+
+import ClipboardActionCopy from "clipboard/src/actions/copy"
 import AOS from "aos"
 
 import vectorTileLayer, { defaultFeatureLayer, featureLayerBase, featureIconLayer, featurePathLayer, featureCircleLayer } from "leaflet-vector-tile-layer"
@@ -953,18 +952,22 @@ class PhotoOpacityElement extends HTMLElement {
         this.value.innerText = 100
 
         this.input.addEventListener("input", () => {
-            this.viewer.getPlugin(ImagePlanePlugin).material.opacity =
-                this.input.valueAsNumber / 100
-            this.value.innerText = this.input.valueAsNumber
-            this.viewer.needsUpdate()
+            import("./photosphere-bundle.js").then(({ImagePlanePlugin}) => {
+                this.viewer.getPlugin(ImagePlanePlugin).material.opacity =
+                    this.input.valueAsNumber / 100
+                this.value.innerText = this.input.valueAsNumber
+                this.viewer.needsUpdate()
+            })
         })
     }
 
     attachViewer(viewer) {
         this.viewer = viewer
-        viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", () => {
-            this.value.innerText = 100
-            this.input.value = 100
+        import("./photosphere-bundle.js").then(({VirtualTourPlugin}) => {
+            viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", () => {
+                this.value.innerText = 100
+                this.input.value = 100
+            })
         })
     }
 }
@@ -986,21 +989,16 @@ class PhotoTimelineElement extends HTMLElement {
     }
     attachViewer(viewer) {
         this.viewer = viewer
-        viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({node}) => {
-            this.link.innerText = node.data.photos[0].name
-            this.link.setAttribute("href", node.data.photos[0].href)
+        import("./photosphere-bundle.js").then(({VirtualTourPlugin}) => {
+            viewer.getPlugin(VirtualTourPlugin).addEventListener("node-changed", ({node}) => {
+                this.link.innerText = node.data.photos[0].name
+                this.link.setAttribute("href", node.data.photos[0].href)
+            })
         })
     }
 }
 customElements.define("fortepan-timeline-link", PhotoTimelineElement)
 
-class MyViewer extends Viewer {
-    setPanorama(panorama, data) {
-        const tourPlugin = this.getPlugin(VirtualTourPlugin)
-        Viewer.useNewAnglesOrder = tourPlugin.getCurrentNode().useNewAnglesOrder
-        return super.setPanorama(panorama, data)
-    }
-}
 
 class PhotoSpherePlugin {
     constructor({context}) {
@@ -1008,6 +1006,14 @@ class PhotoSpherePlugin {
     }
     install({elem}) {
         for (const elem2 of elem.querySelectorAll("[data-photosphere-data]")) {
+            import("./photosphere-bundle.js").then(({Viewer, MarkersPlugin, PlanPlugin, VirtualTourPlugin, ImagePlanePlugin}) => {
+            class MyViewer extends Viewer {
+                setPanorama(panorama, data) {
+                    const tourPlugin = this.getPlugin(VirtualTourPlugin)
+                    Viewer.useNewAnglesOrder = tourPlugin.getCurrentNode().useNewAnglesOrder
+                    return super.setPanorama(panorama, data)
+                }
+            }
             const client_width = window.matchMedia('(max-width: 40em)').matches ? elem2.clientWidth : 300
             const api_url = elem2.getAttribute("data-node-href")
             const map_elem = elem.querySelector(elem2.getAttribute("data-map"))
@@ -1206,6 +1212,7 @@ class PhotoSpherePlugin {
                         )
                     }
                 })
+            })
         }
     }
 }

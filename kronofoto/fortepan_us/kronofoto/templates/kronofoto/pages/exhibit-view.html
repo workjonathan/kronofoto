@@ -19,7 +19,7 @@
 	<meta name="msapplication-config" content="{% static "kronofoto/favicon/browserconfig.xml" %}">
 	<meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, target-densityDpi=device-dpi, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="{% static "kronofoto/js/main.js" %}?version={{ CSS_VERSION }}"></script>
+    <script type="module" src="{% static "kronofoto/js/main.js" %}?version={{ CSS_VERSION }}"></script>
 </head>
 <body>
     {% include "kronofoto/components/exhibit/sitewrapper.html" %}

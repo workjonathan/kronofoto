@@ -1,12 +1,7 @@
 import {
     toggleLogin,
     installButtons,
-    initGalleryNav,
     initNavSearch,
-    initPopups,
-    initEventHandlers,
-    initDraggableThumbnails,
-    initAutocomplete,
     initClipboardJS,
     initFoundation,
     initHTMXListeners,
