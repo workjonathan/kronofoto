@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack --mode development --watch",
-    "release": "webpack --mode production"
+    "watch": "node esbuild-config.js --watch",
+    "release": "webpack --mode production && NODE_ENV=production node esbuild-config.js"
   },
   "repository": {
     "type": "git",

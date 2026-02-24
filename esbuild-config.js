@@ -3,6 +3,7 @@ const path = require("path")
 
 // Determine dev vs prod
 const isProd = process.env.NODE_ENV === "production"
+const isWatch = process.argv.includes("--watch")
 
 // Base output paths
 const staticOut = path.resolve(
@@ -101,8 +102,16 @@ async function buildSCSS() {
 
 // Run all builds
 async function runBuilds() {
-  await buildSingleJS()
-  await buildMainJS()
+  console.log(`production mode = ${isProd}`)
+  const bundles = [...singleBundles, mainBundle]
+  if (isWatch) {
+    const contexts = await Promise.all(bundles.map(bundle => esbuild.context(bundle)))
+    await Promise.all(contexts.map(ctx => ctx.watch()))
+    console.log("running esbuild in watch mode")
+  } else {
+    await buildSingleJS()
+    await buildMainJS()
+  }
   // await buildSCSS()
   // gave up trying to get esbuild to compile scss
 }
