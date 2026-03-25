@@ -5,8 +5,10 @@ from mptt.querysets import TreeQuerySet # type: ignore
 from fortepan_us.kronofoto.reverse import reverse
 from django.http import QueryDict
 from django.contrib.contenttypes.models import ContentType
-from typing import Any, Optional, Dict, TYPE_CHECKING
+from django.db.transaction import atomic
+from typing import Any, Optional, Dict, TYPE_CHECKING, Tuple, List
 from .archive import RemoteActor
+import shapely # type: ignore
 
 
 class PlaceType(models.Model): # type: ignore[django-manager-missing]
@@ -46,6 +48,41 @@ class PlaceType(models.Model): # type: ignore[django-manager-missing]
         indexes = (models.Index(fields=["name"]),)
 
 class PlaceQuerySet(TreeQuerySet):
+    def osm_import(
+        self,
+        import_data: List[Tuple[str, shapely.geometry.base.BaseGeometry, Dict[str, str]]],
+        new_place_type: PlaceType,
+        parent_place_type: PlaceType,
+    ) -> Tuple[List["Place"], List[Tuple[str, shapely.geometry.base.BaseGeometry, Dict[str, str]]], List[Tuple[str, shapely.geometry.base.BaseGeometry, Dict[str, str]]]]:
+        places = []
+        no_parents = []
+        multiple_parents = []
+        with atomic():
+            with Place.objects.disable_mptt_updates():
+                for (name, geom, tags) in import_data:
+                    name = tags.get("name:en", name)
+                    try:
+                        parent = self.get(geom__contains=geom.centroid.wkt, place_type__id=parent_place_type.id)
+                        places.append(Place(
+                            name=name,
+                            parent=parent,
+                            geom=geom.wkt, fullname=name,
+                            place_type=new_place_type,
+                            lft=0,
+                            rght=0,
+                            tree_id=0,
+                            level=0,
+                            )
+                        )
+                    except Place.DoesNotExist:
+                        no_parents.append((name, geom, tags))
+                    except Place.MultipleObjectsReturned:
+                        multiple_parents.append((name, geom, tags))
+
+                self.bulk_create(places)
+                Place.objects.rebuild()
+        return places, no_parents, multiple_parents
+
     def zoom(self, level: int) -> "PlaceQuerySet":
         """Filter places visible at the specified Mapbox vector tile zoom level.
 

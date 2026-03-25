@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label="kronofoto" %}">Kronofoto</a>
+&rsaquo; <a href="{% url 'admin:kronofoto_place_changelist' %}">Places</a>
+&rsaquo; Batch Upload
+</div>
+{% endblock %}
+
+
+{% block content %}
+  <div>
+    {% block object-tools %}
+        <ul class="object-tools">
+          {% block object-tools-items %}
+            <li>
+                <a href="{% url "admin:kronofoto_place_changelist" %}">Back</a>
+          {% endblock %}
+        </ul>
+    {% endblock %}
+    <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit">
+
+    </form>
+ </div>
+{% endblock %}

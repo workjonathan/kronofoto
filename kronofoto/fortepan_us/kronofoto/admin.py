@@ -12,7 +12,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.forms import widgets
-from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, Exhibit, PhotoSphereInfo, PhotoSphereTour, TourSetDescription
+from fortepan_us.kronofoto.models import Photo, PhotoSphere, PhotoSpherePair, Tag, Term, PhotoTag, Donor, NewCutoff, CSVRecord, TermGroup, Place, PlaceType, Exhibit, PhotoSphereInfo, PhotoSphereTour, TourSetDescription
 from fortepan_us.kronofoto.models import donor
 from fortepan_us.kronofoto.models.photosphere import MainStreetSet
 from mptt.admin import MPTTModelAdmin # type: ignore
@@ -43,6 +43,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.utils.html import format_html, format_html_join, html_safe
 from django.shortcuts import get_object_or_404
 from dataclasses import dataclass
+import json
 
 admin.site.site_header = 'Fortepan Administration'
 admin.site.site_title = 'Fortepan Administration'
@@ -901,6 +902,9 @@ class CSVRecordAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(photo__isnull=True)
 
+@base_admin.register(PlaceType)
+class PlaceTypeAdmin(base_admin.ModelAdmin):
+    pass
 
 
 @base_admin.register(Place)
@@ -908,6 +912,70 @@ class PlaceAdmin(MPTTModelAdmin):
     search_fields = ['fullname']
     raw_id_fields = ["parent"]
     list_display = ['fullname', "place_type"]
+
+    def get_urls(self) -> List[URLPattern]:
+        from django.urls import path
+        def wrap(view: Callable[..., HttpResponse]) -> Callable[..., HttpResponse]:
+            def wrapper(*args: Any, **kwargs: Any) -> HttpResponse:
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self # type: ignore
+            return update_wrapper(wrapper, view)
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        return [
+            path("import-osm", wrap(self.osm_import), name="{}_{}_osm_import".format(*info)),
+        ] + super().get_urls()
+
+
+    def osm_import(self, request: HttpRequest) -> HttpResponse:
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        class ImportForm(forms.Form):
+            osm_file = forms.FileField()
+            parent_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
+            new_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
+            admin_level = forms.IntegerField()
+        form = ImportForm(*([request.POST, request.FILES] if request.method != "GET" else []))
+        if request.method == "GET" or not form.is_valid():
+            context = {
+                **self.admin_site.each_context(request),
+                "title": "Batch import OSM Places",
+                "subtitle": None,
+                "actions_on_top": self.actions_on_top,
+                "actions_on_bottom": self.actions_on_bottom,
+                "form": form,
+            }
+            return TemplateResponse(
+                request=request,
+                template="admin/kronofoto/place/osm_import.html",
+                context=context,
+            )
+        else:
+            with form.cleaned_data['osm_file'].open() as f:
+                import shapely
+                data = json.load(f)
+                new_places = []
+                admin_level = str(form.cleaned_data['admin_level'])
+                for feature in data['features']:
+                    properties = feature['properties']
+                    if admin_level != properties['admin_level']:
+                        continue
+                    name = properties['name']
+                    import re
+                    tags = dict(re.findall(r'"([^"]*)"=>"([^"]*)"', properties['other_tags'])) if properties['other_tags'] else {}
+                    if feature['geometry']['type'] == 'Polygon':
+                        polygons = [shapely.Polygon(feature['geometry']['coordinates'][0], feature['geometry']['coordinates'][1:])]
+                    elif feature['geometry']['type'] == 'MultiPolygon':
+                        polygons = [shapely.Polygon(coords[0], coords[1:]) for coords in feature['geometry']['coordinates']]
+                    geom = shapely.MultiPolygon(polygons)
+                    new_places.append((name, geom, tags))
+                    print(geom.centroid)
+                added, no_parent, many_parents = Place.objects.osm_import(
+                    import_data=new_places,
+                    parent_place_type=form.cleaned_data['parent_type'],
+                    new_place_type=form.cleaned_data['new_type']
+                )
+                return HttpResponse(f"Success: {len(added)} added. {len(no_parent)} found no parents. {len(many_parents)} found multiple parents.")
 
 
 class PhotoBaseAdmin(FilteringArchivePermissionMixin, admin.GISModelAdmin):
