@@ -57,30 +57,22 @@ class PlaceQuerySet(TreeQuerySet):
         places = []
         no_parents = []
         multiple_parents = []
-        with atomic():
-            with Place.objects.disable_mptt_updates():
-                for (name, geom, tags) in import_data:
-                    name = tags.get("name:en", name)
-                    try:
-                        parent = self.get(geom__contains=geom.centroid.wkt, place_type__id=parent_place_type.id)
-                        places.append(Place(
-                            name=name,
-                            parent=parent,
-                            geom=geom.wkt, fullname=name,
-                            place_type=new_place_type,
-                            lft=0,
-                            rght=0,
-                            tree_id=0,
-                            level=0,
-                            )
-                        )
-                    except Place.DoesNotExist:
-                        no_parents.append((name, geom, tags))
-                    except Place.MultipleObjectsReturned:
-                        multiple_parents.append((name, geom, tags))
-
-                self.bulk_create(places)
-                Place.objects.rebuild()
+        for (name, geom, tags) in import_data:
+            name = tags.get("name:en", name)
+            try:
+                parent = self.get(geom__contains=geom.centroid.wkt, place_type__id=parent_place_type.id)
+                p = Place.objects.create(
+                    name=name,
+                    parent=parent,
+                    geom=geom.wkt,
+                    fullname=name,
+                    place_type=new_place_type,
+                )
+                places.append(p)
+            except Place.DoesNotExist:
+                no_parents.append((name, geom, tags))
+            except Place.MultipleObjectsReturned:
+                multiple_parents.append((name, geom, tags))
         return places, no_parents, multiple_parents
 
     def zoom(self, level: int) -> "PlaceQuerySet":

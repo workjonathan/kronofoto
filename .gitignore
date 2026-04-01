@@ -1,4 +1,5 @@
 kronofoto/testphotos/
+*.js.map
 kronofoto/fortepan_us/kronofoto/static/assets/js
 kronofoto/fortepan_us/kronofoto/static/kronofoto/js
 kronofoto/fortepan_us/kronofoto/static/kronofoto.js
