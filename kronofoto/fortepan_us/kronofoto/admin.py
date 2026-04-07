@@ -935,7 +935,7 @@ class PlaceAdmin(MPTTModelAdmin):
             parent_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
             new_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
             admin_level = forms.IntegerField()
-        form = ImportForm(*([request.POST, request.FILES] if request.method != "GET" else []))
+        form = ImportForm(*([request.POST, request.FILES] if request.method != "GET" else [])) # type: ignore
         if request.method == "GET" or not form.is_valid():
             context = {
                 **self.admin_site.each_context(request),
@@ -952,7 +952,7 @@ class PlaceAdmin(MPTTModelAdmin):
             )
         else:
             with form.cleaned_data['osm_file'].open() as f:
-                import shapely
+                import shapely # type: ignore
                 data = json.load(f)
                 new_places = []
                 admin_level = str(form.cleaned_data['admin_level'])
