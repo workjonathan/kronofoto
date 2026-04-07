@@ -169,6 +169,7 @@
   </section>
   </div>
 </div>
+
 <div class="bottom-panel" :class="{ active: activePanel === 'metadata' }">
   <div class="panel-metadata panel-scroll" hx-target="#app">
       <aside class="metadata-left">
@@ -273,6 +274,11 @@
 <div class="button-row bottom-row">
   <div class="left-buttons">
     {% include "kronofoto/components/a/mainstreet.html" with object=photo %}
+
+    {% if request.user|has_view_or_change_permission:photo %}
+        <a href="{{ photo.get_edit_url }}">
+        <img class="add-to-list-icon" src="{% static "kronofoto/images/extracted_svgs/_photo-menu-popup_1.svg" %}"></a>
+    {% endif %}
   </div>
   <div class="right-buttons">
     <button class="popup-button" @click="activePanel !== 'myLists' ? activePanel = 'myLists' : activePanel = undefined">
