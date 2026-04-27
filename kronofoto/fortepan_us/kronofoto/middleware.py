@@ -97,38 +97,41 @@ class ActorAuthenticationMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         from fortepan_us.kronofoto.models import RemoteActor
-        signature_parts = decode_signature(request.headers.get("Signature", ""))
         if request.content_type == 'application/ld+json' and request.content_params and request.content_params.get("profile") == "https://www.w3.org/ns/activitystreams" and 'date' in request.headers:
-            body = request.body.decode("utf-8")
-            request_date = datetime.strptime(request.headers['date'], SignatureHeaders.date_format_str).replace(tzinfo=timezone.utc)
-            if abs(request_date - datetime.now(timezone.utc)) <= timedelta(minutes=10):
-                headers = SignatureHeaders(
-                    url=request.path,
-                    msg_body=body,
-                    host=request.headers.get('host', ""),
-                    date=request_date,
-                    verb=(request.method or "get").lower(),
-                )
-                if headers.digest == request.headers.get("Digest", ""):
-                    data = json.loads(body)
-                    actor, _ = RemoteActor.objects.get_or_create(profile=data['actor'])
-                    pubkey_str = actor.public_key()
-                    if pubkey_str:
-                        public_key = load_pem_public_key(pubkey_str)
-                        if isinstance(public_key, RSAPublicKey):
-                            try:
-                                public_key.verify(
-                                    base64.b64decode(signature_parts['signature']),
-                                    headers.signed_headers.encode('utf-8'),
-                                    padding.PSS(
-                                        mgf=padding.MGF1(hashes.SHA256()),
-                                        salt_length=padding.PSS.MAX_LENGTH,
-                                    ),
-                                    hashes.SHA256(),
-                                )
-                                setattr(request, "actor", actor)
-                                setattr(request, "activity_message", data)
-                            except InvalidSignature:
-                                pass
+            try:
+                signature_parts = decode_signature(request.headers.get("Signature", ""))
+                body = request.body.decode("utf-8")
+                request_date = datetime.strptime(request.headers['date'], SignatureHeaders.date_format_str).replace(tzinfo=timezone.utc)
+                if abs(request_date - datetime.now(timezone.utc)) <= timedelta(minutes=10):
+                    headers = SignatureHeaders(
+                        url=request.path,
+                        msg_body=body,
+                        host=request.headers.get('host', ""),
+                        date=request_date,
+                        verb=(request.method or "get").lower(),
+                    )
+                    if headers.digest == request.headers.get("Digest", ""):
+                        data = json.loads(body)
+                        actor, _ = RemoteActor.objects.get_or_create(profile=data['actor'])
+                        pubkey_str = actor.public_key()
+                        if pubkey_str:
+                            public_key = load_pem_public_key(pubkey_str)
+                            if isinstance(public_key, RSAPublicKey):
+                                try:
+                                    public_key.verify(
+                                        base64.b64decode(signature_parts['signature']),
+                                        headers.signed_headers.encode('utf-8'),
+                                        padding.PSS(
+                                            mgf=padding.MGF1(hashes.SHA256()),
+                                            salt_length=padding.PSS.MAX_LENGTH,
+                                        ),
+                                        hashes.SHA256(),
+                                    )
+                                    setattr(request, "actor", actor)
+                                    setattr(request, "activity_message", data)
+                                except InvalidSignature:
+                                    pass
+            except:
+                pass
         response = self.get_response(request)
         return response
