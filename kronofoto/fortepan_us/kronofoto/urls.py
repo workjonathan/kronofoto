@@ -1,5 +1,6 @@
 from django.urls import path, include, register_converter, URLPattern, URLResolver
 from fortepan_us.kronofoto import views
+import fortepan_us.kronofoto.views.places
 from fortepan_us.kronofoto.views import collection, webcomponent, downloadpage
 from django.views.generic.base import TemplateView
 from fortepan_us.kronofoto.views.photosphere import MainStreetList, MainStreetDetail, MainStreetGeojson
@@ -165,6 +166,8 @@ urlpatterns = urlpatterns + [
     path('<slug:short_name>/data.json', views.datadump, name="data-dump"),
     path("<slug:short_name>@<str:domain>/", include(urlpatterns)),
     path("<slug:short_name>/", include(urlpatterns)),
+    path("placetypes", views.places.place_types),
+    path("placetypes/<int:pk>", views.places.placelist, name="placelist"),
     path(settings.IMAGE_CACHE_URL_PREFIX + "images/<int:block1>/<int:block2>/<str:profile1>.jpg", views.resize_image, name="resize-image"),
     path("", include("fortepan_us.kronofoto.views.vector_tiles")),
 ]
