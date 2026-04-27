@@ -182,7 +182,11 @@ class Place(MPTTModel):
         order_insertion_by = ["place_type", "name"]
 
     def __str__(self) -> str:
-        return self.fullname
+        if self.parent:
+            return f"{self.name}, {self.parent.name} ({self.place_type.name}) [{self.id}]"
+        else:
+            return f"{self.name} ({self.place_type.name}) [{self.id}]"
+
 
     class Meta:
         constraints = [

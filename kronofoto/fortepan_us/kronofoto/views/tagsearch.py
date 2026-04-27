@@ -29,7 +29,6 @@ def contributor_search(request: HttpRequest) -> HttpResponse:
     return response
 
 def place_search(request: HttpRequest, *, require_photo: bool=True) -> HttpResponse:
-    print(require_photo)
     txt = request.GET.get('q', '').upper()
     if len(txt) < 2:
         return HttpResponse("Invalid request", status=400)
@@ -48,7 +47,7 @@ def place_search(request: HttpRequest, *, require_photo: bool=True) -> HttpRespo
                 Photo.objects.filter(places__id=OuterRef('id'))
             )
         ).order_by('fullname')
-    results = [{'id': place.id, 'text': str(place)} for place in places[:20]]
+    results = [{'id': place.id, 'text': place.fullname} for place in places[:20]]
     response = HttpResponse(content_type="application/json")
     json.dump({"results": results, "pagination": {"more": False}}, response)
     return response
